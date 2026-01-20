@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-light text-secondary;
+}
+
+.container {
+  @apply max-w-7xl px-4;
+}

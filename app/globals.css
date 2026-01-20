@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables CSS (optionnel mais pro) */
+:root {
+  --color-primary: #ff8a00;
+  --color-secondary: #1f2937;
+}
