@@ -1,46 +1,50 @@
-# --- DÉPENDANCES (Le plus lourd, ne jamais push) ---
+# --- DÉPENDANCES (Le plus lourd) ---
 node_modules/
 **/node_modules/
 /vendor/
 .pnp
 .pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
 
-# --- NEXT.JS / REACT / TYPESCRIPT ---
+# --- NEXT.JS / REACT / FRONTEND ---
 .next/
-**/ .next/
+**/.next/
+/frontend/.next/
+/frontend/out/
+/frontend/build/
 out/
 build/
 dist/
 .cache/
+.eslintcache
 *.tsbuildinfo
 next-env.d.ts
 
-# --- BINAIRES LOURDS (Spécifique à ton erreur) ---
+# --- BINAIRES ET ARCHIVES (Anti-blocage GitHub) ---
+# On bloque les extensions qui dépassent souvent les 100 Mo
 *.node
+*.swc
 *.exe
 *.dll
 *.dylib
 *.so
-*.swc
+*.zip
+*.tar.gz
+*.rar
 
-# --- ENVIRONNEMENT ET SECRETS (Sécurité) ---
+# --- ENVIRONNEMENT ET SECRETS ---
 .env
-.env*
+.env.*
 !.env.example
-*.pem
 *.key
+*.pem
 auth.json
 Homestead.json
 Homestead.yaml
 
-# --- LARAVEL / BACKEND (Si présent) ---
-/public/storage
+# --- LARAVEL / BACKEND ---
+/public/build
 /public/hot
+/public/storage
 /storage/*.key
 /storage/framework/cache/data/*
 /storage/framework/sessions/*
@@ -51,18 +55,22 @@ Homestead.yaml
 .phpunit.result.cache
 
 # --- LOGS ET DEBUG ---
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 .pnpm-debug.log*
-*.log
 
-# --- SYSTÈME ET IDE ---
+# --- IDE ET SYSTÈME ---
 .DS_Store
 .DS_Store?
 ._*
 Thumbs.db
 .vscode/
-.idea/
-.fleet/
+/.vscode
+/.idea
+/.fleet
+.project
+.settings
 .vercel
