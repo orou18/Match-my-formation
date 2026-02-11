@@ -1,52 +1,28 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",      
-    "./components/**/*.{js,ts,jsx,tsx}",   
-    "./config/**/*.{js,ts}",              
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+    "./config/**/*.{js,ts}",
   ],
-
   theme: {
     extend: {
       colors: {
-        /* 🎨 Couleurs principales */
         primary: {
-          DEFAULT: "#FF8A00", // Orange DeliceDelice
-          foreground: "#FFFFFF",
+          DEFAULT: "#007A7A",
+          hover: "#006666",
         },
-
-        secondary: {
-          DEFAULT: "#1F2937", // Dark gray / presque noir
-          foreground: "#FFFFFF",
-        },
-
-        accent: {
-          DEFAULT: "#FACC15", // jaune doux
-          foreground: "#111827",
-        },
-
-        background: "#FFFFFF",
-        foreground: "#111827",
-
-        muted: {
-          DEFAULT: "#F3F4F6",
-          foreground: "#6B7280",
-        },
-
-        border: "#E5E7EB",
+        secondary: "#002D36",
+        contactCard: "#053B45",
+        accent: "#FFB800",
+        darkText: "rgb(26, 26, 26)",
+        bodyText: "rgb(74, 74, 74)",
+        mutedText: "#BDC3C7",
       },
-
-      borderRadius: {
-        lg: "12px",
-        xl: "16px",
-        "2xl": "20px",
-      },
-
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui"],
+        sans: ["Manrope", "sans-serif"],
       },
     },
   },
-
   plugins: [],
 };

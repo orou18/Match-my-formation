@@ -13,20 +13,25 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
+     * Les attributs qui peuvent être assignés en masse.
+     * AJOUT : 'role' pour permettre l'enregistrement lors de l'inscription.
      */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'role', 
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
+     * Valeurs par défaut pour les attributs.
+     */
+    protected $attributes = [
+        'role' => 'student',
+    ];
+
+    /**
+     * Les attributs qui doivent être cachés pour la sérialisation (JSON).
      */
     protected $hidden = [
         'password',
@@ -34,9 +39,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
+     * Les attributs qui doivent être castés (typés).
      */
     protected $casts = [
         'email_verified_at' => 'datetime',

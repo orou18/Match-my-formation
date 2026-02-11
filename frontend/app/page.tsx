@@ -1,6 +1,7 @@
+// app/page.tsx
 import { redirect } from "next/navigation";
 
 export default function RootPage() {
-  // langue par défaut
+  // Force la redirection vers la langue par défaut
   redirect("/fr");
 }

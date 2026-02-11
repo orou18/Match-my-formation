@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Course\CourseController;
 use App\Http\Controllers\Course\ModuleController;
@@ -15,15 +16,24 @@ use App\Http\Controllers\Company\CompanyController;
 |--------------------------------------------------------------------------
 */
 
-// --- Routes Publiques ---
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
+// ======================
+// 🔓 ROUTES PUBLIQUES
+// ======================
 
-// --- Routes Protégées (Sanctum) ---
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+
+
+// ======================
+// 🔐 ROUTES PROTÉGÉES
+// ======================
+
 Route::middleware('auth:sanctum')->group(function () {
 
-    // Informations de l'utilisateur connecté
-    Route::get('/me', fn(Request $r) => $r->user());
+    // Infos utilisateur connecté
+    Route::get('/me', function (Request $request) {
+        return $request->user();
+    });
 
     // Déconnexion
     Route::post('/logout', [AuthController::class, 'logout']);
