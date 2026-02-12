@@ -1,16 +1,18 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
+    // Autorise les images de ton backend Laravel et d'Unsplash
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
+      },
+      {
+        protocol: 'http', // Ou https selon ton serveur Laravel
+        hostname: 'localhost', 
       },
     ],
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

@@ -5,12 +5,11 @@ import { ChevronDown } from "lucide-react";
 export default function PricingHero() {
   return (
     <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-      {/* Background Image avec Overlay */}
       <div
         className="absolute inset-0 bg-cover bg-center z-0"
         style={{ backgroundImage: "url('/images/hero-pricing-bg.jpg')" }}
       >
-        <div className="absolute inset-0 bg-[#004D40]/70 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-primary mix-blend-multiply" />
       </div>
 
       <motion.div

@@ -49,7 +49,7 @@ export default function HeroSection() {
         >
           Devenez un guide touristique certifié.
           <span className="block text-accent mt-4">
-            Formez-vous. Explorez. Progressez.
+            Formez-vous, explorez, progressez.
           </span>
         </motion.h1>
 

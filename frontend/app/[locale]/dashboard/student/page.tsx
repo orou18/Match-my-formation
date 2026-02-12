@@ -1,178 +1,216 @@
 "use client";
+import { motion, Variants } from "framer-motion";
+import { useRef } from "react";
+import StudentHero from "@/components/dashboard/StudentHero";
+import CategoryFilters from "@/components/dashboard/CategoryFilters";
+import FeaturedGrid from "@/components/dashboard/FeaturedGrid";
+import CourseCard from "@/components/courses/CourseCard";
+import LoadMoreButton from "@/components/ui/LoadMoreButton";
+import PremiumBanner from "@/components/dashboard/PremiumBanner";
+import Image from "next/image";
+import { Star, Users, ArrowLeft, ArrowRight } from "lucide-react";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import {
-  BookOpen,
-  Clock,
-  Award,
-  TrendingUp,
-  LayoutDashboard,
-  LogOut,
-} from "lucide-react";
-import { useRouter, useParams } from "next/navigation";
+interface CreatorCourse {
+  id: number;
+  title: string;
+  image: string;
+  students: number;
+  rating: number;
+  creator: {
+    name: string;
+    logo: string;
+    specialty: string;
+  };
+}
 
-export default function Dashboard() {
-  const [user, setUser] = useState<any>(null);
-  const router = useRouter();
-  const params = useParams();
+export default function StudentDashboard() {
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // 1. Récupérer le token
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push(`/${params.locale}/login`);
-      return;
+  // Fonction de scroll pour le carrousel
+  const scroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      const scrollTo = direction === "left" ? scrollLeft - clientWidth : scrollLeft + clientWidth;
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
     }
-
-    // 2. Récupérer les infos de l'utilisateur sur ton API Laravel
-    fetch("http://localhost:8000/api/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => setUser(data))
-      .catch(() => router.push(`/${params.locale}/login`));
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push(`/${params.locale}/login`);
   };
 
-  if (!user)
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-secondary">
-        Chargement de votre aventure...
-      </div>
-    );
+  const catalogueCourses = [
+    { id: 1, title: "Accueil et Excellence du Service Client", image: "/guide1.jpg", duration: "24:35", rating: 4.8, views: "1k", level: "Débutant" },
+    { id: 2, title: "Sommellerie et Accord Mets-Vins", image: "/guide2.jpg", duration: "18:42", rating: 4.9, views: "800", level: "Avancé" },
+    { id: 3, title: "Marketing Digital pour l'Hôtellerie", image: "/guide3.jpg", duration: "32:15", rating: 4.7, views: "2k", level: "Intermédiaire" },
+    { id: 4, title: "Guide Touristique: Techniques de Présentation", image: "/guide1.jpg", duration: "21:08", rating: 4.6, views: "1.2k", level: "Débutant" },
+    { id: 5, title: "Gestion de Crise en Milieu Hôtelier", image: "/guide2.jpg", duration: "45:00", rating: 4.9, views: "540", level: "Avancé" },
+    { id: 6, title: "Ecotourisme : Principes et Pratiques", image: "/guide3.jpg", duration: "15:30", rating: 4.5, views: "3k", level: "Débutant" },
+    { id: 7, title: "Revenue Management Avancé", image: "/guide1.jpg", duration: "52:10", rating: 5.0, views: "900", level: "Expert" },
+    { id: 8, title: "Anglais Professionnel du Tourisme", image: "/guide2.jpg", duration: "12:45", rating: 4.7, views: "4k", level: "Débutant" },
+  ];
+
+  const creatorCourses: CreatorCourse[] = [
+    {
+      id: 101,
+      title: "Secrets du Management de Luxe",
+      image: "/guide3.jpg",
+      students: 1250,
+      rating: 4.9,
+      creator: { name: "Sofitel Académie", logo: "/sofitel-logo.png", specialty: "Hôtellerie de Luxe" },
+    },
+    {
+      id: 102,
+      title: "Art de la Table Panafricaine",
+      image: "/guide1.jpg",
+      students: 850,
+      rating: 4.8,
+      creator: { name: "Chef Azuma", logo: "/chef-logo.png", specialty: "Gastronomie" },
+    },
+    {
+      id: 103,
+      title: "Design d'Espaces Touristiques",
+      image: "/guide2.jpg",
+      students: 2100,
+      rating: 4.7,
+      creator: { name: "ArchiDesign Studio", logo: "/archi-logo.png", specialty: "Architecture" },
+    },
+    {
+        id: 104,
+        title: "Innovation & Spa Wellness",
+        image: "/guide3.jpg",
+        students: 540,
+        rating: 4.9,
+        creator: { name: "Spa Academy", logo: "/logo.png", specialty: "Wellness" },
+      }
+  ];
+
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const itemVariants: Variants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } }
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex">
-      {/* --- SIDEBAR MINIMALISTE --- */}
-      <aside className="w-64 bg-secondary text-white hidden lg:flex flex-col p-6">
-        <div className="mb-10 flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-lg" />
-          <span className="font-black text-xl tracking-tighter">MATCHMY</span>
-        </div>
+    <div className="min-h-screen bg-[#F8FAFB] overflow-x-hidden">
+      <StudentHero />
 
-        <nav className="flex-1 space-y-2">
-          <button className="w-full flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-xl font-bold transition-all">
-            <LayoutDashboard size={20} /> Dashboard
-          </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-white/50 hover:text-white transition-all">
-            <BookOpen size={20} /> Mes Cours
-          </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-white/50 hover:text-white transition-all">
-            <Award size={20} /> Certifications
-          </button>
-        </nav>
+      <main className="container mx-auto px-4 md:px-8 py-10">
+        <FeaturedGrid />
 
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 transition-all mt-auto"
+        {/* SECTION CATALOGUE */}
+        <section className="mt-20">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+            <div>
+              <h2 className="text-4xl font-black text-[#002B24] tracking-tight">Catalogue des formations</h2>
+              <p className="text-gray-400 mt-2 font-medium uppercase text-[10px] tracking-[0.2em]">Explorez l'excellence académique</p>
+            </div>
+            <CategoryFilters />
+          </div>
+
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+          >
+            {catalogueCourses.map((course, index) => (
+              <motion.div variants={itemVariants} key={course.id}>
+                <CourseCard course={course} index={index} />
+              </motion.div>
+            ))}
+          </motion.div>
+          
+          <div className="flex justify-center mt-12">
+            <LoadMoreButton />
+          </div>
+        </section>
+      </main>
+
+      {/* SECTION CRÉATEURS - FULL WIDTH CAROUSEL */}
+      {/* SECTION CRÉATEURS - COMPACTE ET RAPPROCHÉE */}
+<section className="mt-4 mb-16 bg-[#002B24] py-12 relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+  {/* Glow Effect réduit */}
+  <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+  
+  <div className="max-w-[1440px] mx-auto px-4 md:px-8">
+    <div className="flex justify-between items-center mb-8 relative z-10">
+      <div className="max-w-xl">
+        <span className="text-primary text-[9px] font-black uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">Elite Experts</span>
+        <h2 className="text-2xl md:text-3xl font-black text-white mt-3 leading-tight">
+          Pépites de nos <span className="italic text-primary font-serif">experts</span>
+        </h2>
+      </div>
+      
+      {/* Navigation Arrows plus petites */}
+      <div className="flex gap-3">
+        <button 
+          onClick={() => scroll("left")}
+          className="p-3 rounded-full border border-white/10 text-white hover:bg-white hover:text-[#002B24] transition-all active:scale-90"
         >
-          <LogOut size={20} /> Déconnexion
+          <ArrowLeft size={18} />
         </button>
-      </aside>
+        <button 
+          onClick={() => scroll("right")}
+          className="p-3 rounded-full bg-primary text-[#002B24] hover:bg-white transition-all active:scale-90 shadow-lg shadow-primary/20"
+        >
+          <ArrowRight size={18} />
+        </button>
+      </div>
+    </div>
 
-      {/* --- CONTENU PRINCIPAL --- */}
-      <main className="flex-1 p-8 md:p-12 overflow-y-auto">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
-          <div>
-            <h1 className="text-3xl font-black text-secondary tracking-tight">
-              Ravi de vous revoir,{" "}
-              <span className="text-primary">{user.name.split(" ")[0]}</span> !
-              👋
-            </h1>
-            <p className="text-gray-400 text-sm">
-              Prêt à continuer votre formation aujourd&apos;hui ?
-            </p>
-          </div>
-          <div className="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
-              {user.name.charAt(0)}
-            </div>
-            <div className="pr-4">
-              <p className="text-xs font-bold text-secondary">{user.name}</p>
-              <p className="text-[10px] text-gray-400">{user.email}</p>
-            </div>
-          </div>
-        </header>
-
-        {/* --- STATS CARDS --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {[
-            {
-              label: "Cours suivis",
-              value: "04",
-              icon: BookOpen,
-              color: "text-blue-500",
-              bg: "bg-blue-50",
-            },
-            {
-              label: "Heures d'apprentissage",
-              value: "12h",
-              icon: Clock,
-              color: "text-orange-500",
-              bg: "bg-orange-50",
-            },
-            {
-              label: "Certificats obtenus",
-              value: "01",
-              icon: Award,
-              color: "text-emerald-500",
-              bg: "bg-emerald-50",
-            },
-          ].map((stat, i) => (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              key={i}
-              className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-5"
-            >
-              <div
-                className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center`}
-              >
-                <stat.icon size={28} />
+    {/* Carousel Wrapper - Hauteur optimisée */}
+    <div 
+      ref={scrollRef}
+      className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-4 relative z-10"
+      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+    >
+      {creatorCourses.map((item) => (
+        <motion.div 
+          key={item.id}
+          whileHover={{ y: -5 }}
+          className="snap-start shrink-0 w-[80vw] md:w-[320px] bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-5 hover:bg-white/10 transition-all group"
+        >
+          {/* Image plus petite */}
+          <div className="relative h-44 w-full rounded-[1.8rem] overflow-hidden mb-5">
+            <Image src={item.image} fill className="object-cover group-hover:scale-105 transition-transform duration-700" alt={item.title} />
+            
+            {/* Badge Créateur plus discret */}
+            <div className="absolute top-3 left-3 bg-white p-2 rounded-xl shadow-lg">
+              <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center font-black text-[#002B24] text-[8px] uppercase">
+                {item.creator.name.substring(0, 3)}
               </div>
-              <div>
-                <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">
-                  {stat.label}
-                </p>
-                <p className="text-2xl font-black text-secondary">
-                  {stat.value}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* --- SECTION CONTINUER --- */}
-        <div className="bg-secondary rounded-[2.5rem] p-8 text-white relative overflow-hidden">
-          <div className="relative z-10 max-w-md">
-            <span className="bg-primary text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-              En cours
-            </span>
-            <h2 className="text-2xl font-bold mt-4 mb-2">
-              Management Hôtelier de Luxe
-            </h2>
-            <p className="text-white/60 text-sm mb-6">
-              Vous avez complété 65% de ce module. Continuez sur votre lancée !
-            </p>
-            <div className="w-full bg-white/10 h-2 rounded-full mb-6">
-              <div className="bg-primary h-full w-[65%] rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
             </div>
-            <button className="bg-white text-secondary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary hover:text-white transition-all">
-              Reprendre le cours
+          </div>
+
+          <div className="space-y-3 text-white">
+            <p className="text-primary text-[9px] font-black uppercase tracking-wider">{item.creator.name}</p>
+            <h4 className="text-lg font-bold leading-tight min-h-[44px] line-clamp-2">{item.title}</h4>
+            
+            <div className="flex items-center justify-between pt-4 border-t border-white/10">
+              <div className="flex items-center gap-2 text-white/50 text-[11px]">
+                <Users size={14} className="text-primary" />
+                <span>{item.students.toLocaleString()} élèves</span>
+              </div>
+              <div className="flex items-center gap-1 text-orange-400 font-bold text-[11px] bg-orange-400/5 px-2 py-0.5 rounded-md">
+                <Star size={12} fill="currentColor" />
+                <span>{item.rating}</span>
+              </div>
+            </div>
+
+            <button className="w-full py-3.5 bg-white text-[#002B24] rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-primary hover:text-white transition-all active:scale-[0.97]">
+              Découvrir
             </button>
           </div>
-          {/* Décoration de fond */}
-          <TrendingUp className="absolute right-[-20px] bottom-[-20px] text-white/5 w-64 h-64 rotate-[-15deg]" />
-        </div>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</section>
+
+      <main className="container mx-auto px-4 md:px-8 pb-20">
+        <PremiumBanner />
       </main>
     </div>
   );
