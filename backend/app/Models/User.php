@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -14,13 +16,13 @@ class User extends Authenticatable
 
     /**
      * Les attributs qui peuvent être assignés en masse.
-     * AJOUT : 'role' pour permettre l'enregistrement lors de l'inscription.
      */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role', 
+        'role',
+        'company_id', // AJOUT : Pour lier un partenaire à son entreprise
     ];
 
     /**
@@ -45,4 +47,52 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    // =========================================================================
+    // RELATIONS
+    // =========================================================================
+
+    /**
+     * L'entreprise à laquelle appartient l'utilisateur (si c'est un partenaire).
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Les vidéos uploadées par cet utilisateur.
+     */
+    public function videos(): HasMany
+    {
+        return $this->hasMany(Video::class, 'uploader_id');
+    }
+
+    /**
+     * Les inscriptions aux cours (si c'est un étudiant).
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    // =========================================================================
+    // HELPERS (Utile pour ton Frontend)
+    // =========================================================================
+
+    /**
+     * Vérifie si l'utilisateur est un administrateur.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Vérifie si l'utilisateur est un partenaire/créateur.
+     */
+    public function isPartner(): bool
+    {
+        return in_array($this->role, ['partner', 'creator']);
+    }
 }

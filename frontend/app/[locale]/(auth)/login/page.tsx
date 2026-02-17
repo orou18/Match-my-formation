@@ -40,6 +40,12 @@ export default function AuthPage() {
     remember: false,
   });
 
+  // URL de base dynamique pour les appels fetch directs
+  const rawUrl = process.env.NEXT_PUBLIC_API_URL;
+  const baseUrl = (rawUrl && rawUrl !== "undefined") 
+    ? rawUrl.replace(/\/$/, "") 
+    : "http://localhost:8000";
+
   // Auto-hide success message
   useEffect(() => {
     if (successMessage) {
@@ -60,6 +66,7 @@ export default function AuthPage() {
   const handleSocialLogin = async (provider: string) => {
     setLoading(true);
     try {
+      // Pour le social login, on garde la redirection par défaut ou on l'adaptera dans le callback de NextAuth
       await signIn(provider, { callbackUrl: `/${locale}/dashboard/student` });
     } catch (err) {
       setError("La connexion sociale a échoué.");
@@ -73,25 +80,54 @@ export default function AuthPage() {
     setError(null);
     setSuccessMessage(null);
 
-    const rawUrl = process.env.NEXT_PUBLIC_API_URL;
-    const baseUrl = (rawUrl && rawUrl !== "undefined") 
-      ? rawUrl.replace(/\/$/, "") 
-      : "http://localhost:8000"; 
-
     if (isLogin) {
-      const result = await signIn("credentials", {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      });
+      try {
+        // 1. Appel direct à l'API Laravel pour vérifier les identifiants et obtenir le rôle
+        const res = await fetch(`${baseUrl}/api/login`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json", 
+            "Accept": "application/json" 
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
 
-      if (result?.error) {
-        setError("Identifiants incorrects ou compte inexistant.");
+        const data = await res.json();
+
+        if (res.ok) {
+          // Stockage local pour persistance rapide
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("userRole", data.user.role);
+
+          // 2. Synchronisation avec NextAuth (session) sans redirection automatique
+          await signIn("credentials", {
+            email: formData.email,
+            password: formData.password,
+            redirect: false,
+          });
+
+          // 3. Redirection dynamique basée sur le rôle
+          const role = data.user.role;
+          if (role === "admin") {
+            router.push(`/${locale}/dashboard/admin`);
+          } else if (role === "creator") {
+            router.push(`/${locale}/dashboard/creator`);
+          } else {
+            router.push(`/${locale}/dashboard/student`);
+          }
+        } else {
+          setError(data.message || "Identifiants incorrects ou compte inexistant.");
+          setLoading(false);
+        }
+      } catch (err) {
+        setError("Impossible de contacter le serveur. Vérifiez que Laravel tourne.");
         setLoading(false);
-      } else {
-        router.push(`/${locale}/dashboard/student`);
       }
     } else {
+      // LOGIQUE INSCRIPTION
       try {
         const response = await fetch(`${baseUrl}/api/register`, {
           method: "POST",
@@ -118,7 +154,7 @@ export default function AuthPage() {
           setLoading(false);
         }
       } catch (err) {
-        setError("Impossible de contacter le serveur. Vérifiez que Laravel tourne.");
+        setError("Impossible de contacter le serveur.");
         setLoading(false);
       }
     }
@@ -176,7 +212,6 @@ export default function AuthPage() {
           <div className="absolute inset-0 bg-gradient-to-br from-[#004D40] via-[#002B24]/95 to-transparent" />
         </motion.div>
 
-        {/* Effets de lumière décoratifs (Desktop seulement pour optimiser le mobile) */}
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none hidden lg:block">
           <div className="absolute top-[5%] left-[5%] w-96 h-96 bg-primary/10 rounded-full blur-[120px] animate-pulse" />
           <div className="absolute bottom-[-10%] right-[-10%] w-64 h-64 bg-[#FFB800]/10 rounded-full blur-[100px]" />
@@ -286,7 +321,7 @@ export default function AuthPage() {
                   <label className="text-[10px] font-black text-gray-400 uppercase ml-4 tracking-widest">Nom complet</label>
                   <div className="relative group">
                     <User className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors" size={20} />
-                    <input name="name" type="text" onChange={handleChange} placeholder="Jean Kouassi" className="w-full pl-16 pr-6 py-4 lg:py-5.5 bg-gray-50 border border-transparent rounded-[1.5rem] lg:rounded-[1.8rem] focus:bg-white focus:border-primary outline-none transition-all font-semibold text-base" required />
+                    <input name="name" type="text" onChange={handleChange} placeholder="Jean Kouassi" className="w-full pl-16 pr-6 py-4 lg:py-5.5 bg-gray-50 border border-transparent rounded-[1.5rem] lg:rounded-[1.8rem] focus:bg-white focus:border-primary outline-none transition-all font-semibold text-base" required={!isLogin} />
                   </div>
                 </motion.div>
               )}
