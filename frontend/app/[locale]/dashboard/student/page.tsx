@@ -44,29 +44,35 @@ export default function StudentDashboard() {
         return;
       }
 
+      // On force l'usage de localhost si la variable d'env fait défaut
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const baseUrl = apiBase.replace(/\/$/, "");
+
       try {
-        // 1. Vérifier l'identité et le rôle
-        const userRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/me`, {
+        const userRes = await fetch(`${baseUrl}/api/me`, {
+          method: 'GET',
           headers: {
             "Authorization": `Bearer ${token}`,
-            "Accept": "application/json"
-          }
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          mode: 'cors' 
         });
 
-        if (!userRes.ok) throw new Error("Session expirée");
-        
-        const userData = await userRes.json();
-        
-        // Redirection si l'admin essaie d'accéder au dashboard étudiant
-        if (userData.role === "admin") {
-          router.push(`/${params.locale}/dashboard/admin`);
-          return;
+        if (!userRes.ok) {
+          if (userRes.status === 401) {
+            localStorage.removeItem("token");
+            router.push(`/${params.locale}/login`);
+            return;
+          }
+          throw new Error("Erreur profil");
         }
         
+        const userData = await userRes.json();
         setUser(userData);
 
-        // 2. Charger les vidéos
-        const videoRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos`, {
+        // Appel des vidéos
+        const videoRes = await fetch(`${baseUrl}/api/videos`, {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Accept": "application/json"
@@ -78,8 +84,8 @@ export default function StudentDashboard() {
           setVideos(videoData);
         }
       } catch (err) {
-        console.error("Erreur dashboard:", err);
-        setError("Impossible de charger votre espace.");
+        console.error("Bug réseau dashboard:", err);
+        setError("Le serveur Laravel est injoignable sur localhost:8000");
       } finally {
         setLoading(false);
       }
@@ -141,17 +147,15 @@ export default function StudentDashboard() {
     visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } }
   };
 
-  // Écran de chargement préservé avec ton style
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFB]">
         <Loader2 className="animate-spin text-primary mb-4" size={40} />
-        <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Préparation de votre espace...</p>
+        <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Initialisation du dashboard...</p>
       </div>
     );
   }
 
-  // Écran d'erreur
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFB] p-6 text-center">
@@ -165,7 +169,6 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFB] overflow-x-hidden font-sans">
-      {/* Correction ici : Cast en 'any' pour éviter l'erreur de type si le composant n'est pas encore mis à jour */}
       <StudentHero user={user} />
 
       <main className="container mx-auto px-4 md:px-8 py-10">
@@ -200,7 +203,6 @@ export default function StudentDashboard() {
         </section>
       </main>
 
-      {/* Section Experts */}
       <section className="mt-4 mb-16 bg-[#002B24] py-12 relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
         

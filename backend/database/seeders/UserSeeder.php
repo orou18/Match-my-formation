@@ -8,30 +8,41 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        // Création de l'Admin
-        User::create([
-            'name' => 'Admin Match',
-            'email' => 'admin@match.com',
-            'password' => Hash::make('password123'),
-            'role' => 'admin',
-        ]);
+        $password = Hash::make('Azerty123!');
 
-        // Création d'un Formateur
-        User::create([
-            'name' => 'Jean Formateur',
-            'email' => 'creator@match.com',
-            'password' => Hash::make('password123'),
-            'role' => 'creator',
-        ]);
+        $users = [
+            [
+                'name'     => 'Direction Match Admin',
+                'email'    => 'admin@match.com',
+                'password' => $password,
+                'role'     => 'admin',
+            ],
+            [
+                'name'     => 'Jean Formateur',
+                'email'    => 'creator@match.com',
+                'password' => $password,
+                'role'     => 'creator',
+            ],
+            [
+                'name'     => 'Alice Élève',
+                'email'    => 'student@match.com',
+                'password' => $password,
+                'role'     => 'student',
+            ],
+        ];
 
-        // Création d'un Étudiant
-        User::create([
-            'name' => 'Alice Eleve',
-            'email' => 'student@match.com',
-            'password' => Hash::make('password123'),
-            'role' => 'student',
-        ]);
+        foreach ($users as $user) {
+            User::updateOrCreate(
+                ['email' => $user['email']],
+                $user
+            );
+        }
+
+        $this->command->info('Seed terminé : Utilisateurs créés avec le mot de passe Azerty123!');
     }
 }

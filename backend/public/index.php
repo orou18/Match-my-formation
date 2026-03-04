@@ -1,5 +1,8 @@
 <?php
 
+ini_set('memory_limit', '512M');
+ini_set('max_execution_time', '5');
+
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 

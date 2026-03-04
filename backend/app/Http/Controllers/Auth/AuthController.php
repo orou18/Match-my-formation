@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -23,14 +22,18 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => 'student', // Assigne le rôle par défaut
+            'role' => 'student',
         ]);
 
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
             'message' => 'User registered successfully',
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'role' => $user->role,
+            ],
             'token' => $token,
         ], 201);
     }
@@ -51,33 +54,42 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Supprime les anciens tokens pour éviter l'accumulation (optionnel)
+        // On nettoie les anciens tokens pour la propreté
         $user->tokens()->delete();
-
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
             'message' => 'Login successful',
+            'token' => $token,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $user->role, // TRÈS IMPORTANT pour ton frontend
+                'role' => $user->role,
             ],
-            'token' => $token,
         ]);
     }
 
-
+    // ME (La route qui posait problème)
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Non authentifié'], 401);
+        }
+
+        return response()->json([
+            'id'    => $user->id,
+            'name'  => $user->name,
+            'email' => $user->email,
+            'role'  => $user->role,
+        ]);
     }
 
     // LOGOUT
     public function logout(Request $request)
     {
-        // Supprime le token actuel
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([

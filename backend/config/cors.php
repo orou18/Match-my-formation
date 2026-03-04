@@ -12,22 +12,23 @@ return [
 
     'allowed_methods' => ['*'],
 
-    // On autorise explicitement localhost et 127.0.0.1 pour éviter les blocages
+    // Utilisation de l'URL du .env en priorité, avec repli sur localhost
     'allowed_origins' => [
         'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        env('FRONTEND_URL', 'http://localhost:3000'),
+        'http://localhost:3000',
+        trim(env('FRONTEND_URL', 'http://localhost:3000'), '/'),
     ],
 
     'allowed_origins_patterns' => [],
 
+    // On autorise tous les headers, ce qui inclut 'Authorization' et 'Content-Type'
     'allowed_headers' => ['*'],
 
     'exposed_headers' => [],
 
     'max_age' => 0,
 
-    // TRÈS IMPORTANT : Doit être à true pour NextAuth et les cookies de session
+    // OBLIGATOIRE à true pour que Sanctum et NextAuth partagent les cookies/sessions
     'supports_credentials' => true,
 
 ];

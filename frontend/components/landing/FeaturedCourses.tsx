@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Loader2, Film } from "lucide-react";
@@ -9,24 +9,59 @@ import VideoCard from "@/components/video/VideoCard";
 export default function FeaturedCourses() {
   const [publicVideos, setPublicVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // Empêche le double appel au montage du composant (Strict Mode)
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Récupération des vidéos publiques depuis Laravel
   useEffect(() => {
+    // Si une requête est déjà en cours, on l'annule
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     const fetchPublicVideos = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/public/videos`);
+        // CORRECTION : Utilisation forcée de 127.0.0.1 pour éviter le timeout DNS d'Ubuntu
+        const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const baseUrl = rawUrl.replace(/\/$/, "");
+        
+        const response = await fetch(`${baseUrl}/api/public/videos`, {
+          method: 'GET',
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+          },
+          // On évite d'envoyer les cookies de session pour cette route publique
+          // car c'est ce qui fait boucler ton SessionGuard Laravel
+          credentials: 'omit', 
+        });
+
         if (response.ok) {
           const data = await response.json();
-          // On ne prend que les 3 premières pour la landing page comme dans ton mock
-          setPublicVideos(data.slice(0, 3));
+          // On s'assure que data est bien un tableau
+          setPublicVideos(Array.isArray(data) ? data.slice(0, 3) : []);
+        } else {
+          console.error(`Erreur API: ${response.status}`);
         }
-      } catch (error) {
-        console.error("Erreur landing videos:", error);
+      } catch (error: any) {
+        if (error.name === 'AbortError') {
+          // Requête annulée normalement, on ne fait rien
+          return;
+        }
+        console.error("Le backend est injoignable. Vérifiez : php artisan config:clear");
       } finally {
         setLoading(false);
       }
     };
+
     fetchPublicVideos();
+
+    // Nettoyage lors du démontage du composant
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return (
@@ -48,7 +83,7 @@ export default function FeaturedCourses() {
           </p>
         </motion.div>
 
-        {/* Grille des Cartes (Données Réelles) */}
+        {/* Grille des Cartes */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="animate-spin text-primary mb-4" size={40} />
@@ -58,7 +93,7 @@ export default function FeaturedCourses() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
             {publicVideos.map((video, index) => (
               <motion.div
-                key={video.id}
+                key={video.id || index}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -75,7 +110,7 @@ export default function FeaturedCourses() {
           </div>
         )}
 
-        {/* Bouton "Magnetic" (Design original préservé) */}
+        {/* Bouton Parcourir */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -105,8 +140,6 @@ export default function FeaturedCourses() {
                   size={32}
                 />
               </div>
-
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-1 bg-primary/30 w-12 rounded-full group-hover:w-32 group-hover:bg-primary transition-all duration-500"></div>
             </motion.button>
           </Link>
         </motion.div>
