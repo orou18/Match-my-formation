@@ -9,11 +9,9 @@ import VideoCard from "@/components/video/VideoCard";
 export default function FeaturedCourses() {
   const [publicVideos, setPublicVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  // Empêche le double appel au montage du composant (Strict Mode)
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    // Si une requête est déjà en cours, on l'annule
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -23,34 +21,35 @@ export default function FeaturedCourses() {
 
     const fetchPublicVideos = async () => {
       try {
-        // CORRECTION : Utilisation forcée de 127.0.0.1 pour éviter le timeout DNS d'Ubuntu
+        // On force l'URL si process.env est vide pour éviter de taper dans le vide
         const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
         const baseUrl = rawUrl.replace(/\/$/, "");
+        const targetUrl = `${baseUrl}/api/public/videos`;
         
-        const response = await fetch(`${baseUrl}/api/public/videos`, {
+        console.log("Fetching videos from:", targetUrl);
+
+        const response = await fetch(targetUrl, {
           method: 'GET',
           signal: controller.signal,
           headers: {
             'Accept': 'application/json',
           },
-          // On évite d'envoyer les cookies de session pour cette route publique
-          // car c'est ce qui fait boucler ton SessionGuard Laravel
           credentials: 'omit', 
         });
 
         if (response.ok) {
           const data = await response.json();
-          // On s'assure que data est bien un tableau
           setPublicVideos(Array.isArray(data) ? data.slice(0, 3) : []);
         } else {
-          console.error(`Erreur API: ${response.status}`);
+          console.error(`Erreur HTTP: ${response.status}`);
+          setPublicVideos([]); // Évite de rester bloqué
         }
       } catch (error: any) {
-        if (error.name === 'AbortError') {
-          // Requête annulée normalement, on ne fait rien
-          return;
-        }
-        console.error("Le backend est injoignable. Vérifiez : php artisan config:clear");
+        if (error.name === 'AbortError') return;
+        
+        // Message d'erreur plus technique pour t'aider à debugger
+        console.error("Erreur de connexion au backend. Vérifie que Laravel tourne sur 127.0.0.1:8000");
+        console.log("Détails de l'erreur:", error.message);
       } finally {
         setLoading(false);
       }
@@ -58,7 +57,6 @@ export default function FeaturedCourses() {
 
     fetchPublicVideos();
 
-    // Nettoyage lors du démontage du composant
     return () => {
       controller.abort();
     };
@@ -67,7 +65,6 @@ export default function FeaturedCourses() {
   return (
     <section className="py-20 md:py-32 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
-        {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -83,7 +80,6 @@ export default function FeaturedCourses() {
           </p>
         </motion.div>
 
-        {/* Grille des Cartes */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="animate-spin text-primary mb-4" size={40} />
@@ -107,10 +103,10 @@ export default function FeaturedCourses() {
           <div className="text-center py-20 bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-100">
             <Film className="mx-auto text-gray-200 mb-4" size={48} />
             <p className="text-gray-400 font-medium">Nos prochaines formations arrivent bientôt.</p>
+            <p className="text-[10px] text-gray-300 mt-2">Vérifiez la connexion API ou la base de données</p>
           </div>
         )}
 
-        {/* Bouton Parcourir */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}

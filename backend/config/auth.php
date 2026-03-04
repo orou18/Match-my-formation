@@ -3,7 +3,7 @@
 return [
 
     'defaults' => [
-        'guard' => 'api', // Changé de 'web' à 'api'
+        'guard' => 'web',
         'passwords' => 'users',
     ],
 

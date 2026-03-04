@@ -1,7 +1,11 @@
 <?php
 
-ini_set('memory_limit', '512M');
-ini_set('max_execution_time', '5');
+/**
+ * Force l'affichage des erreurs pour le debug Ubuntu
+ * À retirer une fois que le problème est réglé
+ */
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
 
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
@@ -12,13 +16,7 @@ define('LARAVEL_START', microtime(true));
 |--------------------------------------------------------------------------
 | Check If The Application Is Under Maintenance
 |--------------------------------------------------------------------------
-|
-| If the application is in maintenance / demo mode via the "down" command
-| we will load this file so that any pre-rendered content can be shown
-| instead of starting the framework, which could cause an exception.
-|
 */
-
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
     require $maintenance;
 }
@@ -27,32 +25,29 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 |--------------------------------------------------------------------------
 | Register The Auto Loader
 |--------------------------------------------------------------------------
-|
-| Composer provides a convenient, automatically generated class loader for
-| this application. We just need to utilize it! We'll simply require it
-| into the script here so we don't need to manually load our classes.
-|
 */
-
 require __DIR__.'/../vendor/autoload.php';
 
 /*
 |--------------------------------------------------------------------------
 | Run The Application
 |--------------------------------------------------------------------------
-|
-| Once we have the application, we can handle the incoming request using
-| the application's HTTP kernel. Then, we will send the response back
-| to this client's browser, allowing them to enjoy our application.
-|
 */
-
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
 $kernel = $app->make(Kernel::class);
 
-$response = $kernel->handle(
-    $request = Request::capture()
-)->send();
+$request = Request::capture();
 
-$kernel->terminate($request, $response);
+try {
+    $response = $kernel->handle($request);
+    $response->send();
+    $kernel->terminate($request, $response);
+} catch (\Throwable $e) {
+    // Si Laravel crash, on affiche l'erreur proprement au lieu de couper la connexion
+    header('Content-Type: text/plain');
+    echo "L'APPLICATION A CRASHÉ : \n";
+    echo $e->getMessage() . "\n";
+    echo "Fichier : " . $e->getFile() . " à la ligne " . $e->getLine();
+    exit;
+}

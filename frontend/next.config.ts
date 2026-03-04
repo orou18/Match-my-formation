@@ -11,8 +11,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Active cette option si tu utilises le dossier 'src' (ce n'est pas ton cas ici apparemment)
-  // Mais garde la config propre pour Next.js
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://127.0.0.1:8009/api/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -16,23 +16,34 @@ class VideoController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+            // Retourner les vidéos publiques par défaut si pas d'utilisateur
+            if (!$user) {
+                return response()->json(
+                    Video::where('visibility', 'public')
+                        ->latest()
+                        ->limit(20)
+                        ->get()
+                );
+            }
+
+            // Admin voit toutes les vidéos
+            if ($user->role === 'admin') {
+                return response()->json(Video::latest()->limit(20)->get());
+            }
+
+            // Utilisateur normal voit les vidéos publiques
+            return response()->json(
+                Video::where('visibility', 'public')
+                    ->latest()
+                    ->limit(20)
+                    ->get()
+            );
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        // On évite les relations (with) pour l'instant pour stabiliser le serveur
-        if ($user->role === 'admin') {
-            return response()->json(Video::latest()->limit(20)->get());
-        }
-
-        return response()->json(
-            Video::where('visibility', 'public')
-                ->latest()
-                ->limit(20)
-                ->get()
-        );
     }
 
     public function store(Request $request)
