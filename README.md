@@ -90,7 +90,7 @@ cd ../frontend
 npm install
 
 # Configurer l'environnement
-echo "NEXT_PUBLIC_API_URL=http://127.0.0.1:8009" > .env
+echo "NEXT_PUBLIC_API_URL=http://127.0.0.1:8000" > .env
 
 # Démarrer le serveur de développement
 npm run dev
@@ -99,8 +99,8 @@ npm run dev
 ### 4. Accéder à l'Application
 
 - **Frontend** : http://localhost:3000
-- **Backend API** : http://127.0.0.1:8009
-- **API Documentation** : http://127.0.0.1:8009/api/public/videos
+- **Backend API** : http://127.0.0.1:8000
+- **API Documentation** : http://127.0.0.1:8000/api/public/videos
 
 ---
 
@@ -114,7 +114,7 @@ APP_NAME=MatchMyFormation
 APP_ENV=local
 APP_KEY=base64:votre_clé_générée
 APP_DEBUG=true
-APP_URL=http://127.0.0.1:8009
+APP_URL=http://127.0.0.1:8000
 
 # Base de données
 DB_CONNECTION=mysql
@@ -143,7 +143,7 @@ LOG_LEVEL=debug
 
 ```bash
 # API Laravel
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8009
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 
 # NextAuth (si utilisé)
 NEXTAUTH_URL=http://localhost:3000

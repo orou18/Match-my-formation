@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { Search, User } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 
 // Ajout de l'interface pour corriger l'erreur TypeScript
 interface StudentHeroProps {
@@ -12,6 +13,14 @@ interface StudentHeroProps {
 }
 
 export default function StudentHero({ user }: StudentHeroProps) {
+  const router = useRouter();
+  const params = useParams();
+  const locale = params.locale || "fr";
+
+  const handleProfileClick = () => {
+    router.push(`/${locale}/dashboard/student/profile`);
+  };
+
   return (
     <section className="relative w-full py-20 px-6 overflow-hidden bg-gradient-to-br from-[#007A7A] via-[#004D40] to-[#FFB800]/20">
       {/* Effet décoratif en arrière-plan */}
@@ -63,6 +72,17 @@ export default function StudentHero({ user }: StudentHeroProps) {
             Voir les nouveautés
           </button>
         </div>
+
+        {/* Bouton Profil dans le Hero */}
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          onClick={handleProfileClick}
+          className="fixed top-6 right-6 bg-white/10 backdrop-blur-md border border-white/20 text-white p-3 rounded-full hover:bg-white/20 transition-all z-50"
+        >
+          <User size={24} />
+        </motion.button>
       </div>
     </section>
   );

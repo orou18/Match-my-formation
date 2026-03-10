@@ -19,3 +19,21 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Intercepteur pour gérer les erreurs 401 (session expirée)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Nettoyer le stockage local
+      localStorage.removeItem("token");
+      localStorage.removeItem("userRole");
+      
+      // Rediriger vers login
+      if (typeof window !== "undefined") {
+        window.location.href = "/fr/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);

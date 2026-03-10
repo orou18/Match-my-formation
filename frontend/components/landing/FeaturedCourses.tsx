@@ -26,7 +26,7 @@ export default function FeaturedCourses() {
         const baseUrl = rawUrl.replace(/\/$/, "");
         const targetUrl = `${baseUrl}/api/public/videos`;
         
-        console.log("Fetching videos from:", targetUrl);
+        console.log("Fetching public videos from:", targetUrl);
 
         const response = await fetch(targetUrl, {
           method: 'GET',

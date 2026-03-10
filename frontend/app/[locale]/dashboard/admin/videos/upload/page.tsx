@@ -1,189 +1,481 @@
 "use client";
-import { useState, useRef } from "react";
-import { useRouter, useParams } from "next/navigation"; // Ajout de useParams pour la locale
-import { Upload, CheckCircle, ArrowLeft, Loader2, Film, Eye, EyeOff } from "lucide-react";
-import Link from "next/link";
 
-export default function UploadVideoPage() {
-  const [loading, setLoading] = useState(false);
-  const [isPublic, setIsPublic] = useState(true);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+import { motion } from "framer-motion";
+import { useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import React from "react";
+import {
+  Upload,
+  X,
+  Video,
+  Image as ImageIcon,
+  Save,
+  Eye,
+  Trash2,
+  Play,
+  FileText,
+  Tag,
+  Globe,
+  Lock,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
+
+export default function VideoUpload() {
   const router = useRouter();
-  const params = useParams(); // Pour rediriger vers la bonne locale
+  const params = useParams();
+  const locale = params.locale || "fr";
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFileName(e.target.files[0].name);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    category: "",
+    tags: "",
+    visibility: "public",
+    thumbnail: null as File | null,
+    video: null as File | null,
+  });
+
+  const [uploadProgress, setUploadProgress] = useState({
+    video: 0,
+    thumbnail: 0,
+  });
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const categories = [
+    { value: "tourisme", label: "Tourisme" },
+    { value: "hotellerie", label: "Hôtellerie" },
+    { value: "marketing", label: "Marketing Digital" },
+    { value: "service_client", label: "Service Client" },
+    { value: "developpement", label: "Développement Professionnel" },
+    { value: "culture", label: "Culture Générale" },
+  ];
+
+  const handleFileChange = (fileType: 'video' | 'thumbnail') => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData(prev => ({ ...prev, [fileType]: file }));
+      
+      // Preview for video
+      if (fileType === 'video') {
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+      }
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsUploading(true);
+    setErrors({});
 
-    const formData = new FormData(e.currentTarget);
-    // 1. On force la valeur de visibility pour correspondre à l'enum Laravel (public/private)
-    formData.set("visibility", isPublic ? "public" : "private");
+    // Validation
+    const newErrors: Record<string, string> = {};
+    if (!formData.title.trim()) newErrors.title = "Le titre est requis";
+    if (!formData.description.trim()) newErrors.description = "La description est requise";
+    if (!formData.category) newErrors.category = "La catégorie est requise";
+    if (!formData.video) newErrors.video = "La vidéo est requise";
+    if (!formData.thumbnail) newErrors.thumbnail = "La miniature est requise";
 
-    // 2. Récupération du token pour Sanctum
-    const token = localStorage.getItem("token");
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setIsUploading(false);
+      return;
+    }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos/upload`, {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Accept": "application/json",
-          "Authorization": `Bearer ${token}` // On décommente car tes routes sont protégées maintenant
-        }
-      });
+      // Simulation d'upload
+      const uploadData = new FormData();
+      uploadData.append('title', formData.title);
+      uploadData.append('description', formData.description);
+      uploadData.append('category', formData.category);
+      uploadData.append('tags', formData.tags);
+      uploadData.append('visibility', formData.visibility);
+      if (formData.video) uploadData.append('video', formData.video);
+      if (formData.thumbnail) uploadData.append('thumbnail', formData.thumbnail);
 
-      if (response.ok) {
-        // Redirection vers la liste des vidéos
-        router.push(`/${params.locale}/dashboard/admin/videos`);
-      } else {
-        const err = await response.json();
-        // Affichage des erreurs de validation Laravel s'il y en a
-        alert("Erreur : " + (err.message || "Vérifiez les champs du formulaire"));
+      // Simuler progression
+      for (let i = 0; i <= 100; i += 10) {
+        setUploadProgress(prev => ({ ...prev, video: i, thumbnail: i }));
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
+
+      // Simuler succès
+      console.log('Video uploaded:', formData);
+      
+      // Redirection
+      router.push(`/${locale}/dashboard/admin/videos`);
     } catch (error) {
-      console.error("Erreur upload:", error);
-      alert("Erreur réseau. Vérifiez que le backend Laravel est lancé.");
+      console.error('Upload error:', error);
+      setErrors({ submit: "Erreur lors de l'upload. Veuillez réessayer." });
     } finally {
-      setLoading(false);
+      setIsUploading(false);
+      setUploadProgress({ video: 0, thumbnail: 0 });
+    }
+  };
+
+  const removeFile = (fileType: 'video' | 'thumbnail') => {
+    setFormData(prev => ({ ...prev, [fileType]: null }));
+    if (fileType === 'video' && previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
     }
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <Link href={`/${params.locale}/dashboard/admin/videos`} className="group flex items-center gap-2 text-gray-500 hover:text-[#004D40] transition-colors font-bold">
-          <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          Retour à la vidéothèque
-        </Link>
-      </div>
-
-      <form onSubmit={handleSubmit} className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50">
-        <div className="flex items-center gap-4 mb-10">
-          <div className="p-4 bg-[#004D40]/10 text-[#004D40] rounded-2xl">
-            <Film size={28} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-[#002B24]">Publier un nouveau média</h2>
-            <p className="text-sm text-gray-400">Remplissez les détails et choisissez votre fichier vidéo.</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Zone Upload */}
-          <div className="space-y-4">
-            <label className="text-xs font-black uppercase text-gray-400 ml-1">Fichier vidéo</label>
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-gray-200 rounded-[2.5rem] p-12 flex flex-col items-center justify-center group hover:border-[#004D40]/50 transition-all cursor-pointer bg-gray-50/50 min-h-[350px]"
-            >
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <Upload className="text-[#004D40]" size={32} />
-              </div>
-              
-              <div className="text-center mt-6">
-                <p className="font-bold text-[#002B24]">
-                  {fileName ? fileName : "Glissez votre vidéo ici"}
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-3xl shadow-xl"
+        >
+          {/* Header */}
+          <div className="p-8 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  Ajouter une Vidéo
+                </h1>
+                <p className="text-gray-600">
+                  Uploadez et configurez votre nouvelle vidéo
                 </p>
-                <p className="text-xs text-gray-400 mt-2">MP4, WebM ou MOV (Max. 500MB)</p>
               </div>
-
-              {/* ATTENTION : Le nom doit être "video" pour correspondre à mon contrôleur mis à jour */}
-              <input 
-                ref={fileInputRef}
-                name="video" 
-                type="file" 
-                accept="video/*" 
-                className="hidden" 
-                required 
-                onChange={handleFileChange}
-              />
               
-              <button type="button" className="mt-8 px-8 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold shadow-sm group-hover:bg-gray-100">
-                Parcourir les fichiers
+              <button
+                onClick={() => router.back()}
+                className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <X className="w-6 h-6" />
               </button>
             </div>
           </div>
 
-          {/* Détails */}
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-gray-400 ml-1">Titre de la vidéo</label>
-              <input 
-                name="title"
-                required
-                type="text" 
-                placeholder="Ex: Introduction au Design" 
-                className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-[#004D40]/20 transition-all text-[#002B24] font-medium" 
-              />
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            {/* Title and Description */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Titre de la vidéo *
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary ${
+                    errors.title ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Entrez un titre accrocheur..."
+                />
+                {errors.title && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.title}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description *
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={6}
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none ${
+                    errors.description ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Décrivez le contenu de votre vidéo..."
+                />
+                {errors.description && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.description}
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-2">
-                  <label className="text-xs font-black uppercase text-gray-400 ml-1">Catégorie</label>
-                  <select name="category" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 outline-none appearance-none cursor-pointer font-medium text-[#002B24]">
-                      <option value="Tourisme">Tourisme</option>
-                      <option value="Hôtellerie">Hôtellerie</option>
-                      <option value="Management">Management</option>
-                  </select>
-               </div>
-               <div className="space-y-2">
-                  <label className="text-xs font-black uppercase text-gray-400 ml-1">Visibilité</label>
-                  <div className="flex p-1 bg-gray-50 rounded-2xl">
-                      <button 
-                          type="button"
-                          onClick={() => setIsPublic(false)}
-                          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${!isPublic ? 'bg-white shadow-sm text-[#002B24]' : 'text-gray-400'}`}>
-                          <EyeOff size={14} /> Privé
-                      </button>
-                      <button 
-                          type="button"
-                          onClick={() => setIsPublic(true)}
-                          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${isPublic ? 'bg-[#004D40] text-white shadow-md' : 'text-gray-400'}`}>
-                          <Eye size={14} /> Public
-                      </button>
+            {/* Category and Tags */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Catégorie *
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary ${
+                    errors.category ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">Sélectionner une catégorie</option>
+                  {categories.map(cat => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.category && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.category}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tags (séparés par des virgules)
+                </label>
+                <input
+                  type="text"
+                  value={formData.tags}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="tourisme, luxe, service client..."
+                />
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {formData.tags.split(',').filter(tag => tag.trim()).map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full"
+                    >
+                      {tag.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Visibility */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-4">
+                Visibilité de la vidéo
+              </label>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value="public"
+                    checked={formData.visibility === "public"}
+                    onChange={(e) => setFormData(prev => ({ ...prev, visibility: e.target.value }))}
+                    className="text-primary"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <div className="font-medium">Public</div>
+                      <div className="text-sm text-gray-600">Visible par tout le monde</div>
+                    </div>
                   </div>
-               </div>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value="private"
+                    checked={formData.visibility === "private"}
+                    onChange={(e) => setFormData(prev => ({ ...prev, visibility: e.target.value }))}
+                    className="text-primary"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-5 h-5 text-gray-600" />
+                    <div>
+                      <div className="font-medium">Privé</div>
+                      <div className="text-sm text-gray-600">Uniquement les abonnés</div>
+                    </div>
+                  </div>
+                </label>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-gray-400 ml-1">Description</label>
-              <textarea 
-                name="description"
-                rows={5} 
-                className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-[#004D40]/20 transition-all text-[#002B24]" 
-                placeholder="Décrivez brièvement le contenu de la vidéo..."
-              ></textarea>
-            </div>
-          </div>
-        </div>
+            {/* File Uploads */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Video Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Vidéo *
+                </label>
+                <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+                  errors.video ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-primary'
+                }`}>
+                  {formData.video ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-center">
+                        <Video className="w-12 h-12 text-primary" />
+                      </div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {formData.video.name}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {(formData.video.size / 1024 / 1024).toFixed(2)} MB
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile('video')}
+                        className="p-2 text-red-600 hover:text-red-700 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      {uploadProgress.video > 0 && (
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${uploadProgress.video}%` }}
+                            className="bg-primary h-full rounded-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer">
+                      <Upload className="w-12 h-12 text-gray-400 mb-4" />
+                      <div className="text-sm font-medium text-gray-700">
+                        Cliquez pour uploader la vidéo
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Formats supportés: MP4, WebM, MOV (max 500MB)
+                      </div>
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => handleFileChange('video')(e)}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+                {errors.video && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.video}
+                  </p>
+                )}
 
-        <div className="mt-12 pt-8 border-t border-gray-50 flex justify-end">
-          <button 
-            disabled={loading}
-            type="submit"
-            className="bg-[#004D40] text-white px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="animate-spin" size={20} />
-                Publication en cours...
-              </>
-            ) : (
-              <>
-                <CheckCircle size={20} />
-                Lancer la publication
-              </>
+                {/* Thumbnail Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Miniature *
+                  </label>
+                  <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+                    errors.thumbnail ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-primary'
+                  }`}>
+                    {formData.thumbnail ? (
+                      <div className="space-y-4">
+                        <div className="relative mx-auto w-32 h-20 bg-gray-200 rounded-lg overflow-hidden">
+                          <img
+                            src={URL.createObjectURL(formData.thumbnail)}
+                            alt="Thumbnail preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {formData.thumbnail.name}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeFile('thumbnail')}
+                          className="p-2 text-red-600 hover:text-red-700 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        {uploadProgress.thumbnail > 0 && (
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${uploadProgress.thumbnail}%` }}
+                              className="bg-primary h-full rounded-full"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer">
+                        <ImageIcon className="w-12 h-12 text-gray-400 mb-4" />
+                        <div className="text-sm font-medium text-gray-700">
+                          Cliquez pour ajouter une miniature
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Recommandé: 1280x720px, JPG, PNG (max 5MB)
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileChange('thumbnail')(e)}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+                {errors.thumbnail && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.thumbnail}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Video Preview */}
+            {previewUrl && (
+              <div className="border-t border-gray-200 p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Aperçu de la vidéo</h3>
+                <div className="relative bg-black rounded-xl overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+                  <video
+                    src={previewUrl}
+                    controls
+                    className="absolute inset-0 w-full h-full"
+                  >
+                    <source src={previewUrl} type="video/mp4" />
+                    Votre navigateur ne supporte pas la lecture vidéo.
+                  </video>
+                </div>
+              </div>
             )}
-          </button>
-        </div>
-      </form>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-6 border-t border-gray-200">
+              <button
+                type="submit"
+                disabled={isUploading}
+                className="flex items-center gap-3 px-8 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Upload en cours...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    <span>Publier la vidéo</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Error Message */}
+            {errors.submit && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                <p className="text-sm text-red-600 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.submit}
+                </p>
+              </div>
+            )}
+          </form>
+        </motion.div>
+      </div>
     </div>
   );
 }

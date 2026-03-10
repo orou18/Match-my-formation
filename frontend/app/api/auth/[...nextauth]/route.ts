@@ -1,13 +1,13 @@
-import NextAuth from "next-auth";
+import NextAuth, { type AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import LinkedInProvider from "next-auth/providers/linkedin";
 import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-const handler = NextAuth({
+const authOptions: AuthOptions = {
   // 1. OBLIGATOIRE : Forcer le mode JWT car on utilise une API externe
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
   },
   providers: [
     CredentialsProvider({
@@ -68,15 +68,21 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }: any) {
+      // Au moment du login initial
       if (user) {
-        token.user = user;
+        token.id = user.id;
+        token.role = user.role;
+        token.accessToken = user.accessToken; // Le token Sanctum de Laravel
       }
       return token;
     },
-    async session({ session, token }) {
-      if (token.user) {
-        session.user = token.user as any;
+    async session({ session, token }: any) {
+      // On injecte les données du JWT dans la session accessible par useSession()
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.accessToken = token.accessToken;
       }
       return session;
     },
@@ -87,6 +93,8 @@ const handler = NextAuth({
   },
   // Vérifie bien que cette variable est définie dans ton .env
   secret: process.env.NEXTAUTH_SECRET || "panafrican_tourism_academy_secret_key_12345",
-});
+};
 
-export { handler as GET, handler as POST };
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST, authOptions };
