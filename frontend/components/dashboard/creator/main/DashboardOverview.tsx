@@ -15,55 +15,80 @@ import {
   Clock,
   Calendar,
 } from "lucide-react";
+import { api } from "@/lib/api/config";
+import type { DashboardStats as DashboardStatsType, Video as VideoType } from "@/types";
 
-interface DashboardStats {
-  totalVideos: number;
-  totalViews: number;
-  totalLikes: number;
-  totalComments: number;
-  totalShares: number;
-  totalRevenue: number;
-  recentVideos: any[];
-  performanceData: any[];
-}
 
 export default function DashboardOverview() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<DashboardStatsType | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Utiliser des données de test pour éviter les erreurs de fetch
-    const mockStats: DashboardStats = {
-      totalVideos: 12,
-      totalViews: 45680,
-      totalLikes: 3420,
-      totalComments: 892,
-      totalShares: 234,
-      totalRevenue: 2850,
-      recentVideos: [
+    // Utiliser uniquement les données mockées pour éviter les erreurs API
+    const mockStats: DashboardStatsType = {
+      total_videos: 12,
+      total_views: 45680,
+      total_likes: 3420,
+      total_comments: 892,
+      total_shares: 234,
+      total_revenue: 2850,
+      recent_videos: [
         {
           id: 1,
           title: "Introduction au Tourisme Durable",
+          description: "Découvrez les fondamentaux du tourisme écologique et les pratiques durables.",
+          thumbnail: "/videos/video1-thumb.jpg",
+          video_url: "/videos/video1.mp4",
+          duration: "12:34",
+          order: 1,
+          creator_id: 1,
           views: 15420,
           likes: 892,
-          created_at: "2024-01-15"
+          comments: [],
+          tags: ["tourisme", "durable", "ecologie"],
+          is_published: true,
+          visibility: "public",
+          created_at: "2024-01-15",
+          updated_at: "2024-01-15"
         },
         {
           id: 2,
           title: "Gestion Hôtelière Avancée",
+          description: "Techniques avancées de gestion hôtelière pour le secteur du luxe.",
+          thumbnail: "/videos/video2-thumb.jpg",
+          video_url: "/videos/video2.mp4",
+          duration: "18:22",
+          order: 2,
+          creator_id: 1,
           views: 8750,
           likes: 567,
-          created_at: "2024-01-10"
+          comments: [],
+          tags: ["hotellerie", "management", "luxe"],
+          is_published: true,
+          visibility: "public",
+          created_at: "2024-01-10",
+          updated_at: "2024-01-10"
         },
         {
           id: 3,
           title: "Marketing Digital Touristique",
+          description: "Stratégies de marketing digital appliquées au secteur touristique.",
+          thumbnail: "/videos/video3-thumb.jpg",
+          video_url: "/videos/video3.mp4",
+          duration: "15:45",
+          order: 3,
+          creator_id: 1,
           views: 6230,
           likes: 445,
-          created_at: "2024-01-05"
+          comments: [],
+          tags: ["marketing", "digital", "tourisme"],
+          is_published: true,
+          visibility: "public",
+          created_at: "2024-01-05",
+          updated_at: "2024-01-05"
         }
       ],
-      performanceData: [65, 78, 92, 88, 95, 82, 90]
+      performance_data: [65, 78, 92, 88, 95, 82, 90]
     };
 
     // Simuler un chargement
@@ -74,23 +99,81 @@ export default function DashboardOverview() {
 
     return () => clearTimeout(timer);
 
-    /* Commenté pour éviter les erreurs API
+    /* 
+    // Code API original commenté pour éviter les erreurs 404
     const fetchDashboardData = async () => {
-      const token = localStorage.getItem("token");
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/creator/dashboard", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data);
-        }
+        const data = await api.get<DashboardStatsType>('/api/creator/dashboard');
+        setStats(data);
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        console.error('Error fetching dashboard data:', error);
+        // Utiliser des données de test en cas d'erreur
+        const mockStats: DashboardStatsType = {
+          total_videos: 12,
+          total_views: 45680,
+          total_likes: 3420,
+          total_comments: 892,
+          total_shares: 234,
+          total_revenue: 2850,
+          recent_videos: [
+            {
+              id: 1,
+              title: "Introduction au Tourisme Durable",
+              description: "Découvrez les fondamentaux du tourisme écologique et les pratiques durables.",
+              thumbnail: "/videos/video1-thumb.jpg",
+              video_url: "/videos/video1.mp4",
+              duration: "12:34",
+              order: 1,
+              creator_id: 1,
+              views: 15420,
+              likes: 892,
+              comments: [],
+              tags: ["tourisme", "durable", "ecologie"],
+              is_published: true,
+              visibility: "public",
+              created_at: "2024-01-15",
+              updated_at: "2024-01-15"
+            },
+            {
+              id: 2,
+              title: "Gestion Hôtelière Avancée",
+              description: "Techniques avancées de gestion hôtelière pour le secteur du luxe.",
+              thumbnail: "/videos/video2-thumb.jpg",
+              video_url: "/videos/video2.mp4",
+              duration: "18:22",
+              order: 2,
+              creator_id: 1,
+              views: 8750,
+              likes: 567,
+              comments: [],
+              tags: ["hotellerie", "management", "luxe"],
+              is_published: true,
+              visibility: "public",
+              created_at: "2024-01-10",
+              updated_at: "2024-01-10"
+            },
+            {
+              id: 3,
+              title: "Marketing Digital Touristique",
+              description: "Stratégies de marketing digital appliquées au secteur touristique.",
+              thumbnail: "/videos/video3-thumb.jpg",
+              video_url: "/videos/video3.mp4",
+              duration: "15:45",
+              order: 3,
+              creator_id: 1,
+              views: 6230,
+              likes: 445,
+              comments: [],
+              tags: ["marketing", "digital", "tourisme"],
+              is_published: true,
+              visibility: "public",
+              created_at: "2024-01-05",
+              updated_at: "2024-01-05"
+            }
+          ],
+          performance_data: [65, 78, 92, 88, 95, 82, 90]
+        };
+        setStats(mockStats);
       } finally {
         setLoading(false);
       }
@@ -116,7 +199,7 @@ export default function DashboardOverview() {
   const statCards = [
     {
       title: "Total des vidéos",
-      value: stats?.totalVideos || 0,
+      value: stats?.total_videos || 0,
       icon: Video,
       color: "text-blue-600",
       bg: "bg-blue-50",
@@ -124,7 +207,7 @@ export default function DashboardOverview() {
     },
     {
       title: "Vues totales",
-      value: stats?.totalViews?.toLocaleString() || "0",
+      value: stats?.total_views?.toLocaleString() || "0",
       icon: Eye,
       color: "text-green-600",
       bg: "bg-green-50",
@@ -132,7 +215,7 @@ export default function DashboardOverview() {
     },
     {
       title: "Revenus",
-      value: `${stats?.totalRevenue?.toLocaleString() || "0"}€`,
+      value: `${stats?.total_revenue?.toLocaleString() || "0"}€`,
       icon: DollarSign,
       color: "text-purple-600",
       bg: "bg-purple-50",
@@ -140,7 +223,7 @@ export default function DashboardOverview() {
     },
     {
       title: "Abonnés",
-      value: stats?.totalLikes?.toLocaleString() || "0",
+      value: stats?.total_likes?.toLocaleString() || "0",
       icon: Users,
       color: "text-orange-600",
       bg: "bg-orange-50",
@@ -199,7 +282,7 @@ export default function DashboardOverview() {
             Vidéos récentes
           </h2>
           <div className="space-y-4">
-            {stats?.recentVideos?.slice(0, 3).map((video, index) => (
+            {stats?.recent_videos?.slice(0, 3).map((video, index) => (
               <div
                 key={index}
                 className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors"

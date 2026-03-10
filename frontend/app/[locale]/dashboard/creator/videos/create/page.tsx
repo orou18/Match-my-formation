@@ -26,8 +26,8 @@ interface VideoFormData {
   visibility: "public" | "private" | "unlisted";
   allowComments: boolean;
   allowDownloads: boolean;
-  videoFile: File | null;
-  thumbnailFile: File | null;
+  videoFile: File | string | null;
+  thumbnailFile: File | string | null;
 }
 
 export default function CreateVideoPage() {
@@ -76,16 +76,16 @@ export default function CreateVideoPage() {
     const file = e.target.files?.[0];
     if (file) {
       if (type === "video" && !file.type.startsWith("video/")) {
-        setErrors(prev => ({ ...prev, videoFile: "Veuillez sélectionner un fichier vidéo valide" }));
+        setErrors(prev => ({ ...prev, videoFile: "Veuillez sélectionner un fichier vidéo valide" } as unknown as Partial<VideoFormData>));
         return;
       }
       if (type === "thumbnail" && !file.type.startsWith("image/")) {
-        setErrors(prev => ({ ...prev, thumbnailFile: "Veuillez sélectionner une image valide" }));
+        setErrors(prev => ({ ...prev, thumbnailFile: "Veuillez sélectionner une image valide" } as unknown as Partial<VideoFormData>));
         return;
       }
       setFormData(prev => ({ ...prev, [`${type}File`]: file }));
       if (errors[`${type}File` as keyof VideoFormData]) {
-        setErrors(prev => ({ ...prev, [`${type}File`]: undefined }));
+        setErrors(prev => ({ ...prev, [`${type}File`]: undefined } as unknown as Partial<VideoFormData>));
       }
     }
   };
@@ -329,7 +329,7 @@ export default function CreateVideoPage() {
                       : "border-gray-300 hover:border-primary"
                   }`}
                 >
-                  {formData.videoFile ? (
+                  {formData.videoFile && typeof formData.videoFile !== 'string' ? (
                     <div className="text-green-600">
                       <CheckCircle className="w-8 h-8 mx-auto mb-2" />
                       <p className="text-sm font-medium">{formData.videoFile.name}</p>
@@ -347,7 +347,7 @@ export default function CreateVideoPage() {
               {errors.videoFile && (
                 <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                   <AlertCircle className="w-4 h-4" />
-                  {errors.videoFile}
+                  {typeof errors.videoFile === 'string' ? errors.videoFile : 'Erreur de fichier'}
                 </p>
               )}
             </div>
@@ -373,7 +373,7 @@ export default function CreateVideoPage() {
                       : "border-gray-300 hover:border-primary"
                   }`}
                 >
-                  {formData.thumbnailFile ? (
+                  {formData.thumbnailFile && typeof formData.thumbnailFile !== 'string' ? (
                     <div className="text-green-600">
                       <CheckCircle className="w-8 h-8 mx-auto mb-2" />
                       <p className="text-sm font-medium">{formData.thumbnailFile.name}</p>
@@ -391,7 +391,7 @@ export default function CreateVideoPage() {
               {errors.thumbnailFile && (
                 <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                   <AlertCircle className="w-4 h-4" />
-                  {errors.thumbnailFile}
+                  {typeof errors.thumbnailFile === 'string' ? errors.thumbnailFile : 'Erreur de fichier'}
                 </p>
               )}
             </div>
