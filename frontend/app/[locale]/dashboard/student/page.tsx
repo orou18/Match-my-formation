@@ -56,7 +56,44 @@ export default function StudentDashboard() {
       comments: 45,
       publishedAt: "Il y a 2 jours",
       visibility: "public",
-      status: "published"
+      status: "published",
+      creator: {
+        id: 1,
+        name: "Dr. Marie Laurent",
+        email: "marie.laurent@example.com",
+        avatar: "/avatars/creator1.jpg",
+        specialty: "Tourisme Durable & Environnement"
+      },
+      learning_objectives: [
+        {
+          id: 1,
+          video_id: 1,
+          title: "Comprendre les principes du tourisme durable",
+          description: "Maîtriser les concepts fondamentaux et les 3 piliers du développement durable appliqués au tourisme",
+          order: 1
+        },
+        {
+          id: 2,
+          video_id: 1,
+          title: "Analyser l'impact environnemental",
+          description: "Évaluer et mesurer l'empreinte écologique des activités touristiques",
+          order: 2
+        }
+      ],
+      resources: [
+        {
+          id: 1,
+          video_id: 1,
+          name: "Guide pratique du tourisme durable",
+          file_path: "/resources/guide-tourisme-durable.pdf",
+          file_size: 2048000,
+          file_type: "application/pdf",
+          description: "Un guide complet avec les meilleures pratiques et check-lists",
+          created_at: "2024-01-15"
+        }
+      ],
+      is_free: true,
+      tags: ["tourisme", "durable", "ecologie"]
     },
     {
       id: 2,
@@ -70,7 +107,125 @@ export default function StudentDashboard() {
       publishedAt: "Il y a 5 jours",
       visibility: "public",
       status: "published",
-      pathway: "Certificat Hôtellerie"
+      pathway: "Certificat Hôtellerie",
+      creator: {
+        id: 2,
+        name: "Sophie Martin",
+        email: "sophie.martin@example.com",
+        avatar: "/avatars/creator2.jpg",
+        specialty: "Management Hôtelier"
+      },
+      learning_objectives: [
+        {
+          id: 3,
+          video_id: 2,
+          title: "Maîtriser les opérations hôtelières",
+          description: "Comprendre et gérer tous les aspects opérationnels d'un établissement hôtelier",
+          order: 1
+        }
+      ],
+      resources: [
+        {
+          id: 2,
+          video_id: 2,
+          name: "Check-list gestion hôtelière",
+          file_path: "/resources/checklist-hotel.xlsx",
+          file_size: 512000,
+          file_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          description: "Template complet pour la gestion quotidienne",
+          created_at: "2024-01-10"
+        }
+      ],
+      is_free: false,
+      price: 49,
+      tags: ["hotellerie", "management", "luxe"]
+    },
+    {
+      id: 3,
+      title: "Marketing Digital Touristique",
+      description: "Stratégies de marketing digital appliquées au secteur touristique.",
+      thumbnail: "/videos/video3-thumb.jpg",
+      duration: "15:45",
+      views: 6230,
+      likes: 445,
+      comments: 18,
+      publishedAt: "Il y a 1 semaine",
+      visibility: "public",
+      status: "published",
+      creator: {
+        id: 3,
+        name: "Julie Bernard",
+        email: "julie.bernard@example.com",
+        avatar: "/avatars/creator3.jpg",
+        specialty: "Marketing Digital"
+      },
+      learning_objectives: [
+        {
+          id: 4,
+          video_id: 3,
+          title: "Développer une stratégie digitale",
+          description: "Créer et mettre en œuvre une stratégie de marketing digital efficace",
+          order: 1
+        }
+      ],
+      resources: [
+        {
+          id: 3,
+          video_id: 3,
+          name: "Template stratégie marketing",
+          file_path: "/resources/template-marketing.pdf",
+          file_size: 1024000,
+          file_type: "application/pdf",
+          description: "Guide stratégique complet avec exemples",
+          created_at: "2024-01-05"
+        }
+      ],
+      is_free: true,
+      tags: ["marketing", "digital", "tourisme"]
+    },
+    {
+      id: 4,
+      title: "Revenue Management Avancé",
+      description: "Techniques avancées d'optimisation des revenus dans l'hôtellerie.",
+      thumbnail: "/videos/video4-thumb.jpg",
+      duration: "22:15",
+      views: 4890,
+      likes: 334,
+      comments: 12,
+      publishedAt: "Il y a 2 semaines",
+      visibility: "public",
+      status: "published",
+      creator: {
+        id: 4,
+        name: "Thomas Dubois",
+        email: "thomas.dubois@example.com",
+        avatar: "/avatars/creator4.jpg",
+        specialty: "Revenue Management"
+      },
+      learning_objectives: [
+        {
+          id: 5,
+          video_id: 4,
+          title: "Optimiser les revenus",
+          description: "Maîtriser les techniques de pricing et d'optimisation des revenus",
+          order: 1
+        }
+      ],
+      resources: [
+        {
+          id: 4,
+          video_id: 4,
+          name: "Calculateur ROI",
+          file_path: "/resources/calculateur-roi.xlsx",
+          file_size: 256000,
+          file_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          description: "Outil de calcul du retour sur investissement",
+          created_at: "2023-12-28"
+        }
+      ],
+      is_free: false,
+      price: 79,
+      tags: ["revenue", "management", "pricing"]
     }
   ];
 

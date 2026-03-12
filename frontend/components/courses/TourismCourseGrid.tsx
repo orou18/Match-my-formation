@@ -111,7 +111,7 @@ export default function TourismCourseGrid({
                   placeholder="Rechercher un cours..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002B24]/20 focus:border-[#002B24]"
                 />
               </div>
             </div>
@@ -121,7 +121,7 @@ export default function TourismCourseGrid({
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002B24]/20 focus:border-[#002B24]"
               >
                 {categories.map(category => (
                   <option key={category.value} value={category.value}>
@@ -133,7 +133,7 @@ export default function TourismCourseGrid({
               <select
                 value={selectedLevel}
                 onChange={(e) => setSelectedLevel(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002B24]/20 focus:border-[#002B24]"
               >
                 {levels.map(level => (
                   <option key={level.value} value={level.value}>
@@ -145,7 +145,7 @@ export default function TourismCourseGrid({
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002B24]/20 focus:border-[#002B24]"
               >
                 {sortOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -238,7 +238,7 @@ export default function TourismCourseGrid({
               setSelectedCategory("all");
               setSelectedLevel("all");
             }}
-            className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+            className="px-6 py-3 bg-[#002B24] text-white rounded-xl font-semibold hover:bg-[#002B24]/90 transition-colors"
           >
             Réinitialiser les filtres
           </button>
@@ -252,7 +252,7 @@ export default function TourismCourseGrid({
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <button className="px-8 py-3 bg-white border-2 border-primary text-primary rounded-xl font-semibold hover:bg-primary hover:text-white transition-colors">
+          <button className="px-8 py-3 bg-white border-2 border-[#002B24] text-[#002B24] rounded-xl font-semibold hover:bg-[#002B24] hover:text-white transition-colors">
             Voir plus de cours
           </button>
         </motion.div>

@@ -1,0 +1,53 @@
+[33mcommit ceafc0512e7203d039b3c7d1762df77147654951[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m
+Author: Orou18 <orouleonce@gmail.com>
+Date:   Tue Mar 10 12:57:50 2026 +0100
+
+    fix:Mise a  jour  des  composnts  et  parcours  utlisateurs  ,  catégorisations  des  cours  ppour  creator
+
+[33mcommit 24fec3baeadafe560a3b71d49ec4a7f5692e670d[m
+Author: Orou18 <orouleonce@gmail.com>
+Date:   Tue Mar 10 09:41:20 2026 +0100
+
+    fix : Mise  en  pace de  la  strcutre des  dashboard (etudiant , creator , et admin)
+
+[33mcommit a10d8df91c5d87eb7e1cc1ae0327c4614776d6d7[m
+Author: Orou18 <orouleonce@gmail.com>
+Date:   Wed Mar 4 16:20:02 2026 +0100
+
+    fix :Resolution  de  bugg backend-Arrêts brusque  de  server ,  resolution  d'erreur :Exit code 139 / Segfault
+
+[33mcommit b24ea6a5225bd4861791202de83e4ee418607f2a[m
+Author: Orou18 <orouleonce@gmail.com>
+Date:   Wed Mar 4 10:05:42 2026 +0100
+
+    fix:route and  authorisation-structuration  des  dashboard
+
+[33mcommit 784527515733a53ba314b1bdb307aed0821ccf09[m
+Author: Orou18 <orouleonce@gmail.com>
+Date:   Tue Feb 17 17:37:30 2026 +0100
+
+    fix : Sauvegarde  partiels
+
+[33mcommit 514757bf290ffaa7393692e2a39cff0d08d6498b[m
+Author: Orou18 <orouleonce@gmail.com>
+Date:   Thu Feb 12 18:17:59 2026 +0100
+
+    fix:Conception  de  la  strcuture du  dashboard  etudiants
+
+[33mcommit f378ceb31ca79f43deec33ace8bdc0b103c659b2[m
+Author: Orou18 <orouleonce@gmail.com>
+Date:   Wed Feb 11 17:15:55 2026 +0100
+
+    fix:Mise  en  palce  de  la strcutre  du backend  authentification  puis  de  la  Landing  page  vitrine  du site
+
+[33mcommit e9f151ab15d0a2b75244a48233130639a5e2386e[m
+Author: Orou18 <orouleonce@gmail.com>
+Date:   Mon Feb 2 23:11:30 2026 +0100
+
+    chore: configuration .gitignore finale contre les fichiers lourds
+
+[33mcommit 02ab445b5d1543c097f613ec2cb811b2542144dd[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m
+Author: Orou18 <orouleonce@gmail.com>
+Date:   Tue Jan 20 16:35:39 2026 +0100
+
+    Initial commit - import du main de waxeho-solution

@@ -17,7 +17,7 @@ export default function CourseCard({ course, index }: { course: any, index: numb
       viewport={{ once: true }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
       whileHover={{ y: -10 }}
-      className="group relative bg-[#002B24]/40 backdrop-blur-xl rounded-[2.5rem] overflow-hidden border border-white/10 flex flex-col h-full transition-all duration-500 hover:border-primary/50 hover:shadow-[0_0_40px_rgba(0,122,122,0.2)]"
+      className="group relative bg-[#002B24]/40 backdrop-blur-xl rounded-[2.5rem] overflow-hidden border border-white/10 flex flex-col h-full transition-all duration-500 hover:border-[#002B24]/50 hover:shadow-[0_0_40px_rgba(0,43,36,0.2)]"
     >
       {/* Container Image avec Overlay Vidéo */}
       <Link href={courseUrl} className="relative h-56 w-full overflow-hidden block">
@@ -34,7 +34,7 @@ export default function CourseCard({ course, index }: { course: any, index: numb
         
         {/* Bouton Play au survol (Effet YouTube Premium) */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
-          <div className="w-16 h-16 bg-primary/90 rounded-full flex items-center justify-center backdrop-blur-md scale-50 group-hover:scale-100 transition-transform">
+          <div className="w-16 h-16 bg-[#002B24]/90 rounded-full flex items-center justify-center backdrop-blur-md scale-50 group-hover:scale-100 transition-transform">
             <Play className="text-white fill-white ml-1" size={28} />
           </div>
         </div>
@@ -42,7 +42,7 @@ export default function CourseCard({ course, index }: { course: any, index: numb
         {/* Badge Flottant "Certifiant" ou Status */}
         <div className="absolute top-5 left-5 flex gap-2">
           <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-2xl backdrop-blur-md 
-            ${index % 2 === 0 ? 'bg-orange-500/90 text-white' : 'bg-primary/90 text-white'}`}>
+            ${index % 2 === 0 ? 'bg-orange-500/90 text-white' : 'bg-[#002B24]/90 text-white'}`}>
             {index % 2 === 0 ? 'Nouveau' : 'Populaire'}
           </span>
         </div>

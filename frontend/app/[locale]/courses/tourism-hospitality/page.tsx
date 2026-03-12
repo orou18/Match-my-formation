@@ -45,11 +45,11 @@ export default function TourismHospitalityPage() {
           {/* Key Features */}
           <div className="flex flex-wrap justify-center gap-6 mb-8">
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Award className="w-5 h-5 text-primary" />
+              <Award className="w-5 h-5 text-[#002B24]" />
               <span>Certification reconnue</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Users className="w-5 h-5 text-primary" />
+              <Users className="w-5 h-5 text-[#002B24]" />
               <span>4700+ étudiants</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -57,7 +57,7 @@ export default function TourismHospitalityPage() {
               <span>4.8/5 moyenne</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <BookOpen className="w-5 h-5 text-primary" />
+              <BookOpen className="w-5 h-5 text-[#002B24]" />
               <span>45h de contenu</span>
             </div>
           </div>
@@ -145,8 +145,8 @@ export default function TourismHospitalityPage() {
                 transition={{ delay: 0.4 + index * 0.1 }}
                 className="text-center p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
               >
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <BookOpen className="w-6 h-6 text-primary" />
+                <div className="w-12 h-12 bg-[#002B24]/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <BookOpen className="w-6 h-6 text-[#002B24]" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-1">{category.name}</h3>
                 <p className="text-sm text-gray-600">{category.count} cours</p>
@@ -201,7 +201,7 @@ export default function TourismHospitalityPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="mt-16 bg-gradient-to-r from-primary to-primary/80 rounded-3xl p-12 text-center text-white relative overflow-hidden"
+          className="mt-16 bg-gradient-to-r from-[#002B24] to-[#002B24]/80 rounded-3xl p-12 text-center text-white relative overflow-hidden"
         >
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24" />
@@ -214,7 +214,7 @@ export default function TourismHospitalityPage() {
               Rejoignez des milliers de professionnels qui ont transformé leur carrière avec nos formations.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="px-8 py-4 bg-white text-primary rounded-xl font-semibold hover:bg-gray-100 transition-colors">
+              <button className="px-8 py-4 bg-white text-[#002B24] rounded-xl font-semibold hover:bg-gray-100 transition-colors">
                 Explorer tous les cours
               </button>
               <button className="px-8 py-4 bg-white/20 backdrop-blur text-white rounded-xl font-semibold hover:bg-white/30 transition-colors border border-white/30">

@@ -62,6 +62,51 @@ export interface Module {
   is_published: boolean;
 }
 
+// Types pour les ressources associées aux vidéos
+export interface VideoResource {
+  id: number;
+  video_id: number;
+  name: string;
+  file_path: string;
+  file_size: number;
+  file_type: string;
+  description?: string;
+  created_at: string;
+}
+
+// Types pour les objectifs d'apprentissage
+export interface LearningObjective {
+  id: number;
+  video_id: number;
+  title: string;
+  description: string;
+  order: number;
+  is_completed?: boolean;
+}
+
+// Types pour les chapitres/modules de vidéos
+export interface VideoChapter {
+  id: number;
+  video_id: number;
+  title: string;
+  description: string;
+  order: number;
+  videos: Video[];
+}
+
+// Types pour les playlists/collections de cours
+export interface Playlist {
+  id: number;
+  title: string;
+  description: string;
+  creator_id: number;
+  videos: Video[];
+  is_public: boolean;
+  thumbnail?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Video {
   id: number;
   title: string;
@@ -80,6 +125,20 @@ export interface Video {
   visibility: 'public' | 'private' | 'unlisted';
   created_at: string;
   updated_at: string;
+  // Nouvelles propriétés pour le flux complet
+  learning_objectives?: LearningObjective[];
+  resources?: VideoResource[];
+  creator?: {
+    id: number;
+    name: string;
+    email: string;
+    avatar?: string;
+    specialty?: string;
+  };
+  playlist?: Playlist;
+  price?: number;
+  is_free?: boolean;
+  rating?: number;
 }
 
 export interface Category {
