@@ -68,16 +68,6 @@ export default function AuthPage() {
     if (error) setError(null);
   };
 
-  const handleSocialLogin = async (provider: string) => {
-    setLoading(true);
-    try {
-      await signIn(provider, { callbackUrl: `/${locale}/dashboard/student` });
-    } catch (err) {
-      setError("La connexion sociale a échoué.");
-      setLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setLoading(true);
@@ -90,6 +80,7 @@ export default function AuthPage() {
       // Simuler une connexion réussie selon l'email saisi
       let userData = null;
       
+      // Vérifier d'abord les comptes de test
       if (formData.email === testUsers.student.email) {
         userData = {
           token: "mock-student-token",
@@ -120,6 +111,24 @@ export default function AuthPage() {
             role: "admin"
           }
         };
+      } else {
+        // Vérifier les comptes créés via inscription (stockés dans localStorage)
+        const storedToken = localStorage.getItem("token");
+        const storedRole = localStorage.getItem("userRole");
+        const storedName = localStorage.getItem("userName");
+        const storedEmail = localStorage.getItem("userEmail");
+        
+        if (storedToken && storedRole && storedName && storedEmail && formData.email === storedEmail) {
+          userData = {
+            token: storedToken,
+            user: {
+              id: Math.floor(Math.random() * 1000) + 100, // ID aléatoire pour les nouveaux comptes
+              name: storedName,
+              email: storedEmail,
+              role: storedRole
+            }
+          };
+        }
       }
 
       if (!userData) {
@@ -131,6 +140,8 @@ export default function AuthPage() {
       // Stockage des données dans localStorage
       localStorage.setItem("token", userData.token);
       localStorage.setItem("userRole", userData.user.role);
+      localStorage.setItem("userName", userData.user.name);
+      localStorage.setItem("userEmail", userData.user.email);
 
       // Détermination de la destination selon le rôle
       const role = userData.user.role;
@@ -182,6 +193,54 @@ export default function AuthPage() {
     } finally {
       setLoading(false);
     }
+  }
+};
+
+// Fonction pour gérer la connexion avec les réseaux sociaux
+const handleSocialLogin = async (provider: string) => {
+  setLoading(true);
+  setError("");
+  
+  try {
+    // Clés arbitraires pour démonstration
+    const socialKeys = {
+      google: "demo-google-key-12345",
+      linkedIn: "demo-linkedin-key-67890", 
+      facebook: "demo-facebook-key-09876"
+    };
+    
+    console.log(`Connexion avec ${provider}...`);
+    console.log(`Clé API (démo): ${socialKeys[provider as keyof typeof socialKeys]}`);
+    
+    // Simulation de connexion sociale réussie
+    setTimeout(() => {
+      const mockSocialUser = {
+        token: `social-${provider}-token-${Date.now()}`,
+        user: {
+          id: Math.floor(Math.random() * 1000),
+          name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
+          email: `user.${provider}@match.com`,
+          role: "student",
+          avatar: `/${provider}-avatar.jpg`,
+          provider: provider
+        }
+      };
+      
+      localStorage.setItem("token", mockSocialUser.token);
+      localStorage.setItem("userRole", mockSocialUser.user.role);
+      localStorage.setItem("socialProvider", provider);
+      
+      setSuccessMessage(`Connexion avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie !`);
+      
+      setTimeout(() => {
+        window.location.href = `/${locale}/dashboard/student`;
+      }, 1000);
+    }, 1500);
+    
+  } catch (error) {
+    console.error("Social login error:", error);
+    setError(`Erreur lors de la connexion avec ${provider}`);
+    setLoading(false);
   }
 };
 
@@ -373,7 +432,7 @@ export default function AuthPage() {
             <div className="space-y-2">
               <div className="flex justify-between items-center px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 <label>Mot de passe</label>
-                {isLogin && <Link href="#" className="text-primary hover:underline">Oublié ?</Link>}
+                {isLogin && <Link href={`/${locale}/forgot-password`} className="text-primary hover:underline">Oublié ?</Link>}
               </div>
               <div className="relative group">
                 <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors" size={20} />

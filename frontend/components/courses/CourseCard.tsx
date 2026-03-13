@@ -8,7 +8,7 @@ import { useParams } from "next/navigation";
 export default function CourseCard({ course, index }: { course: any, index: number }) {
   const params = useParams();
   const locale = params?.locale || "fr";
-  const courseUrl = `/${locale}/courses/${course.id}`;
+  const courseUrl = `/${locale}/video/${course.id}`;
 
   return (
     <motion.div 

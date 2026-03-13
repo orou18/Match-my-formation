@@ -41,17 +41,17 @@ export default function HeroSection() {
 
       {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-6 text-center text-white">
-        <motion.h1
+        <motion.h2
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
           className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight"
         >
-          Devenez un guide touristique certifié.
+          Maîtrisez les nouveaux codes de l'industrie touristique.
           <span className="block text-accent mt-4">
-            Formez-vous, explorez, progressez.
+            Expertise, management, innovation.
           </span>
-        </motion.h1>
+        </motion.h2>
 
         <motion.p
           initial={{ opacity: 0, y: 25 }}
@@ -59,9 +59,7 @@ export default function HeroSection() {
           transition={{ delay: 0.2 }}
           className="mt-8 max-w-3xl mx-auto text-lg md:text-xl text-mutedText"
         >
-          Des formations premium pour maîtriser le guidage touristique,
-          l&apos;histoire, la géographie, les langues et la communication
-          professionnelle.
+          Des formations premium pour maîtriser l'expertise, le management et l'innovation dans l'industrie touristique.
         </motion.p>
 
         <motion.div
