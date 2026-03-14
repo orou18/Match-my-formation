@@ -9,6 +9,13 @@ export const API_CONFIG = {
   // Timeout des requêtes
   timeout: 30000,
   
+  // Taille des chunks pour l'upload
+  chunkSize: 1024 * 1024, // 1MB
+  
+  // Configuration des retries
+  maxRetries: 3,
+  retryDelay: 1000, // 1 seconde
+  
   // Configuration des headers par défaut
   defaultHeaders: {
     'Content-Type': 'application/json',

@@ -10,7 +10,6 @@ import {
   Clock,
   Calendar,
   MapPin,
-  Device,
   Search,
   Filter,
   BarChart3,
@@ -364,7 +363,7 @@ export default function AudiencePage() {
           className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
         >
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Device className="w-5 h-5 text-gray-600" />
+            <Monitor className="w-5 h-5 text-gray-600" />
             Appareils
           </h2>
           <div className="space-y-4">

@@ -52,6 +52,9 @@ interface LibraryItem {
     format?: string;
     codec?: string;
     bitrate?: number;
+    pages?: number;
+    size?: string;
+    duration?: number;
   };
 }
 

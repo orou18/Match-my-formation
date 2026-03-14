@@ -401,10 +401,12 @@ return (
           transition={{ duration: 2 }}
           className="absolute inset-0 z-0"
         >
-          <img
-            src="/hero-bg.png"
-            className="w-full h-full object-cover grayscale"
-            alt="Tourism"
+          <Image 
+            src="/images/backgrounds/pattern-education.jpg" 
+            fill 
+            className="object-cover grayscale" 
+            alt="Formation tourisme" 
+            priority 
           />
           <div className="absolute inset-0 bg-gradient-to-br from-[#004D40] via-[#002B24]/95 to-transparent" />
         </motion.div>

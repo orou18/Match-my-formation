@@ -1,0 +1,93 @@
+name: Deploy to PlanetHoster
+
+on:
+  push:
+    branches: [ main, prod_hoster ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: Install dependencies (Frontend)
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: Build Frontend
+      run: |
+        cd frontend
+        npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.APP_URL }}
+          
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, mysql, bcmath, curl, zip, gd, dom, fileinfo
+        coverage: none
+        
+    - name: Install Composer dependencies
+      run: |
+        cd backend
+        composer install --no-dev --optimize-autoloader
+        
+    - name: Setup environment
+      run: |
+        cd backend
+        cp .env.planethoster .env
+        php artisan key:generate --force
+        php artisan config:cache
+        php artisan route:cache
+        php artisan view:cache
+        
+    - name: Deploy to PlanetHoster
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PLANETHOSTER_HOST }}
+        username: ${{ secrets.PLANETHOSTER_USERNAME }}
+        password: ${{ secrets.PLANETHOSTER_PASSWORD }}
+        port: ${{ secrets.PLANETHOSTER_PORT }}
+        source: |
+          backend/**
+          frontend/out/**
+          frontend/public/**
+          !backend/node_modules/**
+          !backend/vendor/**
+          !frontend/node_modules/**
+        target: ${{ secrets.PLANETHOSTER_PATH }}
+        strip_components: 1
+        
+    - name: Install dependencies on PlanetHoster
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.PLANETHOSTER_HOST }}
+        username: ${{ secrets.PLANETHOSTER_USERNAME }}
+        password: ${{ secrets.PLANETHOSTER_PASSWORD }}
+        port: ${{ secrets.PLANETHOSTER_PORT }}
+        script: |
+          cd ${{ secrets.PLANETHOSTER_PATH }}
+          cd backend
+          composer install --no-dev --optimize-autoloader
+          php artisan migrate --force
+          php artisan storage:link
+          php artisan cache:clear
+          php artisan config:clear
+          php artisan route:clear
+          php artisan view:clear
+          chmod -R 755 storage
+          chmod -R 755 bootstrap/cache

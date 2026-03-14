@@ -84,7 +84,7 @@ export default function ProfilePage() {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setEditForm(prev => ({
+    setEditForm((prev: any) => ({
       ...prev,
       [field]: value
     }));
@@ -96,7 +96,7 @@ export default function ProfilePage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
-        setEditForm(prev => ({
+        setEditForm((prev: any) => ({
           ...prev,
           avatar: reader.result as string
         }));

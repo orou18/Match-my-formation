@@ -481,7 +481,7 @@ export default function CreateVideoPage() {
                     <button
                       onClick={() => {
                         setPreviewUrl(null);
-                        setFormData(prev => ({ ...prev, videoFile: undefined }));
+                        setFormData(prev => ({ ...prev, videoFile: null }));
                         if (fileInputRef.current) {
                           fileInputRef.current.value = '';
                         }

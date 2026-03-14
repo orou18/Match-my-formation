@@ -1,6 +1,7 @@
 // Hooks personnalisés pour l'API
 import { useState, useEffect, useCallback } from 'react';
-import { apiService, ApiResponse } from './api-service';
+import { apiService } from './api-service';
+import { ApiResponse } from './api-config';
 
 // Hook pour les requêtes GET avec cache
 export function useApiQuery<T = any>(

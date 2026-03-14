@@ -1,0 +1,53 @@
+{
+  "name": "match-my-formation",
+  "version": "1.0.0",
+  "description": "Configuration build pour PlanetHoster",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "build:planethoster": "cp env.planethoster .env.local && npm run build",
+    "build:static": "npm run build && next export",
+    "start": "next start",
+    "lint": "next lint",
+    "analyze": "ANALYZE=true next build",
+    "optimize": "next build && next export && npm run compress",
+    "compress": "gzip -k -r out/*",
+    "deploy:planethoster": "npm run build:planethoster && rsync -avz --delete out/ user@votre-domaine.planethoster.net:/public_html/",
+    "preview": "npm run build && npx serve out",
+    "clean": "rm -rf .next out node_modules/.cache",
+    "type-check": "tsc --noEmit",
+    "test": "npm run type-check && npm run lint"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "framer-motion": "^10.0.0",
+    "lucide-react": "^0.294.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "@next/bundle-analyzer": "^14.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

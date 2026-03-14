@@ -526,13 +526,13 @@ export default function CommentsPage() {
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-medium text-gray-900">{comment.author.name}</span>
                       {comment.author.isVerified && (
-                        <Shield className="w-4 h-4 text-blue-600" title="Vérifié" />
+                        <Shield className="w-4 h-4 text-blue-600" />
                       )}
                       {comment.author.isSubscribed && (
-                        <Bookmark className="w-4 h-4 text-purple-600" title="Abonné" />
+                        <Bookmark className="w-4 h-4 text-purple-600" />
                       )}
                       {comment.isPinned && (
-                        <Pin className="w-4 h-4 text-yellow-600" title="Épinglé" />
+                        <Pin className="w-4 h-4 text-yellow-600" />
                       )}
                       <span className="text-sm text-gray-500">•</span>
                       <span className="text-sm text-gray-500">{formatDate(comment.timestamp)}</span>
