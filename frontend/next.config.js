@@ -10,7 +10,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'votre-domaine.planethoster.net',
+        hostname: 'matchmyformation-e-learning.com.matchmyformation.com',
         port: '',
         pathname: '/**',
       },
@@ -21,11 +21,11 @@ const nextConfig = {
   // output: 'export', // Désactivé pour PlanetHoster avec SSR
   trailingSlash: true,
   assetPrefix: process.env.NODE_ENV === 'production' 
-    ? 'https://votre-domaine.planethoster.net' 
+    ? 'https://matchmyformation-e-learning.com.matchmyformation.com' 
     : undefined,
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://votre-domaine.planethoster.net/api',
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://votre-domaine.planethoster.net',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://matchmyformation-e-learning.com.matchmyformation.com/api',
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://matchmyformation-e-learning.com.matchmyformation.com',
   },
   webpack: (config, { dev, isServer }) => {
     // Optimisation pour la production
