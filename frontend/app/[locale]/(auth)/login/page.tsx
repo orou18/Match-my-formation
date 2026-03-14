@@ -68,6 +68,167 @@ export default function AuthPage() {
     if (error) setError(null);
   };
 
+  // Fonction pour gérer la connexion avec les réseaux sociaux
+  const handleSocialLogin = async (provider: string) => {
+    setLoading(true);
+    setError("");
+    
+    try {
+      console.log(`Début connexion avec ${provider}...`);
+      
+      // Étape 1: Tenter la connexion API réelle
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const baseUrl = API_BASE.replace(/\/$/, "");
+      
+      // Étape 2: Ouvrir une popup pour l'authentification OAuth
+      const popup = window.open(
+        `${baseUrl}/api/auth/${provider}`,
+        'authPopup',
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+      
+      if (!popup) {
+        throw new Error("Impossible d'ouvrir la fenêtre d'authentification. Veuillez autoriser les popups.");
+      }
+      
+      // Étape 3: Écouter les messages de la popup
+      return new Promise((resolve, reject) => {
+        const messageHandler = async (event: MessageEvent) => {
+          // Vérifier que le message vient de notre domaine
+          if (event.origin !== window.location.origin) return;
+          
+          if (event.data.type === 'AUTH_SUCCESS') {
+            popup.close();
+            window.removeEventListener('message', messageHandler);
+            
+            try {
+              // Étape 4: Traiter la réponse d'authentification
+              const { token, user } = event.data.payload;
+              
+              // Étape 5: Sauvegarder les données
+              localStorage.setItem("token", token);
+              localStorage.setItem("userRole", user.role);
+              localStorage.setItem("userName", user.name);
+              localStorage.setItem("userEmail", user.email);
+              localStorage.setItem("userId", user.id.toString());
+              localStorage.setItem("socialProvider", provider);
+              localStorage.setItem("socialAvatar", user.avatar || '');
+              
+              setSuccessMessage(`Connexion avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie !`);
+              
+              // Étape 6: Redirection selon le rôle
+              setTimeout(() => {
+                const dashboardRoute = user.role === "admin" 
+                  ? "/dashboard/admin" 
+                  : `/dashboard/${user.role}`;
+                
+                window.location.href = `/${locale}${dashboardRoute}`;
+              }, 1500);
+              
+              resolve(event.data);
+            } catch (error) {
+              reject(error);
+            }
+          } else if (event.data.type === 'AUTH_ERROR') {
+            popup.close();
+            window.removeEventListener('message', messageHandler);
+            reject(new Error(event.data.message));
+          }
+        };
+        
+        window.addEventListener('message', messageHandler);
+        
+        // Vérifier si la popup a été fermée manuellement
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed);
+            window.removeEventListener('message', messageHandler);
+            reject(new Error("Authentification annulée"));
+          }
+        }, 1000);
+        
+        // Timeout après 5 minutes
+        setTimeout(() => {
+          if (!popup.closed) {
+            popup.close();
+            window.removeEventListener('message', messageHandler);
+            reject(new Error("Timeout d'authentification"));
+          }
+        }, 300000);
+      });
+      
+    } catch (error: any) {
+      console.error("Social login error:", error);
+      
+      // Fallback pour développement si le backend n'est pas accessible
+      if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+        console.log(`Mode développement: simulation connexion ${provider}`);
+        
+        // Créer des utilisateurs sociaux de test
+        const socialUsers = {
+          google: {
+            token: "social-google-token-12345",
+            user: {
+              id: 1001,
+              name: "Google User",
+              email: "google.user@match.com",
+              role: "student",
+              avatar: "https://ui-avatars.com/api/?name=Google&background=4285F4&color=fff"
+            }
+          },
+          linkedin: {
+            token: "social-linkedin-token-67890",
+            user: {
+              id: 1002,
+              name: "LinkedIn User",
+              email: "linkedin.user@match.com",
+              role: "creator",
+              avatar: "https://ui-avatars.com/api/?name=LinkedIn&background=0077B5&color=fff"
+            }
+          },
+          facebook: {
+            token: "social-facebook-token-09876",
+            user: {
+              id: 1003,
+              name: "Facebook User",
+              email: "facebook.user@match.com",
+              role: "student",
+              avatar: "https://ui-avatars.com/api/?name=Facebook&background=1877F2&color=fff"
+            }
+          }
+        };
+        
+        const mockSocialUser = socialUsers[provider as keyof typeof socialUsers];
+        
+        if (mockSocialUser) {
+          localStorage.setItem("token", mockSocialUser.token);
+          localStorage.setItem("userRole", mockSocialUser.user.role);
+          localStorage.setItem("userName", mockSocialUser.user.name);
+          localStorage.setItem("userEmail", mockSocialUser.user.email);
+          localStorage.setItem("userId", mockSocialUser.user.id.toString());
+          localStorage.setItem("socialProvider", provider);
+          localStorage.setItem("socialAvatar", mockSocialUser.user.avatar);
+          
+          setSuccessMessage(`Connexion avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie (mode démo) !`);
+          
+          setTimeout(() => {
+            const dashboardRoute = mockSocialUser.user.role === "admin" 
+              ? "/dashboard/admin" 
+              : `/dashboard/${mockSocialUser.user.role}`;
+            
+            window.location.href = `/${locale}${dashboardRoute}`;
+          }, 1500);
+        } else {
+          setError(`Provider ${provider} non supporté`);
+          setLoading(false);
+        }
+      } else {
+        setError(error.message || `Erreur lors de la connexion avec ${provider}`);
+        setLoading(false);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setLoading(true);
@@ -196,55 +357,7 @@ export default function AuthPage() {
   }
 };
 
-// Fonction pour gérer la connexion avec les réseaux sociaux
-const handleSocialLogin = async (provider: string) => {
-  setLoading(true);
-  setError("");
-  
-  try {
-    // Clés arbitraires pour démonstration
-    const socialKeys = {
-      google: "demo-google-key-12345",
-      linkedIn: "demo-linkedin-key-67890", 
-      facebook: "demo-facebook-key-09876"
-    };
-    
-    console.log(`Connexion avec ${provider}...`);
-    console.log(`Clé API (démo): ${socialKeys[provider as keyof typeof socialKeys]}`);
-    
-    // Simulation de connexion sociale réussie
-    setTimeout(() => {
-      const mockSocialUser = {
-        token: `social-${provider}-token-${Date.now()}`,
-        user: {
-          id: Math.floor(Math.random() * 1000),
-          name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
-          email: `user.${provider}@match.com`,
-          role: "student",
-          avatar: `/${provider}-avatar.jpg`,
-          provider: provider
-        }
-      };
-      
-      localStorage.setItem("token", mockSocialUser.token);
-      localStorage.setItem("userRole", mockSocialUser.user.role);
-      localStorage.setItem("socialProvider", provider);
-      
-      setSuccessMessage(`Connexion avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie !`);
-      
-      setTimeout(() => {
-        window.location.href = `/${locale}/dashboard/student`;
-      }, 1000);
-    }, 1500);
-    
-  } catch (error) {
-    console.error("Social login error:", error);
-    setError(`Erreur lors de la connexion avec ${provider}`);
-    setLoading(false);
-  }
-};
-
-  return (
+return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-white lg:overflow-hidden font-sans relative">
       
       {/* --- BOUTON RETOUR --- */}
@@ -466,26 +579,54 @@ const handleSocialLogin = async (provider: string) => {
               )}
             </div>
 
-            <div className="relative py-4">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"></div></div>
-              <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.2em]">
-                <span className="bg-white px-4 text-gray-400 text-center">Ou continuer avec</span>
+            <div className="relative py-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500 font-medium">Ou continuer avec</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 lg:gap-4">
-              {["google", "linkedIn", "facebook"].map((social) => (
-                <button
-                  key={social}
-                  type="button"
-                  onClick={() => handleSocialLogin(social.toLowerCase())}
-                  className="flex items-center justify-center py-4 lg:py-5 border border-gray-100 rounded-xl lg:rounded-2xl transition-all hover:bg-white hover:shadow-xl active:scale-95 bg-gray-50/50"
-                >
-                  <div className="relative w-5 h-5 lg:w-6 lg:h-6">
-                    <Image src={`/${social}.png`} fill className="object-contain" alt={social} />
-                  </div>
-                </button>
-              ))}
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => handleSocialLogin("google")}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span className="text-gray-700 font-medium">Continuer avec Google</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => handleSocialLogin("linkedIn")}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#0077B5">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                <span className="text-gray-700 font-medium">Continuer avec LinkedIn</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => handleSocialLogin("facebook")}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                <span className="text-gray-700 font-medium">Continuer avec Facebook</span>
+              </button>
             </div>
           </form>
         </motion.div>

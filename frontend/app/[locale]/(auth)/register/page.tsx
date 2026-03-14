@@ -11,6 +11,9 @@ import {
   EyeOff,
   UserPlus,
   ArrowRight,
+  Chrome,
+  Linkedin,
+  Facebook,
 } from "lucide-react";
 
 export default function RegisterPage() {
@@ -37,18 +40,96 @@ export default function RegisterPage() {
     setError("");
     
     try {
-      // Clés arbitraires pour démonstration
-      const socialKeys = {
-        google: "demo-google-key-12345",
-        linkedIn: "demo-linkedin-key-67890", 
-        facebook: "demo-facebook-key-09876"
-      };
+      console.log(`Début inscription avec ${provider}...`);
       
-      console.log(`Inscription avec ${provider}...`);
-      console.log(`Clé API (démo): ${socialKeys[provider as keyof typeof socialKeys]}`);
+      // Étape 1: Redirection vers le provider OAuth
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const baseUrl = API_BASE.replace(/\/$/, "");
       
-      // Simulation d'inscription sociale réussie
-      setTimeout(() => {
+      // Étape 2: Ouvrir une popup pour l'authentification OAuth
+      const popup = window.open(
+        `${baseUrl}/api/auth/${provider}`,
+        'authPopup',
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+      
+      if (!popup) {
+        throw new Error("Impossible d'ouvrir la fenêtre d'authentification. Veuillez autoriser les popups.");
+      }
+      
+      // Étape 3: Écouter les messages de la popup
+      return new Promise((resolve, reject) => {
+        const messageHandler = async (event: MessageEvent) => {
+          // Vérifier que le message vient de notre domaine
+          if (event.origin !== window.location.origin) return;
+          
+          if (event.data.type === 'AUTH_SUCCESS') {
+            popup.close();
+            window.removeEventListener('message', messageHandler);
+            
+            try {
+              // Étape 4: Traiter la réponse d'authentification
+              const { token, user } = event.data.payload;
+              
+              // Étape 5: Sauvegarder les données
+              localStorage.setItem("token", token);
+              localStorage.setItem("userRole", user.role);
+              localStorage.setItem("userName", user.name);
+              localStorage.setItem("userEmail", user.email);
+              localStorage.setItem("userId", user.id.toString());
+              localStorage.setItem("socialProvider", provider);
+              localStorage.setItem("socialAvatar", user.avatar || '');
+              
+              setSuccessMessage(`Inscription avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie !`);
+              
+              // Étape 6: Redirection selon le rôle
+              setTimeout(() => {
+                const dashboardRoute = user.role === "admin" 
+                  ? "/dashboard/admin" 
+                  : `/dashboard/${user.role}`;
+                
+                router.push(`/${locale}${dashboardRoute}`);
+              }, 1500);
+              
+              resolve(event.data);
+            } catch (error) {
+              reject(error);
+            }
+          } else if (event.data.type === 'AUTH_ERROR') {
+            popup.close();
+            window.removeEventListener('message', messageHandler);
+            reject(new Error(event.data.message));
+          }
+        };
+        
+        window.addEventListener('message', messageHandler);
+        
+        // Vérifier si la popup a été fermée manuellement
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed);
+            window.removeEventListener('message', messageHandler);
+            reject(new Error("Authentification annulée"));
+          }
+        }, 1000);
+        
+        // Timeout après 5 minutes
+        setTimeout(() => {
+          if (!popup.closed) {
+            popup.close();
+            window.removeEventListener('message', messageHandler);
+            reject(new Error("Timeout d'authentification"));
+          }
+        }, 300000);
+      });
+      
+    } catch (error: any) {
+      console.error("Social registration error:", error);
+      
+      // Fallback pour développement si le backend n'est pas accessible
+      if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+        console.log(`Mode développement: simulation inscription ${provider}`);
+        
         const mockSocialUser = {
           token: `social-${provider}-token-${Date.now()}`,
           user: {
@@ -56,25 +137,28 @@ export default function RegisterPage() {
             name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
             email: `user.${provider}@match.com`,
             role: "student",
-            avatar: `/${provider}-avatar.jpg`,
+            avatar: `https://ui-avatars.com/api/?name=${provider}&background=random`,
             provider: provider
           }
         };
         
         localStorage.setItem("token", mockSocialUser.token);
         localStorage.setItem("userRole", mockSocialUser.user.role);
+        localStorage.setItem("userName", mockSocialUser.user.name);
+        localStorage.setItem("userEmail", mockSocialUser.user.email);
+        localStorage.setItem("userId", mockSocialUser.user.id.toString());
         localStorage.setItem("socialProvider", provider);
+        localStorage.setItem("socialAvatar", mockSocialUser.user.avatar);
         
-        setSuccessMessage(`Inscription avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie !`);
+        setSuccessMessage(`Inscription avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie (mode démo) !`);
         
         setTimeout(() => {
           router.push(`/${locale}/dashboard/student`);
         }, 1500);
-      }, 1500);
+      } else {
+        setError(error.message || `Erreur lors de l'inscription avec ${provider}`);
+      }
       
-    } catch (error) {
-      console.error("Social registration error:", error);
-      setError(`Erreur lors de l'inscription avec ${provider}`);
       setLoading(false);
     }
   };
@@ -110,72 +194,97 @@ export default function RegisterPage() {
     }
 
     try {
-      const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      const baseUrl = rawUrl.replace(/\/$/, "");
+      // Utiliser l'URL de l'API configurée
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const baseUrl = API_BASE.replace(/\/$/, "");
+      
+      console.log(`Tentative d'inscription vers: ${baseUrl}/api/register`);
       
       // Créer un timeout manuel
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // Augmenté à 15s
       
       const res = await fetch(`${baseUrl}/api/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
         },
         body: JSON.stringify(formData),
         signal: controller.signal,
       });
       
       clearTimeout(timeoutId);
+      
+      console.log(`Response status: ${res.status}`);
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erreur HTTP ${res.status}`);
+      }
+      
       const data = await res.json();
+      console.log("Inscription réussie:", data);
 
-      if (res.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userRole", data.user.role);
-        localStorage.setItem("userName", data.user.name);
-        localStorage.setItem("userEmail", data.user.email);
-        
-        // Redirection selon le rôle
+      // Sauvegarder les données utilisateur
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userRole", data.user.role);
+      localStorage.setItem("userName", data.user.name);
+      localStorage.setItem("userEmail", data.user.email);
+      localStorage.setItem("userId", data.user.id.toString());
+      
+      setSuccessMessage("Inscription réussie ! Redirection...");
+      
+      // Redirection selon le rôle après un court délai
+      setTimeout(() => {
         const dashboardRoute = data.user.role === "admin" 
           ? "/dashboard/admin" 
           : `/dashboard/${data.user.role}`;
         
         router.push(`/${locale}${dashboardRoute}`);
-      } else {
-        setError(data.message || "Erreur lors de l'inscription");
-      }
+      }, 1500);
+      
     } catch (error: any) {
       console.error("Registration error:", error);
       
-      // Fallback immédiat pour développement - pas de vérification d'erreur
-      console.log("Mode fallback: inscription locale");
-      
-      // Simulation d'inscription réussie
-      const mockUserData = {
-        token: `mock-token-${Date.now()}`,
-        user: {
-          id: Math.floor(Math.random() * 1000),
-          name: formData.name,
-          email: formData.email,
-          role: formData.role
-        }
-      };
-      
-      localStorage.setItem("token", mockUserData.token);
-      localStorage.setItem("userRole", mockUserData.user.role);
-      localStorage.setItem("userName", mockUserData.user.name);
-      localStorage.setItem("userEmail", mockUserData.user.email);
-      
-      setSuccessMessage("Inscription réussie (mode démo)");
-      
-      setTimeout(() => {
-        const dashboardRoute = mockUserData.user.role === "admin" 
-          ? "/dashboard/admin" 
-          : `/dashboard/${mockUserData.user.role}`;
+      // Gestion spécifique des erreurs de connexion
+      if (error.name === 'AbortError') {
+        setError("Le serveur met trop temps à répondre. Vérifiez votre connexion ou réessayez plus tard.");
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+        setError("Impossible de se connecter au serveur. Vérifiez que le backend est démarré.");
         
-        router.push(`/${locale}${dashboardRoute}`);
-      }, 1500);
+        // Option de fallback pour développement uniquement
+        console.log("Mode développement: utilisation du fallback");
+        
+        const mockUserData = {
+          token: `dev-token-${Date.now()}`,
+          user: {
+            id: Math.floor(Math.random() * 1000),
+            name: formData.name,
+            email: formData.email,
+            role: formData.role
+          }
+        };
+        
+        localStorage.setItem("token", mockUserData.token);
+        localStorage.setItem("userRole", mockUserData.user.role);
+        localStorage.setItem("userName", mockUserData.user.name);
+        localStorage.setItem("userEmail", mockUserData.user.email);
+        localStorage.setItem("userId", mockUserData.user.id.toString());
+        
+        setSuccessMessage("Inscription réussie (mode développement)");
+        
+        setTimeout(() => {
+          const dashboardRoute = mockUserData.user.role === "admin" 
+            ? "/dashboard/admin" 
+            : `/dashboard/${mockUserData.user.role}`;
+          
+          router.push(`/${locale}${dashboardRoute}`);
+        }, 1500);
+      } else {
+        setError(error.message || "Erreur lors de l'inscription");
+      }
       
       setLoading(false);
     }
@@ -363,18 +472,36 @@ export default function RegisterPage() {
           </div>
 
           {/* Social Login Buttons */}
-          <div className="grid grid-cols-3 gap-3">
-            {["google", "linkedIn", "facebook"].map((social) => (
-              <button
-                key={social}
-                type="button"
-                onClick={() => handleSocialLogin(social)}
-                className="flex items-center justify-center py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
-                disabled={loading}
-              >
-                <div className="w-5 h-5 bg-gray-300 rounded"></div>
-              </button>
-            ))}
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => handleSocialLogin("google")}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Chrome className="w-5 h-5 text-blue-500" />
+              <span className="text-gray-700 font-medium">Continuer avec Google</span>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => handleSocialLogin("linkedIn")}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Linkedin className="w-5 h-5 text-blue-700" />
+              <span className="text-gray-700 font-medium">Continuer avec LinkedIn</span>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => handleSocialLogin("facebook")}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Facebook className="w-5 h-5 text-blue-600" />
+              <span className="text-gray-700 font-medium">Continuer avec Facebook</span>
+            </button>
           </div>
 
           {/* Login Link */}

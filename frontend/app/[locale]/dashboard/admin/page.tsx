@@ -15,10 +15,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
 
 export default function AdminDashboard() {
-  const { data: session, status } = useSession(); 
   const [stats, setStats] = useState<any>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,66 +26,64 @@ export default function AdminDashboard() {
   const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    // Vérification de l'authentification avec le token personnalisé
+    const token = localStorage.getItem("token");
+    const userRole = localStorage.getItem("userRole");
+    
+    if (!token) {
       router.push(`/${params.locale}/login`);
       return;
     }
 
-    if (status === "authenticated" && session) {
-      // Vérification du rôle admin
-      if ((session.user as any).role !== "admin") {
-        router.push(`/${params.locale}/dashboard/student`);
-        return;
-      }
-
-      const fetchAdminData = async () => {
-        try {
-          // Récupération du token stocké lors du login
-          const token = localStorage.getItem("token");
-
-          if (!token) {
-            setError("Session invalide. Veuillez vous reconnecter.");
-            setLoadingStats(false);
-            return;
-          }
-
-          const statsRes = await fetch(`${API_BASE}/api/admin/stats`, {
-            method: "GET",
-            headers: { 
-              "Accept": "application/json",
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}` 
-            },
-          });
-
-          if (statsRes.ok) {
-            const statsData = await statsRes.json();
-            setStats(statsData);
-          } else if (statsRes.status === 401) {
-            setError("Votre session a expiré (401).");
-          } else if (statsRes.status === 500) {
-            setError("Le serveur Laravel a rencontré une erreur interne (500).");
-          } else {
-            setError("Impossible de joindre la console d'administration.");
-          }
-        } catch (err) {
-          setError("L'API Laravel est injoignable. Vérifiez que 'php artisan serve' tourne.");
-        } finally {
-          setLoadingStats(false);
-        }
-      };
-
-      fetchAdminData();
+    if (userRole !== "admin") {
+      router.push(`/${params.locale}/dashboard/student`);
+      return;
     }
-  }, [status, session, params.locale, router, API_BASE]);
+
+    const fetchAdminData = async () => {
+      try {
+        const statsRes = await fetch(`${API_BASE}/api/admin/stats`, {
+          method: "GET",
+          headers: { 
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}` 
+          },
+        });
+
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStats(statsData);
+        } else if (statsRes.status === 401) {
+          setError("Votre session a expiré (401).");
+          // Rediriger vers login si session expirée
+          setTimeout(() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("userRole");
+            router.push(`/${params.locale}/login`);
+          }, 2000);
+        } else if (statsRes.status === 500) {
+          setError("Le serveur Laravel a rencontré une erreur interne (500).");
+        } else {
+          setError("Impossible de joindre la console d'administration.");
+        }
+      } catch (err) {
+        setError("L'API Laravel est injoignable. Vérifiez que le serveur backend tourne.");
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchAdminData();
+  }, [params.locale, router, API_BASE]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userRole");
-    signOut({ callbackUrl: `/${params.locale}/login` });
+    router.push(`/${params.locale}/login`);
   };
 
-  if (status === "loading" || (status === "authenticated" && loadingStats)) {
+  if (loadingStats) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
         <motion.div 
@@ -121,7 +117,7 @@ export default function AdminDashboard() {
     );
   }
 
-  const initial = session?.user?.name ? session.user.name.charAt(0) : "A";
+  const initial = "A"; // Admin avatar initial
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex font-sans selection:bg-[#E3FF04] selection:text-[#002B24]">
@@ -164,7 +160,7 @@ export default function AdminDashboard() {
             </h1>
             <div className="flex items-center gap-3">
                 <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase rounded-full tracking-widest">Live System</span>
-                <p className="text-gray-400 font-medium tracking-tight italic">Bienvenue, {session?.user?.name}</p>
+                <p className="text-gray-400 font-medium tracking-tight italic">Bienvenue, Administrateur</p>
             </div>
           </motion.div>
           
@@ -179,7 +175,7 @@ export default function AdminDashboard() {
                 {initial}
               </div>
               <div>
-                <p className="text-sm font-black text-[#002B24] leading-none mb-1.5 truncate max-w-[120px]">{session?.user?.name}</p>
+                <p className="text-sm font-black text-[#002B24] leading-none mb-1.5 truncate max-w-[120px]">Administrateur</p>
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                     <p className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.15em]">Propriétaire</p>

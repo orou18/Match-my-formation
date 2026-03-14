@@ -65,4 +65,9 @@ Thumbs.db
 .vscode/
 .idea/
 .fleet/
-.vercel
+# --- DÉPLOIEMENT ET ARTIFACTS (À exclure pour GitHub) ---
+*.tar.gz
+*.zip
+deploy*.sh
+*production*
+.github/workflows/deploy-*.yml.bak

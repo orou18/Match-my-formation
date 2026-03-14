@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
   Upload,
   X,
@@ -15,6 +15,11 @@ import {
   Settings,
   CheckCircle,
   AlertCircle,
+  Play,
+  Pause,
+  Plus,
+  FolderOpen,
+  Loader2,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 
@@ -28,12 +33,17 @@ interface VideoFormData {
   allowDownloads: boolean;
   videoFile: File | string | null;
   thumbnailFile: File | string | null;
+  isInPlaylist: boolean;
+  playlistId?: string;
+  playlistPosition?: number;
 }
 
 export default function CreateVideoPage() {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<VideoFormData>({
     title: "",
@@ -45,11 +55,23 @@ export default function CreateVideoPage() {
     allowDownloads: false,
     videoFile: null,
     thumbnailFile: null,
+    isInPlaylist: false,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState<Partial<VideoFormData>>({});
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoDuration, setVideoDuration] = useState(0);
+
+  // Playlists simulées
+  const playlists = [
+    { id: "1", name: "Formation Tourisme Durable", videos: 5 },
+    { id: "2", name: "Marketing Digital Avancé", videos: 8 },
+    { id: "3", name: "Gestion Hôtelière", videos: 6 },
+    { id: "4", name: "Service Client Excellence", videos: 4 },
+  ];
 
   const categories = [
     "Tourisme durable",
@@ -71,6 +93,83 @@ export default function CreateVideoPage() {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
   };
+
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validation du type de fichier
+    const validTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+    if (!validTypes.includes(file.type)) {
+      setErrors({ videoFile: "Format de vidéo non supporté. Utilisez MP4, WebM, OGG ou MOV." });
+      return;
+    }
+
+    // Validation de la taille (max 2GB)
+    const maxSize = 2 * 1024 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setErrors({ videoFile: "La vidéo est trop volumineuse. Taille maximale: 2GB." });
+      return;
+    }
+
+    // Créer l'aperçu
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setFormData(prev => ({ ...prev, videoFile: file }));
+
+    // Charger les métadonnées de la vidéo
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      setVideoDuration(video.duration);
+      URL.revokeObjectURL(url);
+    };
+    video.src = url;
+
+    setErrors({});
+  }, []);
+
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const generateThumbnail = useCallback(() => {
+    if (!videoRef.current || !previewUrl) return;
+
+    const canvas = document.createElement('canvas');
+    const video = videoRef.current;
+    canvas.width = 1280;
+    canvas.height = 720;
+    
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const thumbnailFile = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
+          setFormData(prev => ({ ...prev, thumbnailFile: thumbnailFile }));
+        }
+      }, 'image/jpeg', 0.8);
+    }
+  }, [previewUrl]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "video" | "thumbnail") => {
     const file = e.target.files?.[0];
@@ -307,45 +406,104 @@ export default function CreateVideoPage() {
             Fichiers multimédia
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Upload vidéo */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Upload et prévisualisation vidéo */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Vidéo *
               </label>
-              <div className="relative">
-                <input
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => handleFileUpload(e, "video")}
-                  className="hidden"
-                  id="video-upload"
-                />
-                <label
-                  htmlFor="video-upload"
-                  className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
-                    errors.videoFile
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300 hover:border-primary"
-                  }`}
-                >
-                  {formData.videoFile && typeof formData.videoFile !== 'string' ? (
-                    <div className="text-green-600">
-                      <CheckCircle className="w-8 h-8 mx-auto mb-2" />
-                      <p className="text-sm font-medium">{formData.videoFile.name}</p>
-                      <p className="text-xs">{(formData.videoFile.size / 1024 / 1024).toFixed(2)} MB</p>
+              
+              {!previewUrl ? (
+                /* Zone d'upload */
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary transition-colors">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="video-upload"
+                  />
+                  <label
+                    htmlFor="video-upload"
+                    className="cursor-pointer"
+                  >
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
+                        <Upload className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Uploadez votre vidéo
+                        </h3>
+                        <p className="text-gray-600 mt-1">
+                          Glissez-déposez ou cliquez pour parcourir
+                        </p>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        <p>Formats: MP4, WebM, OGG, MOV</p>
+                        <p>Taille maximale: 2GB</p>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="text-gray-400">
-                      <Upload className="w-8 h-8 mx-auto mb-2" />
-                      <p className="text-sm">Cliquez pour uploader</p>
-                      <p className="text-xs">MP4, MOV, AVI jusqu'à 500MB</p>
+                  </label>
+                </div>
+              ) : (
+                /* Prévisualisation vidéo */
+                <div className="space-y-4">
+                  <div className="relative bg-black rounded-xl overflow-hidden">
+                    <video
+                      ref={videoRef}
+                      src={previewUrl}
+                      className="w-full h-auto max-h-64 object-contain"
+                      onLoadedMetadata={() => generateThumbnail()}
+                    />
+                    
+                    {/* Contrôles de lecture */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={togglePlayPause}
+                          className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                        >
+                          {isPlaying ? (
+                            <Pause className="w-5 h-5 text-white" />
+                          ) : (
+                            <Play className="w-5 h-5 text-white" />
+                          )}
+                        </button>
+                        <div className="text-white text-sm">
+                          {formatDuration(videoDuration)}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </label>
-              </div>
+
+                    {/* Bouton de suppression */}
+                    <button
+                      onClick={() => {
+                        setPreviewUrl(null);
+                        setFormData(prev => ({ ...prev, videoFile: undefined }));
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
+                      }}
+                      className="absolute top-4 right-4 w-10 h-10 bg-red-500/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    >
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+
+                  {/* Bouton générer miniature */}
+                  <button
+                    onClick={generateThumbnail}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    Générer une miniature automatiquement
+                  </button>
+                </div>
+              )}
+              
               {errors.videoFile && (
-                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
                   <AlertCircle className="w-4 h-4" />
                   {typeof errors.videoFile === 'string' ? errors.videoFile : 'Erreur de fichier'}
                 </p>
@@ -355,7 +513,7 @@ export default function CreateVideoPage() {
             {/* Upload miniature */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Miniature *
+                Miniature {formData.thumbnailFile ? '✓' : '(optionnel - générer auto)'}
               </label>
               <div className="relative">
                 <input
@@ -460,6 +618,86 @@ export default function CreateVideoPage() {
                 <span className="text-sm text-gray-700">Autoriser les téléchargements</span>
               </label>
             </div>
+          </div>
+        </div>
+
+        {/* Playlist */}
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
+            <FolderOpen className="w-5 h-5" />
+            Playlist
+          </h2>
+          
+          <div className="space-y-4">
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={formData.isInPlaylist}
+                onChange={(e) => setFormData(prev => ({ ...prev, isInPlaylist: e.target.checked }))}
+                className="rounded text-primary focus:ring-primary"
+              />
+              <span className="text-sm text-gray-700 font-medium">Ajouter cette vidéo à une playlist</span>
+            </label>
+
+            {formData.isInPlaylist && (
+              <div className="space-y-4 pl-6 border-l-4 border-primary/20">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sélectionner une playlist
+                  </label>
+                  <select
+                    value={formData.playlistId || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, playlistId: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+                  >
+                    <option value="">Choisissez une playlist...</option>
+                    {playlists.map(playlist => (
+                      <option key={playlist.id} value={playlist.id}>
+                        {playlist.name} ({playlist.videos} vidéos)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {formData.playlistId && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Position dans la playlist
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Position (ex: 1 pour début)"
+                      value={formData.playlistPosition || ""}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        playlistPosition: e.target.value ? parseInt(e.target.value) : undefined 
+                      }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Laissez vide pour ajouter à la fin
+                    </p>
+                  </div>
+                )}
+
+                {/* Option pour créer une nouvelle playlist */}
+                <button className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-2 transition-colors">
+                  <Plus className="w-4 h-4" />
+                  Créer une nouvelle playlist
+                </button>
+              </div>
+            )}
+
+            {/* Option vidéo indépendante */}
+            {!formData.isInPlaylist && (
+              <div className="pl-6 border-l-4 border-gray-200">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Film className="w-4 h-4" />
+                  <span className="text-sm">Cette vidéo sera publiée indépendamment</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
