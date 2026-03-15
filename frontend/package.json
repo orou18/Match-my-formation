@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "axios": "^1.13.4",
+    "clsx": "^2.1.1",
     "framer-motion": "^12.34.0",
     "lucide-react": "^0.563.0",
     "next": "16.0.10",
@@ -24,15 +25,16 @@
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-icons": "^5.5.0",
+    "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.0.10",
     "@tailwindcss/postcss": "^4",
     "@types/next-auth": "^3.13.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@next/bundle-analyzer": "^16.0.10",
     "autoprefixer": "^10.4.23",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
