@@ -20,6 +20,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import UserIdManager, { AuthData } from "@/lib/user-id-manager";
 
 export default function AuthPage() {
   const params = useParams();
@@ -52,6 +53,17 @@ export default function AuthPage() {
     ? rawUrl.replace(/\/$/, "") 
     : "http://localhost:8000";
 
+  // Vérifier si l'utilisateur est déjà connecté
+  useEffect(() => {
+    if (UserIdManager.isAuthenticated()) {
+      const userData = UserIdManager.getStoredUserData();
+      if (userData) {
+        const redirectPath = `/${locale}/dashboard/${userData.role}`;
+        window.location.href = redirectPath;
+      }
+    }
+  }, [locale]);
+
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => setSuccessMessage(null), 5000);
@@ -76,82 +88,35 @@ export default function AuthPage() {
 
   if (isLogin) {
     try {
-      // Utiliser les données de test directement pour éviter les erreurs de connexion
-      // Simuler une connexion réussie selon l'email saisi
-      let userData = null;
+      // Utiliser UserIdManager pour une gestion cohérente des IDs
+      let authData: AuthData | null = null;
       
-      // Vérifier d'abord les comptes de test
-      if (formData.email === testUsers.student.email) {
-        userData = {
-          token: "mock-student-token",
-          user: {
-            id: 3,
-            name: "Alice Élève",
-            email: "student@match.com",
-            role: "student"
-          }
-        };
-      } else if (formData.email === testUsers.creator.email) {
-        userData = {
-          token: "mock-creator-token", 
-          user: {
-            id: 2,
-            name: "Jean Formateur",
-            email: "creator@match.com",
-            role: "creator"
-          }
-        };
-      } else if (formData.email === testUsers.admin.email) {
-        userData = {
-          token: "mock-admin-token",
-          user: {
-            id: 1,
-            name: "Direction Match Admin",
-            email: "admin@match.com",
-            role: "admin"
-          }
-        };
-      } else {
-        // Vérifier les comptes créés via inscription (stockés dans localStorage)
-        const storedToken = localStorage.getItem("token");
-        const storedRole = localStorage.getItem("userRole");
-        const storedName = localStorage.getItem("userName");
-        const storedEmail = localStorage.getItem("userEmail");
-        
-        if (storedToken && storedRole && storedName && storedEmail && formData.email === storedEmail) {
-          userData = {
-            token: storedToken,
-            user: {
-              id: Math.floor(Math.random() * 1000) + 100, // ID aléatoire pour les nouveaux comptes
-              name: storedName,
-              email: storedEmail,
-              role: storedRole
-            }
+      // Vérifier les comptes de test
+      authData = UserIdManager.createTestUser(formData.email, formData.password);
+      
+      if (!authData) {
+        // Vérifier les comptes créés via inscription
+        const storedUserData = UserIdManager.getStoredUserData();
+        if (storedUserData && storedUserData.email === formData.email) {
+          authData = {
+            token: localStorage.getItem("token") || `mock-token-${Date.now()}`,
+            user: storedUserData
           };
         }
       }
 
-      if (!userData) {
+      if (!authData) {
         setError("Identifiants incorrects ou compte inexistant.");
         setLoading(false);
         return;
       }
 
-      // Stockage des données dans localStorage
-      localStorage.setItem("token", userData.token);
-      localStorage.setItem("userRole", userData.user.role);
-      localStorage.setItem("userName", userData.user.name);
-      localStorage.setItem("userEmail", userData.user.email);
+      // Stocker les données de manière cohérente
+      UserIdManager.storeAuthData(authData);
 
       // Détermination de la destination selon le rôle
-      const role = userData.user.role;
-      let redirectPath = `/${locale}/dashboard/student`;
-      
-      if (role === "admin") {
-        redirectPath = `/${locale}/dashboard/admin`;
-      } else if (role === "creator") {
-        redirectPath = `/${locale}/dashboard/creator`;
-      }
+      const role = authData.user.role;
+      const redirectPath = `/${locale}/dashboard/${role}`;
 
       // Redirection forcée
       window.location.href = redirectPath;
@@ -214,21 +179,8 @@ const handleSocialLogin = async (provider: string) => {
     
     // Simulation de connexion sociale réussie
     setTimeout(() => {
-      const mockSocialUser = {
-        token: `social-${provider}-token-${Date.now()}`,
-        user: {
-          id: Math.floor(Math.random() * 1000),
-          name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
-          email: `user.${provider}@match.com`,
-          role: "student",
-          avatar: `/${provider}-avatar.jpg`,
-          provider: provider
-        }
-      };
-      
-      localStorage.setItem("token", mockSocialUser.token);
-      localStorage.setItem("userRole", mockSocialUser.user.role);
-      localStorage.setItem("socialProvider", provider);
+      const authData = UserIdManager.createSocialUser(provider);
+      UserIdManager.storeAuthData(authData);
       
       setSuccessMessage(`Connexion avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie !`);
       

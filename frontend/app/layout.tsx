@@ -2,6 +2,8 @@
 import { NextAuthProvider } from "@/components/providers/NextAuthProvider";
 import { NotificationsProvider } from "@/components/ui/Notifications";
 import { BrandingProvider } from "@/components/ui/BrandingProvider";
+import { ThemeProvider } from "@/lib/theme-provider";
+import { TranslationProvider } from "@/lib/i18n-provider";
 import "./globals.css";
 
 export const metadata = {
@@ -86,26 +88,30 @@ export default function RootLayout({
         className="antialiased font-sans text-gray-900 bg-gray-50 selection:bg-primary/20 selection:text-primary"
         suppressHydrationWarning={true}
       >
-        <NextAuthProvider>
-          <BrandingProvider>
-            <NotificationsProvider>
-              <div className="min-h-screen flex flex-col">
-                {/* Skip to main content for accessibility */}
-                <a 
-                  href="#main-content" 
-                  className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-white px-4 py-2 rounded-lg z-50"
-                >
-                  Aller au contenu principal
-                </a>
-                
-                {/* Main content wrapper */}
-                <main id="main-content" className="flex-1">
-                  {children}
-                </main>
-              </div>
-            </NotificationsProvider>
-          </BrandingProvider>
-        </NextAuthProvider>
+        <ThemeProvider>
+          <TranslationProvider>
+            <NextAuthProvider>
+              <BrandingProvider>
+                <NotificationsProvider>
+                  <div className="min-h-screen flex flex-col">
+                    {/* Skip to main content for accessibility */}
+                    <a 
+                      href="#main-content" 
+                      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-white px-4 py-2 rounded-lg z-50"
+                    >
+                      Aller au contenu principal
+                    </a>
+                    
+                    {/* Main content wrapper */}
+                    <main id="main-content" className="flex-1">
+                      {children}
+                    </main>
+                  </div>
+                </NotificationsProvider>
+              </BrandingProvider>
+            </NextAuthProvider>
+          </TranslationProvider>
+        </ThemeProvider>
         
         {/* Performance monitoring script */}
         <script

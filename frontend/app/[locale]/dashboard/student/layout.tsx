@@ -17,14 +17,17 @@ import {
 import Link from "next/link";
 import PageLoader from "@/components/ui/PageLoader";
 import DashboardNavbar from "@/components/dashboard/DashboardNavbar";
+import Footer from "@/components/layout/Footer";
 import { api, isAuthenticated } from "@/lib/api/config";
+import UserIdManager from "@/lib/user-id-manager";
+import { AppProviders } from "@/components/providers/AppProviders";
+import { useTheme } from "@/components/providers/ThemeProvider";
+import { useTranslation } from "@/components/providers/TranslationProvider";
 import type { Student } from "@/types";
 
-export default function StudentLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function StudentLayoutContent({ children }: { children: React.ReactNode }) {
+  const { theme } = useTheme();
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<Student | null>(null);
@@ -35,117 +38,119 @@ export default function StudentLayout({
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Vérifier l'authentification
-        if (!isAuthenticated()) {
+        // Utiliser UserIdManager pour vérifier l'authentification
+        if (!UserIdManager.isAuthenticated()) {
           router.push(`/${locale}/login`);
           return;
         }
 
-        // Utiliser des données mockées temporairement
-        const mockUser: Student = {
-          id: 1,
-          name: "Étudiant Test",
-          email: "student@example.com",
-          role: "student",
-          avatar: "/avatars/student.jpg",
-          subscription: "premium",
-          level: 3,
-          points: 1250,
-          enrolled_courses: 5,
-          completed_courses: 2,
-          certificates: [],
-          progress: [],
-          created_at: "2024-01-15",
-          updated_at: "2024-01-15"
-        };
-
-        setUser(mockUser);
-
-        /* 
-        // Code original commenté pour éviter les erreurs 404
-        const userData = await api.get<Student>('/api/student/me');
-        setUser(userData);
-        */
-
+        // Récupérer les données stockées de manière cohérente
+        const storedUserData = UserIdManager.getStoredUserData();
+        
+        if (storedUserData && storedUserData.role === 'student') {
+          // Créer un objet Student à partir des données stockées
+          const studentData: Student = {
+            id: storedUserData.id,
+            name: storedUserData.name || 'Student',
+            email: storedUserData.email || '',
+            role: 'student',
+            avatar: storedUserData.avatar || '',
+            createdAt: storedUserData.createdAt || new Date().toISOString(),
+            updatedAt: storedUserData.updatedAt || new Date().toISOString(),
+            profile: {
+              bio: storedUserData.profile?.bio || '',
+              phone: storedUserData.profile?.phone || '',
+              location: storedUserData.profile?.location || '',
+              website: storedUserData.profile?.website || '',
+            },
+            stats: {
+              coursesCompleted: 0,
+              coursesInProgress: 0,
+              certificates: 0,
+              totalHours: 0,
+            }
+          };
+          
+          setUser(studentData);
+        } else {
+          router.push(`/${locale}/login`);
+          return;
+        }
       } catch (error) {
-        console.error('Error fetching user data:', error);
-        // En cas d'erreur, utiliser des données mockées
-        const mockUser: Student = {
-          id: 1,
-          name: "Étudiant Test",
-          email: "student@example.com",
-          role: "student",
-          avatar: "/avatars/student.jpg",
-          subscription: "premium",
-          level: 3,
-          points: 1250,
-          enrolled_courses: 5,
-          completed_courses: 2,
-          certificates: [],
-          progress: [],
-          created_at: "2024-01-15",
-          updated_at: "2024-01-15"
-        };
-        setUser(mockUser);
+        console.error('Erreur lors du chargement des données utilisateur:', error);
+        router.push(`/${locale}/login`);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserData();
-  }, [locale, router]);
+  }, [router, locale]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRole');
-    router.push(`/${locale}/login`);
-  };
-
-  const navigation = [
-    {
-      name: "Dashboard",
-      href: `/${locale}/dashboard/student`,
-      icon: LayoutDashboard,
-    },
-    {
-      name: "Mes parcours",
-      href: `/${locale}/dashboard/student/parcours`,
-      icon: Map,
-    },
-    {
-      name: "Blog",
-      href: `/${locale}/dashboard/student/blog`,
-      icon: BookOpen,
-    },
-    {
-      name: "Abonnement",
-      href: `/${locale}/dashboard/student/billing`,
-      icon: CreditCard,
-    },
-    {
-      name: "Notifications",
-      href: `/${locale}/dashboard/student/notifications`,
-      icon: Bell,
-    },
-    {
-      name: "Mon profil",
-      href: `/${locale}/dashboard/student/profile`,
-      icon: User,
-    },
-  ];
-
-  // État de chargement
   if (loading) {
+    return <PageLoader />;
+  }
+
+  if (!user) {
     return (
-      <PageLoader 
-        text="Vérification de l'accès étudiant..." 
-        fullScreen={true}
-      />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500">{t('error.profile', 'Impossible de charger votre profil')}</p>
+          <button
+            onClick={() => router.push(`/${locale}/login`)}
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-lg"
+          >
+            Retour à la connexion
+          </button>
+        </div>
+      </div>
     );
   }
 
+  const navigationItems = [
+    {
+      name: t('nav.dashboard', 'Tableau de bord'),
+      href: `/${locale}/dashboard/student`,
+      icon: LayoutDashboard,
+      current: false,
+    },
+    {
+      name: t('nav.parcours', 'Mes parcours'),
+      href: `/${locale}/dashboard/student/parcours`,
+      icon: Map,
+      current: false,
+    },
+    {
+      name: t('nav.courses', 'Cours'),
+      href: `/${locale}/dashboard/student/courses`,
+      icon: BookOpen,
+      current: false,
+    },
+    {
+      name: t('nav.certificates', 'Certificats'),
+      href: `/${locale}/dashboard/student/certificates`,
+      icon: CreditCard,
+      current: false,
+    },
+  ];
+
+  const profileItems = [
+    {
+      name: t('nav.profile', 'Mon profil'),
+      href: `/${locale}/dashboard/student/profile`,
+      icon: User,
+      current: false,
+    },
+    {
+      name: t('nav.preferences', 'Préférences'),
+      href: `/${locale}/dashboard/student/profile/preferences`,
+      icon: Bell,
+      current: false,
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="dashboard-layout">
       {/* DashboardNavbar intégrée */}
       <DashboardNavbar />
 
@@ -194,49 +199,55 @@ export default function StudentLayout({
 
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-              {navigation.map((item, index) => {
-                const isActive = window.location.pathname === item.href;
-                return (
+              <div className="space-y-1">
+                {navigationItems.map((item) => (
                   <Link
-                    key={index}
+                    key={item.name}
                     href={item.href}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all text-left ${
-                      isActive
-                        ? "bg-white/20 text-white"
-                        : "text-white/60 hover:text-white hover:bg-white/5"
-                    }`}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all"
                     onClick={() => setSidebarOpen(false)}
                   >
-                    <item.icon size={20} />
-                    {item.name}
+                    <item.icon className="w-5 h-5" />
+                    <span className="font-medium">{item.name}</span>
                   </Link>
-                );
-              })}
+                ))}
+              </div>
+
+              <div className="border-t border-white/10 my-4" />
+
+              <div className="space-y-1">
+                {profileItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span className="font-medium">{item.name}</span>
+                  </Link>
+                ))}
+              </div>
             </nav>
 
             {/* Footer Sidebar */}
             <div className="p-4 border-t border-white/10">
               <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-xl transition-all font-medium"
+                onClick={() => {
+                  UserIdManager.logout();
+                  router.push(`/${locale}/login`);
+                }}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all w-full"
               >
-                <LogOut size={20} />
-                Déconnexion
+                <LogOut className="w-5 h-5" />
+                <span className="font-medium">{t('nav.logout', 'Déconnexion')}</span>
               </button>
             </div>
           </motion.aside>
         </>
       )}
 
-      {/* Bouton menu mobile */}
-      <button
-        onClick={() => setSidebarOpen(true)}
-        className="fixed top-20 left-4 z-40 p-3 bg-white rounded-lg shadow-md text-gray-600 hover:text-gray-900 lg:hidden"
-      >
-        <Menu size={20} />
-      </button>
-
-      {/* Page Content - Pleine largeur avec padding pour la navbar */}
+      {/* Contenu principal */}
       <main className="min-h-screen pt-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -247,6 +258,21 @@ export default function StudentLayout({
           {children}
         </motion.div>
       </main>
+
+      {/* Footer existant */}
+      <Footer />
     </div>
+  );
+}
+
+export default function StudentLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AppProviders>
+      <StudentLayoutContent>{children}</StudentLayoutContent>
+    </AppProviders>
   );
 }

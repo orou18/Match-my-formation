@@ -6,6 +6,7 @@ import { LogOut, Menu, X, Bell, User, Map, Compass } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signOut } from "next-auth/react";
 import { useParams, usePathname } from "next/navigation";
+import ThemeLanguageSwitcher from "./ThemeLanguageSwitcher";
 
 export default function DashboardNavbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -88,6 +89,9 @@ export default function DashboardNavbar() {
               </Link>
 
               <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-gray-100">
+                {/* Theme and Language Switcher */}
+                <ThemeLanguageSwitcher />
+                
                 {/* REDIRECTION PROFIL ICI */}
                 <Link 
                   href={profileUrl}
@@ -167,6 +171,12 @@ export default function DashboardNavbar() {
                 </div>
 
                 <div className="pt-8 mt-auto border-t border-gray-100">
+                  {/* Theme and Language Switcher Mobile */}
+                  <div className="mb-6 p-4 bg-gray-50 rounded-2xl">
+                    <p className="text-xs font-black uppercase tracking-wider text-primary mb-3">Préférences</p>
+                    <ThemeLanguageSwitcher />
+                  </div>
+                  
                   {/* REDIRECTION PROFIL MOBILE ICI */}
                   <Link 
                     href={profileUrl}

@@ -11,6 +11,7 @@ import PremiumBanner from "@/components/dashboard/PremiumBanner";
 import Image from "next/image";
 import { Star, Users, ArrowLeft, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
+import UserIdManager from "@/lib/user-id-manager";
 
 interface CreatorCourse {
   id: number;
@@ -36,9 +37,9 @@ export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Données de test pour éviter les erreurs de connexion
+  // Données de test cohérentes avec UserIdManager
   const mockUser = {
-    id: 3,
+    id: UserIdManager.getCurrentUserId() || 3,
     name: "Alice Élève",
     email: "student@match.com",
     role: "student"
@@ -231,10 +232,21 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("token");
+      // Vérifier l'authentification avec UserIdManager
+      if (!UserIdManager.isAuthenticated()) {
+        window.location.href = `/${locale}/login`;
+        return;
+      }
+
+      // Récupérer les données utilisateur stockées
+      const storedUserData = UserIdManager.getStoredUserData();
       
-      // Utiliser les données de test directement pour éviter les erreurs
-      setUser(mockUser);
+      if (storedUserData && storedUserData.role === 'student') {
+        setUser(storedUserData);
+      } else {
+        setUser(mockUser);
+      }
+      
       setVideos(mockVideos);
       setLoading(false);
       
@@ -353,7 +365,7 @@ export default function StudentDashboard() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFB]">
         <Loader2 className="animate-spin text-primary mb-4" size={40} />
-        <p className="text-[#002B24] font-black uppercase text-[10px] tracking-[0.3em]">Accès à l'académie...</p>
+        <p className="text-gray-600 font-medium text-sm tracking-[0.1em]">Accès à l'académie...</p>
       </div>
     );
   }
@@ -363,11 +375,11 @@ export default function StudentDashboard() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFB] p-6 text-center">
         <div className="bg-red-50 p-8 rounded-[3rem] border border-red-100 max-w-md shadow-2xl shadow-red-500/5">
             <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-black text-[#002B24] mb-2">Erreur de liaison</h2>
+            <h2 className="text-xl font-bold text-[#002B24] mb-2">Erreur de liaison</h2>
             <p className="text-gray-500 mb-8 text-sm leading-relaxed">{error}</p>
             <button 
                 onClick={() => window.location.reload()} 
-                className="w-full px-6 py-4 bg-[#002B24] text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-primary transition-all active:scale-95"
+                className="w-full px-6 py-4 bg-[#002B24] text-white rounded-xl font-bold uppercase tracking-wide text-sm hover:bg-primary transition-all active:scale-95"
             >
                 Réessayer la connexion
             </button>
@@ -386,8 +398,8 @@ export default function StudentDashboard() {
         <section className="mt-20">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
-              <h2 className="text-4xl font-black text-[#002B24] tracking-tight">Catalogue des formations</h2>
-              <p className="text-gray-400 mt-2 font-medium uppercase text-[10px] tracking-[0.2em]">Explorez l'excellence académique</p>
+              <h2 className="text-2xl font-bold text-[#002B24] tracking-tight">Catalogue des formations</h2>
+              <p className="text-gray-500 mt-2 text-sm font-medium uppercase tracking-[0.15em]">Explorez l'excellence académique</p>
             </div>
             <CategoryFilters />
           </div>
@@ -408,7 +420,7 @@ export default function StudentDashboard() {
             </motion.div>
           ) : (
             <div className="py-20 text-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200">
-                <p className="text-gray-400 font-bold tracking-widest uppercase text-xs">Aucune formation disponible pour le moment</p>
+                    <span className="text-xs text-gray-500">Aucune formation disponible pour le moment</span>
             </div>
           )}
           
@@ -426,7 +438,7 @@ export default function StudentDashboard() {
           <div className="flex justify-between items-center mb-8 relative z-10">
             <div className="max-w-xl">
               <span className="text-primary text-[9px] font-black uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">Elite Experts</span>
-              <h2 className="text-2xl md:text-3xl font-black text-white mt-3 leading-tight">
+              <h2 className="text-xl font-bold text-white mt-3 leading-tight">
                 Pépites de nos <span className="italic text-primary font-serif">experts</span>
               </h2>
             </div>
@@ -463,14 +475,14 @@ export default function StudentDashboard() {
 
                 <div className="space-y-3 text-white">
                   <p className="text-primary text-[9px] font-black uppercase tracking-wider">{item.creator.name}</p>
-                  <h4 className="text-lg font-bold leading-tight min-h-[44px] line-clamp-2">{item.title}</h4>
+                  <h4 className="text-base font-semibold leading-tight min-h-[44px] line-clamp-2">{item.title}</h4>
                   
                   <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                    <div className="flex items-center gap-2 text-white/50 text-[11px]">
+                    <div className="flex items-center gap-2 text-white/60 text-xs">
                       <Users size={14} className="text-primary" />
                       <span>{item.students.toLocaleString()} élèves</span>
                     </div>
-                    <div className="flex items-center gap-1 text-orange-400 font-bold text-[11px] bg-orange-400/5 px-2 py-0.5 rounded-md">
+                    <div className="flex items-center gap-1 text-orange-400 font-semibold text-xs bg-orange-400/5 px-2 py-0.5 rounded-md">
                       <Star size={12} fill="currentColor" />
                       <span>{item.rating}</span>
                     </div>

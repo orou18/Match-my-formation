@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import UserIdManager, { AuthData } from "@/lib/user-id-manager";
 import {
   User,
   Mail,
@@ -49,21 +50,8 @@ export default function RegisterPage() {
       
       // Simulation d'inscription sociale réussie
       setTimeout(() => {
-        const mockSocialUser = {
-          token: `social-${provider}-token-${Date.now()}`,
-          user: {
-            id: Math.floor(Math.random() * 1000),
-            name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
-            email: `user.${provider}@match.com`,
-            role: "student",
-            avatar: `/${provider}-avatar.jpg`,
-            provider: provider
-          }
-        };
-        
-        localStorage.setItem("token", mockSocialUser.token);
-        localStorage.setItem("userRole", mockSocialUser.user.role);
-        localStorage.setItem("socialProvider", provider);
+        const authData = UserIdManager.createSocialUser(provider);
+        UserIdManager.storeAuthData(authData);
         
         setSuccessMessage(`Inscription avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie !`);
         
@@ -131,17 +119,22 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userRole", data.user.role);
-        localStorage.setItem("userName", data.user.name);
-        localStorage.setItem("userEmail", data.user.email);
+        // Utiliser UserIdManager pour stocker les données de manière cohérente
+        const authData: AuthData = {
+          token: data.token,
+          user: {
+            id: data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            role: data.user.role
+          }
+        };
+        
+        UserIdManager.storeAuthData(authData);
         
         // Redirection selon le rôle
-        const dashboardRoute = data.user.role === "admin" 
-          ? "/dashboard/admin" 
-          : `/dashboard/${data.user.role}`;
-        
-        router.push(`/${locale}${dashboardRoute}`);
+        const redirectPath = `/${locale}/dashboard/${data.user.role}`;
+        router.push(redirectPath);
       } else {
         setError(data.message || "Erreur lors de l'inscription");
       }
@@ -151,30 +144,20 @@ export default function RegisterPage() {
       // Fallback immédiat pour développement - pas de vérification d'erreur
       console.log("Mode fallback: inscription locale");
       
-      // Simulation d'inscription réussie
-      const mockUserData = {
-        token: `mock-token-${Date.now()}`,
-        user: {
-          id: Math.floor(Math.random() * 1000),
-          name: formData.name,
-          email: formData.email,
-          role: formData.role
-        }
-      };
+      // Créer un utilisateur avec UserIdManager
+      const authData = UserIdManager.createNewUser(
+        formData.name,
+        formData.email,
+        formData.role
+      );
       
-      localStorage.setItem("token", mockUserData.token);
-      localStorage.setItem("userRole", mockUserData.user.role);
-      localStorage.setItem("userName", mockUserData.user.name);
-      localStorage.setItem("userEmail", mockUserData.user.email);
+      UserIdManager.storeAuthData(authData);
       
       setSuccessMessage("Inscription réussie (mode démo)");
       
       setTimeout(() => {
-        const dashboardRoute = mockUserData.user.role === "admin" 
-          ? "/dashboard/admin" 
-          : `/dashboard/${mockUserData.user.role}`;
-        
-        router.push(`/${locale}${dashboardRoute}`);
+        const redirectPath = `/${locale}/dashboard/${formData.role}`;
+        router.push(redirectPath);
       }, 1500);
       
       setLoading(false);
