@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('videos', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('slug')->unique();
+            $table->string('slug')->nullable();
             $table->text('description')->nullable();
             
             // Stockage
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('thumbnail')->nullable(); // Image d'aperçu
             
             // Organisation
-            $table->string('category')->index(); // Tourisme, Hôtellerie, etc.
+            $table->string('category')->nullable()->index(); // Tourisme, Hôtellerie, etc.
             
             // Système de droits & visibilité
             // 'public' = visible par tous, 'private' = limité aux élèves du partenaire ou groupe spécifique
@@ -30,13 +30,16 @@ return new class extends Migration
             
             // Relations
             // L'utilisateur qui a uploadé (Admin ou Employé du partenaire)
-            $table->foreignId('uploader_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('uploader_id')->nullable()->constrained('users')->onDelete('cascade');
             
             // Si la vidéo appartient à un partenaire spécifique
             $table->foreignId('company_id')->nullable()->constrained('companies')->onDelete('cascade');
             
             // Si la vidéo fait partie d'un module/cours précis
             $table->foreignId('module_id')->nullable()->constrained('modules')->onDelete('set null');
+            
+            // Ordre d'affichage dans le module
+            $table->integer('order')->default(0);
 
             // Métadonnées
             $table->integer('duration')->nullable(); // Durée en secondes

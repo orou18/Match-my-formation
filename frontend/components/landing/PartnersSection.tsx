@@ -7,9 +7,13 @@ import {
   Star,
   Building2,
   ArrowRight,
-  CheckCircle2,
+  Check,
+  CheckCircle,
 } from "lucide-react";
 import Image from "next/image";
+
+// Forcer l'export correct pour éviter le cache
+const CheckCircle2 = CheckCircle;
 
 // --- Données Mockées ---
 const PARTNERS = [
@@ -165,7 +169,7 @@ export default function PartnersSection() {
                   key={text}
                   className="flex items-center justify-center gap-2 text-white/80 font-bold text-sm"
                 >
-                  <CheckCircle2 size={18} className="text-primary" /> {text}
+                  <Check size={18} className="text-primary" /> {text}
                 </div>
               ))}
             </div>

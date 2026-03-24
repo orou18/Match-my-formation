@@ -312,37 +312,46 @@ export default function VideoWatchPage() {
         </div>
       </nav>
 
-      {/* Lecteur vidéo */}
-      <div className="relative aspect-video bg-black">
+      {/* Lecteur vidéo optimisé */}
+      <div className="relative aspect-video bg-black rounded-2xl overflow-hidden video-container gpu-accelerated">
         <video
           ref={videoRef}
-          className="w-full h-full"
+          className="w-full h-full video-player"
           poster={video.thumbnail}
           onClick={togglePlay}
+          preload="metadata"
+          playsInline
+          x-webkit-airplay="allow"
         >
           <source src={video.video_url} type="video/mp4" />
+          <source src={video.video_url} type="video/webm" />
           Votre navigateur ne supporte pas la lecture vidéo.
         </video>
 
-        {/* Contrôles vidéo */}
+        {/* Contrôles vidéo optimisés */}
         <motion.div
           animate={{ opacity: showControls ? 1 : 0 }}
-          className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50 flex items-end"
+          className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/50 flex items-end video-controls"
         >
           <div className="w-full p-4">
-            {/* Barre de progression */}
+            {/* Barre de progression améliorée */}
             <div className="mb-4">
-              <input
-                type="range"
-                min="0"
-                max={duration}
-                value={currentTime}
-                onChange={handleSeek}
-                className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
-              />
-              <div className="flex justify-between text-xs text-white mt-1">
-                <span>{formatTime(currentTime)}</span>
-                <span>{formatTime(duration)}</span>
+              <div className="relative">
+                <input
+                  type="range"
+                  min="0"
+                  max={duration}
+                  value={currentTime}
+                  onChange={handleSeek}
+                  className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider will-change-transform"
+                  style={{
+                    background: `linear-gradient(to right, #007A7A 0%, #007A7A ${(currentTime / duration) * 100}%, #4b5563 ${(currentTime / duration) * 100}%, #4b5563 100%)`
+                  }}
+                />
+                <div className="flex justify-between text-xs text-white mt-1">
+                  <span className="font-mono">{formatTime(currentTime)}</span>
+                  <span className="font-mono">{formatTime(duration)}</span>
+                </div>
               </div>
             </div>
 
@@ -351,46 +360,104 @@ export default function VideoWatchPage() {
               <div className="flex items-center space-x-4">
                 {/* Boutons de lecture */}
                 <div className="flex items-center space-x-2">
-                  <button className="p-2 text-white hover:bg-white/10 rounded">
+                  <button 
+                    className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                    onClick={() => {
+                      const video = videoRef.current;
+                      if (video) {
+                        video.currentTime = Math.max(0, video.currentTime - 10);
+                      }
+                    }}
+                  >
                     <SkipBack className="w-4 h-4" />
                   </button>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={togglePlay}
-                    className="p-3 bg-white text-black rounded-full hover:bg-gray-200"
+                    className="p-3 bg-white text-black rounded-full hover:bg-gray-200 transition-all duration-200 shadow-lg"
                   >
                     {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-                  </button>
-                  <button className="p-2 text-white hover:bg-white/10 rounded">
+                  </motion.button>
+                  <button 
+                    className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                    onClick={() => {
+                      const video = videoRef.current;
+                      if (video) {
+                        video.currentTime = Math.min(duration, video.currentTime + 10);
+                      }
+                    }}
+                  >
                     <SkipForward className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Volume */}
+                {/* Volume amélioré */}
                 <div className="flex items-center space-x-2">
-                  <Volume2 className="w-4 h-4 text-white" />
+                  <button 
+                    className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                    onClick={() => {
+                      const video = videoRef.current;
+                      if (video) {
+                        video.muted = !video.muted;
+                      }
+                    }}
+                  >
+                    <Volume2 className="w-4 h-4" />
+                  </button>
                   <input
                     type="range"
                     min="0"
                     max="1"
-                    step="0.1"
+                    step="0.05"
                     value={volume}
                     onChange={handleVolumeChange}
-                    className="w-20 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                    className="w-20 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer slider will-change-transform"
                   />
                 </div>
 
-                {/* Durée */}
-                <span className="text-white text-sm">{video.duration}</span>
+                {/* Durée et qualité */}
+                <div className="flex items-center space-x-3 text-sm text-white">
+                  <span className="font-mono bg-black/50 px-2 py-1 rounded">{video.duration}</span>
+                  <select className="bg-black/50 text-white text-xs px-2 py-1 rounded border border-gray-600">
+                    <option>Auto</option>
+                    <option>1080p</option>
+                    <option>720p</option>
+                    <option>480p</option>
+                  </select>
+                </div>
               </div>
 
               <div className="flex items-center space-x-2">
-                <button className="p-2 text-white hover:bg-white/10 rounded">
+                <button className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200">
                   <Settings className="w-4 h-4" />
                 </button>
-                <button className="p-2 text-white hover:bg-white/10 rounded">
+                <button 
+                  className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                  onClick={() => {
+                    const video = videoRef.current;
+                    if (video && document.pictureInPictureElement) {
+                      document.exitPictureInPicture();
+                    } else if (video) {
+                      video.requestPictureInPicture();
+                    }
+                  }}
+                >
                   <PictureInPicture className="w-4 h-4" />
                 </button>
-                <button className="p-2 text-white hover:bg-white/10 rounded">
+                <button 
+                  className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                  onClick={() => {
+                    const video = videoRef.current;
+                    if (video) {
+                      if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                      } else {
+                        video.requestFullscreen();
+                      }
+                    }
+                  }}
+                >
                   <Maximize className="w-4 h-4" />
                 </button>
               </div>
@@ -665,19 +732,61 @@ export default function VideoWatchPage() {
       <style jsx>{`
         .slider::-webkit-slider-thumb {
           appearance: none;
-          width: 12px;
-          height: 12px;
-          background: white;
+          width: 14px;
+          height: 14px;
+          background: #007A7A;
           border-radius: 50%;
           cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          transition: all 150ms ease;
+        }
+        .slider::-webkit-slider-thumb:hover {
+          transform: scale(1.2);
+          background: #006666;
         }
         .slider::-moz-range-thumb {
-          width: 12px;
-          height: 12px;
-          background: white;
+          width: 14px;
+          height: 14px;
+          background: #007A7A;
           border-radius: 50%;
           cursor: pointer;
-          border: none;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          transition: all 150ms ease;
+        }
+        .slider::-moz-range-thumb:hover {
+          transform: scale(1.2);
+          background: #006666;
+        }
+        
+        /* Optimisation des transitions vidéo */
+        video {
+          transition: filter 300ms ease;
+        }
+        
+        video:fullscreen {
+          object-fit: contain;
+        }
+        
+        /* Amélioration du contraste des contrôles */
+        .video-controls {
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+        }
+        
+        /* Animation de pulse pour le bouton play */
+        @keyframes pulse-play {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+          }
+          50% {
+            box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+          }
+        }
+        
+        .play-button:not(.playing) {
+          animation: pulse-play 2s infinite;
         }
       `}</style>
     </div>

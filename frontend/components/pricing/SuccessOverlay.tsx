@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import {
-  CheckCircle2,
+  CheckCircle,
   Download,
   Play,
   Mail,
@@ -32,7 +32,7 @@ export default function SuccessModal({ isOpen }: { isOpen: boolean }) {
           }}
           className="w-24 h-24 bg-[#E8F5E9] text-[#2E7D32] rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner"
         >
-          <CheckCircle2 size={50} />
+          <CheckCircle size={50} />
         </motion.div>
 
         <h1 className="text-3xl md:text-5xl font-black text-[#004D40] mb-4">

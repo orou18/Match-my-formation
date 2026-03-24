@@ -13,6 +13,15 @@ return new class extends Migration
     {
         Schema::create('pathways', function (Blueprint $table) {
             $table->id();
+            $table->string('title');
+            $table->text('description');
+            $table->integer('duration');
+            $table->decimal('price', 8, 2);
+            $table->json('courses')->nullable();
+            $table->string('level')->nullable();
+            $table->string('image')->nullable();
+            $table->boolean('featured')->default(false);
+            $table->boolean('active')->default(true);
             $table->timestamps();
         });
     }

@@ -9,7 +9,7 @@ import {
   Lock,
   Eye,
   EyeOff,
-  UserPlus,
+  Users,
   ArrowRight,
 } from "lucide-react";
 
@@ -193,7 +193,7 @@ export default function RegisterPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <UserPlus className="w-8 h-8 text-white" />
+              <Users className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Créer un compte

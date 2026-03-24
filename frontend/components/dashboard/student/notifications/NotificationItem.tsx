@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { 
   Bell, 
-  CheckCircle2, 
+  CheckCircle, 
   CreditCard, 
   BookOpen, 
   Trash2, 
@@ -22,7 +22,7 @@ interface NotificationItemProps {
 
 const typeConfig = {
   info: { icon: Bell, color: "bg-blue-500", light: "bg-blue-50", text: "text-blue-600" },
-  success: { icon: CheckCircle2, color: "bg-green-500", light: "bg-green-50", text: "text-green-600" },
+  success: { icon: CheckCircle, color: "bg-green-500", light: "bg-green-50", text: "text-green-600" },
   billing: { icon: CreditCard, color: "bg-amber-500", light: "bg-amber-50", text: "text-amber-600" },
   course: { icon: BookOpen, color: "bg-primary", light: "bg-primary/10", text: "text-primary" },
 };

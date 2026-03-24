@@ -12,7 +12,7 @@ import {
   GraduationCap,
   Eye,
   EyeOff,
-  CheckCircle2,
+  CheckCircle,
   X,
   ArrowLeft,
 } from "lucide-react";
@@ -269,7 +269,7 @@ const handleSocialLogin = async (provider: string) => {
           >
             <div className="bg-emerald-600 text-white p-4 rounded-3xl shadow-2xl flex items-center gap-4 border border-white/20 backdrop-blur-lg">
               <div className="bg-white/20 p-2 rounded-2xl">
-                <CheckCircle2 size={24} />
+                <CheckCircle size={24} />
               </div>
               <p className="text-sm font-bold flex-1 leading-tight">{successMessage}</p>
               <button onClick={() => setSuccessMessage(null)} className="hover:rotate-90 transition-transform">

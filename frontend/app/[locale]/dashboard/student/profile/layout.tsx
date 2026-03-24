@@ -7,7 +7,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 items-start">
+    <div className="flex flex-col md:flex-row gap-8 items-start min-h-screen">
       {/* Sidebar gauche fixe */}
       <aside className="w-full md:w-80 shrink-0 sticky top-24">
         <ProfileSidebar />

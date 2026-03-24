@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
-import { UserPlus, BookOpen, GraduationCap, ArrowRight } from "lucide-react";
+import { Users, BookOpen, GraduationCap, ArrowRight } from "lucide-react";
 import { useRef } from "react";
 import Link from "next/link";
 
@@ -10,7 +10,7 @@ const steps = [
     number: "01",
     title: "Compte",
     description: "Inscrivez-vous gratuitement en quelques secondes.",
-    icon: UserPlus,
+    icon: Users,
     color: "from-orange-400 to-amber-500",
   },
   {

@@ -29,28 +29,14 @@ class CourseController extends Controller
             ],
             [
                 'id' => 2,
-                'title' => 'Gestion Hôtelière Avancée - Module 1',
-                'description' => 'Première partie de notre formation complète en gestion hôtelière.',
+                'title' => 'Gestion Hôtelière Avancée',
+                'description' => 'Techniques avancées de gestion hôtelière pour professionnels.',
                 'thumbnail' => '/videos/video2-thumb.jpg',
                 'duration' => '18:22',
                 'views' => 8750,
                 'likes' => 567,
                 'comments' => 23,
                 'publishedAt' => 'Il y a 5 jours',
-                'visibility' => 'public',
-                'status' => 'published',
-                'pathway' => 'Certificat Hôtellerie'
-            ],
-            [
-                'id' => 3,
-                'title' => 'Marketing Digital pour le Tourisme',
-                'description' => 'Stratégies digitales et marketing pour les professionnels du secteur touristique.',
-                'thumbnail' => '/videos/video3-thumb.jpg',
-                'duration' => '15:45',
-                'views' => 6230,
-                'likes' => 445,
-                'comments' => 18,
-                'publishedAt' => 'Il y a 1 semaine',
                 'visibility' => 'public',
                 'status' => 'published'
             ]
@@ -96,5 +82,43 @@ class CourseController extends Controller
         ];
 
         return response()->json($courses);
+    }
+
+    /**
+     * Récupérer les cours pour l'employé connecté
+     */
+    public function employeeCourses(Request $request): JsonResponse
+    {
+        $employee = $request->user();
+        
+        // Récupérer les vidéos créées par le créateur de cet employé
+        $videos = Video::where('creator_id', $employee->creator_id)
+            ->where('visibility', 'public')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($video) {
+                return [
+                    'id' => $video->id,
+                    'title' => $video->title,
+                    'description' => $video->description,
+                    'thumbnail' => $video->thumbnail_url,
+                    'duration' => $video->duration ?? '00:00',
+                    'views' => $video->views ?? 0,
+                    'likes' => $video->likes ?? 0,
+                    'comments' => $video->comments_count ?? 0,
+                    'publishedAt' => $video->created_at->diffForHumans(),
+                    'visibility' => $video->visibility,
+                    'status' => $video->published_immediately ? 'published' : 'draft',
+                    'creator' => [
+                        'name' => $video->creator->name ?? 'Formateur',
+                        'domain' => $employee->domain
+                    ]
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $videos
+        ]);
     }
 }

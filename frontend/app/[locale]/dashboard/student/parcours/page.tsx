@@ -43,7 +43,7 @@ const IN_PROGRESS_COURSES: Course[] = [
     title: "Patrimoine culturel et traditions locales",
     module: "Module 2 sur 6 terminé",
     progress: 33,
-    image: "/images/guide3.jpg",
+    image: "/guide1.jpg",
   },
 ];
 

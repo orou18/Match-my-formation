@@ -308,7 +308,7 @@ export default function StudentDashboard() {
     {
       id: 101,
       title: "Secrets du Management de Luxe",
-      image: "/guide3.jpg",
+      image: "/guide1.jpg",
       students: 1250,
       rating: 4.9,
       creator: { name: "Sofitel Académie", logo: "/sofitel-logo.png", specialty: "Hôtellerie de Luxe" },
@@ -332,7 +332,7 @@ export default function StudentDashboard() {
     {
         id: 104,
         title: "Innovation & Spa Wellness",
-        image: "/guide3.jpg",
+        image: "/guide1.jpg",
         students: 540,
         rating: 4.9,
         creator: { name: "Spa Academy", logo: "/logo.png", specialty: "Wellness" },

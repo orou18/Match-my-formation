@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Play, Clock, Eye, Heart, Star, Download, FileText, User } from "lucide-react";
+import { Play, Clock, Eye, Heart, Star, Download, FileText, User, Calendar, Target, Share2, BookmarkPlus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
@@ -21,14 +21,22 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getFileIcon = (fileType: string) => {
-    if (fileType.includes('pdf')) return <FileText className="w-4 h-4 text-red-500" />;
-    if (fileType.includes('sheet')) return <FileText className="w-4 h-4 text-green-500" />;
-    if (fileType.includes('word')) return <FileText className="w-4 h-4 text-blue-500" />;
-    return <FileText className="w-4 h-4 text-gray-500" />;
+  const getFileIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'pdf':
+        return <FileText className="w-3 h-3" />;
+      case 'image':
+        return <div className="w-3 h-3 bg-blue-500 rounded" />;
+      case 'video':
+        return <Play className="w-3 h-3" />;
+      case 'audio':
+        return <div className="w-3 h-3 bg-green-500 rounded-full" />;
+      default:
+        return <FileText className="w-3 h-3 text-gray-500" />;
+    }
   };
 
   return (
@@ -38,64 +46,100 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
     >
       {/* Lien vers la page d'aperçu */}
       <Link href={`/${currentLocale}/video/${video.id}`}>
-        {/* Thumbnail avec overlay */}
-        <div className="relative aspect-video bg-gray-200 overflow-hidden">
+        {/* Thumbnail avec overlay optimisé */}
+        <div className="relative aspect-video bg-gray-200 overflow-hidden rounded-lg group cursor-pointer">
           <Image
             src={video.thumbnail}
             alt={video.title}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            loading="lazy"
           />
           
-          {/* Overlay au survol */}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+          {/* Overlay au survol amélioré */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
             <motion.div
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.1, rotate: 5 }}
               whileTap={{ scale: 0.95 }}
-              className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-2xl"
+              className="w-12 h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-xl border-2 border-white/50"
             >
-              <Play className="w-6 h-6 text-[#002B24] ml-0.5" />
+              <Play className="w-5 h-5 text-[#002B24] ml-0.5" />
             </motion.div>
           </div>
 
-          {/* Badge de statut */}
-          <div className="absolute top-3 left-3">
+          {/* Badge de statut premium */}
+          <div className="absolute top-2 left-2 z-10">
             {video.is_free ? (
-              <span className="px-2 py-1 bg-green-500 text-white text-xs font-medium rounded-full">
+              <motion.span 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md"
+              >
+                <span>✨</span>
                 Gratuit
-              </span>
+              </motion.span>
             ) : (
-              <span className="px-2 py-1 bg-purple-500 text-white text-xs font-medium rounded-full">
+              <motion.span 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full shadow-md"
+              >
+                <span>💎</span>
                 {video.price}€
-              </span>
+              </motion.span>
             )}
           </div>
 
-          {/* Durée */}
-          <div className="absolute bottom-3 right-3">
-            <span className="px-2 py-1 bg-black/70 text-white text-xs font-medium rounded">
-              <Clock className="w-3 h-3 inline mr-1" />
+          {/* Durée avec design amélioré */}
+          <div className="absolute bottom-2 right-2 z-10">
+            <motion.span 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="inline-flex items-center gap-1 px-2 py-1 bg-black/80 backdrop-blur-sm text-white text-xs font-medium rounded-md border border-white/20"
+            >
+              <Clock className="w-3 h-3" />
               {video.duration}
-            </span>
+            </motion.span>
           </div>
 
-          {/* Badge de ressources */}
+          {/* Badge de ressources amélioré */}
           {video.resources && video.resources.length > 0 && (
-            <div className="absolute top-3 right-3">
-              <span className="px-2 py-1 bg-blue-500 text-white text-xs font-medium rounded-full flex items-center">
-                <Download className="w-3 h-3 mr-1" />
+            <div className="absolute top-2 right-2 z-10">
+              <motion.span 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.4 }}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/90 backdrop-blur-sm text-white text-xs font-bold rounded-md border border-blue-400/30"
+              >
+                <Download className="w-3 h-3" />
                 {video.resources.length}
-              </span>
+              </motion.span>
             </div>
           )}
+
+          {/* Indicateur de qualité */}
+          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10">
+            <motion.span 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 }}
+              className="px-1.5 py-0.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-md"
+            >
+              HD
+            </motion.span>
+          </div>
         </div>
       </Link>
 
       {/* Contenu */}
-      <div className="p-5">
+      <div className="p-4">
         {/* Titre */}
         <Link href={`/${currentLocale}/video/${video.id}`}>
-          <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#002B24] transition-colors">
+          <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#002B24] transition-colors text-sm">
             {video.title}
           </h3>
         </Link>
@@ -105,41 +149,75 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
           {video.description}
         </p>
 
-        {/* Infos créateur */}
-        {video.creator && (
-          <div className="flex items-center space-x-2 mb-3">
+        {/* Informations du créateur */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-              {video.creator.avatar ? (
-                <Image src={video.creator.avatar} alt={video.creator.name} fill className="rounded-full object-cover" />
-              ) : (
-                <span className="text-xs font-bold text-gray-600">
-                  {video.creator.name.charAt(0)}
-                </span>
-              )}
+              <User className="w-3 h-3 text-gray-500" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{video.creator.name}</p>
-              <p className="text-xs text-gray-500 truncate">{video.creator.specialty}</p>
+            <span className="text-xs text-gray-600">{video.creator?.name || 'Anonyme'}</span>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <Calendar className="w-3 h-3" />
+            {video.created_at}
+          </div>
+        </div>
+
+        {/* Statistiques */}
+        <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <Eye className="w-3 h-3" />
+              <span>{video.views.toLocaleString()}</span>
             </div>
+            <div className="flex items-center gap-1">
+              <Heart className="w-3 h-3" />
+              <span>{video.likes.toLocaleString()}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <Star className="w-3 h-3 text-yellow-500" />
+            <span>{video.rating}</span>
+          </div>
+        </div>
+
+        {/* Tags */}
+        {video.tags && video.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {video.tags.slice(0, 2).map((tag, index) => (
+              <span
+                key={index}
+                className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full"
+              >
+                {tag}
+              </span>
+            ))}
+            {video.tags.length > 2 && (
+              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                +{video.tags.length - 2}
+              </span>
+            )}
           </div>
         )}
 
         {/* Objectifs d'apprentissage */}
         {video.learning_objectives && video.learning_objectives.length > 0 && (
           <div className="mb-3">
-            <p className="text-xs text-gray-500 mb-1">
-              {video.learning_objectives.length} objectif{video.learning_objectives.length > 1 ? 's' : ''} d'apprentissage
-            </p>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex items-center gap-1 text-xs font-medium text-gray-700 mb-1">
+              <Target className="w-3 h-3" />
+              Objectifs ({video.learning_objectives.length})
+            </div>
+            <div className="space-y-0.5">
               {video.learning_objectives.slice(0, 2).map((objective, index) => (
-                <span key={objective.id} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full">
-                  {index + 1}. {objective.title.length > 20 ? objective.title.substring(0, 20) + '...' : objective.title}
-                </span>
+                <div key={index} className="flex items-center gap-1 text-xs text-gray-600">
+                  <div className="w-1 h-1 bg-green-500 rounded-full" />
+                  <span className="line-clamp-1">{objective.title}</span>
+                </div>
               ))}
               {video.learning_objectives.length > 2 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                  +{video.learning_objectives.length - 2}
-                </span>
+                <div className="text-xs text-gray-500">
+                  +{video.learning_objectives.length - 2} autres...
+                </div>
               )}
             </div>
           </div>
@@ -148,71 +226,43 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
         {/* Ressources */}
         {video.resources && video.resources.length > 0 && (
           <div className="mb-3">
-            <p className="text-xs text-gray-500 mb-1">Ressources disponibles</p>
+            <div className="flex items-center gap-1 text-xs font-medium text-gray-700 mb-1">
+              <Download className="w-3 h-3" />
+              Ressources ({video.resources.length})
+            </div>
             <div className="flex flex-wrap gap-1">
-              {video.resources.slice(0, 2).map((resource) => (
-                <div key={resource.id} className="flex items-center space-x-1 px-2 py-1 bg-gray-50 rounded-full">
-                  {getFileIcon(resource.file_type)}
-                  <span className="text-xs text-gray-600 truncate max-w-20">
-                    {resource.name.length > 15 ? resource.name.substring(0, 15) + '...' : resource.name}
-                  </span>
+              {video.resources.slice(0, 3).map((resource, index) => (
+                <div key={index} className="flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded">
+                  {getFileIcon(resource.file_type || 'document')}
+                  <span className="max-w-20 truncate">{resource.name || 'Ressource'}</span>
                 </div>
               ))}
-              {video.resources.length > 2 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                  +{video.resources.length - 2}
-                </span>
+              {video.resources.length > 3 && (
+                <div className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                  +{video.resources.length - 3}
+                </div>
               )}
             </div>
           </div>
         )}
 
-        {/* Tags */}
-        {video.tags && video.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {video.tags.slice(0, 3).map((tag, index) => (
-              <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                #{tag}
-              </span>
-            ))}
-            {video.tags.length > 3 && (
-              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                +{video.tags.length - 3}
-              </span>
-            )}
+        {/* Actions */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-1">
+            <button className="p-1.5 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors">
+              <Play className="size-3" />
+            </button>
+            <button className="p-1.5 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors">
+              <Share2 className="w-3 h-3" />
+            </button>
+            <button className="p-1.5 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors">
+              <BookmarkPlus className="w-3 h-3" />
+            </button>
           </div>
-        )}
-
-        {/* Statistiques */}
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100">
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-1">
-              <Eye className="w-3 h-3" />
-              <span>{video.views.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Heart className="w-3 h-3" />
-              <span>{video.likes.toLocaleString()}</span>
-            </div>
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <Clock className="w-3 h-3" />
+            <span>{video.duration}</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <Star className="w-3 h-3 text-yellow-500 fill-current" />
-            <span>4.8</span>
-          </div>
-        </div>
-
-        {/* Bouton d'action */}
-        <div className="mt-4">
-          <Link href={`/${currentLocale}/video/${video.id}`}>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full px-4 py-2 bg-[#002B24] text-white text-sm font-medium rounded-xl hover:bg-[#003d34] transition-colors flex items-center justify-center space-x-2"
-            >
-              <Play className="w-4 h-4" />
-              <span>Voir l'aperçu</span>
-            </motion.button>
-          </Link>
         </div>
       </div>
     </motion.div>

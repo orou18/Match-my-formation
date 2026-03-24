@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { CheckCircle2, Clock } from "lucide-react";
+import { CheckCircle, Clock } from "lucide-react";
 
 export default function SubscriptionStatus({ status, planName, nextBillingDate }: any) {
   return (
@@ -20,7 +20,7 @@ export default function SubscriptionStatus({ status, planName, nextBillingDate }
       <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
-            <CheckCircle2 size={32} className="text-white" />
+            <CheckCircle size={32} className="text-white" />
           </div>
           <div>
             <p className="text-white/70 text-sm font-bold uppercase tracking-widest">Statut du compte</p>
