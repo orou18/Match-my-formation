@@ -1,29 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// Base de données en mémoire (simulation)
-let users: any[] = [
-  {
-    id: 1,
-    name: 'Student Test',
-    email: 'student@match.com',
-    password: 'Azerty123!',
-    role: 'student'
-  },
-  {
-    id: 2,
-    name: 'Creator Test',
-    email: 'creator@match.com',
-    password: 'Azerty123!',
-    role: 'creator'
-  },
-  {
-    id: 3,
-    name: 'Admin Test',
-    email: 'admin@match.com',
-    password: 'Azerty123!',
-    role: 'admin'
-  }
-];
+import { UserStore } from '@/lib/user-store';
 
 export async function POST(request: NextRequest) {
   // Headers CORS pour éviter les erreurs
@@ -82,7 +58,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ Validation réussie - Création utilisateur');
 
     // Vérifier si l'email existe déjà
-    const existingUser = users.find(user => user.email === email);
+    const existingUser = UserStore.findUserByEmail(email);
     if (existingUser) {
       console.log('❌ Email déjà utilisé:', email);
       return NextResponse.json(
@@ -93,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     // Créer le nouvel utilisateur
     const newUser = {
-      id: users.length + 1,
+      id: UserStore.getNextId(),
       name,
       email,
       password, // En production, hash le mot de passe!
@@ -101,11 +77,11 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString()
     };
 
-    // Ajouter à la base de données
-    users.push(newUser);
+    // Ajouter à la base de données partagée
+    UserStore.addUser(newUser);
     
     console.log('💾 Utilisateur sauvegardé:', newUser);
-    console.log('📊 Total utilisateurs:', users.length);
+    console.log('📊 Total utilisateurs:', UserStore.getUsers().length);
 
     // Générer un token JWT simulé
     const token = `mock-jwt-token-${newUser.id}-${Date.now()}`;

@@ -36,6 +36,8 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isNewUser, setIsNewUser] = useState(false);
+  const [dashboardData, setDashboardData] = useState<any>(null);
 
   // Récupérer dynamiquement les informations de l'utilisateur connecté
   useEffect(() => {
@@ -76,6 +78,70 @@ export default function StudentDashboard() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Charger les données du dashboard et détecter les nouveaux utilisateurs
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        if (user) {
+          console.log('📊 Chargement dashboard pour:', user.email);
+          
+          // Vérifier si c'est un nouvel utilisateur (créé il y a moins de 5 minutes)
+          const userCreatedAt = new Date(user.created_at || Date.now());
+          const now = new Date();
+          const timeDiff = now.getTime() - userCreatedAt.getTime();
+          const minutesDiff = timeDiff / (1000 * 60);
+          
+          if (minutesDiff < 5 || user.id > 3) {
+            console.log('🎉 Nouvel utilisateur détecté!');
+            setIsNewUser(true);
+          }
+          
+          // Charger les données du dashboard
+          const response = await fetch('/api/student/dashboard');
+          if (response.ok) {
+            const data = await response.json();
+            setDashboardData(data);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erreur chargement dashboard:', error);
+      }
+    };
+
+    fetchDashboardData();
+  }, [user]);
+
+  // Récupérer les vidéos publiques depuis l'API
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        console.log('🎬 Récupération des vidéos publiques...');
+        const response = await fetch('/api/final-videos');
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Vidéos publiques récupérées:', data.videos.length);
+          setVideos(data.videos);
+        } else {
+          console.error('❌ Erreur récupération vidéos:', response.status);
+          // En cas d'erreur, utiliser les vidéos mockées
+          setVideos(mockVideos);
+        }
+      } catch (error) {
+        console.error('❌ Erreur fetch vidéos:', error);
+        // En cas d'erreur, utiliser les vidéos mockées
+        setVideos(mockVideos);
+      }
+    };
+
+    fetchVideos();
+    
+    // Rafraîchir les vidéos toutes les 10 secondes pour voir les nouvelles vidéos rapidement
+    const interval = setInterval(fetchVideos, 10000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const mockVideos = [
@@ -432,6 +498,45 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-[#F8FAFB] overflow-hidden font-sans">
       <StudentHero user={user} />
+
+      {/* Message de bienvenue pour les nouveaux utilisateurs */}
+      {isNewUser && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="container mx-auto px-4 md:px-8 -mt-8 mb-8"
+        >
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-8 text-center">
+            <div className="max-w-2xl mx-auto">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-white text-2xl">🎉</span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Bienvenue dans votre espace d'apprentissage !
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Nous sommes ravis de vous accueillir. Votre parcours commence maintenant ! 
+                Explorez nos formations et commencez à développer vos compétences.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button 
+                  onClick={() => setIsNewUser(false)}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105"
+                >
+                  Commencer à explorer
+                </button>
+                <button 
+                  onClick={() => router.push(`/${locale}/dashboard/student/profile`)}
+                  className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-300"
+                >
+                  Compléter mon profil
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       <main className="container mx-auto px-4 md:px-8 py-10">
         <FeaturedGrid />

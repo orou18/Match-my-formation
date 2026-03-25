@@ -47,110 +47,24 @@ export default function VideosPage() {
   const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
 
   useEffect(() => {
-    // Simuler le chargement des vidéos
-    const mockVideos: VideoData[] = [
-      {
-        id: "1",
-        title: "Introduction au Tourisme Durable",
-        description: "Découvrez les fondements du tourisme durable et ses applications pratiques dans l'industrie moderne.",
-        thumbnail: "/api/placeholder/320/180",
-        duration: "45:30",
-        views: 3420,
-        students: 156,
-        revenue: 1250.00,
-        status: "published",
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-        category: "Tourisme",
-        price: 89.99,
-        language: "Français"
-      },
-      {
-        id: "2",
-        title: "Gestion Hôtelière Avancée",
-        description: "Techniques avancées de gestion hôtelière pour les professionnels du secteur.",
-        thumbnail: "/api/placeholder/320/180",
-        duration: "1:23:45",
-        views: 2890,
-        students: 134,
-        revenue: 980.50,
-        status: "published",
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-        category: "Hôtellerie",
-        price: 79.99,
-        language: "Français"
-      },
-      {
-        id: "3",
-        title: "Marketing Touristique Digital",
-        description: "Stratégies de marketing digital adaptées au secteur touristique et hôtelier.",
-        thumbnail: "/api/placeholder/320/180",
-        duration: "38:15",
-        views: 2156,
-        students: 98,
-        revenue: 890.00,
-        status: "published",
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(),
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-        category: "Marketing",
-        price: 69.99,
-        language: "Français"
-      },
-      {
-        id: "4",
-        title: "Service Client Excellence",
-        description: "Excellence dans le service client pour l'hôtellerie et la restauration.",
-        thumbnail: "/api/placeholder/320/180",
-        duration: "52:20",
-        views: 1876,
-        students: 87,
-        revenue: 745.00,
-        status: "draft",
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 28).toISOString(),
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-        category: "Service Client",
-        price: 59.99,
-        language: "Français"
-      },
-      {
-        id: "5",
-        title: "Réservation et Revenue Management",
-        description: "Optimisation des réservations et maximisation des revenus dans l'hôtellerie.",
-        thumbnail: "/api/placeholder/320/180",
-        duration: "1:05:30",
-        views: 1654,
-        students: 76,
-        revenue: 680.00,
-        status: "processing",
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35).toISOString(),
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-        category: "Management",
-        price: 99.99,
-        language: "Français"
-      },
-      {
-        id: "6",
-        title: "Sécurité Alimentaire HACCP",
-        description: "Normes HACCP et sécurité alimentaire pour le secteur de la restauration.",
-        thumbnail: "/api/placeholder/320/180",
-        duration: "42:10",
-        views: 1432,
-        students: 65,
-        revenue: 520.00,
-        status: "archived",
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 42).toISOString(),
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-        category: "Sécurité",
-        price: 49.99,
-        language: "Français"
+    // Charger les vidéos depuis l'API
+    const fetchVideos = async () => {
+      try {
+        const response = await fetch('/api/creator/videos-simple');
+        if (response.ok) {
+          const data = await response.json();
+          setVideos(data.videos || []);
+        } else {
+          console.error('Erreur lors du chargement des vidéos');
+        }
+      } catch (error) {
+        console.error('Erreur fetch vidéos:', error);
+      } finally {
+        setLoading(false);
       }
-    ];
+    };
 
-    setTimeout(() => {
-      setVideos(mockVideos);
-      setLoading(false);
-    }, 1200);
+    fetchVideos();
   }, []);
 
   const getStatusColor = (status: VideoData["status"]) => {

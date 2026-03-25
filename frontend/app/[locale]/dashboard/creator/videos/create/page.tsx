@@ -175,7 +175,7 @@ export default function CreateVideoPage() {
         });
       }, 200);
 
-      const response = await fetch('/api/creator/videos', {
+      const response = await fetch('/api/creator/videos-simple', {
         method: 'POST',
         body: formDataToSend
       });

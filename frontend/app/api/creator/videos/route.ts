@@ -48,48 +48,52 @@ let creatorVideos = [
         id: '2',
         title: "Checklist Écologique",
         type: "document",
-        url: "/resources/checklist-ecologique.docx",
-        description: "Checklist pour vérifier la durabilité",
-        file_size: 524288,
-        created_at: "2024-03-15T09:15:00Z"
+        url: "/resources/checklist-ecologique.pdf",
+        description: "Checklist pour vérifier les pratiques durables",
+        file_size: 1024000,
+        created_at: "2024-03-15T10:00:00Z"
       }
     ],
-    created_at: "2024-01-15",
-    updated_at: "2024-01-15"
+    created_at: "2024-03-15T08:00:00Z",
+    updated_at: "2024-03-15T08:00:00Z"
   },
   {
     id: '2',
     title: "Gestion Hôtelière Avancée",
-    description: "Techniques avancées de gestion hôtelière pour le secteur du luxe et du premium.",
+    description: "Techniques avancées de gestion hôtelière pour les professionnels du secteur.",
     thumbnail: "/videos/video2-thumb.jpg",
     video_url: "/videos/video2.mp4",
-    duration: "18:22",
+    duration: "45:20",
     order: 2,
     creator_id: 1,
-    views: 8750,
-    likes: 567,
-    comments: [],
-    tags: ["hotellerie", "management", "luxe"],
-    is_published: true,
-    visibility: "public",
-    learning_objectives: [
-      "Maîtriser la gestion hôtelière premium",
-      "Développer des stratégies de luxe",
-      "Optimiser l'expérience client"
-    ],
-    resources: [
-      {
-        id: '3',
-        title: "Templates Management Hôtel",
-        type: "document",
-        url: "/resources/templates-hotel.docx",
-        description: "Modèles de documents pour gestion hôtelière",
-        file_size: 1048576,
-        created_at: "2024-03-10T14:00:00Z"
-      }
-    ],
-    created_at: "2024-01-10",
-    updated_at: "2024-01-10"
+    views: 2890,
+    students: 134,
+    revenue: 980.50,
+    status: "published",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    category: "Hôtellerie",
+    price: 79.99,
+    language: "Français"
+  },
+  {
+    id: '3',
+    title: "Marketing Touristique Digital",
+    description: "Stratégies de marketing digital adaptées au secteur touristique et hôtelier.",
+    thumbnail: "/videos/video3-thumb.jpg",
+    video_url: "/videos/video3.mp4",
+    duration: "38:15",
+    order: 3,
+    creator_id: 1,
+    views: 2156,
+    students: 98,
+    revenue: 890.00,
+    status: "published",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+    category: "Marketing",
+    price: 69.99,
+    language: "Français"
   }
 ];
 
@@ -105,6 +109,7 @@ export async function GET(request: NextRequest) {
     // Simuler l'ID du créateur (en production, viendrait de la BDD)
     const creatorId = 1;
 
+    // Utiliser les données locales
     const videos = creatorVideos.filter(video => video.creator_id === creatorId);
     
     console.log('CREATOR VIDEOS - Vidéos récupérées:', videos.length);
@@ -113,9 +118,9 @@ export async function GET(request: NextRequest) {
       videos,
       stats: {
         total_videos: videos.length,
-        total_views: videos.reduce((sum, video) => sum + video.views, 0),
-        total_likes: videos.reduce((sum, video) => sum + video.likes, 0),
-        total_comments: videos.reduce((sum, video) => sum + video.comments.length, 0),
+        total_views: videos.reduce((sum: number, video: any) => sum + video.views, 0),
+        total_likes: videos.reduce((sum: number, video: any) => sum + video.likes, 0),
+        total_comments: videos.reduce((sum: number, video: any) => sum + video.comments.length, 0),
         total_shares: Math.floor(Math.random() * 500) + 100,
         total_revenue: Math.floor(Math.random() * 5000) + 1000,
       }
@@ -128,13 +133,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Temporairement désactiver l'authentification pour le développement
-    // const session = await getServerSession(authOptions);
-    // 
-    // if (!session?.user) {
-    //   return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
-    // }
-
     const formData = await request.formData();
     
     // Extraire les données du formulaire
@@ -201,7 +199,30 @@ export async function POST(request: NextRequest) {
 
     creatorVideos.push(newVideo);
     
+    // Synchroniser avec l'API final-videos pour le dashboard étudiant
+    try {
+      const finalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/final-videos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'add',
+          video: newVideo
+        })
+      });
+      
+      if (finalResponse.ok) {
+        console.log('CREATOR VIDEOS - Vidéo synchronisée avec final-videos');
+      } else {
+        console.error('CREATOR VIDEOS - Erreur synchronisation final-videos');
+      }
+    } catch (error) {
+      console.error('CREATOR VIDEOS - Erreur synchronisation final-videos:', error);
+    }
+    
     console.log('CREATOR VIDEOS - Nouvelle vidéo créée:', newVideo.title);
+    console.log('CREATOR VIDEOS - Total vidéos:', creatorVideos.length);
     
     return NextResponse.json({
       message: 'Vidéo créée avec succès',
@@ -271,9 +292,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Vidéo non trouvée' }, { status: 404 });
     }
 
+    // Supprimer la vidéo
     const deletedVideo = creatorVideos.splice(videoIndex, 1)[0];
     
-    console.log('CREATOR VIDEOS - Vidéo supprimée:', deletedVideo.title);
+    console.log('CREATOR VIDEOS - Vidéo supprimée:', id);
     
     return NextResponse.json({
       message: 'Vidéo supprimée avec succès',

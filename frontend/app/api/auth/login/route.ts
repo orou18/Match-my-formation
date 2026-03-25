@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { UserStore } from '@/lib/user-store';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,35 +23,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Simulation d'une base de données utilisateurs
-    const users = [
-      {
-        id: 1,
-        name: 'Étudiant Test',
-        email: 'student@match.com',
-        password: 'Azerty123!',
-        role: 'student'
-      },
-      {
-        id: 2,
-        name: 'Créateur Test',
-        email: 'creator@match.com',
-        password: 'Azerty123!',
-        role: 'creator'
-      },
-      {
-        id: 3,
-        name: 'Admin Test',
-        email: 'admin@match.com',
-        password: 'Azerty123!',
-        role: 'admin'
-      }
-    ];
+    console.log('🔑 API LOGIN - Tentative de connexion:', email);
+    console.log('👥 Utilisateurs disponibles:', UserStore.getUsers().length);
 
     // Trouver l'utilisateur par email
-    const user = users.find(u => u.email === email);
+    const user = UserStore.findUserByEmail(email);
     
     if (!user) {
+      console.log('❌ Utilisateur non trouvé:', email);
       return NextResponse.json(
         { message: 'Email ou mot de passe incorrect' },
         { status: 401 }
@@ -59,11 +39,14 @@ export async function POST(request: NextRequest) {
 
     // Vérifier le mot de passe
     if (user.password !== password) {
+      console.log('❌ Mot de passe incorrect pour:', email);
       return NextResponse.json(
         { message: 'Email ou mot de passe incorrect' },
         { status: 401 }
       );
     }
+
+    console.log('✅ Connexion réussie pour:', email, 'ID:', user.id, 'Rôle:', user.role);
 
     // Générer un token JWT (simulation)
     const token = `mock-jwt-token-${Date.now()}-${user.id}`;
@@ -81,7 +64,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ Login error:', error);
     return NextResponse.json(
       { message: 'Erreur serveur lors de la connexion' },
       { status: 500 }
