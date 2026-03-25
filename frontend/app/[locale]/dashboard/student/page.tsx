@@ -37,13 +37,46 @@ export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Données de test cohérentes avec UserIdManager
-  const mockUser = {
-    id: UserIdManager.getCurrentUserId() || 3,
-    name: "Alice Élève",
-    email: "student@match.com",
-    role: "student"
-  };
+  // Récupérer dynamiquement les informations de l'utilisateur connecté
+  useEffect(() => {
+    try {
+      // Essayer de récupérer depuis UserIdManager
+      const storedUser = UserIdManager.getStoredUserData();
+      
+      if (storedUser) {
+        console.log('✅ Utilisateur récupéré depuis UserIdManager:', storedUser);
+        setUser(storedUser);
+      } else {
+        // Fallback sur les données de localStorage
+        const userBackup = localStorage.getItem('user_backup');
+        if (userBackup) {
+          const userData = JSON.parse(userBackup);
+          console.log('✅ Utilisateur récupéré depuis localStorage:', userData);
+          setUser(userData);
+        } else {
+          // Dernier fallback : utilisateur de test
+          console.log('⚠️ Utilisation de l utilisateur de test par défaut');
+          setUser({
+            id: UserIdManager.getCurrentUserId() || 3,
+            name: "Alice Élève",
+            email: "student@match.com",
+            role: "student"
+          });
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erreur récupération utilisateur:', error);
+      // Fallback sur utilisateur de test
+      setUser({
+        id: 3,
+        name: "Alice Élève",
+        email: "student@match.com",
+        role: "student"
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const mockVideos = [
     {
@@ -244,7 +277,15 @@ export default function StudentDashboard() {
       if (storedUserData && storedUserData.role === 'student') {
         setUser(storedUserData);
       } else {
-        setUser(mockUser);
+        // Ne pas remplacer l'utilisateur s'il est déjà défini
+        if (!user) {
+          setUser({
+            id: UserIdManager.getCurrentUserId() || 3,
+            name: "Alice Élève",
+            email: "student@match.com",
+            role: "student"
+          });
+        }
       }
       
       setVideos(mockVideos);

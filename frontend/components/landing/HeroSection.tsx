@@ -44,26 +44,33 @@ export default function HeroSection() {
 
       {/* Particules animées */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-white/20 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -100, 0],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 4,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
+        {[...Array(20)].map((_, i) => {
+          // Générer des positions fixes basées sur l'index pour éviter l'hydratation
+          const left = (i * 5.3) % 100;
+          const top = (i * 7.1) % 100;
+          const delay = i * 0.2;
+          
+          return (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-white/20 rounded-full"
+              style={{
+                left: `${left}%`,
+                top: `${top}%`,
+              }}
+              animate={{
+                y: [0, -100, 0],
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: 3 + (i % 3),
+                repeat: Infinity,
+                delay: delay,
+                ease: "easeInOut",
+              }}
+            />
+          );
+        })}
       </div>
 
       {/* Content */}

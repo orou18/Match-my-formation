@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -36,6 +37,10 @@ interface Employee {
 }
 
 export default function EmployeesPage() {
+  const router = useRouter();
+  const params = useParams();
+  const locale = params.locale || "fr";
+  
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -129,10 +134,35 @@ export default function EmployeesPage() {
               </p>
             </div>
             
-            <button className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105">
+            <div className="flex items-center gap-3">
+            {/* Lien principal */}
+            <a 
+              href={`/${locale}/dashboard/creator/employees/add`}
+              className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+              onClick={(e) => {
+                // Fallback JavaScript si le lien ne fonctionne pas
+                e.preventDefault();
+                const targetUrl = `/${locale}/dashboard/creator/employees/add`;
+                console.log('Navigation fallback vers:', targetUrl);
+                window.location.href = targetUrl;
+              }}
+            >
               <Users className="w-5 h-5" />
               Ajouter un employé
+            </a>
+            
+            {/* Bouton de test direct */}
+            <button 
+              onClick={() => {
+                const targetUrl = `/${locale}/dashboard/creator/employees/add`;
+                console.log('Test direct navigation vers:', targetUrl);
+                window.location.href = targetUrl;
+              }}
+              className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+            >
+              Test
             </button>
+            </div>
           </div>
         </div>
       </div>

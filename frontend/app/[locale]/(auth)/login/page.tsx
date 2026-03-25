@@ -82,6 +82,8 @@ export default function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
+  console.log('🔥 handleSubmit appelé - isLogin:', isLogin);
+  
   setLoading(true);
   setError(null);
   setSuccessMessage(null);
@@ -128,8 +130,41 @@ export default function AuthPage() {
     }
   } else {
     // --- LOGIQUE D'INSCRIPTION ---
+    console.log('🚀 DÉBUT INSCRIPTION - isLogin = false');
+    
+    // Validation côté client simple
+    if (!formData.name || !formData.email || !formData.password || !formData.password_confirmation) {
+      console.log('❌ Validation: champs manquants');
+      setError("Tous les champs sont obligatoires");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password !== formData.password_confirmation) {
+      console.log('❌ Validation: passwords ne correspondent pas');
+      setError("Les mots de passe ne correspondent pas");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      console.log('❌ Validation: mot de passe trop court');
+      setError("Le mot de passe doit contenir au moins 8 caractères");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch(`${baseUrl}/api/register`, {
+      console.log('🚀 DÉBUT INSCRIPTION COMPLET');
+      console.log('📧 Email:', formData.email);
+      console.log('👤 Name:', formData.name);
+      console.log('🔑 Password length:', formData.password?.length || 0);
+      console.log('🔑 Password Confirmation length:', formData.password_confirmation?.length || 0);
+      console.log('🔗 Base URL:', baseUrl);
+      console.log('🔗 API URL complète:', `${baseUrl}/api/auth/register`);
+      console.log('📋 FormData complet:', JSON.stringify(formData, null, 2));
+      
+      const response = await fetch(`${baseUrl}/api/auth/register`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -139,22 +174,84 @@ export default function AuthPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          password_confirmation: formData.password, // On utilise formData.password pour la confirmation par défaut
+          password_confirmation: formData.password_confirmation,
         }),
       });
 
+      console.log('📨 Response status:', response.status);
+      console.log('📨 Response ok:', response.ok);
+      console.log('📨 Response headers:', Object.fromEntries(response.headers.entries()));
+      
       const data = await response.json();
+      console.log('📋 Response data:', data);
+      console.log('📋 Response data type:', typeof data);
 
       if (response.ok) {
-        setIsLogin(true); // On bascule sur le formulaire de connexion
-        setSuccessMessage("Compte créé avec succès ! Connectez-vous maintenant.");
-        // On ne vide pas le mail pour faciliter la reconnexion
-        setFormData(prev => ({ ...prev, password: "", password_confirmation: "" }));
+        console.log('✅ INSCRIPTION RÉUSSIE - Sauvegarde locale');
+        
+        // Sauvegarder l'utilisateur localement pour persistance
+        try {
+          const userData = {
+            id: data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            role: data.user.role,
+            token: data.token,
+            createdAt: new Date().toISOString()
+          };
+          
+          // Sauvegarder dans UserIdManager avec la bonne méthode
+          UserIdManager.storeAuthData({
+            token: data.token,
+            user: {
+              id: data.user.id,
+              name: data.user.name,
+              email: data.user.email,
+              role: data.user.role as 'student' | 'creator' | 'admin'
+            }
+          });
+          
+          // Sauvegarder aussi dans localStorage directement pour backup
+          localStorage.setItem('user_backup', JSON.stringify(userData));
+          
+          // Sauvegarder dans la liste des utilisateurs inscrits
+          const registeredUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
+          const userExists = registeredUsers.some((user: any) => user.email === userData.email);
+          if (!userExists) {
+            registeredUsers.push(userData);
+            localStorage.setItem('registered_users', JSON.stringify(registeredUsers));
+          }
+          
+          console.log('💾 Utilisateur sauvegardé localement:', userData);
+          console.log('📊 Total utilisateurs locaux:', registeredUsers.length);
+        } catch (saveError) {
+          console.error('❌ Erreur sauvegarde locale:', saveError);
+        }
+        
+        // Redirection automatique vers le dashboard étudiant
+        setSuccessMessage("Compte créé avec succès ! Redirection vers votre dashboard...");
+        setTimeout(() => {
+          const redirectPath = `/${locale}/dashboard/student`;
+          console.log('🔄 Redirection vers:', redirectPath);
+          window.location.href = redirectPath;
+        }, 1500);
       } else {
         setError(data.message || "L'inscription a échoué. Cet email est peut-être déjà utilisé.");
       }
-    } catch (err) {
-      setError("Erreur réseau lors de l'inscription.");
+    } catch (err: any) {
+      console.error("❌ ERREUR INSCRIPTION DÉTAILLÉE:", err);
+      console.error("❌ Type d'erreur:", err?.constructor?.name || 'Unknown');
+      console.error("❌ Message:", err?.message || 'No message');
+      console.error("❌ Stack:", err?.stack || 'No stack');
+      
+      // Vérifier si c'est une erreur réseau
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        setError("Erreur réseau: Impossible de contacter le serveur. Vérifiez votre connexion.");
+      } else if (err instanceof TypeError && err.message.includes('JSON')) {
+        setError("Erreur serveur: La réponse n'est pas valide. Réessayez.");
+      } else {
+        setError("Erreur lors de l'inscription. Vérifiez vos informations et réessayez.");
+      }
     } finally {
       setLoading(false);
     }
@@ -397,6 +494,31 @@ const handleSocialLogin = async (provider: string) => {
                 Mot de passe test: Azerty123!
               </div>
             </div>
+
+            <AnimatePresence mode="wait">
+              {!isLogin && (
+                <motion.div 
+                  key="password-confirm" 
+                  initial={{ opacity: 0, height: 0 }} 
+                  animate={{ opacity: 1, height: "auto" }} 
+                  exit={{ opacity: 0, height: 0 }} 
+                  className="space-y-2"
+                >
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-4 tracking-widest">Confirmation mot de passe</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors" size={20} />
+                    <input 
+                      name="password_confirmation" 
+                      type={showPassword ? "text" : "password"} 
+                      onChange={handleChange} 
+                      placeholder="Confirmez votre mot de passe" 
+                      className="w-full pl-16 pr-6 py-4 lg:py-5.5 bg-gray-50 border border-transparent rounded-[1.5rem] lg:rounded-[1.8rem] focus:bg-white focus:border-primary outline-none transition-all font-semibold text-base" 
+                      required={!isLogin} 
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="pt-2">
               <button
