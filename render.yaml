@@ -1,52 +1,76 @@
 services:
-  # Service API Backend
+  # Service API Backend Laravel
   - type: web
     name: match-my-formation-api
-    runtime: node
+    runtime: docker
     plan: free
-    buildCommand: "cd frontend && npm install && npm run build"
-    startCommand: "cd frontend && npm start"
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    buildCommand: "docker build -t laravel-app ."
+    startCommand: "php-fpm"
+    healthCheckPath: /api/health
     envVars:
-      - key: NODE_ENV
+      - key: APP_NAME
+        value: MatchMyFormation
+      - key: APP_ENV
         value: production
-      - key: PORT
-        value: 3000
-      - key: DATABASE_URL
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_DEBUG
+        value: false
+      - key: APP_URL
+        value: https://match-my-formation-api.onrender.com
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
         fromDatabase:
           name: match-my-formation-db
-          property: connectionString
-      - key: REDIS_URL
+          property: host
+      - key: DB_PORT
+        value: 5432
+      - key: DB_DATABASE
+        fromDatabase:
+          name: match-my-formation-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: match-my-formation-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: match-my-formation-db
+          property: password
+      - key: CACHE_DRIVER
+        value: redis
+      - key: REDIS_HOST
         fromService:
           type: redis
           name: match-my-formation-redis
-          property: connectionString
-      - key: NEXTAUTH_URL
-        value: https://match-my-formation.onrender.com
-      - key: NEXTAUTH_SECRET
-        generateValue: true
-      - key: NEXT_PUBLIC_API_URL
-        value: https://match-my-formation.onrender.com
-      - key: NEXT_PUBLIC_FRONTEND_URL
-        value: https://match-my-formation.vercel.app
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: match-my-formation-redis
+          property: port
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_LIFETIME
+        value: 120
+      - key: FILESYSTEM_DISK
+        value: local
 
   # Base de données PostgreSQL
   - type: pserv
     name: match-my-formation-db
     plan: free
     ipAllowList: []
-    databaseName: matchmyformation
+    databaseName: match_my_formation
 
   # Service Redis
   - type: redis
     name: match-my-formation-redis
     plan: free
     ipAllowList: []
-
-# Configuration du domaine
-databases:
-  - name: match-my-formation-db
-    databaseName: matchmyformation
-    user: matchmyformation
 
 # Configuration du déploiement automatique
 version: "1.0"

@@ -26,6 +26,17 @@ use App\Http\Controllers\EmployeeController;
 |--------------------------------------------------------------------------
 */
 
+// --- HEALTH CHECK ---
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => now()->toISOString(),
+        'version' => '1.0.0',
+        'environment' => config('app.env'),
+        'database' => \DB::connection()->getPdo() ? 'connected' : 'disconnected'
+    ]);
+});
+
 // --- 0. ROUTES PUBLIQUES (PAS D'AUTHENTIFICATION REQUISE) ---
 Route::get('/public/videos', [CourseController::class, 'publicVideos']);
 
