@@ -55,20 +55,12 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
             email: storedUserData.email || '',
             role: 'student',
             avatar: storedUserData.avatar || '',
-            createdAt: storedUserData.createdAt || new Date().toISOString(),
-            updatedAt: storedUserData.updatedAt || new Date().toISOString(),
-            profile: {
-              bio: storedUserData.profile?.bio || '',
-              phone: storedUserData.profile?.phone || '',
-              location: storedUserData.profile?.location || '',
-              website: storedUserData.profile?.website || '',
-            },
-            stats: {
-              coursesCompleted: 0,
-              coursesInProgress: 0,
-              certificates: 0,
-              totalHours: 0,
-            }
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            enrolled_courses: 0,
+            completed_courses: 0,
+            certificates: [],
+            progress: []
           };
           
           setUser(studentData);

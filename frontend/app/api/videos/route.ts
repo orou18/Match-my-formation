@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     
     if (action === 'refresh') {
       console.log('VIDEOS PUBLIC - Rafraîchissement manuel');
-      const publicVideos = VideoSync.getPublicVideos();
+      const publicVideos = SharedDB.getPublicVideos();
       
       return NextResponse.json({
         videos: publicVideos,

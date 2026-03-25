@@ -18,6 +18,7 @@ import {
   MoreVertical,
   Upload,
   FileText,
+  X,
   Calendar,
 } from "lucide-react";
 
@@ -26,6 +27,7 @@ interface VideoData {
   title: string;
   description: string;
   thumbnail: string;
+  video_url: string;
   duration: string;
   views: number;
   students: number;
@@ -45,6 +47,8 @@ export default function VideosPage() {
   const [filter, setFilter] = useState<"all" | "published" | "draft" | "processing" | "archived">("all");
   const [sortBy, setSortBy] = useState<"date" | "views" | "revenue" | "title">("date");
   const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<VideoData | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     // Charger les vidéos depuis l'API
@@ -180,19 +184,83 @@ export default function VideosPage() {
     }
   };
 
-  const handleBulkAction = (action: "publish" | "draft" | "archive" | "delete") => {
+  const handleVideoPreview = (video: VideoData) => {
+    setSelectedVideo(video);
+    setIsPreviewOpen(true);
+  };
+
+  const closePreview = () => {
+    setIsPreviewOpen(false);
+    setSelectedVideo(null);
+  };
+
+  const handleBulkAction = async (action: "publish" | "draft" | "archive" | "delete") => {
     if (action === "delete") {
       if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedVideos.length} vidéo(s) ?`)) {
-        setVideos(prev => prev.filter(v => !selectedVideos.includes(v.id)));
-        setSelectedVideos([]);
+        // Appeler l'API DELETE pour chaque vidéo sélectionnée
+        try {
+          await Promise.all(
+            selectedVideos.map(videoId =>
+              fetch(`/api/creator/videos-simple?id=${videoId}`, { method: 'DELETE' })
+            )
+          );
+          
+          // Mettre à jour le state local
+          setVideos(prev => prev.filter(v => !selectedVideos.includes(v.id)));
+          setSelectedVideos([]);
+        } catch (error) {
+          console.error('Erreur suppression vidéos:', error);
+          alert('Erreur lors de la suppression des vidéos');
+        }
       }
     } else {
-      setVideos(prev => prev.map(v => 
-        selectedVideos.includes(v.id) 
-          ? { ...v, status: action as VideoData["status"] }
-          : v
-      ));
-      setSelectedVideos([]);
+      // Appeler l'API PUT pour chaque vidéo sélectionnée
+      try {
+        await Promise.all(
+          selectedVideos.map(videoId =>
+            fetch('/api/creator/videos-simple', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: videoId, status: action })
+            })
+          )
+        );
+        
+        // Mettre à jour le state local
+        setVideos(prev => prev.map(v => 
+          selectedVideos.includes(v.id) 
+            ? { ...v, status: action as VideoData["status"] }
+            : v
+        ));
+        setSelectedVideos([]);
+      } catch (error) {
+        console.error('Erreur mise à jour vidéos:', error);
+        alert('Erreur lors de la mise à jour des vidéos');
+      }
+    }
+  };
+
+  const handleEditVideo = (video: VideoData) => {
+    // Rediriger vers la page d'édition
+    window.location.href = `/fr/dashboard/creator/videos/${video.id}/edit`;
+  };
+
+  const handleDeleteVideo = async (video: VideoData) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer la vidéo "${video.title}" ?`)) {
+      try {
+        const response = await fetch(`/api/creator/videos-simple?id=${video.id}`, { 
+          method: 'DELETE' 
+        });
+        
+        if (response.ok) {
+          setVideos(prev => prev.filter(v => v.id !== video.id));
+        } else {
+          alert('Erreur lors de la suppression de la vidéo');
+        }
+      } catch (error) {
+        console.error('Erreur suppression vidéo:', error);
+        alert('Erreur lors de la suppression de la vidéo');
+      }
     }
   };
 
@@ -468,9 +536,33 @@ export default function VideosPage() {
                   </div>
 
                   {/* Thumbnail */}
-                  <div className="relative aspect-video bg-gray-100">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                  <div 
+                    className="relative aspect-video bg-gray-100 cursor-pointer group-hover:opacity-90 transition-opacity"
+                    onClick={() => handleVideoPreview(video)}
+                  >
+                    {video.thumbnail && video.thumbnail !== "/api/placeholder/320/180" ? (
+                      <img 
+                        src={video.thumbnail} 
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback si l'image ne charge pas
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    
+                    {/* Fallback gradient si pas de miniature */}
+                    <div className={`absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ${video.thumbnail && video.thumbnail !== "/api/placeholder/320/180" ? 'hidden' : ''}`}>
                       <Video className="w-12 h-12 text-white/60" />
+                    </div>
+                    
+                    {/* Play button overlay au hover */}
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
+                        <Play className="w-8 h-8 text-primary ml-1" />
+                      </div>
                     </div>
                     
                     {/* Duration Badge */}
@@ -517,12 +609,14 @@ export default function VideosPage() {
                       
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
+                          onClick={() => handleEditVideo(video)}
                           className="p-1 text-gray-400 hover:text-primary transition-colors"
                           title="Modifier"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
+                          onClick={() => handleDeleteVideo(video)}
                           className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                           title="Supprimer"
                         >
@@ -537,6 +631,117 @@ export default function VideosPage() {
           </div>
         )}
       </div>
+
+      {/* Video Preview Modal */}
+      {isPreviewOpen && selectedVideo && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={closePreview}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">{selectedVideo.title}</h2>
+                <p className="text-sm text-gray-600 mt-1">{selectedVideo.description}</p>
+              </div>
+              <button
+                onClick={closePreview}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Video Player */}
+            <div className="relative aspect-video bg-black">
+              {selectedVideo.video_url ? (
+                <video
+                  controls
+                  className="w-full h-full"
+                  poster={selectedVideo.thumbnail}
+                >
+                  <source src={selectedVideo.video_url} type="video/mp4" />
+                  Votre navigateur ne supporte pas la lecture vidéo.
+                </video>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <Video className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Vidéo non disponible</p>
+                    <p className="text-sm text-gray-400 mt-2">URL de la vidéo manquante</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Video Info */}
+            <div className="p-6 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Informations</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Durée:</span>
+                      <span className="font-medium">{selectedVideo.duration}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Catégorie:</span>
+                      <span className="font-medium">{selectedVideo.category}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Statut:</span>
+                      <span className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1 w-fit ${getStatusColor(selectedVideo.status)}`}>
+                        {getStatusIcon(selectedVideo.status)}
+                        {getStatusLabel(selectedVideo.status)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Statistiques</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Vues:</span>
+                      <span className="font-medium">{formatNumber(selectedVideo.views)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Étudiants:</span>
+                      <span className="font-medium">{selectedVideo.students}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Revenus:</span>
+                      <span className="font-medium text-green-600">{formatCurrency(selectedVideo.revenue)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Actions</h3>
+                  <div className="flex gap-2">
+                    <button className="px-3 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors">
+                      Modifier
+                    </button>
+                    <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors">
+                      Dupliquer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }

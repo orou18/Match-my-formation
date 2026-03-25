@@ -110,3 +110,66 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    console.log('CREATOR VIDEOS SIMPLE - PUT request received');
+    
+    const { id, ...updateData } = await request.json();
+    
+    if (!id) {
+      return NextResponse.json({ error: 'ID vidéo requis' }, { status: 400 });
+    }
+
+    const videoIndex = videos.findIndex(video => video.id === id);
+    
+    if (videoIndex === -1) {
+      return NextResponse.json({ error: 'Vidéo non trouvée' }, { status: 404 });
+    }
+
+    // Mettre à jour la vidéo
+    videos[videoIndex] = { ...videos[videoIndex], ...updateData, updated_at: new Date().toISOString() };
+    
+    console.log('CREATOR VIDEOS SIMPLE - Vidéo mise à jour:', id);
+    
+    return NextResponse.json({
+      message: 'Vidéo mise à jour avec succès',
+      video: videos[videoIndex]
+    });
+  } catch (error) {
+    console.error('CREATOR VIDEOS SIMPLE - Erreur mise à jour:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    console.log('CREATOR VIDEOS SIMPLE - DELETE request received');
+    
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json({ error: 'ID vidéo requis' }, { status: 400 });
+    }
+
+    const videoIndex = videos.findIndex(video => video.id === id);
+    
+    if (videoIndex === -1) {
+      return NextResponse.json({ error: 'Vidéo non trouvée' }, { status: 404 });
+    }
+
+    // Supprimer la vidéo
+    const deletedVideo = videos.splice(videoIndex, 1)[0];
+    
+    console.log('CREATOR VIDEOS SIMPLE - Vidéo supprimée:', id);
+    
+    return NextResponse.json({
+      message: 'Vidéo supprimée avec succès',
+      video: deletedVideo
+    });
+  } catch (error) {
+    console.error('CREATOR VIDEOS SIMPLE - Erreur suppression:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
+}

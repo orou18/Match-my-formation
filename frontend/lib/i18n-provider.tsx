@@ -154,7 +154,6 @@ const translations = {
     'preferences.switch_to_dark': 'Passer au mode sombre',
     'preferences.save_success': 'Préférences sauvegardées avec succès',
     'preferences.updated': 'Préférences mises à jour',
-    'preferences.save_preferences': 'Enregistrer les préférences',
   },
   en: {
     // Navigation
@@ -297,7 +296,6 @@ const translations = {
     'preferences.switch_to_dark': 'Switch to Dark Mode',
     'preferences.save_success': 'Preferences saved successfully',
     'preferences.updated': 'Preferences updated',
-    'preferences.save_preferences': 'Save Preferences',
   },
   es: {
     // Navigation
@@ -440,7 +438,6 @@ const translations = {
     'preferences.switch_to_dark': 'Cambiar a Modo Oscuro',
     'preferences.save_success': 'Preferencias guardadas con éxito',
     'preferences.updated': 'Preferencias actualizadas',
-    'preferences.save_preferences': 'Guardar Preferencias',
   },
 };
 

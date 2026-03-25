@@ -2,7 +2,6 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { ArrowRight, TestTube, AlertCircle } from "lucide-react";
 
 export default function TestNavigationPage() {

@@ -68,7 +68,10 @@ export default function TestCompletePage() {
         setTestResults(prev => [...prev, `   👤 Rôle: ${loginData.user.role}`]);
         
         // Simuler le stockage des données
-        UserIdManager.storeAuthData(loginData.user, loginData.token);
+        UserIdManager.storeAuthData({
+          token: loginData.token,
+          user: loginData.user
+        });
         setTestResults(prev => [...prev, `   💾 Données stockées localement`]);
       } else {
         const errorData = await loginResponse.json();

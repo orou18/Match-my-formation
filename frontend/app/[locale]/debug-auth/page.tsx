@@ -32,7 +32,11 @@ export default function DebugAuthPage() {
   }, []);
 
   const handleForceClean = () => {
-    UserIdManager.forceCleanAuth();
+    UserIdManager.logout();
+    // Nettoyage supplémentaire si nécessaire
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+    }
     window.location.reload();
   };
 
