@@ -1,10 +1,30 @@
 "use client";
 import { motion } from "framer-motion";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useParams } from "next/navigation";
+import { useEffect } from "react";
+import UserIdManager from "@/lib/user-id-manager";
 import AdminSidebar from "@/components/dashboard/admin/AdminSidebar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const params = useParams();
+  const locale = params.locale || "fr";
+
+  // Vérifier l'authentification au chargement
+  useEffect(() => {
+    if (!UserIdManager.isAuthenticated()) {
+      router.push(`/${locale}/login`);
+      return;
+    }
+
+    // Vérifier que l'utilisateur a le rôle admin
+    const userData = UserIdManager.getStoredUserData();
+    if (userData && userData.role !== "admin") {
+      router.push(`/${locale}/dashboard/${userData.role}`);
+      return;
+    }
+  }, [router, locale]);
 
   return (
     <div className="flex min-h-screen bg-gray-50">

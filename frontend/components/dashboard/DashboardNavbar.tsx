@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { LogOut, Menu, X, Bell, User, Map, Compass } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { signOut } from "next-auth/react";
 import { useParams, usePathname } from "next/navigation";
+import UserIdManager from "@/lib/user-id-manager";
 import ThemeLanguageSwitcher from "./ThemeLanguageSwitcher";
 
 export default function DashboardNavbar() {
@@ -31,7 +31,12 @@ export default function DashboardNavbar() {
     { name: "Abonnement", href: `/${locale}/dashboard/student/billing`, icon: <Bell size={14}/> },
   ];
 
-  const handleLogout = () => signOut({ callbackUrl: `/${locale}` });
+  const handleLogout = () => {
+    console.log('Déconnexion depuis le dashboard...');
+    UserIdManager.logout();
+    // Rediriger vers la landing page (page d'accueil)
+    window.location.href = `/${locale}`;
+  };
 
   return (
     <>

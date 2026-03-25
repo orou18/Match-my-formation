@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import UserIdManager from "@/lib/user-id-manager";
 import {
   LayoutDashboard,
   Video,
@@ -207,9 +208,11 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
     }
   ];
 
-  const handleLogout = async () => {
-    await signOut({ redirect: false });
-    router.push(`/${locale}/login`);
+  const handleLogout = () => {
+    console.log('Déconnexion depuis le dashboard creator...');
+    UserIdManager.logout();
+    // Rediriger vers la landing page (page d'accueil)
+    window.location.href = `/${locale}`;
   };
 
   const isActiveRoute = (href: string) => {

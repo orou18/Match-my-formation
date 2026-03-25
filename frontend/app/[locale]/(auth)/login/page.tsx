@@ -51,18 +51,18 @@ export default function AuthPage() {
   const rawUrl = process.env.NEXT_PUBLIC_API_URL;
   const baseUrl = (rawUrl && rawUrl !== "undefined") 
     ? rawUrl.replace(/\/$/, "") 
-    : "http://localhost:8000";
+    : "http://localhost:3000";
 
-  // Vérifier si l'utilisateur est déjà connecté
-  useEffect(() => {
-    if (UserIdManager.isAuthenticated()) {
-      const userData = UserIdManager.getStoredUserData();
-      if (userData) {
-        const redirectPath = `/${locale}/dashboard/${userData.role}`;
-        window.location.href = redirectPath;
-      }
-    }
-  }, [locale]);
+  // PAS de vérification automatique - l'utilisateur doit pouvoir s'authentifier manuellement
+  // useEffect(() => {
+  //   if (UserIdManager.isAuthenticated()) {
+  //     const userData = UserIdManager.getStoredUserData();
+  //     if (userData) {
+  //       const redirectPath = `/${locale}/dashboard/${userData.role}`;
+  //       window.location.href = redirectPath;
+  //     }
+  //   }
+  // }, [locale]);
 
   useEffect(() => {
     if (successMessage) {
