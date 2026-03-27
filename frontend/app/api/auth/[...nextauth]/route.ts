@@ -3,6 +3,13 @@ import GoogleProvider from "next-auth/providers/google";
 import LinkedInProvider from "next-auth/providers/linkedin";
 import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { ensureUserRecords, findAccountByEmail } from "@/lib/server/account-store";
+
+type SessionUser = {
+  id?: string | number;
+  role?: string;
+  accessToken?: string;
+};
 
 const authOptions: AuthOptions = {
   // 1. OBLIGATOIRE : Forcer le mode JWT car on utilise une API externe
@@ -20,7 +27,6 @@ const authOptions: AuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          // Correction de l'URL avec un fallback localhost
           const apiUrl =
             process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -36,9 +42,8 @@ const authOptions: AuthOptions = {
             },
           });
 
-          const data = await res.json();
+          const data = await res.json().catch(() => null);
 
-          // Dans ton contrôleur Laravel, tu renvoies : ['user' => $user, 'token' => $token]
           if (res.ok && data.user) {
             return {
               id: data.user.id,
@@ -48,11 +53,23 @@ const authOptions: AuthOptions = {
               accessToken: data.token, // On stocke le token Sanctum
             };
           }
-          return null;
         } catch (error) {
           console.error("Erreur connexion Laravel:", error);
+        }
+
+        const localUser = findAccountByEmail(String(credentials.email));
+        if (!localUser || localUser.password !== credentials.password) {
           return null;
         }
+
+        ensureUserRecords(localUser.id, localUser.role);
+        return {
+          id: Number(localUser.id),
+          name: localUser.name,
+          email: localUser.email,
+          role: localUser.role,
+          accessToken: `mock-${localUser.role}-token-${localUser.id}-${Date.now()}`,
+        };
       },
     }),
     GoogleProvider({
@@ -69,21 +86,25 @@ const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }: any) {
-      // Au moment du login initial
+    async jwt({ token, user }: { token: Record<string, unknown>; user?: Record<string, unknown> }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
-        token.accessToken = user.accessToken; // Le token Sanctum de Laravel
+        token.accessToken = user.accessToken;
       }
       return token;
     },
-    async session({ session, token }: any) {
-      // On injecte les données du JWT dans la session accessible par useSession()
+    async session({
+      session,
+      token,
+    }: {
+      session: { user?: SessionUser };
+      token: Record<string, unknown>;
+    }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.accessToken = token.accessToken;
+        session.user.id = token.id as string | number | undefined;
+        session.user.role = token.role as string | undefined;
+        session.user.accessToken = token.accessToken as string | undefined;
       }
       return session;
     },

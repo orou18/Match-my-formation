@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Bell, Globe, Moon, Sun, Mail, Smartphone } from "lucide-react";
-import UserIdManager from "@/lib/user-id-manager";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useTranslation } from "@/components/providers/TranslationProvider";
 
 export default function PreferencesPage() {
   const { theme, setTheme } = useTheme();
-  const { language, setLanguage, t } = useTranslation();
+  const { language, setLanguage } = useTranslation();
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
     pushNotifications: false,
@@ -20,25 +19,40 @@ export default function PreferencesPage() {
   const [messageType, setMessageType] = useState<"success" | "error">(
     "success"
   );
+  const accessToken =
+    (typeof window !== "undefined" ? localStorage.getItem("token") : "") || "";
 
-  // Charger les préférences au démarrage
   useEffect(() => {
-    // Charger les autres préférences
-    const savedPreferences = localStorage.getItem("userPreferences");
-    if (savedPreferences) {
+    const loadPreferences = async () => {
       try {
-        const parsed = JSON.parse(savedPreferences);
-        setPreferences({
-          emailNotifications: parsed.emailNotifications ?? true,
-          pushNotifications: parsed.pushNotifications ?? false,
-          newsletter: parsed.newsletter ?? true,
-          timezone: parsed.timezone ?? "Europe/Paris",
+        const response = await fetch("/api/user/preferences", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         });
+
+        if (!response.ok) return;
+        const data = await response.json();
+        const loaded = data.preferences || data;
+        setPreferences({
+          emailNotifications: loaded.emailNotifications ?? true,
+          pushNotifications: loaded.pushNotifications ?? false,
+          newsletter: loaded.newsletter ?? true,
+          timezone: loaded.timezone ?? "Europe/Paris",
+        });
+        if (loaded.theme && loaded.theme !== theme) {
+          setTheme(loaded.theme);
+        }
+        if (loaded.language && loaded.language !== language) {
+          setLanguage(loaded.language);
+        }
       } catch (error) {
         console.error("Erreur lors du chargement des préférences:", error);
       }
-    }
-  }, []);
+    };
+
+    loadPreferences();
+  }, [accessToken, language, setLanguage, setTheme, theme]);
 
   const cardStyle =
     "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[2rem] p-8 shadow-sm hover:shadow-md transition-all";
@@ -100,6 +114,7 @@ export default function PreferencesPage() {
       const response = await fetch("/api/user/preferences", {
         method: "PUT",
         headers: {
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

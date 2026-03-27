@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Folder,
@@ -56,110 +56,25 @@ export default function LibraryPage() {
   const [sortBy, setSortBy] = useState("name");
   const [filterType, setFilterType] = useState("all");
 
-  const libraryItems: LibraryItem[] = [
-    {
-      id: "1",
-      name: "Formation Tourisme",
-      type: "folder",
-      createdAt: "2024-01-15",
-      modifiedAt: "2024-06-15",
-      tags: ["formation", "tourisme"],
-      visibility: "public",
-      starred: true,
-      path: "/formations/tourisme",
-      children: [],
-    },
-    {
-      id: "2",
-      name: "Introduction au Tourisme Durable",
-      type: "video",
-      size: "245 MB",
-      duration: "12:34",
-      thumbnail: "/videos/video1-thumb.jpg",
-      createdAt: "2024-06-10",
-      modifiedAt: "2024-06-14",
-      tags: ["tourisme", "durable", "introduction"],
-      visibility: "public",
-      starred: true,
-      path: "/videos/intro-tourisme-durable",
-    },
-    {
-      id: "3",
-      name: "Marketing Digital",
-      type: "folder",
-      createdAt: "2024-02-20",
-      modifiedAt: "2024-06-12",
-      tags: ["marketing", "digital"],
-      visibility: "public",
-      starred: false,
-      path: "/formations/marketing-digital",
-      children: [],
-    },
-    {
-      id: "4",
-      name: "Thumbnail Hôtellerie",
-      type: "image",
-      size: "2.4 MB",
-      thumbnail: "/images/hotellerie-thumb.jpg",
-      createdAt: "2024-06-08",
-      modifiedAt: "2024-06-08",
-      tags: ["thumbnail", "hôtellerie"],
-      visibility: "private",
-      starred: false,
-      path: "/images/thumbnails/hotellerie",
-    },
-    {
-      id: "5",
-      name: "Musique d'Intro",
-      type: "audio",
-      size: "4.8 MB",
-      duration: "0:30",
-      createdAt: "2024-05-15",
-      modifiedAt: "2024-05-15",
-      tags: ["musique", "intro"],
-      visibility: "public",
-      starred: true,
-      path: "/audio/intro-music",
-    },
-    {
-      id: "6",
-      name: "Guide Hôtellerie",
-      type: "document",
-      size: "1.2 MB",
-      createdAt: "2024-06-01",
-      modifiedAt: "2024-06-10",
-      tags: ["guide", "hôtellerie", "pdf"],
-      visibility: "public",
-      starred: false,
-      path: "/documents/guide-hotellerie",
-    },
-    {
-      id: "7",
-      name: "Service Client Vidéo",
-      type: "video",
-      size: "389 MB",
-      duration: "22:10",
-      thumbnail: "/videos/video3-thumb.jpg",
-      createdAt: "2024-06-05",
-      modifiedAt: "2024-06-13",
-      tags: ["service", "client", "excellence"],
-      visibility: "public",
-      starred: false,
-      path: "/videos/service-client",
-    },
-    {
-      id: "8",
-      name: "Ressources Pédagogiques",
-      type: "folder",
-      createdAt: "2024-03-10",
-      modifiedAt: "2024-06-14",
-      tags: ["ressources", "pédagogiques"],
-      visibility: "private",
-      starred: false,
-      path: "/ressources/pedagogiques",
-      children: [],
-    },
-  ];
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
+
+  useEffect(() => {
+    const loadItems = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
+      const response = await fetch("/api/creator/library", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setLibraryItems(data.items || []);
+      }
+    };
+
+    loadItems();
+  }, []);
 
   const filteredItems = libraryItems.filter((item) => {
     const matchesSearch =
@@ -240,7 +155,23 @@ export default function LibraryPage() {
   };
 
   const toggleStar = (itemId: string) => {
-    console.log(`Toggle star for item ${itemId}`);
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("token")
+        : null;
+    setLibraryItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, starred: !item.starred } : item
+      )
+    );
+    fetch("/api/creator/library", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ id: itemId }),
+    });
   };
 
   const handleItemAction = (action: string, itemId: string) => {

@@ -28,6 +28,10 @@ interface SecuritySettings {
 
 export default function SecurityPage() {
   const { data: session } = useSession();
+  const accessToken =
+    ((session?.user as { accessToken?: string } | undefined)?.accessToken ||
+      (typeof window !== "undefined" ? localStorage.getItem("token") : "") ||
+      "");
   const [securitySettings, setSecuritySettings] =
     useState<SecuritySettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +75,7 @@ export default function SecurityPage() {
       if (session?.user) {
         const response = await fetch("/api/user/security", {
           headers: {
-            Authorization: `Bearer ${(session.user as any)?.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
         });
@@ -123,12 +127,12 @@ export default function SecurityPage() {
     try {
       setLoading(true);
 
-      const response = await fetch("/api/user/change-password", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-          "Content-Type": "application/json",
-        },
+        const response = await fetch("/api/user/change-password", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
         body: JSON.stringify({
           currentPassword: passwordForm.currentPassword,
           newPassword: passwordForm.newPassword,
@@ -172,7 +176,7 @@ export default function SecurityPage() {
         const response = await fetch("/api/user/2fa/setup", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -193,7 +197,7 @@ export default function SecurityPage() {
         const response = await fetch("/api/user/2fa/disable", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
         });
@@ -220,7 +224,7 @@ export default function SecurityPage() {
       const response = await fetch("/api/user/2fa/verify", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

@@ -41,13 +41,6 @@ export default function AuthPage() {
     remember: false,
   });
 
-  // Données de test pour connexion rapide
-  const testUsers = {
-    student: { email: "student@match.com", password: "Azerty123!" },
-    creator: { email: "creator@match.com", password: "Azerty123!" },
-    admin: { email: "admin@match.com", password: "Azerty123!" },
-  };
-
   const rawUrl = process.env.NEXT_PUBLIC_API_URL;
   const baseUrl =
     rawUrl && rawUrl !== "undefined"
@@ -83,101 +76,81 @@ export default function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("🔥 handleSubmit appelé - isLogin:", isLogin);
-
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
 
     if (isLogin) {
       try {
-        // Utiliser UserIdManager pour une gestion cohérente des IDs
-        let authData: AuthData | null = null;
+        const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
 
-        // Vérifier les comptes de test
-        authData = UserIdManager.createTestUser(
-          formData.email,
-          formData.password
-        );
-
-        if (!authData) {
-          // Vérifier les comptes créés via inscription
-          const storedUserData = UserIdManager.getStoredUserData();
-          if (storedUserData && storedUserData.email === formData.email) {
-            authData = {
-              token:
-                localStorage.getItem("token") || `mock-token-${Date.now()}`,
-              user: storedUserData,
-            };
-          }
-        }
-
-        if (!authData) {
-          setError("Identifiants incorrects ou compte inexistant.");
+        const loginData = await loginResponse.json();
+        if (!loginResponse.ok) {
+          setError(loginData.message || "Identifiants incorrects.");
           setLoading(false);
           return;
         }
 
-        // Stocker les données de manière cohérente
+        const authData: AuthData = {
+          token: loginData.token,
+          user: {
+            id: loginData.user.id,
+            name: loginData.user.name,
+            email: loginData.user.email,
+            role: loginData.user.role,
+          },
+        };
+
         UserIdManager.storeAuthData(authData);
 
-        // Détermination de la destination selon le rôle
-        const role = authData.user.role;
-        const redirectPath = `/${locale}/dashboard/${role}`;
+        await signIn("credentials", {
+          email: formData.email,
+          password: formData.password,
+          redirect: false,
+        });
 
-        // Redirection forcée
-        window.location.href = redirectPath;
-      } catch (err) {
-        console.error("Login Error:", err);
+        window.location.href = `/${locale}/dashboard/${loginData.user.role}`;
+      } catch {
         setError(
-          "Le serveur Laravel est injoignable (Vérifiez qu'il tourne sur le port 8000)."
+          "Une erreur est survenue lors de la connexion. Réessayez."
         );
         setLoading(false);
       }
     } else {
-      // --- LOGIQUE D'INSCRIPTION ---
-      console.log("🚀 DÉBUT INSCRIPTION - isLogin = false");
-
-      // Validation côté client simple
       if (
         !formData.name ||
         !formData.email ||
         !formData.password ||
         !formData.password_confirmation
       ) {
-        console.log("❌ Validation: champs manquants");
         setError("Tous les champs sont obligatoires");
         setLoading(false);
         return;
       }
 
       if (formData.password !== formData.password_confirmation) {
-        console.log("❌ Validation: passwords ne correspondent pas");
         setError("Les mots de passe ne correspondent pas");
         setLoading(false);
         return;
       }
 
       if (formData.password.length < 8) {
-        console.log("❌ Validation: mot de passe trop court");
         setError("Le mot de passe doit contenir au moins 8 caractères");
         setLoading(false);
         return;
       }
 
       try {
-        console.log("🚀 DÉBUT INSCRIPTION COMPLET");
-        console.log("📧 Email:", formData.email);
-        console.log("👤 Name:", formData.name);
-        console.log("🔑 Password length:", formData.password?.length || 0);
-        console.log(
-          "🔑 Password Confirmation length:",
-          formData.password_confirmation?.length || 0
-        );
-        console.log("🔗 Base URL:", baseUrl);
-        console.log("🔗 API URL complète:", `${baseUrl}/api/auth/register`);
-        console.log("📋 FormData complet:", JSON.stringify(formData, null, 2));
-
         const response = await fetch(`${baseUrl}/api/auth/register`, {
           method: "POST",
           headers: {
@@ -192,21 +165,9 @@ export default function AuthPage() {
           }),
         });
 
-        console.log("📨 Response status:", response.status);
-        console.log("📨 Response ok:", response.ok);
-        console.log(
-          "📨 Response headers:",
-          Object.fromEntries(response.headers.entries())
-        );
-
         const data = await response.json();
-        console.log("📋 Response data:", data);
-        console.log("📋 Response data type:", typeof data);
 
         if (response.ok) {
-          console.log("✅ INSCRIPTION RÉUSSIE - Sauvegarde locale");
-
-          // Sauvegarder l'utilisateur localement pour persistance
           try {
             const userData = {
               id: data.user.id,
@@ -217,7 +178,6 @@ export default function AuthPage() {
               createdAt: new Date().toISOString(),
             };
 
-            // Sauvegarder dans UserIdManager avec la bonne méthode
             UserIdManager.storeAuthData({
               token: data.token,
               user: {
@@ -228,34 +188,11 @@ export default function AuthPage() {
               },
             });
 
-            // Sauvegarder aussi dans localStorage directement pour backup
             localStorage.setItem("user_backup", JSON.stringify(userData));
-
-            // Sauvegarder dans la liste des utilisateurs inscrits
-            const registeredUsers = JSON.parse(
-              localStorage.getItem("registered_users") || "[]"
-            );
-            const userExists = registeredUsers.some(
-              (user: any) => user.email === userData.email
-            );
-            if (!userExists) {
-              registeredUsers.push(userData);
-              localStorage.setItem(
-                "registered_users",
-                JSON.stringify(registeredUsers)
-              );
-            }
-
-            console.log("💾 Utilisateur sauvegardé localement:", userData);
-            console.log(
-              "📊 Total utilisateurs locaux:",
-              registeredUsers.length
-            );
           } catch (saveError) {
-            console.error("❌ Erreur sauvegarde locale:", saveError);
+            console.error("Erreur sauvegarde locale:", saveError);
           }
 
-          // Redirection automatique vers le dashboard étudiant
           setSuccessMessage(
             "Compte créé avec succès ! Redirection vers votre dashboard..."
           );
@@ -270,24 +207,10 @@ export default function AuthPage() {
               "L'inscription a échoué. Cet email est peut-être déjà utilisé."
           );
         }
-      } catch (err: any) {
-        console.error("❌ ERREUR INSCRIPTION DÉTAILLÉE:", err);
-        console.error("❌ Type d'erreur:", err?.constructor?.name || "Unknown");
-        console.error("❌ Message:", err?.message || "No message");
-        console.error("❌ Stack:", err?.stack || "No stack");
-
-        // Vérifier si c'est une erreur réseau
-        if (err instanceof TypeError && err.message.includes("fetch")) {
-          setError(
-            "Erreur réseau: Impossible de contacter le serveur. Vérifiez votre connexion."
-          );
-        } else if (err instanceof TypeError && err.message.includes("JSON")) {
-          setError("Erreur serveur: La réponse n'est pas valide. Réessayez.");
-        } else {
-          setError(
-            "Erreur lors de l'inscription. Vérifiez vos informations et réessayez."
-          );
-        }
+      } catch {
+        setError(
+          "Erreur lors de l'inscription. Vérifiez vos informations et réessayez."
+        );
       } finally {
         setLoading(false);
       }

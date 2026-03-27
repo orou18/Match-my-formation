@@ -116,7 +116,7 @@ export default function CreateVideoPage() {
 
   const loadVideos = async () => {
     try {
-      const response = await fetch("/api/creator/dashboard");
+      const response = await fetch("/api/creator/videos-simple");
       if (response.ok) {
         const data = await response.json();
         setVideos(data.videos || []);
@@ -132,17 +132,30 @@ export default function CreateVideoPage() {
 
   const loadStats = async () => {
     try {
-      const response = await fetch("/api/creator/dashboard");
+      const response = await fetch("/api/creator/videos-simple");
       if (response.ok) {
         const data = await response.json();
-        setStats(
-          data.stats || {
-            totalVideos: 0,
-            totalViews: 0,
-            engagement: 0,
-            revenue: 0,
-          }
-        );
+        const videosList = Array.isArray(data.videos) ? data.videos : [];
+        setStats({
+          totalVideos: videosList.length,
+          totalViews: videosList.reduce(
+            (sum: number, video: Video) => sum + (video.views || 0),
+            0
+          ),
+          engagement: videosList.length
+            ? Math.round(
+                videosList.reduce(
+                  (sum: number, video: Video) => sum + (video.likes || 0),
+                  0
+                ) / videosList.length
+              )
+            : 0,
+          revenue: videosList.reduce(
+            (sum: number, video: Video) =>
+              sum + ((video as Video & { revenue?: number }).revenue || 0),
+            0
+          ),
+        });
       }
     } catch (error) {
       console.error("Erreur lors du chargement des stats:", error);
@@ -951,7 +964,7 @@ export default function CreateVideoPage() {
                               <Target className="w-4 h-4 text-green-600" />
                             </div>
                             <h3 className="font-medium text-sm text-gray-900">
-                              Objectifs d'apprentissage
+                              Objectifs d&apos;apprentissage
                             </h3>
                             <span className="text-xs text-gray-500">
                               {formData.learning_objectives.length} ajouté
@@ -1178,11 +1191,11 @@ export default function CreateVideoPage() {
                                           }
                                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         />
-                                        {(resource as any).file_data && (
+                                        {resource.file_data && (
                                           <div className="mt-2 text-sm text-green-600 flex items-center gap-2">
                                             <CheckCircle className="w-4 h-4" />
                                             Fichier sélectionné:{" "}
-                                            {(resource as any).file_data.name}
+                                            {resource.file_data.name}
                                           </div>
                                         )}
                                       </div>
@@ -1387,7 +1400,10 @@ export default function CreateVideoPage() {
                                   onChange={(e) =>
                                     setFormData((prev) => ({
                                       ...prev,
-                                      visibility: e.target.value as any,
+                                      visibility: e.target.value as
+                                        | "private"
+                                        | "public"
+                                        | "unlisted",
                                     }))
                                   }
                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1448,8 +1464,8 @@ export default function CreateVideoPage() {
                                     <p className="text-sm text-blue-700">
                                       Cette vidéo sera visible par tous les
                                       utilisateurs sur les dashboards étudiants
-                                      et dans la section "pépites de nos
-                                      experts".
+                                      et dans la section &quot;pépites de nos
+                                      experts&quot;.
                                     </p>
                                   </div>
                                 </div>

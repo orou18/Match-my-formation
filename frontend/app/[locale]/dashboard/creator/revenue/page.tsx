@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import {
   DollarSign,
   TrendingUp,
@@ -15,8 +16,7 @@ import {
 } from "lucide-react";
 
 export default function RevenuePage() {
-  // Données mockées pour le développement
-  const stats = {
+  const [stats, setStats] = useState({
     totalRevenue: 45680,
     monthlyRevenue: 12450,
     growth: 15.8,
@@ -37,7 +37,25 @@ export default function RevenuePage() {
       { month: "Mai", revenue: 13500, orders: 98 },
       { month: "Juin", revenue: 14200, orders: 103 },
     ],
-  };
+  });
+
+  useEffect(() => {
+    const loadData = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
+      const response = await fetch("/api/creator/revenue", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const payload = await response.json();
+      if (response.ok && payload.data) {
+        setStats(payload.data);
+      }
+    };
+
+    loadData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">

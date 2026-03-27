@@ -277,7 +277,6 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
       }
     });
 
-    console.log("Branding appliqué:", brandingSettings.company_name);
   };
 
   const resetBranding = () => {
@@ -322,7 +321,6 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
       root.style.removeProperty(variable);
     });
 
-    console.log("Branding réinitialisé");
   };
 
   useEffect(() => {
@@ -330,7 +328,8 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
       try {
         const response = await fetch("/api/branding");
         if (response.ok) {
-          const brandingSettings = await response.json();
+          const payload = await response.json();
+          const brandingSettings = payload.settings || payload;
           setSettings(brandingSettings);
           applyBranding(brandingSettings);
         }
@@ -342,6 +341,19 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
     };
 
     loadBranding();
+
+    const handleBrandingUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<BrandingSettings>;
+      if (customEvent.detail) {
+        setSettings(customEvent.detail);
+        applyBranding(customEvent.detail);
+      }
+    };
+
+    window.addEventListener("brandingUpdated", handleBrandingUpdated);
+    return () => {
+      window.removeEventListener("brandingUpdated", handleBrandingUpdated);
+    };
   }, []);
 
   return (

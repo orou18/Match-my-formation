@@ -293,7 +293,10 @@ export default function AdminCreators() {
             <Download size={18} />
             Exporter
           </button>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
             <Plus size={18} />
             Nouveau Créateur
           </button>
@@ -472,13 +475,24 @@ export default function AdminCreators() {
 
             <div className="border-t border-gray-100 p-4 bg-gray-50">
               <div className="flex gap-2">
-                <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center justify-center gap-1">
+                <button
+                  onClick={() =>
+                    handleUpdateCreator(creator.id, {
+                      status:
+                        creator.status === "pending" ? "active" : "suspended",
+                    })
+                  }
+                  className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center justify-center gap-1"
+                >
                   <Eye size={14} />
-                  Voir
+                  {creator.status === "pending" ? "Approuver" : "Suspendre"}
                 </button>
-                <button className="flex-1 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm flex items-center justify-center gap-1">
+                <button
+                  onClick={() => handleDeleteCreator(creator.id)}
+                  className="flex-1 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm flex items-center justify-center gap-1"
+                >
                   <BarChart3 size={14} />
-                  Stats
+                  {creator.status === "pending" ? "Rejeter" : "Supprimer"}
                 </button>
               </div>
             </div>

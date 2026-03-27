@@ -49,91 +49,28 @@ export default function StatsPage() {
   );
 
   useEffect(() => {
-    // Simuler le chargement des statistiques
-    const mockStats: Stats = {
-      totalViews: 15420,
-      totalStudents: 892,
-      totalRevenue: 8945.5,
-      totalVideos: 12,
-      monthlyViews: [1200, 1900, 1500, 2200, 2800, 2400, 3200],
-      monthlyRevenue: [450, 680, 520, 890, 1200, 950, 1450],
-      topVideos: [
-        {
-          id: "1",
-          title: "Introduction au Tourisme Durable",
-          views: 3420,
-          revenue: 1250.0,
-          students: 156,
-        },
-        {
-          id: "2",
-          title: "Gestion Hôtelière Avancée",
-          views: 2890,
-          revenue: 980.5,
-          students: 134,
-        },
-        {
-          id: "3",
-          title: "Marketing Touristique Digital",
-          views: 2156,
-          revenue: 890.0,
-          students: 98,
-        },
-        {
-          id: "4",
-          title: "Service Client Excellence",
-          views: 1876,
-          revenue: 745.0,
-          students: 87,
-        },
-        {
-          id: "5",
-          title: "Réservation et Revenue Management",
-          views: 1654,
-          revenue: 680.0,
-          students: 76,
-        },
-      ],
-      recentActivity: [
-        {
-          id: "1",
-          type: "enrollment",
-          title: "Nouvel inscrit - Tourisme Durable",
-          timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-        },
-        {
-          id: "2",
-          type: "revenue",
-          title: "Paiement reçu - Marketing Digital",
-          timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-          amount: 45.0,
-        },
-        {
-          id: "3",
-          type: "view",
-          title: "Pic de vues - Gestion Hôtelière",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-        },
-        {
-          id: "4",
-          type: "enrollment",
-          title: "Nouvel inscrit - Service Client",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-        },
-        {
-          id: "5",
-          type: "revenue",
-          title: "Paiement reçu - Tourisme Durable",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-          amount: 67.5,
-        },
-      ],
+    const fetchStats = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
+
+      try {
+        const response = await fetch("/api/creator/stats", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const payload = await response.json();
+        if (response.ok && payload?.data) {
+          setStats(payload.data);
+        }
+      } catch (error) {
+        console.error("Erreur de chargement des statistiques créateur:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setTimeout(() => {
-      setStats(mockStats);
-      setLoading(false);
-    }, 1500);
+    fetchStats();
   }, [timeRange]);
 
   const formatCurrency = (amount: number) => {
@@ -236,7 +173,9 @@ export default function StatsPage() {
           ].map((range) => (
             <button
               key={range.value}
-              onClick={() => setTimeRange(range.value as any)}
+              onClick={() =>
+                setTimeRange(range.value as "7d" | "30d" | "90d" | "1y")
+              }
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 timeRange === range.value
                   ? "bg-primary text-white"

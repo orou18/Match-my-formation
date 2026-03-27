@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Image,
@@ -70,148 +70,25 @@ export default function MediaPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.7);
 
-  const mediaItems: MediaItem[] = [
-    {
-      id: "1",
-      name: "Thumbnail Hôtellerie",
-      type: "image",
-      url: "/images/hotellerie-thumb.jpg",
-      size: "2.4 MB",
-      dimensions: "1920x1080",
-      format: "JPEG",
-      createdAt: "2024-06-08",
-      tags: ["thumbnail", "hôtellerie", "premium"],
-      description: "Miniature pour la vidéo sur l'hôtellerie",
-      isFavorite: true,
-      metadata: {
-        resolution: "1920x1080",
-        bitrate: "8.2 Mbps",
-      },
-    },
-    {
-      id: "2",
-      name: "Introduction Tourisme Durable",
-      type: "video",
-      url: "/videos/intro-tourisme.mp4",
-      thumbnail: "/videos/video1-thumb.jpg",
-      size: "245 MB",
-      duration: "12:34",
-      dimensions: "1920x1080",
-      format: "MP4",
-      createdAt: "2024-06-10",
-      tags: ["tourisme", "durable", "intro"],
-      description: "Vidéo d'introduction au tourisme durable",
-      isFavorite: true,
-      metadata: {
-        resolution: "1920x1080",
-        bitrate: "4.5 Mbps",
-        fps: "30",
-        codec: "H.264",
-      },
-    },
-    {
-      id: "3",
-      name: "Musique d'Ambiance",
-      type: "audio",
-      url: "/audio/ambiance.mp3",
-      size: "4.8 MB",
-      duration: "3:45",
-      format: "MP3",
-      createdAt: "2024-05-15",
-      tags: ["musique", "ambiance", "background"],
-      description: "Musique d'ambiance pour les vidéos",
-      isFavorite: false,
-      metadata: {
-        bitrate: "320 kbps",
-        codec: "MP3",
-      },
-    },
-    {
-      id: "4",
-      name: "Guide Marketing PDF",
-      type: "document",
-      url: "/documents/guide-marketing.pdf",
-      size: "1.2 MB",
-      format: "PDF",
-      createdAt: "2024-06-01",
-      tags: ["guide", "marketing", "pdf"],
-      description: "Guide complet sur le marketing digital",
-      isFavorite: false,
-      metadata: {},
-    },
-    {
-      id: "5",
-      name: "Bannière Promotion",
-      type: "image",
-      url: "/images/banner-promo.jpg",
-      size: "856 KB",
-      dimensions: "1200x400",
-      format: "PNG",
-      createdAt: "2024-06-12",
-      tags: ["bannière", "promotion", "marketing"],
-      description: "Bannière pour la promotion des formations",
-      isFavorite: false,
-      metadata: {
-        resolution: "1200x400",
-        bitrate: "2.1 Mbps",
-      },
-    },
-    {
-      id: "6",
-      name: "Témoignage Client",
-      type: "video",
-      url: "/videos/temoignage.mp4",
-      thumbnail: "/videos/temoignage-thumb.jpg",
-      size: "156 MB",
-      duration: "8:22",
-      dimensions: "1920x1080",
-      format: "MP4",
-      createdAt: "2024-06-05",
-      tags: ["témoignage", "client", "avis"],
-      description: "Témoignage d'un client satisfait",
-      isFavorite: true,
-      metadata: {
-        resolution: "1920x1080",
-        bitrate: "3.8 Mbps",
-        fps: "30",
-        codec: "H.264",
-      },
-    },
-    {
-      id: "7",
-      name: "Logo Formation",
-      type: "image",
-      url: "/images/logo-formation.png",
-      size: "245 KB",
-      dimensions: "512x512",
-      format: "PNG",
-      createdAt: "2024-05-20",
-      tags: ["logo", "formation", "branding"],
-      description: "Logo pour les formations",
-      isFavorite: false,
-      metadata: {
-        resolution: "512x512",
-        bitrate: "1.2 Mbps",
-      },
-    },
-    {
-      id: "8",
-      name: "Podcast Tourisme",
-      type: "audio",
-      url: "/audio/podcast-tourisme.mp3",
-      size: "12.3 MB",
-      duration: "25:30",
-      format: "MP3",
-      createdAt: "2024-06-14",
-      tags: ["podcast", "tourisme", "audio"],
-      description: "Podcast sur les tendances du tourisme",
-      isFavorite: false,
-      metadata: {
-        bitrate: "320 kbps",
-        codec: "MP3",
-      },
-    },
-  ];
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+
+  useEffect(() => {
+    const loadItems = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
+      const response = await fetch("/api/creator/media", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMediaItems(data.items || []);
+      }
+    };
+
+    loadItems();
+  }, []);
 
   const filteredItems = mediaItems.filter((item) => {
     const matchesSearch =
@@ -283,7 +160,23 @@ export default function MediaPage() {
   };
 
   const toggleFavorite = (itemId: string) => {
-    console.log(`Toggle favorite for item ${itemId}`);
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("token")
+        : null;
+    setMediaItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, isFavorite: !item.isFavorite } : item
+      )
+    );
+    fetch("/api/creator/media", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ id: itemId }),
+    });
   };
 
   const openPreview = (item: MediaItem) => {

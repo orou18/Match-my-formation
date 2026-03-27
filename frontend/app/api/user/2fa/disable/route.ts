@@ -1,25 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getUserIdFromToken } from "@/lib/auth";
+import { updateUserSecurity } from "@/lib/server/account-store";
+
+type SessionUser = {
+  id?: string | number;
+};
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const userId = getUserIdFromToken(request);
+    const session = userId ? null : await getServerSession(authOptions);
+    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
 
-    if (!session?.user) {
+    if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    // Mock 2FA disable - Remplacer par votre logique réelle
-    console.log("Désactivation 2FA pour:", session.user?.email);
+    updateUserSecurity(String(finalUserId), {
+      twoFactorEnabled: false,
+    });
 
-    // Simuler la désactivation du 2FA
     return NextResponse.json({
       message: "2FA désactivé avec succès",
       twoFactorEnabled: false,
     });
-  } catch (error) {
-    console.error("Erreur lors de la désactivation 2FA:", error);
+  } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

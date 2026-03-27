@@ -53,6 +53,10 @@ interface NotificationSettings {
 
 export default function NotificationsPage() {
   const { data: session } = useSession();
+  const accessToken =
+    ((session?.user as { accessToken?: string } | undefined)?.accessToken ||
+      (typeof window !== "undefined" ? localStorage.getItem("token") : "") ||
+      "");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,7 +78,7 @@ export default function NotificationsPage() {
       if (session?.user) {
         const response = await fetch("/api/user/notifications", {
           headers: {
-            Authorization: `Bearer ${(session.user as any)?.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
         });
@@ -82,65 +86,6 @@ export default function NotificationsPage() {
         if (response.ok) {
           const data = await response.json();
           setNotifications(data);
-        } else {
-          // Données mockées
-          setNotifications([
-            {
-              id: "1",
-              title: "Nouveau cours disponible",
-              message:
-                "React Avancé est maintenant disponible dans votre parcours",
-              type: "info",
-              category: "course",
-              isRead: false,
-              createdAt: "2024-06-18T10:30:00Z",
-              actionUrl: "/courses/react-advanced",
-              metadata: {
-                courseName: "React Avancé",
-                instructor: "Jean Dupont",
-              },
-            },
-            {
-              id: "2",
-              title: "Félicitations !",
-              message: "Vous avez terminé le cours TypeScript avec succès",
-              type: "success",
-              category: "achievement",
-              isRead: false,
-              createdAt: "2024-06-17T15:45:00Z",
-              metadata: { courseName: "TypeScript" },
-            },
-            {
-              id: "3",
-              title: "Message de votre instructeur",
-              message:
-                "Bonjour ! J'ai regardé votre dernier exercice, excellent travail.",
-              type: "info",
-              category: "message",
-              isRead: true,
-              createdAt: "2024-06-16T09:20:00Z",
-              metadata: { instructor: "Marie Curie" },
-            },
-            {
-              id: "4",
-              title: "Maintenance système",
-              message: "La plateforme sera en maintenance demain de 2h à 4h",
-              type: "warning",
-              category: "system",
-              isRead: true,
-              createdAt: "2024-06-15T14:00:00Z",
-            },
-            {
-              id: "5",
-              title: "Offre spéciale",
-              message: "-30% sur tous les cours premium cette semaine",
-              type: "info",
-              category: "marketing",
-              isRead: false,
-              createdAt: "2024-06-14T11:30:00Z",
-              metadata: { amount: "-30%" },
-            },
-          ]);
         }
       }
     } catch (error) {
@@ -155,7 +100,7 @@ export default function NotificationsPage() {
       if (session?.user) {
         const response = await fetch("/api/user/notification-settings", {
           headers: {
-            Authorization: `Bearer ${(session.user as any)?.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
         });
@@ -163,16 +108,6 @@ export default function NotificationsPage() {
         if (response.ok) {
           const data = await response.json();
           setSettings(data);
-        } else {
-          // Paramètres par défaut
-          setSettings({
-            courseAlerts: true,
-            marketingEmails: false,
-            directMessages: true,
-            systemAnnouncements: true,
-            achievementAlerts: true,
-            weeklyDigest: true,
-          });
         }
       }
     } catch (error) {
@@ -182,16 +117,14 @@ export default function NotificationsPage() {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch(
-        `/api/user/notifications/${notificationId}/read`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch("/api/user/notifications", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: notificationId, isRead: true }),
+      });
 
       if (response.ok) {
         setNotifications((prev) =>
@@ -208,16 +141,14 @@ export default function NotificationsPage() {
 
   const markAsUnread = async (notificationId: string) => {
     try {
-      const response = await fetch(
-        `/api/user/notifications/${notificationId}/unread`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch("/api/user/notifications", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: notificationId, isRead: false }),
+      });
 
       if (response.ok) {
         setNotifications((prev) =>
@@ -235,11 +166,11 @@ export default function NotificationsPage() {
   const deleteNotification = async (notificationId: string) => {
     try {
       const response = await fetch(
-        `/api/user/notifications/${notificationId}`,
+        `/api/user/notifications?id=${notificationId}`,
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
         }
@@ -256,12 +187,13 @@ export default function NotificationsPage() {
 
   const markAllAsRead = async () => {
     try {
-      const response = await fetch("/api/user/notifications/mark-all-read", {
-        method: "POST",
+      const response = await fetch("/api/user/notifications", {
+        method: "PUT",
         headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ action: "mark_all_read" }),
       });
 
       if (response.ok) {
@@ -275,10 +207,10 @@ export default function NotificationsPage() {
 
   const clearAllNotifications = async () => {
     try {
-      const response = await fetch("/api/user/notifications/clear-all", {
+      const response = await fetch("/api/user/notifications", {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
       });
@@ -297,7 +229,7 @@ export default function NotificationsPage() {
       const response = await fetch("/api/user/notification-settings", {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(newSettings),
@@ -593,7 +525,9 @@ export default function NotificationsPage() {
           <div className="flex gap-2">
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value as any)}
+              onChange={(e) =>
+                setFilter(e.target.value as "all" | "unread" | "read")
+              }
               className="px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="all">Toutes</option>

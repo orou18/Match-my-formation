@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import UserIdManager from "@/lib/user-id-manager";
 import {
@@ -47,7 +47,17 @@ interface UserProfile {
   learningTime: number;
 }
 
+type SessionUser = {
+  id?: string | number;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  accessToken?: string;
+};
+
 export default function ProfilePage() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,10 +69,10 @@ export default function ProfilePage() {
 
   const { locale } = useParams();
   const { data: session } = useSession();
+  const sessionUser = session?.user as SessionUser | undefined;
 
   // Données par défaut garanties avec UserIdManager
   const getCurrentUserId = () => {
-    const sessionUser = session?.user as any;
     if (sessionUser?.id) return sessionUser.id;
 
     const storedUserData = UserIdManager.getStoredUserData();
@@ -72,7 +82,6 @@ export default function ProfilePage() {
   };
 
   const getCurrentUserName = () => {
-    const sessionUser = session?.user as any;
     if (sessionUser?.name) return sessionUser.name;
 
     const storedUserData = UserIdManager.getStoredUserData();
@@ -82,7 +91,6 @@ export default function ProfilePage() {
   };
 
   const getCurrentUserEmail = () => {
-    const sessionUser = session?.user as any;
     if (sessionUser?.email) return sessionUser.email;
 
     const storedUserData = UserIdManager.getStoredUserData();
@@ -99,7 +107,7 @@ export default function ProfilePage() {
     bio: "Passionné par l'apprentissage et le développement personnel",
     location: "Cotonou, Bénin",
     website: "https://monportfolio.com",
-    avatar: (session?.user as any)?.image || "/temoignage.png",
+    avatar: sessionUser?.image || "/temoignage.png",
     role: "student",
     subscription: "FREE",
     level: 5,
@@ -116,7 +124,6 @@ export default function ProfilePage() {
     const loadUserData = async () => {
       try {
         // Utiliser directement les données par défaut pour éviter les erreurs 401
-        console.log("Chargement du profil avec données par défaut...");
         setUser(defaultUser);
         setIsLoading(false);
 
@@ -147,7 +154,7 @@ export default function ProfilePage() {
 
             setUser(userProfile);
           }
-        } catch (apiError) {
+        } catch {
           console.log("API non disponible, utilisation des données par défaut");
         }
       } catch (error) {
@@ -159,7 +166,7 @@ export default function ProfilePage() {
     };
 
     loadUserData();
-  }, [session]);
+  }, [defaultUser]);
 
   const handleEdit = () => {
     setEditedUser({
@@ -209,7 +216,7 @@ export default function ProfilePage() {
         const response = await fetch("/api/user/profile", {
           method: "PUT",
           headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+            Authorization: `Bearer ${sessionUser?.accessToken || localStorage.getItem("token") || ""}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(editedUser),
@@ -219,7 +226,7 @@ export default function ProfilePage() {
           const apiUpdatedUser = await response.json();
           setUser(apiUpdatedUser);
         }
-      } catch (apiError) {
+      } catch {
         console.log("Sauvegarde API échouée, données locales conservées");
       }
     } catch (error) {
@@ -241,6 +248,50 @@ export default function ProfilePage() {
 
   const handleInputChange = (field: string, value: string) => {
     setEditedUser((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAvatarUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const token =
+        sessionUser?.accessToken || localStorage.getItem("token") || "";
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const response = await fetch("/api/user/upload-avatar", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        setSaveMessage({
+          type: "error",
+          message: "Impossible de mettre à jour l'avatar",
+        });
+        return;
+      }
+
+      const payload = await response.json();
+      setUser((prev) =>
+        prev ? { ...prev, avatar: payload.avatarUrl || prev.avatar } : prev
+      );
+      setSaveMessage({
+        type: "success",
+        message: "Photo de profil mise à jour",
+      });
+    } catch {
+      setSaveMessage({
+        type: "error",
+        message: "Erreur lors de l'envoi de l'image",
+      });
+    }
   };
 
   if (isLoading) {
@@ -434,7 +485,7 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h2 className="text-lg font-bold text-[#002B24] mb-6 flex items-center gap-3">
                 <BookOpen className="w-6 h-6 text-[#004D40]" />
-                Statistiques d'Apprentissage
+                Statistiques d&apos;Apprentissage
               </h2>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -482,7 +533,17 @@ export default function ProfilePage() {
                   className="w-full h-full rounded-full object-cover border-4 border-gray-50"
                 />
               </div>
-              <button className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors"
+              >
                 <Camera size={18} />
                 Changer la photo
               </button>
@@ -514,7 +575,7 @@ export default function ProfilePage() {
 
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span>Temps d'apprentissage</span>
+                    <span>Temps d&apos;apprentissage</span>
                     <span>{currentUser.learningTime}h</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -543,9 +604,12 @@ export default function ProfilePage() {
                   Membre depuis {currentUser.joinDate}
                 </div>
               </div>
-              <button className="w-full bg-white/20 backdrop-blur text-white px-6 py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white/30 transition-colors border border-white/30 font-medium">
+              <button
+                onClick={() => router.push(`/${locale}/dashboard/creator/become`)}
+                className="w-full bg-white/20 backdrop-blur text-white px-6 py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white/30 transition-colors border border-white/30 font-medium"
+              >
                 <Sparkles className="w-5 h-5" />
-                Passer à Premium
+                Demander un accès créateur
               </button>
             </div>
           </div>

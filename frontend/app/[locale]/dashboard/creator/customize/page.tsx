@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   Palette,
   Layout,
@@ -12,7 +12,6 @@ import {
   Download,
   Upload,
   Settings,
-  Sparkles,
   Grid3X3,
   List,
   BarChart3,
@@ -53,9 +52,7 @@ interface DashboardSettings {
 }
 
 export default function CustomizeDashboard() {
-  const router = useRouter();
-  const params = useParams();
-  const locale = params.locale || "fr";
+  useParams();
 
   const [settings, setSettings] = useState<DashboardSettings>({
     theme: {
@@ -90,6 +87,14 @@ export default function CustomizeDashboard() {
   const { notifications, success, error, removeNotification } =
     useSimpleNotification();
 
+  const getAuthHeaders = () => {
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("token")
+        : null;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   const colorPresets = [
     { name: "Bleu Professionnel", primary: "#3B82F6", secondary: "#8B5CF6" },
     { name: "Vert Nature", primary: "#10B981", secondary: "#34D399" },
@@ -102,18 +107,25 @@ export default function CustomizeDashboard() {
     setIsLoading(true);
 
     try {
-      // Simuler la sauvegarde des parametres
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await fetch("/api/creator/customize", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(settings),
+      });
 
-      // Sauvegarder dans localStorage pour la demo
-      localStorage.setItem("dashboardSettings", JSON.stringify(settings));
+      if (!response.ok) {
+        throw new Error("Erreur de sauvegarde");
+      }
 
       success(
         "Parametres importes",
         "Vos parametres ont ete appliques avec succes"
       );
       setPreviewMode(false);
-    } catch (err) {
+    } catch {
       error(
         "Erreur de sauvegarde",
         "Une erreur est survenue lors de la sauvegarde"
@@ -123,7 +135,7 @@ export default function CustomizeDashboard() {
     }
   };
 
-  const handleResetSettings = () => {
+  const handleResetSettings = async () => {
     const defaultSettings: DashboardSettings = {
       theme: {
         primaryColor: "#3B82F6",
@@ -151,7 +163,21 @@ export default function CustomizeDashboard() {
     };
 
     setSettings(defaultSettings);
-    localStorage.setItem("dashboardSettings", JSON.stringify(defaultSettings));
+    try {
+      await fetch("/api/creator/customize", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(defaultSettings),
+      });
+    } catch (resetError) {
+      console.error(
+        "Erreur lors de la reinitialisation des parametres:",
+        resetError
+      );
+    }
     success(
       "Parametres reinitialises",
       "Les parametres par defaut ont ete appliques"
@@ -186,7 +212,7 @@ export default function CustomizeDashboard() {
           "Parametres importes",
           "Vos parametres ont ete appliques avec succes"
         );
-      } catch (err) {
+      } catch {
         error("Erreur d'import", "Le fichier de parametres est invalide");
       }
     };
@@ -194,15 +220,21 @@ export default function CustomizeDashboard() {
   };
 
   useEffect(() => {
-    // Charger les parametres sauvegardes
-    const savedSettings = localStorage.getItem("dashboardSettings");
-    if (savedSettings) {
+    const fetchSettings = async () => {
       try {
-        setSettings(JSON.parse(savedSettings));
+        const response = await fetch("/api/creator/customize", {
+          headers: getAuthHeaders(),
+        });
+        const data = await response.json();
+        if (response.ok && data.settings) {
+          setSettings(data.settings);
+        }
       } catch (error) {
         console.error("Erreur lors du chargement des parametres:", error);
       }
-    }
+    };
+
+    fetchSettings();
   }, []);
 
   return (
@@ -217,7 +249,8 @@ export default function CustomizeDashboard() {
                 <span>Personnaliser le Dashboard</span>
               </h1>
               <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                Configurez l'apparence et les fonctionnalités de votre espace
+                Configurez l&apos;apparence et les fonctionnalités de votre
+                espace
               </p>
             </div>
 
@@ -377,7 +410,10 @@ export default function CustomizeDashboard() {
                                 ...settings,
                                 theme: {
                                   ...settings.theme,
-                                  cardStyle: style.value as any,
+                                  cardStyle: style.value as
+                                    | "modern"
+                                    | "classic"
+                                    | "minimal",
                                 },
                               })
                             }
@@ -426,7 +462,9 @@ export default function CustomizeDashboard() {
                                 ...settings,
                                 layout: {
                                   ...settings.layout,
-                                  sidebarPosition: position.value as any,
+                                  sidebarPosition: position.value as
+                                    | "left"
+                                    | "right",
                                 },
                               })
                             }
@@ -458,7 +496,7 @@ export default function CustomizeDashboard() {
                                 ...settings,
                                 layout: {
                                   ...settings.layout,
-                                  defaultView: view.value as any,
+                                  defaultView: view.value as "grid" | "list",
                                 },
                               })
                             }

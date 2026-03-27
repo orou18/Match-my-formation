@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -68,109 +68,27 @@ export default function SchedulePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const scheduledContent: ScheduledContent[] = [
-    {
-      id: "1",
-      title: "Webinaire : Marketing Tourisme",
-      type: "live",
-      thumbnail: "/videos/webinar-thumb.jpg",
-      scheduledDate: "2024-06-20",
-      scheduledTime: "15:00",
-      duration: "1h30",
-      platform: ["YouTube", "MessageCircle", "Users"],
-      status: "scheduled",
-      visibility: "public",
-      expectedViews: 500,
-      description:
-        "Webinaire interactif sur les stratégies marketing dans le tourisme",
-      tags: ["webinaire", "marketing", "tourisme"],
-      reminders: [
-        { type: "email", time: "1h avant", enabled: true },
-        { type: "push", time: "15min avant", enabled: true },
-      ],
-    },
-    {
-      id: "2",
-      title: "Nouvelle vidéo : Service Client",
-      type: "video",
-      thumbnail: "/videos/service-client-thumb.jpg",
-      scheduledDate: "2024-06-22",
-      scheduledTime: "10:00",
-      duration: "22:10",
-      platform: ["YouTube", "TikTok"],
-      status: "scheduled",
-      visibility: "public",
-      expectedViews: 2500,
-      description:
-        "Nouvelle vidéo sur les meilleures pratiques du service client",
-      tags: ["service client", "hôtellerie", "formation"],
-      isRecurring: true,
-      recurrencePattern: "Chaque semaine",
-      reminders: [
-        { type: "email", time: "1h avant", enabled: true },
-        { type: "push", time: "15min avant", enabled: true },
-      ],
-    },
-    {
-      id: "3",
-      title: "Première : Formation Avancée",
-      type: "premiere",
-      thumbnail: "/videos/premiere-thumb.jpg",
-      scheduledDate: "2024-06-25",
-      scheduledTime: "18:00",
-      duration: "45:00",
-      platform: ["YouTube"],
-      status: "scheduled",
-      visibility: "public",
-      expectedViews: 1000,
-      description: "Première diffusion de notre nouvelle formation avancée",
-      tags: ["premiere", "formation", "avancé"],
-      reminders: [
-        { type: "email", time: "2h avant", enabled: true },
-        { type: "push", time: "30min avant", enabled: true },
-      ],
-    },
-    {
-      id: "4",
-      title: "Live Q&A Tourisme",
-      type: "live",
-      thumbnail: "/videos/qa-thumb.jpg",
-      scheduledDate: "2024-06-18",
-      scheduledTime: "14:00",
-      duration: "1h00",
-      platform: ["Instagram", "YouTube"],
-      status: "completed",
-      visibility: "public",
-      expectedViews: 300,
-      actualViews: 456,
-      description: "Session de questions-réponses sur le tourisme",
-      tags: ["live", "qa", "tourisme"],
-      reminders: [
-        { type: "email", time: "2h avant", enabled: true },
-        { type: "push", time: "30min avant", enabled: true },
-      ],
-    },
-    {
-      id: "5",
-      title: "Tutoriel : Réservation Hôtelière",
-      type: "video",
-      thumbnail: "/videos/tutorial-thumb.jpg",
-      scheduledDate: "2024-06-15",
-      scheduledTime: "09:00",
-      duration: "18:45",
-      platform: ["YouTube", "MessageCircle"],
-      status: "completed",
-      visibility: "public",
-      expectedViews: 1500,
-      actualViews: 2234,
-      description: "Tutoriel complet sur les systèmes de réservation hôtelière",
-      tags: ["tutoriel", "réservation", "hôtellerie"],
-      reminders: [
-        { type: "email", time: "1h avant", enabled: true },
-        { type: "push", time: "15min avant", enabled: true },
-      ],
-    },
-  ];
+  const [scheduledContent, setScheduledContent] = useState<ScheduledContent[]>(
+    []
+  );
+
+  useEffect(() => {
+    const loadItems = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
+      const response = await fetch("/api/creator/schedule", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const payload = await response.json();
+      if (response.ok) {
+        setScheduledContent(payload.items || []);
+      }
+    };
+
+    loadItems();
+  }, []);
 
   const filteredContent = scheduledContent.filter((content) => {
     const matchesSearch =

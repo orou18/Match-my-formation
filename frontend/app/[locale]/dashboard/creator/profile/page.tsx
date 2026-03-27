@@ -2,23 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Edit,
-  Save,
-  X,
-  Camera,
-  Shield,
-  CreditCard,
-  Bell,
-  Globe,
-  Lock,
-  Settings,
-} from "lucide-react";
+import { User, Calendar, Edit, Save, X, Camera, Settings } from "lucide-react";
 
 interface UserProfile {
   id: number;
@@ -46,6 +30,14 @@ export default function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
+  const getAuthHeaders = () => {
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("token")
+        : null;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   // Générer les initiales du nom
   const getInitials = (name: string) => {
     return name
@@ -58,17 +50,10 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const token = localStorage.getItem("token");
-      const userRole = localStorage.getItem("userRole");
-
-      // Récupérer les données depuis localStorage en fallback
-      const storedName = localStorage.getItem("userName") || "";
-      const storedEmail = localStorage.getItem("userEmail") || "";
-
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/creator/profile", {
+        const res = await fetch("/api/creator/profile", {
           headers: {
-            Authorization: `Bearer ${token}`,
+            ...getAuthHeaders(),
             Accept: "application/json",
           },
         });
@@ -78,52 +63,9 @@ export default function ProfilePage() {
           setProfile(data);
           setFormData(data);
           setAvatarPreview(data.avatar || "");
-        } else {
-          // Fallback avec données localStorage
-          const fallbackProfile: UserProfile = {
-            id: 1,
-            name: storedName || "Creator Name",
-            email: storedEmail || "creator@match.com",
-            phone: "",
-            bio: "",
-            location: "",
-            website: "",
-            avatar: "",
-            created_at: new Date().toISOString(),
-            settings: {
-              email_notifications: true,
-              push_notifications: true,
-              public_profile: true,
-              language: "fr",
-            },
-          };
-          setProfile(fallbackProfile);
-          setFormData(fallbackProfile);
-          setAvatarPreview(fallbackProfile.avatar || "");
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
-        // Fallback garanti avec données localStorage
-        const fallbackProfile: UserProfile = {
-          id: 1,
-          name: storedName || "Creator Name",
-          email: storedEmail || "creator@match.com",
-          phone: "",
-          bio: "",
-          location: "",
-          website: "",
-          avatar: "",
-          created_at: new Date().toISOString(),
-          settings: {
-            email_notifications: true,
-            push_notifications: true,
-            public_profile: true,
-            language: "fr",
-          },
-        };
-        setProfile(fallbackProfile);
-        setFormData(fallbackProfile);
-        setAvatarPreview(fallbackProfile.avatar || "");
       } finally {
         setLoading(false);
       }
@@ -138,29 +80,36 @@ export default function ProfilePage() {
     if (!file) return;
 
     setUploadingAvatar(true);
-    const reader = new FileReader();
+    const uploadData = new FormData();
+    uploadData.append("avatar", file);
 
-    reader.onload = async (event) => {
-      const preview = event.target?.result as string;
-      setAvatarPreview(preview);
+    try {
+      const response = await fetch("/api/user/upload-avatar", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: uploadData,
+      });
+      const data = await response.json();
 
-      // Simulation d'upload
-      setTimeout(() => {
-        setFormData((prev) => ({ ...prev, avatar: preview }));
-        setUploadingAvatar(false);
-      }, 1000);
-    };
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors de l'upload");
+      }
 
-    reader.readAsDataURL(file);
+      setAvatarPreview(data.avatarUrl);
+      setFormData((prev) => ({ ...prev, avatar: data.avatarUrl }));
+    } catch (error) {
+      console.error("Error uploading creator avatar:", error);
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const handleSave = async () => {
-    const token = localStorage.getItem("token");
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/creator/profile", {
+      const res = await fetch("/api/creator/profile", {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...getAuthHeaders(),
           "Content-Type": "application/json",
           Accept: "application/json",
         },
@@ -172,61 +121,10 @@ export default function ProfilePage() {
         setProfile(updatedProfile);
         setFormData(updatedProfile);
         setAvatarPreview(updatedProfile.avatar || "");
-
-        // Mettre à jour localStorage
-        localStorage.setItem("userName", updatedProfile.name);
-        localStorage.setItem("userEmail", updatedProfile.email);
-
-        setEditing(false);
-      } else {
-        // Fallback local
-        const updatedProfile: UserProfile = {
-          ...profile!,
-          ...formData,
-          avatar: avatarPreview,
-          id: profile?.id || 1,
-          created_at: profile?.created_at || new Date().toISOString(),
-          settings: {
-            email_notifications: formData.settings?.email_notifications ?? true,
-            push_notifications: formData.settings?.push_notifications ?? true,
-            public_profile: formData.settings?.public_profile ?? true,
-            language: formData.settings?.language ?? "fr",
-          },
-        };
-        setProfile(updatedProfile);
-        setFormData(updatedProfile);
-
-        // Mettre à jour localStorage
-        localStorage.setItem("userName", updatedProfile.name);
-        localStorage.setItem("userEmail", updatedProfile.email);
-
         setEditing(false);
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      // Fallback garanti
-      const updatedProfile: UserProfile = {
-        ...profile!,
-        ...formData,
-        avatar: avatarPreview,
-        id: profile?.id || 1,
-        created_at: profile?.created_at || new Date().toISOString(),
-        settings: formData.settings ||
-          profile?.settings || {
-            email_notifications: true,
-            push_notifications: true,
-            public_profile: true,
-            language: "fr",
-          },
-      };
-      setProfile(updatedProfile);
-      setFormData(updatedProfile);
-
-      // Mettre à jour localStorage
-      localStorage.setItem("userName", updatedProfile.name);
-      localStorage.setItem("userEmail", updatedProfile.email);
-
-      setEditing(false);
     }
   };
 

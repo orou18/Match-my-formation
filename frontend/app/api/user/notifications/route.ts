@@ -1,74 +1,126 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getRoleFromToken, getUserIdFromToken } from "@/lib/auth";
+import {
+  findAccountById,
+  getUserNotifications,
+  saveUserNotifications,
+} from "@/lib/server/account-store";
 
-// GET - Récupérer les notifications
+type SessionUser = {
+  id?: string | number;
+  role?: string;
+};
+
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const userId = getUserIdFromToken(request);
+    const session = userId ? null : await getServerSession(authOptions);
+    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    const role =
+      getRoleFromToken(request) ||
+      (session?.user as SessionUser | undefined)?.role ||
+      "student";
 
-    if (!session?.user) {
+    if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    // Mock notifications - Remplacer par appel à votre base de données
-    const notifications = [
-      {
-        id: "1",
-        title: "Nouveau cours disponible",
-        message: "React Avancé est maintenant disponible dans votre parcours",
-        type: "info" as const,
-        category: "course" as const,
-        isRead: false,
-        createdAt: "2024-06-18T10:30:00Z",
-        actionUrl: "/courses/react-advanced",
-        metadata: { courseName: "React Avancé", instructor: "Jean Dupont" },
-      },
-      {
-        id: "2",
-        title: "Félicitations !",
-        message: "Vous avez terminé le cours TypeScript avec succès",
-        type: "success" as const,
-        category: "achievement" as const,
-        isRead: false,
-        createdAt: "2024-06-17T15:45:00Z",
-        metadata: { courseName: "TypeScript" },
-      },
-      {
-        id: "3",
-        title: "Message de votre instructeur",
-        message:
-          "Bonjour ! J'ai regardé votre dernier exercice, excellent travail.",
-        type: "info" as const,
-        category: "message" as const,
-        isRead: true,
-        createdAt: "2024-06-16T09:20:00Z",
-        metadata: { instructor: "Marie Curie" },
-      },
-      {
-        id: "4",
-        title: "Maintenance système",
-        message: "La plateforme sera en maintenance demain de 2h à 4h",
-        type: "warning" as const,
-        category: "system" as const,
-        isRead: true,
-        createdAt: "2024-06-15T14:00:00Z",
-      },
-      {
-        id: "5",
-        title: "Offre spéciale",
-        message: "-30% sur tous les cours premium cette semaine",
-        type: "info" as const,
-        category: "marketing" as const,
-        isRead: false,
-        createdAt: "2024-06-14T11:30:00Z",
-        metadata: { amount: "-30%" },
-      },
-    ];
-
-    return NextResponse.json(notifications);
+    const account = findAccountById(String(finalUserId));
+    return NextResponse.json(
+      getUserNotifications(
+        String(finalUserId),
+        (account?.role || role) as
+          | "student"
+          | "creator"
+          | "admin"
+          | "super_admin"
+          | "employee"
+      )
+    );
   } catch (error) {
     console.error("Erreur lors de la récupération des notifications:", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const userId = getUserIdFromToken(request);
+    const session = userId ? null : await getServerSession(authOptions);
+    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    if (!finalUserId) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const account = findAccountById(String(finalUserId));
+    const notifications = getUserNotifications(
+      String(finalUserId),
+      (account?.role || "student") as
+        | "student"
+        | "creator"
+        | "admin"
+        | "super_admin"
+        | "employee"
+    );
+
+    if (body.action === "mark_all_read") {
+      return NextResponse.json(
+        saveUserNotifications(
+          String(finalUserId),
+          notifications.map((notification) => ({
+            ...notification,
+            isRead: true,
+          }))
+        )
+      );
+    }
+
+    if (!body.id) {
+      return NextResponse.json({ error: "ID notification requis" }, { status: 400 });
+    }
+
+    return NextResponse.json(
+      saveUserNotifications(
+        String(finalUserId),
+        notifications.map((notification) =>
+          notification.id === String(body.id)
+            ? { ...notification, isRead: body.isRead ?? true }
+            : notification
+        )
+      )
+    );
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const userId = getUserIdFromToken(request);
+    const session = userId ? null : await getServerSession(authOptions);
+    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    if (!finalUserId) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const notificationId = searchParams.get("id");
+    const notifications = getUserNotifications(String(finalUserId), "student");
+
+    if (!notificationId) {
+      return NextResponse.json(saveUserNotifications(String(finalUserId), []));
+    }
+
+    return NextResponse.json(
+      saveUserNotifications(
+        String(finalUserId),
+        notifications.filter((notification) => notification.id !== notificationId)
+      )
+    );
+  } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

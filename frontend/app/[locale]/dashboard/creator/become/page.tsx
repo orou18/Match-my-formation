@@ -2,27 +2,74 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import UserIdManager from "@/lib/user-id-manager";
 import {
   User,
-  Building,
   Briefcase,
-  Award,
   CheckCircle,
-  ArrowRight,
 } from "lucide-react";
 
 export default function BecomeCreatorPage() {
+  const params = useParams<{ locale?: string }>();
+  const router = useRouter();
+  const locale = typeof params?.locale === "string" ? params.locale : "fr";
   const [formData, setFormData] = useState({
     companyName: "",
     specialization: "",
     description: "",
     website: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call
-    console.log("Form submitted:", formData);
+    const user = UserIdManager.getStoredUserData();
+    const token = localStorage.getItem("token");
+
+    if (!user || !token) {
+      setStatusMessage("Vous devez être connecté en tant qu'étudiant.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatusMessage(null);
+
+    try {
+      const response = await fetch("/api/admin/creator-applications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          studentName: user.name,
+          studentEmail: user.email,
+          motivation: formData.description,
+          expertise: formData.companyName,
+          category: formData.specialization || "general",
+          website: formData.website,
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        setStatusMessage(payload.error || "Impossible d'envoyer la demande.");
+        return;
+      }
+
+      setStatusMessage(
+        "Votre demande a bien été envoyée à l'administration. Vous recevrez vos accès créateur après validation."
+      );
+      setTimeout(() => {
+        router.push(`/${locale}/dashboard/student/profile`);
+      }, 1500);
+    } catch {
+      setStatusMessage("Une erreur technique est survenue.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -38,7 +85,7 @@ export default function BecomeCreatorPage() {
           </h1>
           <p className="text-xl text-white/80 max-w-2xl mx-auto">
             Rejoignez notre communauté de créateurs et partagez votre expertise
-            avec des milliers d'apprenants
+            avec des milliers d&apos;apprenants
           </p>
         </motion.div>
 
@@ -57,7 +104,7 @@ export default function BecomeCreatorPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nom de l'entreprise
+                  Nom de l&apos;entreprise
                 </label>
                 <input
                   type="text"
@@ -123,11 +170,20 @@ export default function BecomeCreatorPage() {
 
               <button
                 type="submit"
-                className="w-full bg-primary text-white py-4 rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className="w-full bg-primary text-white py-4 rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 <CheckCircle className="w-5 h-5" />
-                Créer mon profil créateur
+                {isSubmitting
+                  ? "Envoi de la demande..."
+                  : "Envoyer ma demande créateur"}
               </button>
+
+              {statusMessage ? (
+                <p className="text-sm text-center text-gray-600">
+                  {statusMessage}
+                </p>
+              ) : null}
             </form>
           </motion.div>
 
@@ -150,7 +206,7 @@ export default function BecomeCreatorPage() {
               <ul className="space-y-4 text-white/90">
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-1" />
-                  <span>Accès à des milliers d'apprenants potentiels</span>
+                  <span>Accès à des milliers d&apos;apprenants potentiels</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-1" />

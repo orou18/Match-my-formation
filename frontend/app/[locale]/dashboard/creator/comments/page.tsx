@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   MessageSquare,
@@ -49,109 +49,25 @@ export default function CommentsPage() {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedComments, setSelectedComments] = useState<string[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
 
-  const comments: Comment[] = [
-    {
-      id: "1",
-      user: {
-        name: "Marie Dubois",
-        avatar: "/avatars/user1.jpg",
-        subscribers: 1250,
-      },
-      content:
-        "Excellent contenu ! J'ai beaucoup appris sur les pratiques durables en tourisme. Pourriez-vous faire un suivi sur les certifications écologiques ?",
-      video: {
-        title: "Introduction au Tourisme Durable",
-        thumbnail: "/videos/video1-thumb.jpg",
-        id: "1",
-      },
-      timestamp: "Il y a 2 heures",
-      likes: 24,
-      replies: 3,
-      status: "published",
-      sentiment: "positive",
-      isPinned: true,
-    },
-    {
-      id: "2",
-      user: {
-        name: "Jean Martin",
-        avatar: "/avatars/user2.jpg",
-        subscribers: 850,
-      },
-      content:
-        "Les explications sont claires mais j'aimerais voir plus d'exemples concrets de mise en œuvre dans des hôtels réels.",
-      video: {
-        title: "Gestion Hôtelière Avancée",
-        thumbnail: "/videos/video2-thumb.jpg",
-        id: "2",
-      },
-      timestamp: "Il y a 4 heures",
-      likes: 12,
-      replies: 1,
-      status: "published",
-      sentiment: "neutral",
-    },
-    {
-      id: "3",
-      user: {
-        name: "Sophie Laurent",
-        avatar: "/avatars/user3.jpg",
-        subscribers: 2100,
-      },
-      content:
-        "Merci beaucoup ! Ces conseils m'ont permis d'améliorer mon service client de 40%. Mon taux de satisfaction est passé de 3.2 à 4.8 étoiles !",
-      video: {
-        title: "Service Client d'Excellence",
-        thumbnail: "/videos/video3-thumb.jpg",
-        id: "3",
-      },
-      timestamp: "Il y a 6 heures",
-      likes: 48,
-      replies: 5,
-      status: "published",
-      sentiment: "positive",
-    },
-    {
-      id: "4",
-      user: {
-        name: "Pierre Bernard",
-        avatar: "/avatars/user4.jpg",
-        subscribers: 320,
-      },
-      content:
-        "Le son est un peu faible dans cette vidéo, serait-il possible d'améliorer l'audio pour les prochaines vidéos ?",
-      video: {
-        title: "Marketing Digital pour le Tourisme",
-        thumbnail: "/videos/video4-thumb.jpg",
-        id: "4",
-      },
-      timestamp: "Il y a 8 heures",
-      likes: 8,
-      replies: 2,
-      status: "published",
-      sentiment: "neutral",
-    },
-    {
-      id: "5",
-      user: {
-        name: "Utilisateur spam",
-        avatar: "/avatars/spam.jpg",
-        subscribers: 0,
-      },
-      content: "Achetez mes produits ! Liens dans la description !!!",
-      video: {
-        title: "Introduction au Tourisme Durable",
-        thumbnail: "/videos/video1-thumb.jpg",
-        id: "1",
-      },
-      timestamp: "Il y a 12 heures",
-      likes: 0,
-      replies: 0,
-      status: "spam",
-      sentiment: "negative",
-    },
-  ];
+  useEffect(() => {
+    const loadComments = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
+      const response = await fetch("/api/creator/comments", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setComments(data.comments || []);
+      }
+    };
+
+    loadComments();
+  }, []);
 
   const filteredComments = comments.filter((comment) => {
     const matchesSearch =
@@ -210,7 +126,61 @@ export default function CommentsPage() {
   };
 
   const handleCommentAction = (action: string, commentId: string) => {
-    console.log(`Action ${action} on comment ${commentId}`);
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("token")
+        : null;
+
+    if (action === "delete") {
+      fetch(`/api/creator/comments?id=${commentId}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }).then(() =>
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment.id === commentId
+              ? { ...comment, status: "deleted" }
+              : comment
+          )
+        )
+      );
+      return;
+    }
+
+    const status =
+      action === "approve"
+        ? "published"
+        : action === "spam"
+          ? "spam"
+          : undefined;
+
+    fetch("/api/creator/comments", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        id: commentId,
+        status,
+        action: action === "like" ? "like" : undefined,
+      }),
+    }).then(() =>
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                status:
+                  status === "published" || status === "spam"
+                    ? status
+                    : comment.status,
+                likes: action === "like" ? comment.likes + 1 : comment.likes,
+              }
+            : comment
+        )
+      )
+    );
   };
 
   const toggleCommentSelection = (commentId: string) => {
@@ -379,13 +349,34 @@ export default function CommentsPage() {
                 {selectedComments.length} commentaire(s) sélectionné(s)
               </span>
               <div className="flex gap-2">
-                <button className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600">
+                <button
+                  onClick={() =>
+                    selectedComments.forEach((id) =>
+                      handleCommentAction("approve", id)
+                    )
+                  }
+                  className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600"
+                >
                   Approuver
                 </button>
-                <button className="px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600">
+                <button
+                  onClick={() =>
+                    selectedComments.forEach((id) =>
+                      handleCommentAction("delete", id)
+                    )
+                  }
+                  className="px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600"
+                >
                   Supprimer
                 </button>
-                <button className="px-3 py-1 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600">
+                <button
+                  onClick={() =>
+                    selectedComments.forEach((id) =>
+                      handleCommentAction("spam", id)
+                    )
+                  }
+                  className="px-3 py-1 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600"
+                >
                   Marquer comme spam
                 </button>
               </div>
@@ -476,11 +467,17 @@ export default function CommentsPage() {
                       <Reply className="w-3 h-3" />
                       Répondre
                     </button>
-                    <button className="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1">
+                    <button
+                      onClick={() => handleCommentAction("like", comment.id)}
+                      className="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1"
+                    >
                       <Heart className="w-3 h-3" />
                       Aimer
                     </button>
-                    <button className="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1">
+                    <button
+                      onClick={() => handleCommentAction("spam", comment.id)}
+                      className="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1"
+                    >
                       <Flag className="w-3 h-3" />
                       Signaler
                     </button>

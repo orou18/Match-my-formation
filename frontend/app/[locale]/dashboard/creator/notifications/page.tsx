@@ -2,21 +2,17 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Bell,
   Check,
-  X,
   Trash2,
-  Filter,
   Search,
   Calendar,
-  User,
-  Video,
-  DollarSign,
   AlertCircle,
   CheckCircle,
   Info,
-  Star,
+  X,
 } from "lucide-react";
 
 interface Notification {
@@ -39,71 +35,32 @@ export default function NotificationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    // Simuler le chargement des notifications
-    const mockNotifications: Notification[] = [
-      {
-        id: "1",
-        type: "success",
-        title: "Nouvelle inscription",
-        message:
-          "Un nouvel utilisateur s'est inscrit à votre formation 'Tourisme Durable'",
-        timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-        read: false,
-        action: {
-          label: "Voir l'inscription",
-          url: "/dashboard/creator/history",
-        },
-      },
-      {
-        id: "2",
-        type: "info",
-        title: "Mise à jour de la plateforme",
-        message:
-          "De nouvelles fonctionnalités sont disponibles dans votre dashboard creator",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-        read: false,
-      },
-      {
-        id: "3",
-        type: "warning",
-        title: "Paiement en attente",
-        message:
-          "Le paiement pour la formation 'Guide Touristique' est en cours de validation",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-        read: true,
-        action: {
-          label: "Voir les détails",
-          url: "/dashboard/creator/history",
-        },
-      },
-      {
-        id: "4",
-        type: "success",
-        title: "Formation approuvée",
-        message:
-          "Votre formation 'Hôtellerie de Luxe' a été approuvée et est maintenant en ligne",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-        read: true,
-        action: {
-          label: "Voir la formation",
-          url: "/dashboard/creator/videos",
-        },
-      },
-      {
-        id: "5",
-        type: "info",
-        title: "Nouveau commentaire",
-        message:
-          "Un utilisateur a commenté votre vidéo 'Introduction au Tourisme'",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-        read: true,
-      },
-    ];
+    const fetchNotifications = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
 
-    setTimeout(() => {
-      setNotifications(mockNotifications);
-      setLoading(false);
-    }, 1000);
+      try {
+        const response = await fetch("/api/creator/notifications", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          setNotifications(data.notifications || []);
+        }
+      } catch (error) {
+        console.error(
+          "Erreur de chargement des notifications créateur:",
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
   }, []);
 
   const getIcon = (type: Notification["type"]) => {
@@ -132,21 +89,61 @@ export default function NotificationsPage() {
     }
   };
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("token")
+        : null;
+    await fetch("/api/creator/notifications", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ id, read: true }),
+    });
     setNotifications((prev) =>
       prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif))
     );
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("token")
+        : null;
+    await fetch("/api/creator/notifications", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ action: "mark_all_read" }),
+    });
     setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
   };
 
-  const deleteNotification = (id: string) => {
+  const deleteNotification = async (id: string) => {
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("token")
+        : null;
+    await fetch(`/api/creator/notifications?id=${id}`, {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     setNotifications((prev) => prev.filter((notif) => notif.id !== id));
   };
 
-  const clearAll = () => {
+  const clearAll = async () => {
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("token")
+        : null;
+    await fetch("/api/creator/notifications", {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     setNotifications([]);
   };
 
@@ -354,12 +351,12 @@ export default function NotificationsPage() {
                     </div>
 
                     {notification.action && (
-                      <a
+                      <Link
                         href={notification.action.url}
                         className="text-sm font-medium text-primary hover:underline"
                       >
                         {notification.action.label}
-                      </a>
+                      </Link>
                     )}
                   </div>
                 </div>

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getUserIdFromToken } from "@/lib/auth";
+import { updateUserSecurity } from "@/lib/server/account-store";
+
+type SessionUser = {
+  id?: string | number;
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     // Fallback vers session NextAuth
     const session = userId ? null : await getServerSession(authOptions);
-    const finalUserId = userId || (session?.user as any)?.id;
+    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
 
     if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -23,28 +28,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Méthode invalide" }, { status: 400 });
     }
 
-    // Mock 2FA setup - Remplacer par votre logique réelle
-    console.log("CONFIGURATION 2FA RÉELLE pour l'utilisateur:", finalUserId);
-    console.log(
-      "Email:",
-      session?.user?.email || `user-${finalUserId}@match.com`
-    );
-    console.log("Méthode:", method);
-
-    // Simuler l'envoi d'un code (code de test fixe pour la démo)
     const verificationCode = "123456"; // Code de test fixe
-    console.log("Code de vérification (démo):", verificationCode);
-
-    // Dans un vrai système, vous enverriez ce code par email ou SMS
-    if (method === "email") {
-      console.log(
-        `ENVOI EMAIL: Code ${verificationCode} envoyé à ${session?.user?.email || `user-${finalUserId}@match.com`}`
-      );
-      // Simuler un envoi d'email réussi
-    } else if (method === "sms") {
-      console.log(`ENVOI SMS: Code ${verificationCode} envoyé par SMS`);
-      // Simuler un envoi SMS réussi
-    }
+    updateUserSecurity(String(finalUserId), {
+      twoFactorMethod: method,
+    });
 
     return NextResponse.json({
       message: `Code de vérification envoyé par ${method}`,

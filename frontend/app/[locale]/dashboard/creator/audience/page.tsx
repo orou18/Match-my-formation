@@ -1,9 +1,37 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, TrendingUp, Target, Eye } from "lucide-react";
 
 export default function AudiencePage() {
+  const [data, setData] = useState({
+    totalViewers: 0,
+    engagementRate: 0,
+    targetAudience: 0,
+    watchTimeHours: 0,
+    demographics: [] as Array<{ label: string; value: number }>,
+    locations: [] as Array<{ label: string; value: number }>,
+  });
+
+  useEffect(() => {
+    const loadData = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
+      const response = await fetch("/api/creator/audience", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const payload = await response.json();
+      if (response.ok && payload.data) {
+        setData(payload.data);
+      }
+    };
+
+    loadData();
+  }, []);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -17,7 +45,9 @@ export default function AudiencePage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
+            <div className="text-2xl font-bold">
+              {data.totalViewers.toLocaleString("fr-FR")}
+            </div>
             <p className="text-xs text-muted-foreground">
               +12% from last month
             </p>
@@ -32,7 +62,7 @@ export default function AudiencePage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">68%</div>
+            <div className="text-2xl font-bold">{data.engagementRate}%</div>
             <p className="text-xs text-muted-foreground">+5% from last month</p>
           </CardContent>
         </Card>
@@ -45,7 +75,9 @@ export default function AudiencePage() {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">892</div>
+            <div className="text-2xl font-bold">
+              {data.targetAudience.toLocaleString("fr-FR")}
+            </div>
             <p className="text-xs text-muted-foreground">Active learners</p>
           </CardContent>
         </Card>
@@ -56,7 +88,7 @@ export default function AudiencePage() {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45h</div>
+            <div className="text-2xl font-bold">{data.watchTimeHours}h</div>
             <p className="text-xs text-muted-foreground">This week</p>
           </CardContent>
         </Card>
@@ -69,36 +101,21 @@ export default function AudiencePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span>18-24 years</span>
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full"
-                    style={{ width: "35%" }}
-                  ></div>
+              {data.demographics.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between"
+                >
+                  <span>{item.label}</span>
+                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full"
+                      style={{ width: `${item.value}%` }}
+                    ></div>
+                  </div>
+                  <span>{item.value}%</span>
                 </div>
-                <span>35%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>25-34 years</span>
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full"
-                    style={{ width: "45%" }}
-                  ></div>
-                </div>
-                <span>45%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>35-44 years</span>
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full"
-                    style={{ width: "20%" }}
-                  ></div>
-                </div>
-                <span>20%</span>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -109,36 +126,21 @@ export default function AudiencePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span>France</span>
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-600 h-2 rounded-full"
-                    style={{ width: "60%" }}
-                  ></div>
+              {data.locations.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between"
+                >
+                  <span>{item.label}</span>
+                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-600 h-2 rounded-full"
+                      style={{ width: `${item.value}%` }}
+                    ></div>
+                  </div>
+                  <span>{item.value}%</span>
                 </div>
-                <span>60%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Canada</span>
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-600 h-2 rounded-full"
-                    style={{ width: "25%" }}
-                  ></div>
-                </div>
-                <span>25%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Belgium</span>
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-600 h-2 rounded-full"
-                    style={{ width: "15%" }}
-                  ></div>
-                </div>
-                <span>15%</span>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>

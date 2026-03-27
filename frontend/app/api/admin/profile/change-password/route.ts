@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { findAccountById, updateAccount, updateUserSecurity } from "@/lib/server/account-store";
+
+type SessionUser = {
+  id?: string | number;
+  role?: string;
+};
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || (session.user as any)?.role !== "admin") {
+    const sessionUser = session?.user as SessionUser | undefined;
+    if (!sessionUser || sessionUser.role !== "admin") {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -27,21 +34,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Simuler la vérification du mot de passe actuel
-    // En production, vous vérifieriez contre le hash stocké
-    if (currentPassword !== "Azerty123!") {
+    const account = findAccountById(String(sessionUser.id));
+    if (!account || account.password !== currentPassword) {
       return NextResponse.json(
         { error: "Mot de passe actuel incorrect" },
         { status: 400 }
       );
     }
 
-    // Simuler le changement de mot de passe
-    // En production, vous hasheriez le nouveau mot de passe et le stockeriez
-    console.log(
-      "ADMIN PROFILE - Mot de passe changé pour:",
-      (session.user as any).email
-    );
+    updateAccount(account.id, { password: newPassword });
+    updateUserSecurity(account.id, { lastPasswordChange: new Date().toISOString() });
 
     return NextResponse.json({
       message: "Mot de passe modifié avec succès",

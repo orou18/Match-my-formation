@@ -22,6 +22,8 @@ import {
   Calendar,
 } from "lucide-react";
 import { isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/video-utils";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 
 interface VideoData {
   id: string;
@@ -42,6 +44,8 @@ interface VideoData {
 }
 
 export default function VideosPage() {
+  const params = useParams<{ locale?: string }>();
+  const locale = typeof params?.locale === "string" ? params.locale : "fr";
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -259,8 +263,7 @@ export default function VideosPage() {
   };
 
   const handleEditVideo = (video: VideoData) => {
-    // Rediriger vers la page d'édition
-    window.location.href = `/fr/dashboard/creator/videos/${video.id}/edit`;
+    window.location.href = `/${locale}/dashboard/creator/videos/${video.id}/edit`;
   };
 
   const handleDeleteVideo = async (video: VideoData) => {
@@ -329,13 +332,13 @@ export default function VideosPage() {
           </p>
         </div>
 
-        <a
-          href="/fr/dashboard/creator/videos/create"
+        <Link
+          href={`/${locale}/dashboard/creator/videos/create`}
           className="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 font-medium"
         >
           <Plus className="w-5 h-5" />
           Créer une vidéo
-        </a>
+        </Link>
       </div>
 
       {/* Stats Cards */}
@@ -441,7 +444,16 @@ export default function VideosPage() {
             ].map((filterType) => (
               <button
                 key={filterType.value}
-                onClick={() => setFilter(filterType.value as any)}
+                onClick={() =>
+                  setFilter(
+                    filterType.value as
+                      | "all"
+                      | "published"
+                      | "draft"
+                      | "processing"
+                      | "archived"
+                  )
+                }
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   filter === filterType.value
                     ? "bg-primary text-white"
@@ -455,7 +467,11 @@ export default function VideosPage() {
 
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={(e) =>
+              setSortBy(
+                e.target.value as "date" | "views" | "revenue" | "title"
+              )
+            }
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
           >
             <option value="date">Date de modification</option>
@@ -514,13 +530,13 @@ export default function VideosPage() {
                 ? "Essayez de modifier votre recherche ou vos filtres"
                 : "Commencez par créer votre première vidéo"}
             </p>
-            <a
-              href="/fr/dashboard/creator/videos/create"
+            <Link
+              href={`/${locale}/dashboard/creator/videos/create`}
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium"
             >
               <Plus className="w-5 h-5" />
               Créer une vidéo
-            </a>
+            </Link>
           </div>
         ) : (
           <div className="p-6">

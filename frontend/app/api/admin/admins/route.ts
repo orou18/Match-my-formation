@@ -8,12 +8,25 @@ import {
   getAdminsStats,
   saveAdminAdmins,
 } from "@/lib/server/admin-store";
+import {
+  createStudentAccount,
+  findAccountByEmail,
+  getAccounts,
+  updateAccount,
+} from "@/lib/server/account-store";
+
+type SessionUser = {
+  id?: string | number;
+  role?: string;
+  email?: string | null;
+};
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || (session.user as any)?.role !== "admin") {
+    const sessionUser = session?.user as SessionUser | undefined;
+    if (!sessionUser || sessionUser.role !== "admin") {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -21,7 +34,24 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search");
 
     const admins = getAdminAdmins();
+    const accountAdmins = getAccounts()
+      .filter((account) => account.role === "admin" || account.role === "super_admin")
+      .map((account) => ({
+        id: account.id,
+        name: account.name,
+        email: account.email,
+        role: account.role,
+        permissions: account.permissions || [],
+        status: account.status,
+        lastLogin: account.lastLogin || "",
+        avatar: account.avatar || "/temoignage.png",
+        createdAt: account.created_at,
+      }));
     let filteredAdmins = admins;
+    filteredAdmins = [...filteredAdmins, ...accountAdmins].filter(
+      (admin, index, list) =>
+        list.findIndex((item) => item.email === admin.email) === index
+    );
 
     if (search) {
       filteredAdmins = filteredAdmins.filter(
@@ -47,7 +77,8 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || (session.user as any)?.role !== "super_admin") {
+    const sessionUser = session?.user as SessionUser | undefined;
+    if (!sessionUser || sessionUser.role !== "super_admin") {
       return NextResponse.json(
         { error: "Non autorisé - Super Admin requis" },
         { status: 401 }
@@ -55,6 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     const adminData = await request.json();
+    const role = String(adminData.role || "admin");
 
     // Validation
     if (!adminData.name || !adminData.email || !adminData.role) {
@@ -66,6 +98,12 @@ export async function POST(request: NextRequest) {
 
     // Déterminer les permissions selon le rôle
     const admins = getAdminAdmins();
+    if (findAccountByEmail(String(adminData.email))) {
+      return NextResponse.json(
+        { error: "Cet email est déjà utilisé" },
+        { status: 409 }
+      );
+    }
     if (
       admins.some(
         (admin) =>
@@ -79,6 +117,20 @@ export async function POST(request: NextRequest) {
     }
     const newAdmin = buildAdminAdmin(adminData, admins);
     saveAdminAdmins([...admins, newAdmin]);
+    createStudentAccount({
+      name: String(adminData.name),
+      email: String(adminData.email),
+      password: "AdminTemp!2026",
+    });
+    const account = findAccountByEmail(String(adminData.email));
+    if (account) {
+      updateAccount(account.id, {
+        role: role as "admin" | "super_admin",
+        status: "active",
+        permissions: newAdmin.permissions,
+        subscription: "ADMIN",
+      });
+    }
 
     return NextResponse.json(newAdmin, { status: 201 });
   } catch (error) {
@@ -91,7 +143,8 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || (session.user as any)?.role !== "super_admin") {
+    const sessionUser = session?.user as SessionUser | undefined;
+    if (!sessionUser || sessionUser.role !== "super_admin") {
       return NextResponse.json(
         { error: "Non autorisé - Super Admin requis" },
         { status: 401 }
@@ -140,7 +193,8 @@ export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || (session.user as any)?.role !== "super_admin") {
+    const sessionUser = session?.user as SessionUser | undefined;
+    if (!sessionUser || sessionUser.role !== "super_admin") {
       return NextResponse.json(
         { error: "Non autorisé - Super Admin requis" },
         { status: 401 }

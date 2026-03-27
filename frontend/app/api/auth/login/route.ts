@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { UserStore } from "@/lib/user-store";
+import {
+  ensureUserRecords,
+  findAccountByEmail,
+  updateLastLogin,
+} from "@/lib/server/account-store";
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,14 +27,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("🔑 API LOGIN - Tentative de connexion:", email);
-    console.log("👥 Utilisateurs disponibles:", UserStore.getUsers().length);
-
-    // Trouver l'utilisateur par email
-    const user = UserStore.findUserByEmail(email);
+    const user = findAccountByEmail(email);
 
     if (!user) {
-      console.log("❌ Utilisateur non trouvé:", email);
       return NextResponse.json(
         { message: "Email ou mot de passe incorrect" },
         { status: 401 }
@@ -39,38 +38,29 @@ export async function POST(request: NextRequest) {
 
     // Vérifier le mot de passe
     if (user.password !== password) {
-      console.log("❌ Mot de passe incorrect pour:", email);
       return NextResponse.json(
         { message: "Email ou mot de passe incorrect" },
         { status: 401 }
       );
     }
 
-    console.log(
-      "✅ Connexion réussie pour:",
-      email,
-      "ID:",
-      user.id,
-      "Rôle:",
-      user.role
-    );
+    updateLastLogin(user.id);
+    ensureUserRecords(user.id, user.role);
+    const token = `mock-${user.role}-token-${user.id}-${Date.now()}`;
 
-    // Générer un token JWT (simulation)
-    const token = `mock-jwt-token-${Date.now()}-${user.id}`;
-
-    // Retourner la réponse avec les données utilisateur et le token
     return NextResponse.json({
       message: "Connexion réussie",
       user: {
-        id: user.id,
+        id: Number(user.id),
         name: user.name,
         email: user.email,
         role: user.role,
+        status: user.status,
+        avatar: user.avatar || `/avatars/${user.role}.jpg`,
       },
       token,
     });
-  } catch (error) {
-    console.error("❌ Login error:", error);
+  } catch {
     return NextResponse.json(
       { message: "Erreur serveur lors de la connexion" },
       { status: 500 }

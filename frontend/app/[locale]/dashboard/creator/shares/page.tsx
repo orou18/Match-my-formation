@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Share2,
@@ -23,11 +23,12 @@ import {
   Smartphone,
   Tablet,
   Monitor,
+  type LucideIcon,
 } from "lucide-react";
 
 interface ShareData {
   platform: string;
-  icon: any;
+  icon: LucideIcon;
   shares: number;
   clicks: number;
   engagement: number;
@@ -53,175 +54,87 @@ interface SharedVideo {
   engagement: number;
 }
 
+interface DeviceStat {
+  device: string;
+  percentage: number;
+  icon: LucideIcon;
+  color: string;
+}
+
+interface TimelineStat {
+  date: string;
+  shares: number;
+  clicks: number;
+}
+
 export default function SharesPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("week");
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
-  const shareData: ShareData[] = [
-    {
-      platform: "Facebook",
-      icon: MessageCircle,
-      shares: 1240,
-      clicks: 3450,
-      engagement: 278,
-      change: 12.5,
-      color: "from-blue-500 to-blue-600",
-    },
-    {
-      platform: "Twitter",
-      icon: MessageCircle,
-      shares: 890,
-      clicks: 2340,
-      engagement: 263,
-      change: -5.2,
-      color: "from-sky-500 to-sky-600",
-    },
-    {
-      platform: "LinkedIn",
-      icon: Users,
-      shares: 456,
-      clicks: 1890,
-      engagement: 414,
-      change: -2.1,
-      color: "from-blue-600 to-blue-700",
-    },
-    {
-      platform: "WhatsApp",
-      icon: MessageCircle,
-      shares: 678,
-      clicks: 1560,
-      engagement: 230,
-      change: 15.7,
-      color: "from-green-500 to-green-600",
-    },
-    {
-      platform: "Email",
-      icon: Mail,
-      shares: 234,
-      clicks: 890,
-      engagement: 380,
-      change: 5.2,
-      color: "from-purple-500 to-purple-600",
-    },
-    {
-      platform: "Direct",
-      icon: Link,
-      shares: 1890,
-      clicks: 5670,
-      engagement: 300,
-      change: 22.4,
-      color: "from-gray-500 to-gray-600",
-    },
-  ];
+  const [shareData, setShareData] = useState<ShareData[]>([]);
+  const [sharedVideos, setSharedVideos] = useState<SharedVideo[]>([]);
+  const [deviceStats, setDeviceStats] = useState<DeviceStat[]>([]);
+  const [timelineData, setTimelineData] = useState<TimelineStat[]>([]);
 
-  const sharedVideos: SharedVideo[] = [
-    {
-      id: "1",
-      title: "Introduction au Tourisme Durable",
-      thumbnail: "/videos/video1-thumb.jpg",
-      totalShares: 234,
-      platforms: {
-        facebook: 89,
-        twitter: 45,
-        linkedin: 23,
-        whatsapp: 34,
-        email: 12,
-        direct: 31,
-      },
-      publishedAt: "Il y a 2 jours",
-      views: 15420,
-      engagement: 6.4,
-    },
-    {
-      id: "2",
-      title: "Marketing Digital pour le Tourisme",
-      thumbnail: "/videos/video2-thumb.jpg",
-      totalShares: 189,
-      platforms: {
-        facebook: 67,
-        twitter: 56,
-        linkedin: 34,
-        whatsapp: 12,
-        email: 8,
-        direct: 12,
-      },
-      publishedAt: "Il y a 5 jours",
-      views: 12300,
-      engagement: 6.8,
-    },
-    {
-      id: "3",
-      title: "Service Client d'Excellence",
-      thumbnail: "/videos/video3-thumb.jpg",
-      totalShares: 156,
-      platforms: {
-        facebook: 45,
-        twitter: 34,
-        linkedin: 28,
-        whatsapp: 23,
-        email: 6,
-        direct: 20,
-      },
-      publishedAt: "Il y a 1 semaine",
-      views: 9870,
-      engagement: 7.1,
-    },
-    {
-      id: "4",
-      title: "Gestion Hôtelière Avancée",
-      thumbnail: "/videos/video4-thumb.jpg",
-      totalShares: 145,
-      platforms: {
-        facebook: 56,
-        twitter: 23,
-        linkedin: 34,
-        whatsapp: 12,
-        email: 4,
-        direct: 16,
-      },
-      publishedAt: "Il y a 3 jours",
-      views: 8650,
-      engagement: 6.9,
-    },
-  ];
+  useEffect(() => {
+    const iconMap: Record<string, LucideIcon> = {
+      Facebook: MessageCircle,
+      Twitter: MessageCircle,
+      LinkedIn: Users,
+      WhatsApp: MessageCircle,
+      Email: Mail,
+      Direct: Link,
+    };
+    const deviceIconMap: Record<string, LucideIcon> = {
+      Mobile: Smartphone,
+      Desktop: Monitor,
+      Tablet: Tablet,
+    };
 
-  const deviceStats = [
-    {
-      device: "Mobile",
-      percentage: 68,
-      icon: Smartphone,
-      color: "from-blue-500 to-blue-600",
-    },
-    {
-      device: "Desktop",
-      percentage: 24,
-      icon: Monitor,
-      color: "from-purple-500 to-purple-600",
-    },
-    {
-      device: "Tablet",
-      percentage: 8,
-      icon: Tablet,
-      color: "from-green-500 to-green-600",
-    },
-  ];
+    const loadData = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
+      const response = await fetch("/api/creator/shares", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const payload = await response.json();
+      if (response.ok && payload.data) {
+        setShareData(
+          (payload.data.shareData || []).map(
+            (item: Omit<ShareData, "icon">) => ({
+              ...item,
+              icon: iconMap[item.platform] || Share2,
+            })
+          )
+        );
+        setSharedVideos(payload.data.sharedVideos || []);
+        setDeviceStats(
+          (payload.data.deviceStats || []).map(
+            (item: Omit<DeviceStat, "icon">) => ({
+              ...item,
+              icon: deviceIconMap[item.device] || Smartphone,
+            })
+          )
+        );
+        setTimelineData(payload.data.timelineData || []);
+      }
+    };
 
-  const timelineData = [
-    { date: "Lun", shares: 120, clicks: 340 },
-    { date: "Mar", shares: 145, clicks: 420 },
-    { date: "Mer", shares: 168, clicks: 480 },
-    { date: "Jeu", shares: 189, clicks: 520 },
-    { date: "Ven", shares: 234, clicks: 680 },
-    { date: "Sam", shares: 198, clicks: 560 },
-    { date: "Dim", shares: 156, clicks: 440 },
-  ];
+    loadData();
+  }, [selectedPeriod]);
 
   const totalShares = shareData.reduce((sum, data) => sum + data.shares, 0);
   const totalClicks = shareData.reduce((sum, data) => sum + data.clicks, 0);
-  const avgEngagement = Math.round(
-    shareData.reduce((sum, data) => sum + data.engagement, 0) / shareData.length
-  );
+  const avgEngagement =
+    shareData.length > 0
+      ? Math.round(
+          shareData.reduce((sum, data) => sum + data.engagement, 0) /
+            shareData.length
+        )
+      : 0;
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -251,7 +164,7 @@ export default function SharesPage() {
               onChange={(e) => setSelectedPeriod(e.target.value)}
               className="px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
-              <option value="day">Aujourd'hui</option>
+              <option value="day">Aujourd&apos;hui</option>
               <option value="week">Cette semaine</option>
               <option value="month">Ce mois</option>
               <option value="year">Cette année</option>
@@ -317,7 +230,7 @@ export default function SharesPage() {
           <h3 className="text-2xl font-bold text-gray-900 mb-1">
             {avgEngagement}%
           </h3>
-          <p className="text-sm text-gray-600">Taux d'engagement</p>
+          <p className="text-sm text-gray-600">Taux d&apos;engagement</p>
         </div>
       </motion.div>
 
