@@ -22,7 +22,7 @@ import {
   Globe,
   Smartphone,
   Tablet,
-  Monitor
+  Monitor,
 } from "lucide-react";
 
 interface ShareData {
@@ -66,7 +66,7 @@ export default function SharesPage() {
       clicks: 3450,
       engagement: 278,
       change: 12.5,
-      color: "from-blue-500 to-blue-600"
+      color: "from-blue-500 to-blue-600",
     },
     {
       platform: "Twitter",
@@ -75,7 +75,7 @@ export default function SharesPage() {
       clicks: 2340,
       engagement: 263,
       change: -5.2,
-      color: "from-sky-500 to-sky-600"
+      color: "from-sky-500 to-sky-600",
     },
     {
       platform: "LinkedIn",
@@ -84,7 +84,7 @@ export default function SharesPage() {
       clicks: 1890,
       engagement: 414,
       change: -2.1,
-      color: "from-blue-600 to-blue-700"
+      color: "from-blue-600 to-blue-700",
     },
     {
       platform: "WhatsApp",
@@ -93,7 +93,7 @@ export default function SharesPage() {
       clicks: 1560,
       engagement: 230,
       change: 15.7,
-      color: "from-green-500 to-green-600"
+      color: "from-green-500 to-green-600",
     },
     {
       platform: "Email",
@@ -102,7 +102,7 @@ export default function SharesPage() {
       clicks: 890,
       engagement: 380,
       change: 5.2,
-      color: "from-purple-500 to-purple-600"
+      color: "from-purple-500 to-purple-600",
     },
     {
       platform: "Direct",
@@ -111,8 +111,8 @@ export default function SharesPage() {
       clicks: 5670,
       engagement: 300,
       change: 22.4,
-      color: "from-gray-500 to-gray-600"
-    }
+      color: "from-gray-500 to-gray-600",
+    },
   ];
 
   const sharedVideos: SharedVideo[] = [
@@ -127,11 +127,11 @@ export default function SharesPage() {
         linkedin: 23,
         whatsapp: 34,
         email: 12,
-        direct: 31
+        direct: 31,
       },
       publishedAt: "Il y a 2 jours",
       views: 15420,
-      engagement: 6.4
+      engagement: 6.4,
     },
     {
       id: "2",
@@ -144,11 +144,11 @@ export default function SharesPage() {
         linkedin: 34,
         whatsapp: 12,
         email: 8,
-        direct: 12
+        direct: 12,
       },
       publishedAt: "Il y a 5 jours",
       views: 12300,
-      engagement: 6.8
+      engagement: 6.8,
     },
     {
       id: "3",
@@ -161,11 +161,11 @@ export default function SharesPage() {
         linkedin: 28,
         whatsapp: 23,
         email: 6,
-        direct: 20
+        direct: 20,
       },
       publishedAt: "Il y a 1 semaine",
       views: 9870,
-      engagement: 7.1
+      engagement: 7.1,
     },
     {
       id: "4",
@@ -178,18 +178,33 @@ export default function SharesPage() {
         linkedin: 34,
         whatsapp: 12,
         email: 4,
-        direct: 16
+        direct: 16,
       },
       publishedAt: "Il y a 3 jours",
       views: 8650,
-      engagement: 6.9
-    }
+      engagement: 6.9,
+    },
   ];
 
   const deviceStats = [
-    { device: "Mobile", percentage: 68, icon: Smartphone, color: "from-blue-500 to-blue-600" },
-    { device: "Desktop", percentage: 24, icon: Monitor, color: "from-purple-500 to-purple-600" },
-    { device: "Tablet", percentage: 8, icon: Tablet, color: "from-green-500 to-green-600" }
+    {
+      device: "Mobile",
+      percentage: 68,
+      icon: Smartphone,
+      color: "from-blue-500 to-blue-600",
+    },
+    {
+      device: "Desktop",
+      percentage: 24,
+      icon: Monitor,
+      color: "from-purple-500 to-purple-600",
+    },
+    {
+      device: "Tablet",
+      percentage: 8,
+      icon: Tablet,
+      color: "from-green-500 to-green-600",
+    },
   ];
 
   const timelineData = [
@@ -199,12 +214,14 @@ export default function SharesPage() {
     { date: "Jeu", shares: 189, clicks: 520 },
     { date: "Ven", shares: 234, clicks: 680 },
     { date: "Sam", shares: 198, clicks: 560 },
-    { date: "Dim", shares: 156, clicks: 440 }
+    { date: "Dim", shares: 156, clicks: 440 },
   ];
 
   const totalShares = shareData.reduce((sum, data) => sum + data.shares, 0);
   const totalClicks = shareData.reduce((sum, data) => sum + data.clicks, 0);
-  const avgEngagement = Math.round(shareData.reduce((sum, data) => sum + data.engagement, 0) / shareData.length);
+  const avgEngagement = Math.round(
+    shareData.reduce((sum, data) => sum + data.engagement, 0) / shareData.length
+  );
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -223,9 +240,11 @@ export default function SharesPage() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Partages</h1>
-            <p className="text-gray-600">Analysez les performances de partage de votre contenu</p>
+            <p className="text-gray-600">
+              Analysez les performances de partage de votre contenu
+            </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <select
               value={selectedPeriod}
@@ -237,7 +256,7 @@ export default function SharesPage() {
               <option value="month">Ce mois</option>
               <option value="year">Cette année</option>
             </select>
-            
+
             <button className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
               <Download className="w-4 h-4" />
               Exporter
@@ -263,7 +282,9 @@ export default function SharesPage() {
               <span className="text-sm font-medium">+18%</span>
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">{totalShares.toLocaleString()}</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            {totalShares.toLocaleString()}
+          </h3>
           <p className="text-sm text-gray-600">Total des partages</p>
         </div>
 
@@ -277,7 +298,9 @@ export default function SharesPage() {
               <span className="text-sm font-medium">+24%</span>
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">{totalClicks.toLocaleString()}</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            {totalClicks.toLocaleString()}
+          </h3>
           <p className="text-sm text-gray-600">Clics générés</p>
         </div>
 
@@ -291,7 +314,9 @@ export default function SharesPage() {
               <span className="text-sm font-medium">+12%</span>
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">{avgEngagement}%</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            {avgEngagement}%
+          </h3>
           <p className="text-sm text-gray-600">Taux d'engagement</p>
         </div>
       </motion.div>
@@ -315,7 +340,7 @@ export default function SharesPage() {
               className="px-3 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="all">Toutes</option>
-              {shareData.map(platform => (
+              {shareData.map((platform) => (
                 <option key={platform.platform} value={platform.platform}>
                   {platform.platform}
                 </option>
@@ -333,30 +358,47 @@ export default function SharesPage() {
                 className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 bg-gradient-to-br ${platform.color} rounded-lg flex items-center justify-center`}>
+                  <div
+                    className={`w-10 h-10 bg-gradient-to-br ${platform.color} rounded-lg flex items-center justify-center`}
+                  >
                     <platform.icon className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{platform.platform}</h3>
-                    <p className="text-sm text-gray-600">{platform.shares.toLocaleString()} partages</p>
+                    <h3 className="font-semibold text-gray-900">
+                      {platform.platform}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {platform.shares.toLocaleString()} partages
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg font-bold text-gray-900">{platform.engagement}%</span>
-                    <div className={`flex items-center gap-1 text-sm ${
-                      (platform.change || 0) > 0 ? "text-green-600" : "text-red-600"
-                    }`}>
+                    <span className="text-lg font-bold text-gray-900">
+                      {platform.engagement}%
+                    </span>
+                    <div
+                      className={`flex items-center gap-1 text-sm ${
+                        (platform.change || 0) > 0
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
                       {(platform.change || 0) > 0 ? (
                         <TrendingUp className="w-3 h-3" />
                       ) : (
                         <TrendingDown className="w-3 h-3" />
                       )}
-                      <span>{(platform.change || 0) > 0 ? "+" : ""}{platform.change || 0}%</span>
+                      <span>
+                        {(platform.change || 0) > 0 ? "+" : ""}
+                        {platform.change || 0}%
+                      </span>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">{platform.clicks.toLocaleString()} clics</p>
+                  <p className="text-xs text-gray-500">
+                    {platform.clicks.toLocaleString()} clics
+                  </p>
                 </div>
               </motion.div>
             ))}
@@ -387,9 +429,13 @@ export default function SharesPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <device.icon className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium text-gray-700">{device.device}</span>
+                    <span className="font-medium text-gray-700">
+                      {device.device}
+                    </span>
                   </div>
-                  <span className="font-bold text-gray-900">{device.percentage}%</span>
+                  <span className="font-bold text-gray-900">
+                    {device.percentage}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <motion.div
@@ -419,22 +465,29 @@ export default function SharesPage() {
 
         <div className="h-64 flex items-end justify-between gap-2">
           {timelineData.map((data, index) => {
-            const maxShares = Math.max(...timelineData.map(d => d.shares));
-            const maxClicks = Math.max(...timelineData.map(d => d.clicks));
+            const maxShares = Math.max(...timelineData.map((d) => d.shares));
+            const maxClicks = Math.max(...timelineData.map((d) => d.clicks));
             const sharesHeight = (data.shares / maxShares) * 100;
             const clicksHeight = (data.clicks / maxClicks) * 100;
 
             return (
-              <div key={data.date} className="flex-1 flex flex-col items-center gap-2">
+              <div
+                key={data.date}
+                className="flex-1 flex flex-col items-center gap-2"
+              >
                 <div className="w-full flex flex-col items-center gap-1">
-                  <span className="text-xs font-medium text-gray-700">{data.clicks}</span>
+                  <span className="text-xs font-medium text-gray-700">
+                    {data.clicks}
+                  </span>
                   <motion.div
                     initial={{ height: 0 }}
                     animate={{ height: `${clicksHeight}%` }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                     className="w-full bg-gradient-to-t from-purple-500 to-purple-300 rounded-t-lg"
                   />
-                  <span className="text-xs font-medium text-gray-700">{data.shares}</span>
+                  <span className="text-xs font-medium text-gray-700">
+                    {data.shares}
+                  </span>
                   <motion.div
                     initial={{ height: 0 }}
                     animate={{ height: `${sharesHeight}%` }}
@@ -486,17 +539,17 @@ export default function SharesPage() {
               transition={{ delay: 0.6 + index * 0.05 }}
               className="flex gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors"
             >
-              <img 
-                src={video.thumbnail} 
+              <img
+                src={video.thumbnail}
                 alt={video.title}
                 className="w-24 h-16 object-cover rounded-lg"
               />
-              
+
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
                   {video.title}
                 </h3>
-                
+
                 <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
                   <div className="flex items-center gap-1">
                     <Share2 className="w-3 h-3" />
@@ -514,11 +567,16 @@ export default function SharesPage() {
 
                 <div className="flex items-center gap-2">
                   {Object.entries(video.platforms).map(([platform, count]) => {
-                    const platformData = shareData.find(p => p.platform.toLowerCase() === platform);
+                    const platformData = shareData.find(
+                      (p) => p.platform.toLowerCase() === platform
+                    );
                     if (!platformData || count === 0) return null;
-                    
+
                     return (
-                      <div key={platform} className="flex items-center gap-1 text-xs text-gray-500">
+                      <div
+                        key={platform}
+                        className="flex items-center gap-1 text-xs text-gray-500"
+                      >
                         <platformData.icon className="w-3 h-3" />
                         <span>{count}</span>
                       </div>
@@ -529,12 +587,16 @@ export default function SharesPage() {
 
               <div className="flex flex-col items-end gap-2">
                 <div className="text-right">
-                  <div className="text-lg font-bold text-primary">{video.engagement}%</div>
+                  <div className="text-lg font-bold text-primary">
+                    {video.engagement}%
+                  </div>
                   <div className="text-xs text-gray-500">Engagement</div>
                 </div>
-                
-                <button 
-                  onClick={() => copyToClipboard(`https://match.com/videos/${video.id}`)}
+
+                <button
+                  onClick={() =>
+                    copyToClipboard(`https://match.com/videos/${video.id}`)
+                  }
                   className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   {copiedLink === `https://match.com/videos/${video.id}` ? (

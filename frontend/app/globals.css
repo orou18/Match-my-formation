@@ -1,7 +1,7 @@
 /* Import de polices modernes et optimisées */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -10,18 +10,25 @@
 /* Variables CSS optimisées */
 :root {
   /* Couleurs principales */
-  --color-primary: #007A7A;
+  --color-primary: #007a7a;
   --color-primary-hover: #006666;
-  --color-secondary: #002D36;
-  --color-accent: #FFB800;
+  --color-secondary: #002d36;
+  --color-accent: #ffb800;
   --color-dark: #1f2937;
   --color-light: #f8fafc;
-  
+
   /* Typographie */
-  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  --font-secondary: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
-  
+  --font-primary:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  --font-secondary:
+    "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    sans-serif;
+  --font-mono:
+    "JetBrains Mono", "Fira Code", "Monaco", "Cascadia Code", "Roboto Mono",
+    monospace;
+
   /* Espacements et tailles */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -29,7 +36,7 @@
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
-  
+
   /* Tailles de police optimisées */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -40,7 +47,7 @@
   --text-3xl: 1.875rem;
   --text-4xl: 2.25rem;
   --text-5xl: 3rem;
-  
+
   /* Performance optimizations */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2);
   --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2);
@@ -49,7 +56,7 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  
+
   /* Breakpoints pour les media queries */
   --breakpoint-xs: 475px;
   --breakpoint-sm: 640px;
@@ -69,7 +76,10 @@
 
 html {
   scroll-behavior: smooth;
-  font-feature-settings: 'kern' 1, 'liga' 1;
+  font-feature-settings:
+    "kern" 1,
+    "liga" 1;
+  overflow-x: hidden;
 }
 
 body {
@@ -85,31 +95,118 @@ body {
   -webkit-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 /* Typographie optimisée */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-secondary);
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.025em;
   margin-bottom: var(--spacing-md);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
-h1 { font-size: var(--text-4xl); }
-h2 { font-size: var(--text-3xl); }
-h3 { font-size: var(--text-2xl); }
-h4 { font-size: var(--text-xl); }
-h5 { font-size: var(--text-lg); }
-h6 { font-size: var(--text-base); }
+h1 {
+  font-size: var(--text-4xl);
+}
+h2 {
+  font-size: var(--text-3xl);
+}
+h3 {
+  font-size: var(--text-2xl);
+}
+h4 {
+  font-size: var(--text-xl);
+}
+h5 {
+  font-size: var(--text-lg);
+}
+h6 {
+  font-size: var(--text-base);
+}
 
 p {
   margin-bottom: var(--spacing-md);
   line-height: 1.7;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+button,
+[role="button"] {
+  min-height: 2.75rem;
+  touch-action: manipulation;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+a,
+button,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+#main-content,
+main,
+section,
+article,
+aside {
+  min-width: 0;
+}
+
+.text-safe {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.panel-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Optimisation des images et médias */
-img, video {
+img,
+video {
   max-width: 100%;
   height: auto;
   display: block;
@@ -146,7 +243,7 @@ video {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
+
   html {
     scroll-behavior: auto;
   }
@@ -154,44 +251,45 @@ video {
 
 /* Animations optimisées */
 @keyframes fadeIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px) scale(0.95); 
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0) scale(1); 
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes slideIn {
-  from { 
-    transform: translateX(-100%) scale(0.95); 
+  from {
+    transform: translateX(-100%) scale(0.95);
   }
-  to { 
-    transform: translateX(0) scale(1); 
+  to {
+    transform: translateX(0) scale(1);
   }
 }
 
 @keyframes scaleIn {
-  from { 
-    opacity: 0; 
-    transform: scale(0.9); 
+  from {
+    opacity: 0;
+    transform: scale(0.9);
   }
-  to { 
-    opacity: 1; 
-    transform: scale(1); 
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
 @keyframes pulse {
-  0%, 100% { 
-    opacity: 1; 
-    transform: scale(1); 
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
-  50% { 
-    opacity: 0.8; 
-    transform: scale(1.02); 
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
   }
 }
 
@@ -252,12 +350,12 @@ video {
     box-shadow: none !important;
     text-shadow: none !important;
   }
-  
+
   img {
     max-width: 100% !important;
     break-inside: avoid;
   }
-  
+
   .no-print {
     display: none !important;
   }
@@ -285,12 +383,20 @@ video {
 }
 
 /* Optimisation des boutons et interactions */
-button, a, input, textarea, select {
+button,
+a,
+input,
+textarea,
+select {
   font-family: inherit;
   transition: all var(--transition-fast);
 }
 
-button:focus, a:focus, input:focus, textarea:focus, select:focus {
+button:focus,
+a:focus,
+input:focus,
+textarea:focus,
+select:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(0, 122, 138, 0.1);
 }
@@ -323,7 +429,7 @@ button:focus, a:focus, input:focus, textarea:focus, select:focus {
 }
 
 .video-controls {
-  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
   backdrop-filter: blur(8px);
   transition: opacity var(--transition-fast);
 }

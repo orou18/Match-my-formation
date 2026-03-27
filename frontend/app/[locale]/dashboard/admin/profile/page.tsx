@@ -24,7 +24,7 @@ import {
   Activity,
   Key,
   Eye,
-  EyeOff
+  EyeOff,
 } from "lucide-react";
 
 interface AdminProfile {
@@ -54,9 +54,9 @@ export default function AdminProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -65,16 +65,16 @@ export default function AdminProfile() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const response = await fetch('/api/admin/profile');
+        const response = await fetch("/api/admin/profile");
         if (response.ok) {
           const data = await response.json();
           setProfile(data.profile);
           setEditProfile(data.profile);
         } else {
-          console.error('Erreur lors du chargement du profil');
+          console.error("Erreur lors du chargement du profil");
         }
       } catch (error) {
-        console.error('Erreur:', error);
+        console.error("Erreur:", error);
       } finally {
         setIsLoading(false);
       }
@@ -88,10 +88,10 @@ export default function AdminProfile() {
 
     setIsSaving(true);
     try {
-      const response = await fetch('/api/admin/profile', {
-        method: 'PUT',
+      const response = await fetch("/api/admin/profile", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(editProfile),
       });
@@ -101,14 +101,14 @@ export default function AdminProfile() {
         setProfile(updatedProfile);
         setEditProfile(updatedProfile);
         setIsEditing(false);
-        alert('Profil mis à jour avec succès!');
+        alert("Profil mis à jour avec succès!");
       } else {
         const error = await response.json();
-        alert(error.error || 'Erreur lors de la mise à jour');
+        alert(error.error || "Erreur lors de la mise à jour");
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la mise à jour');
+      console.error("Erreur:", error);
+      alert("Erreur lors de la mise à jour");
     } finally {
       setIsSaving(false);
     }
@@ -116,20 +116,20 @@ export default function AdminProfile() {
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
-      alert('Les mots de passe ne correspondent pas');
+      alert("Les mots de passe ne correspondent pas");
       return;
     }
 
     if (newPassword.length < 8) {
-      alert('Le mot de passe doit contenir au moins 8 caractères');
+      alert("Le mot de passe doit contenir au moins 8 caractères");
       return;
     }
 
     try {
-      const response = await fetch('/api/admin/profile/change-password', {
-        method: 'POST',
+      const response = await fetch("/api/admin/profile/change-password", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           currentPassword,
@@ -139,17 +139,17 @@ export default function AdminProfile() {
 
       if (response.ok) {
         setShowPasswordModal(false);
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-        alert('Mot de passe modifié avec succès!');
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        alert("Mot de passe modifié avec succès!");
       } else {
         const error = await response.json();
-        alert(error.error || 'Erreur lors du changement de mot de passe');
+        alert(error.error || "Erreur lors du changement de mot de passe");
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors du changement de mot de passe');
+      console.error("Erreur:", error);
+      alert("Erreur lors du changement de mot de passe");
     }
   };
 
@@ -158,51 +158,53 @@ export default function AdminProfile() {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append('avatar', file);
+    formData.append("avatar", file);
 
     try {
-      const response = await fetch('/api/admin/profile/upload-avatar', {
-        method: 'POST',
+      const response = await fetch("/api/admin/profile/upload-avatar", {
+        method: "POST",
         body: formData,
       });
 
       if (response.ok) {
         const data = await response.json();
-        setProfile(prev => prev ? { ...prev, avatar: data.avatar } : null);
-        setEditProfile(prev => ({ ...prev, avatar: data.avatar }));
-        alert('Avatar mis à jour avec succès!');
+        setProfile((prev) => (prev ? { ...prev, avatar: data.avatar } : null));
+        setEditProfile((prev) => ({ ...prev, avatar: data.avatar }));
+        alert("Avatar mis à jour avec succès!");
       } else {
         const error = await response.json();
-        alert(error.error || 'Erreur lors du téléchargement');
+        alert(error.error || "Erreur lors du téléchargement");
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors du téléchargement');
+      console.error("Erreur:", error);
+      alert("Erreur lors du téléchargement");
     }
   };
 
-  const canEdit = profile?.role === 'super_admin' || 
-    (profile?.permissions?.includes('profile_edit') || false);
+  const canEdit =
+    profile?.role === "super_admin" ||
+    profile?.permissions?.includes("profile_edit") ||
+    false;
 
   const getPermissionBadge = (permission: string) => {
-    const category = permission.split('_')[0];
+    const category = permission.split("_")[0];
     switch (category) {
-      case 'users':
-        return 'bg-blue-100 text-blue-700';
-      case 'creators':
-        return 'bg-green-100 text-green-700';
-      case 'content':
-        return 'bg-purple-100 text-purple-700';
-      case 'ads':
-        return 'bg-orange-100 text-orange-700';
-      case 'webinars':
-        return 'bg-red-100 text-red-700';
-      case 'analytics':
-        return 'bg-indigo-100 text-indigo-700';
-      case 'settings':
-        return 'bg-gray-100 text-gray-700';
+      case "users":
+        return "bg-blue-100 text-blue-700";
+      case "creators":
+        return "bg-green-100 text-green-700";
+      case "content":
+        return "bg-purple-100 text-purple-700";
+      case "ads":
+        return "bg-orange-100 text-orange-700";
+      case "webinars":
+        return "bg-red-100 text-red-700";
+      case "analytics":
+        return "bg-indigo-100 text-indigo-700";
+      case "settings":
+        return "bg-gray-100 text-gray-700";
       default:
-        return 'bg-gray-100 text-gray-700';
+        return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -232,7 +234,9 @@ export default function AdminProfile() {
         {/* Header */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Profil Administrateur</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Profil Administrateur
+            </h1>
             <div className="flex items-center gap-3">
               {canEdit && !isEditing && (
                 <button
@@ -261,7 +265,7 @@ export default function AdminProfile() {
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50"
                   >
                     <Save size={18} />
-                    {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+                    {isSaving ? "Sauvegarde..." : "Sauvegarder"}
                   </button>
                 </div>
               )}
@@ -303,8 +307,10 @@ export default function AdminProfile() {
                   {isEditing ? (
                     <input
                       type="text"
-                      value={editProfile.name || ''}
-                      onChange={(e) => setEditProfile({ ...editProfile, name: e.target.value })}
+                      value={editProfile.name || ""}
+                      onChange={(e) =>
+                        setEditProfile({ ...editProfile, name: e.target.value })
+                      }
                       className="text-center border-b-2 border-blue-500 focus:outline-none"
                     />
                   ) : (
@@ -313,19 +319,23 @@ export default function AdminProfile() {
                 </h2>
 
                 <div className="flex items-center justify-center gap-2 mb-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    profile.role === 'super_admin' 
-                      ? 'bg-purple-100 text-purple-700' 
-                      : 'bg-blue-100 text-blue-700'
-                  }`}>
-                    {profile.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      profile.role === "super_admin"
+                        ? "bg-purple-100 text-purple-700"
+                        : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
+                    {profile.role === "super_admin" ? "Super Admin" : "Admin"}
                   </span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    profile.status === 'active' 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-red-100 text-red-700'
-                  }`}>
-                    {profile.status === 'active' ? 'Actif' : 'Inactif'}
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      profile.status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {profile.status === "active" ? "Actif" : "Inactif"}
                   </span>
                 </div>
 
@@ -335,8 +345,13 @@ export default function AdminProfile() {
                     {isEditing ? (
                       <input
                         type="email"
-                        value={editProfile.email || ''}
-                        onChange={(e) => setEditProfile({ ...editProfile, email: e.target.value })}
+                        value={editProfile.email || ""}
+                        onChange={(e) =>
+                          setEditProfile({
+                            ...editProfile,
+                            email: e.target.value,
+                          })
+                        }
                         className="flex-1 border-b border-gray-300 focus:outline-none focus:border-blue-500"
                       />
                     ) : (
@@ -349,12 +364,17 @@ export default function AdminProfile() {
                     {isEditing ? (
                       <input
                         type="tel"
-                        value={editProfile.phone || ''}
-                        onChange={(e) => setEditProfile({ ...editProfile, phone: e.target.value })}
+                        value={editProfile.phone || ""}
+                        onChange={(e) =>
+                          setEditProfile({
+                            ...editProfile,
+                            phone: e.target.value,
+                          })
+                        }
                         className="flex-1 border-b border-gray-300 focus:outline-none focus:border-blue-500"
                       />
                     ) : (
-                      profile.phone || 'Non renseigné'
+                      profile.phone || "Non renseigné"
                     )}
                   </div>
 
@@ -363,12 +383,17 @@ export default function AdminProfile() {
                     {isEditing ? (
                       <input
                         type="text"
-                        value={editProfile.location || ''}
-                        onChange={(e) => setEditProfile({ ...editProfile, location: e.target.value })}
+                        value={editProfile.location || ""}
+                        onChange={(e) =>
+                          setEditProfile({
+                            ...editProfile,
+                            location: e.target.value,
+                          })
+                        }
                         className="flex-1 border-b border-gray-300 focus:outline-none focus:border-blue-500"
                       />
                     ) : (
-                      profile.location || 'Non renseigné'
+                      profile.location || "Non renseigné"
                     )}
                   </div>
 
@@ -377,12 +402,17 @@ export default function AdminProfile() {
                     {isEditing ? (
                       <input
                         type="text"
-                        value={editProfile.department || ''}
-                        onChange={(e) => setEditProfile({ ...editProfile, department: e.target.value })}
+                        value={editProfile.department || ""}
+                        onChange={(e) =>
+                          setEditProfile({
+                            ...editProfile,
+                            department: e.target.value,
+                          })
+                        }
                         className="flex-1 border-b border-gray-300 focus:outline-none focus:border-blue-500"
                       />
                     ) : (
-                      profile.department || 'Non renseigné'
+                      profile.department || "Non renseigné"
                     )}
                   </div>
                 </div>
@@ -408,22 +438,41 @@ export default function AdminProfile() {
                   </div>
                   {canEdit ? (
                     <button
-                      onClick={() => setEditProfile({ ...editProfile, emailNotifications: !editProfile.emailNotifications })}
+                      onClick={() =>
+                        setEditProfile({
+                          ...editProfile,
+                          emailNotifications: !editProfile.emailNotifications,
+                        })
+                      }
                       className={`w-12 h-6 rounded-full transition-colors ${
-                        editProfile.emailNotifications ? 'bg-green-500' : 'bg-gray-300'
+                        editProfile.emailNotifications
+                          ? "bg-green-500"
+                          : "bg-gray-300"
                       }`}
                     >
-                      <div className={`w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform ${
-                        editProfile.emailNotifications ? 'translate-x-6' : 'translate-x-0.5'
-                      }`} />
+                      <div
+                        className={`w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform ${
+                          editProfile.emailNotifications
+                            ? "translate-x-6"
+                            : "translate-x-0.5"
+                        }`}
+                      />
                     </button>
                   ) : (
-                    <span className={`w-12 h-6 rounded-full ${
-                      profile.emailNotifications ? 'bg-green-500' : 'bg-gray-300'
-                    }`}>
-                      <div className={`w-5 h-5 bg-white rounded-full shadow-sm transform ${
-                        profile.emailNotifications ? 'translate-x-6' : 'translate-x-0.5'
-                      }`} />
+                    <span
+                      className={`w-12 h-6 rounded-full ${
+                        profile.emailNotifications
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 bg-white rounded-full shadow-sm transform ${
+                          profile.emailNotifications
+                            ? "translate-x-6"
+                            : "translate-x-0.5"
+                        }`}
+                      />
                     </span>
                   )}
                 </div>
@@ -435,15 +484,22 @@ export default function AdminProfile() {
                   </div>
                   {canEdit ? (
                     <select
-                      value={editProfile.language || 'fr'}
-                      onChange={(e) => setEditProfile({ ...editProfile, language: e.target.value })}
+                      value={editProfile.language || "fr"}
+                      onChange={(e) =>
+                        setEditProfile({
+                          ...editProfile,
+                          language: e.target.value,
+                        })
+                      }
                       className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                     >
                       <option value="fr">Français</option>
                       <option value="en">English</option>
                     </select>
                   ) : (
-                    <span className="text-gray-600">{profile.language === 'fr' ? 'Français' : 'English'}</span>
+                    <span className="text-gray-600">
+                      {profile.language === "fr" ? "Français" : "English"}
+                    </span>
                   )}
                 </div>
               </div>
@@ -457,15 +513,17 @@ export default function AdminProfile() {
               <h3 className="font-semibold text-gray-900 mb-4">Biographie</h3>
               {isEditing ? (
                 <textarea
-                  value={editProfile.bio || ''}
-                  onChange={(e) => setEditProfile({ ...editProfile, bio: e.target.value })}
+                  value={editProfile.bio || ""}
+                  onChange={(e) =>
+                    setEditProfile({ ...editProfile, bio: e.target.value })
+                  }
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Parlez-nous de vous..."
                 />
               ) : (
                 <p className="text-gray-600">
-                  {profile.bio || 'Aucune biographie renseignée'}
+                  {profile.bio || "Aucune biographie renseignée"}
                 </p>
               )}
             </div>
@@ -479,7 +537,9 @@ export default function AdminProfile() {
                     key={index}
                     className={`px-3 py-2 rounded-lg text-sm font-medium ${getPermissionBadge(permission)}`}
                   >
-                    {permission.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    {permission
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (l) => l.toUpperCase())}
                   </div>
                 ))}
               </div>
@@ -501,7 +561,7 @@ export default function AdminProfile() {
                   <div>
                     <p className="text-sm text-gray-500">Date d'inscription</p>
                     <p className="font-semibold text-gray-900">
-                      {new Date(profile.joinDate).toLocaleDateString('fr-FR')}
+                      {new Date(profile.joinDate).toLocaleDateString("fr-FR")}
                     </p>
                   </div>
                 </div>
@@ -513,7 +573,7 @@ export default function AdminProfile() {
                   <div>
                     <p className="text-sm text-gray-500">Dernière connexion</p>
                     <p className="font-semibold text-gray-900">
-                      {new Date(profile.lastLogin).toLocaleDateString('fr-FR')}
+                      {new Date(profile.lastLogin).toLocaleDateString("fr-FR")}
                     </p>
                   </div>
                 </div>
@@ -523,9 +583,11 @@ export default function AdminProfile() {
                     <Shield size={20} className="text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Authentification 2FA</p>
+                    <p className="text-sm text-gray-500">
+                      Authentification 2FA
+                    </p>
                     <p className="font-semibold text-gray-900">
-                      {profile.twoFactorEnabled ? 'Activée' : 'Désactivée'}
+                      {profile.twoFactorEnabled ? "Activée" : "Désactivée"}
                     </p>
                   </div>
                 </div>
@@ -537,7 +599,9 @@ export default function AdminProfile() {
                   <div>
                     <p className="text-sm text-gray-500">Rôle</p>
                     <p className="font-semibold text-gray-900">
-                      {profile.role === 'super_admin' ? 'Super Administrateur' : 'Administrateur'}
+                      {profile.role === "super_admin"
+                        ? "Super Administrateur"
+                        : "Administrateur"}
                     </p>
                   </div>
                 </div>
@@ -554,7 +618,9 @@ export default function AdminProfile() {
               animate={{ opacity: 1, scale: 1 }}
               className="bg-white rounded-xl p-6 w-full max-w-md"
             >
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Changer le mot de passe</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                Changer le mot de passe
+              </h3>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -569,10 +635,16 @@ export default function AdminProfile() {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      onClick={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                     >
-                      {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showCurrentPassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -593,7 +665,11 @@ export default function AdminProfile() {
                       onClick={() => setShowNewPassword(!showNewPassword)}
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                     >
-                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showNewPassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -611,10 +687,16 @@ export default function AdminProfile() {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                     >
-                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showConfirmPassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -624,9 +706,9 @@ export default function AdminProfile() {
                 <button
                   onClick={() => {
                     setShowPasswordModal(false);
-                    setCurrentPassword('');
-                    setNewPassword('');
-                    setConfirmPassword('');
+                    setCurrentPassword("");
+                    setNewPassword("");
+                    setConfirmPassword("");
                   }}
                   className="flex-1 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >

@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
-import { useSimpleNotification, NotificationContainer } from "@/components/ui/SimpleNotification";
+import { useParams, useRouter } from "next/navigation";
+import {
+  useSimpleNotification,
+  NotificationContainer,
+} from "@/components/ui/SimpleNotification";
 import {
   Users,
   Building,
@@ -12,7 +15,7 @@ import {
   ArrowLeft,
   CheckCircle,
   AlertCircle,
-  Briefcase
+  Briefcase,
 } from "lucide-react";
 
 export default function EmployeeLoginPage() {
@@ -23,17 +26,23 @@ export default function EmployeeLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  
+
   const router = useRouter();
-  const { notifications, success, error, removeNotification } = useSimpleNotification();
+  const params = useParams<{ locale?: string }>();
+  const locale = typeof params?.locale === "string" ? params.locale : "fr";
+  const { notifications, success, error, removeNotification } =
+    useSimpleNotification();
+
+  const withLocale = (path: string) =>
+    `/${locale}${path.startsWith("/") ? path : `/${path}`}`;
 
   useEffect(() => {
     // Vérifier si déjà connecté
     const token = localStorage.getItem("employee_token");
     if (token) {
-      router.push("/dashboard/employee");
+      router.push(withLocale("/dashboard/employee"));
     }
-  }, [router]);
+  }, [router, locale]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,15 +67,15 @@ export default function EmployeeLoginPage() {
         }
 
         success("Connexion réussie", `Bienvenue ${data.data.employee.name} !`);
-        
+
         // Rediriger vers le dashboard employé
         setTimeout(() => {
-          router.push("/dashboard/employee");
+          router.push(withLocale("/dashboard/employee"));
         }, 1000);
       } else {
         error("Erreur de connexion", data.message || "Identifiants incorrects");
       }
-    } catch (err) {
+    } catch {
       error("Erreur technique", "Une erreur est survenue lors de la connexion");
     } finally {
       setIsLoading(false);
@@ -77,11 +86,11 @@ export default function EmployeeLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
       {/* Background pattern */}
       <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-5"></div>
-      
+
       {/* Navigation retour */}
       <div className="absolute top-8 left-8">
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.push(withLocale("/"))}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors px-4 py-2 rounded-lg hover:bg-white/50 backdrop-blur-sm"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -126,7 +135,9 @@ export default function EmployeeLoginPage() {
                 <input
                   type="text"
                   value={formData.login_id}
-                  onChange={(e) => setFormData({ ...formData, login_id: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, login_id: e.target.value })
+                  }
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   placeholder="EMP_ABC12345"
                   required
@@ -145,7 +156,9 @@ export default function EmployeeLoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   placeholder="••••••••"
                   required
@@ -155,7 +168,11 @@ export default function EmployeeLoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -168,7 +185,9 @@ export default function EmployeeLoginPage() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-600">Se souvenir de moi</span>
+                <span className="text-sm text-gray-600">
+                  Se souvenir de moi
+                </span>
               </label>
             </div>
 
@@ -210,9 +229,10 @@ export default function EmployeeLoginPage() {
               Bienvenue dans votre espace de formation
             </h2>
             <p className="text-blue-100 mb-6">
-              Accédez à toutes les formations mises à votre disposition par votre entreprise.
+              Accédez à toutes les formations mises à votre disposition par
+              votre entreprise.
             </p>
-            
+
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
@@ -220,27 +240,33 @@ export default function EmployeeLoginPage() {
                 </div>
                 <div>
                   <h3 className="font-medium">Formations personnalisées</h3>
-                  <p className="text-sm text-blue-100">Contenus adaptés à votre domaine d'activité</p>
+                  <p className="text-sm text-blue-100">
+                    Contenus adaptés à votre domaine d'activité
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                   <CheckCircle className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-medium">Suivi de progression</h3>
-                  <p className="text-sm text-blue-100">Visualisez votre avancement en temps réel</p>
+                  <p className="text-sm text-blue-100">
+                    Visualisez votre avancement en temps réel
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                   <CheckCircle className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-medium">Certifications</h3>
-                  <p className="text-sm text-blue-100">Obtenez des certificats de fin de formation</p>
+                  <p className="text-sm text-blue-100">
+                    Obtenez des certificats de fin de formation
+                  </p>
                 </div>
               </div>
             </div>
@@ -272,9 +298,9 @@ export default function EmployeeLoginPage() {
         </motion.div>
       </motion.div>
 
-      <NotificationContainer 
-        notifications={notifications} 
-        onRemove={removeNotification} 
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
       />
     </div>
   );

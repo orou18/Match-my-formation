@@ -16,8 +16,10 @@ import {
   Calendar,
 } from "lucide-react";
 import { api } from "@/lib/api/config";
-import type { DashboardStats as DashboardStatsType, Video as VideoType } from "@/types";
-
+import type {
+  DashboardStats as DashboardStatsType,
+  Video as VideoType,
+} from "@/types";
 
 export default function DashboardOverview() {
   const [stats, setStats] = useState<DashboardStatsType | null>(null);
@@ -36,7 +38,8 @@ export default function DashboardOverview() {
         {
           id: 1,
           title: "Introduction au Tourisme Durable",
-          description: "Découvrez les fondamentaux du tourisme écologique et les pratiques durables.",
+          description:
+            "Découvrez les fondamentaux du tourisme écologique et les pratiques durables.",
           thumbnail: "/videos/video1-thumb.jpg",
           video_url: "/videos/video1.mp4",
           duration: "12:34",
@@ -49,12 +52,13 @@ export default function DashboardOverview() {
           is_published: true,
           visibility: "public",
           created_at: "2024-01-15",
-          updated_at: "2024-01-15"
+          updated_at: "2024-01-15",
         },
         {
           id: 2,
           title: "Gestion Hôtelière Avancée",
-          description: "Techniques avancées de gestion hôtelière pour le secteur du luxe.",
+          description:
+            "Techniques avancées de gestion hôtelière pour le secteur du luxe.",
           thumbnail: "/videos/video2-thumb.jpg",
           video_url: "/videos/video2.mp4",
           duration: "18:22",
@@ -67,12 +71,13 @@ export default function DashboardOverview() {
           is_published: true,
           visibility: "public",
           created_at: "2024-01-10",
-          updated_at: "2024-01-10"
+          updated_at: "2024-01-10",
         },
         {
           id: 3,
           title: "Marketing Digital Touristique",
-          description: "Stratégies de marketing digital appliquées au secteur touristique.",
+          description:
+            "Stratégies de marketing digital appliquées au secteur touristique.",
           thumbnail: "/videos/video3-thumb.jpg",
           video_url: "/videos/video3.mp4",
           duration: "15:45",
@@ -85,10 +90,10 @@ export default function DashboardOverview() {
           is_published: true,
           visibility: "public",
           created_at: "2024-01-05",
-          updated_at: "2024-01-05"
-        }
+          updated_at: "2024-01-05",
+        },
       ],
-      performance_data: [65, 78, 92, 88, 95, 82, 90]
+      performance_data: [65, 78, 92, 88, 95, 82, 90],
     };
 
     // Simuler un chargement
@@ -371,10 +376,10 @@ export default function DashboardOverview() {
               d'apprenants
             </p>
           </div>
-          <button 
+          <button
             onClick={() => {
               // Rediriger vers le formulaire de création
-              window.location.href = '/fr/dashboard/creator/videos/create';
+              window.location.href = "/fr/dashboard/creator/videos/create";
             }}
             className="bg-white text-primary px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
           >
@@ -393,7 +398,7 @@ export default function DashboardOverview() {
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
           Créer une nouvelle vidéo
         </h2>
-        
+
         <form className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -406,7 +411,7 @@ export default function DashboardOverview() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Catégorie
@@ -420,7 +425,7 @@ export default function DashboardOverview() {
               </select>
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Description
@@ -431,7 +436,7 @@ export default function DashboardOverview() {
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -439,23 +444,45 @@ export default function DashboardOverview() {
               </label>
               <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-primary transition-colors cursor-pointer">
                 <div className="text-gray-400">
-                  <svg className="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 48 48">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" />
+                  <svg
+                    className="mx-auto h-12 w-12 mb-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 48 48"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                    />
                   </svg>
-                  <p className="text-sm">Cliquez pour uploader ou glissez-déposez</p>
+                  <p className="text-sm">
+                    Cliquez pour uploader ou glissez-déposez
+                  </p>
                   <p className="text-xs mt-1">MP4, MOV jusqu'à 500MB</p>
                 </div>
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Miniature (JPG, PNG)
               </label>
               <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-primary transition-colors cursor-pointer">
                 <div className="text-gray-400">
-                  <svg className="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 48 48">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <svg
+                    className="mx-auto h-12 w-12 mb-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 48 48"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </svg>
                   <p className="text-sm">Cliquez pour uploader</p>
                   <p className="text-xs mt-1">JPG, PNG jusqu'à 5MB</p>
@@ -463,19 +490,23 @@ export default function DashboardOverview() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <label className="flex items-center">
               <input type="checkbox" className="mr-2" />
-              <span className="text-sm text-gray-700">Publier immédiatement</span>
+              <span className="text-sm text-gray-700">
+                Publier immédiatement
+              </span>
             </label>
-            
+
             <label className="flex items-center">
               <input type="checkbox" className="mr-2" defaultChecked />
-              <span className="text-sm text-gray-700">Autoriser les commentaires</span>
+              <span className="text-sm text-gray-700">
+                Autoriser les commentaires
+              </span>
             </label>
           </div>
-          
+
           <div className="flex gap-4">
             <button
               type="submit"

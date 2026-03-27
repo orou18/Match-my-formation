@@ -14,12 +14,16 @@ export default function TestCreatorPage() {
           Test Dashboard Creator
         </h1>
         <p className="text-gray-600 mb-8">
-          Si vous voyez cette page, le layout fonctionne. La sidebar devrait être visible.
+          Si vous voyez cette page, le layout fonctionne. La sidebar devrait
+          être visible.
         </p>
-        
+
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Contenu de test</h2>
-          <p>Ceci est une page de test pour vérifier que le layout creator s'applique correctement.</p>
+          <p>
+            Ceci est une page de test pour vérifier que le layout creator
+            s'applique correctement.
+          </p>
         </div>
       </motion.div>
     </div>

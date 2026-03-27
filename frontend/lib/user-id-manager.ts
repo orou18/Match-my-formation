@@ -7,7 +7,7 @@ export interface UserData {
   id: number;
   name: string;
   email: string;
-  role: 'student' | 'creator' | 'admin';
+  role: "student" | "creator" | "admin";
   avatar?: string;
   provider?: string;
 }
@@ -19,20 +19,20 @@ export interface AuthData {
 
 export class UserIdManager {
   private static readonly STORAGE_KEYS = {
-    TOKEN: 'token',
-    USER_ROLE: 'userRole',
-    USER_ID: 'userId',
-    USER_NAME: 'userName',
-    USER_EMAIL: 'userEmail',
-    USER_AVATAR: 'userAvatar',
-    PROVIDER: 'socialProvider'
+    TOKEN: "token",
+    USER_ROLE: "userRole",
+    USER_ID: "userId",
+    USER_NAME: "userName",
+    USER_EMAIL: "userEmail",
+    USER_AVATAR: "userAvatar",
+    PROVIDER: "socialProvider",
   };
 
   // IDs de base pour les comptes de test
   private static readonly BASE_IDS = {
     admin: 1,
     creator: 2,
-    student: 3
+    student: 3,
   };
 
   /**
@@ -49,17 +49,17 @@ export class UserIdManager {
    */
   static storeAuthData(authData: AuthData): void {
     const { token, user } = authData;
-    
+
     localStorage.setItem(this.STORAGE_KEYS.TOKEN, token);
     localStorage.setItem(this.STORAGE_KEYS.USER_ROLE, user.role);
     localStorage.setItem(this.STORAGE_KEYS.USER_ID, user.id.toString());
     localStorage.setItem(this.STORAGE_KEYS.USER_NAME, user.name);
     localStorage.setItem(this.STORAGE_KEYS.USER_EMAIL, user.email);
-    
+
     if (user.avatar) {
       localStorage.setItem(this.STORAGE_KEYS.USER_AVATAR, user.avatar);
     }
-    
+
     if (user.provider) {
       localStorage.setItem(this.STORAGE_KEYS.PROVIDER, user.provider);
     }
@@ -72,7 +72,9 @@ export class UserIdManager {
     const id = localStorage.getItem(this.STORAGE_KEYS.USER_ID);
     const name = localStorage.getItem(this.STORAGE_KEYS.USER_NAME);
     const email = localStorage.getItem(this.STORAGE_KEYS.USER_EMAIL);
-    const role = localStorage.getItem(this.STORAGE_KEYS.USER_ROLE) as UserData['role'];
+    const role = localStorage.getItem(
+      this.STORAGE_KEYS.USER_ROLE
+    ) as UserData["role"];
     const avatar = localStorage.getItem(this.STORAGE_KEYS.USER_AVATAR);
     const provider = localStorage.getItem(this.STORAGE_KEYS.PROVIDER);
 
@@ -86,7 +88,7 @@ export class UserIdManager {
       email,
       role,
       avatar: avatar || undefined,
-      provider: provider || undefined
+      provider: provider || undefined,
     };
   }
 
@@ -95,27 +97,27 @@ export class UserIdManager {
    */
   static createTestUser(email: string, password: string): AuthData | null {
     const testUsers = {
-      'student@match.com': {
+      "student@match.com": {
         id: this.BASE_IDS.student,
-        name: 'Alice Élève',
-        email: 'student@match.com',
-        role: 'student' as const,
-        avatar: '/avatars/student.jpg'
+        name: "Alice Élève",
+        email: "student@match.com",
+        role: "student" as const,
+        avatar: "/avatars/student.jpg",
       },
-      'creator@match.com': {
+      "creator@match.com": {
         id: this.BASE_IDS.creator,
-        name: 'Jean Formateur',
-        email: 'creator@match.com',
-        role: 'creator' as const,
-        avatar: '/avatars/creator.jpg'
+        name: "Jean Formateur",
+        email: "creator@match.com",
+        role: "creator" as const,
+        avatar: "/avatars/creator.jpg",
       },
-      'admin@match.com': {
+      "admin@match.com": {
         id: this.BASE_IDS.admin,
-        name: 'Direction Match Admin',
-        email: 'admin@match.com',
-        role: 'admin' as const,
-        avatar: '/avatars/admin.jpg'
-      }
+        name: "Direction Match Admin",
+        email: "admin@match.com",
+        role: "admin" as const,
+        avatar: "/avatars/admin.jpg",
+      },
     };
 
     const userData = testUsers[email as keyof typeof testUsers];
@@ -123,26 +125,31 @@ export class UserIdManager {
 
     return {
       token: `mock-${userData.role}-token-${Date.now()}`,
-      user: userData
+      user: userData,
     };
   }
 
   /**
    * Crée un nouvel utilisateur pour l'inscription
    */
-  static createNewUser(name: string, email: string, role: string, provider?: string): AuthData {
+  static createNewUser(
+    name: string,
+    email: string,
+    role: string,
+    provider?: string
+  ): AuthData {
     const userData: UserData = {
       id: this.generateUserId(role),
       name,
       email,
-      role: role as UserData['role'],
+      role: role as UserData["role"],
       avatar: `/avatars/${role}.jpg`,
-      provider
+      provider,
     };
 
     return {
       token: `mock-token-${Date.now()}`,
-      user: userData
+      user: userData,
     };
   }
 
@@ -151,17 +158,17 @@ export class UserIdManager {
    */
   static createSocialUser(provider: string): AuthData {
     const userData: UserData = {
-      id: this.generateUserId('student'),
+      id: this.generateUserId("student"),
       name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
       email: `user.${provider}@match.com`,
-      role: 'student',
+      role: "student",
       avatar: `/${provider}-avatar.jpg`,
-      provider
+      provider,
     };
 
     return {
       token: `social-${provider}-token-${Date.now()}`,
-      user: userData
+      user: userData,
     };
   }
 
@@ -169,21 +176,23 @@ export class UserIdManager {
    * Vérifie si l'utilisateur est authentifié
    */
   static isAuthenticated(): boolean {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       // Côté serveur: utiliser les cookies ou vérifier autrement
       return false;
     }
-    return !!localStorage.getItem(this.STORAGE_KEYS.TOKEN) && 
-           !!this.getStoredUserData();
+    return (
+      !!localStorage.getItem(this.STORAGE_KEYS.TOKEN) &&
+      !!this.getStoredUserData()
+    );
   }
 
   /**
    * Déconnecte l'utilisateur
    */
   static logout(): void {
-    if (typeof window === 'undefined') return;
-    
-    Object.values(this.STORAGE_KEYS).forEach(key => {
+    if (typeof window === "undefined") return;
+
+    Object.values(this.STORAGE_KEYS).forEach((key) => {
       localStorage.removeItem(key);
     });
   }

@@ -1,25 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🚀 API REGISTER SIMPLE');
-    
+    console.log("🚀 API REGISTER SIMPLE");
+
     const body = await request.json();
-    const { name, email, password, password_confirmation, role = 'student' } = body;
-    
-    console.log('📋 Données:', { name, email, role });
+    const {
+      name,
+      email,
+      password,
+      password_confirmation,
+      role = "student",
+    } = body;
+
+    console.log("📋 Données:", { name, email, role });
 
     // Validation simple
     if (!name || !email || !password || !password_confirmation) {
       return NextResponse.json(
-        { message: 'Tous les champs sont obligatoires' },
+        { message: "Tous les champs sont obligatoires" },
         { status: 400 }
       );
     }
 
     if (password !== password_confirmation) {
       return NextResponse.json(
-        { message: 'Les mots de passe ne correspondent pas' },
+        { message: "Les mots de passe ne correspondent pas" },
         { status: 400 }
       );
     }
@@ -30,25 +36,21 @@ export async function POST(request: NextRequest) {
       name,
       email,
       role,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     // Token simple
     const token = `mock-jwt-token-${newUser.id}-${Date.now()}`;
 
-    console.log('✅ Utilisateur créé:', newUser);
+    console.log("✅ Utilisateur créé:", newUser);
 
     return NextResponse.json({
       message: "Inscription réussie",
       user: newUser,
-      token: token
+      token: token,
     });
-
   } catch (error) {
-    console.error('❌ Erreur:', error);
-    return NextResponse.json(
-      { message: 'Erreur serveur' },
-      { status: 500 }
-    );
+    console.error("❌ Erreur:", error);
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

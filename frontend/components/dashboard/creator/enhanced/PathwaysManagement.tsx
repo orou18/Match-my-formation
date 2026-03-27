@@ -60,7 +60,9 @@ export default function PathwaysManagement() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<"pathways" | "playlists">("pathways");
+  const [selectedTab, setSelectedTab] = useState<"pathways" | "playlists">(
+    "pathways"
+  );
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -74,7 +76,8 @@ export default function PathwaysManagement() {
       {
         id: 1,
         title: "Formation Management Hôtelier",
-        description: "Devenez expert en gestion hôtelière avec ce parcours complet",
+        description:
+          "Devenez expert en gestion hôtelière avec ce parcours complet",
         courses: [1, 2, 3],
         estimatedHours: 120,
         difficulty: "intermediate",
@@ -110,15 +113,96 @@ export default function PathwaysManagement() {
     ];
 
     const mockCourses: Course[] = [
-      { id: 1, title: "Introduction au Management", description: "Bases du management", category: "Management", level: "Beginner", duration: 20, enrolledUsers: 45, status: "published" },
-      { id: 2, title: "Communication Hôtelière", description: "Techniques de communication", category: "Soft Skills", level: "Intermediate", duration: 25, enrolledUsers: 38, status: "published" },
-      { id: 3, title: "Leadership Équipe", description: "Gestion d'équipe", category: "Management", level: "Advanced", duration: 30, enrolledUsers: 32, status: "published" },
-      { id: 4, title: "Techniques de Base", description: "Cuisine fondamentale", category: "Cuisine", level: "Beginner", duration: 40, enrolledUsers: 67, status: "published" },
-      { id: 5, title: "Cuisine Française", description: "Plats traditionnels", category: "Cuisine", level: "Intermediate", duration: 50, enrolledUsers: 54, status: "published" },
-      { id: 6, title: "Cuisine Créative", description: "Techniques avancées", category: "Cuisine", level: "Advanced", duration: 60, enrolledUsers: 41, status: "published" },
-      { id: 7, title: "Pâtisserie", description: "Desserts français", category: "Pâtisserie", level: "Intermediate", duration: 35, enrolledUsers: 28, status: "published" },
-      { id: 8, title: "Marketing Digital", description: "Stratégies en ligne", category: "Marketing", level: "Beginner", duration: 25, enrolledUsers: 89, status: "published" },
-      { id: 9, title: "Réseaux Sociaux", description: "Social media marketing", category: "Marketing", level: "Intermediate", duration: 30, enrolledUsers: 67, status: "published" },
+      {
+        id: 1,
+        title: "Introduction au Management",
+        description: "Bases du management",
+        category: "Management",
+        level: "Beginner",
+        duration: 20,
+        enrolledUsers: 45,
+        status: "published",
+      },
+      {
+        id: 2,
+        title: "Communication Hôtelière",
+        description: "Techniques de communication",
+        category: "Soft Skills",
+        level: "Intermediate",
+        duration: 25,
+        enrolledUsers: 38,
+        status: "published",
+      },
+      {
+        id: 3,
+        title: "Leadership Équipe",
+        description: "Gestion d'équipe",
+        category: "Management",
+        level: "Advanced",
+        duration: 30,
+        enrolledUsers: 32,
+        status: "published",
+      },
+      {
+        id: 4,
+        title: "Techniques de Base",
+        description: "Cuisine fondamentale",
+        category: "Cuisine",
+        level: "Beginner",
+        duration: 40,
+        enrolledUsers: 67,
+        status: "published",
+      },
+      {
+        id: 5,
+        title: "Cuisine Française",
+        description: "Plats traditionnels",
+        category: "Cuisine",
+        level: "Intermediate",
+        duration: 50,
+        enrolledUsers: 54,
+        status: "published",
+      },
+      {
+        id: 6,
+        title: "Cuisine Créative",
+        description: "Techniques avancées",
+        category: "Cuisine",
+        level: "Advanced",
+        duration: 60,
+        enrolledUsers: 41,
+        status: "published",
+      },
+      {
+        id: 7,
+        title: "Pâtisserie",
+        description: "Desserts français",
+        category: "Pâtisserie",
+        level: "Intermediate",
+        duration: 35,
+        enrolledUsers: 28,
+        status: "published",
+      },
+      {
+        id: 8,
+        title: "Marketing Digital",
+        description: "Stratégies en ligne",
+        category: "Marketing",
+        level: "Beginner",
+        duration: 25,
+        enrolledUsers: 89,
+        status: "published",
+      },
+      {
+        id: 9,
+        title: "Réseaux Sociaux",
+        description: "Social media marketing",
+        category: "Marketing",
+        level: "Intermediate",
+        duration: 30,
+        enrolledUsers: 67,
+        status: "published",
+      },
     ];
 
     const mockPlaylists: Playlist[] = [
@@ -169,7 +253,7 @@ export default function PathwaysManagement() {
       difficulty: formData.difficulty,
       enrolledUsers: 0,
       completionRate: 0,
-      created_at: new Date().toISOString().split('T')[0],
+      created_at: new Date().toISOString().split("T")[0],
       status: "draft",
     };
 
@@ -199,7 +283,9 @@ export default function PathwaysManagement() {
       advanced: "Avancé",
     };
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${colors[difficulty as keyof typeof colors]}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${colors[difficulty as keyof typeof colors]}`}
+      >
         {labels[difficulty as keyof typeof labels]}
       </span>
     );
@@ -237,11 +323,16 @@ export default function PathwaysManagement() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Parcours et Playlists</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Parcours et Playlists
+          </h1>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+            <div
+              key={i}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse"
+            >
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
               <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
               <div className="h-3 bg-gray-200 rounded w-2/3"></div>
@@ -303,7 +394,7 @@ export default function PathwaysManagement() {
 
       {/* Pathways */}
       {selectedTab === "pathways" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           {pathways.map((pathway, index) => (
             <motion.div
               key={pathway.id}
@@ -322,17 +413,25 @@ export default function PathwaysManagement() {
                 </div>
 
                 {/* Content */}
-                <h3 className="font-semibold text-gray-900 mb-2">{pathway.title}</h3>
-                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{pathway.description}</p>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {pathway.title}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                  {pathway.description}
+                </p>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">{pathway.courses.length}</div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {pathway.courses.length}
+                    </div>
                     <div className="text-xs text-gray-600">Cours</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">{pathway.estimatedHours}h</div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {pathway.estimatedHours}h
+                    </div>
                     <div className="text-xs text-gray-600">Durée</div>
                   </div>
                 </div>
@@ -340,8 +439,12 @@ export default function PathwaysManagement() {
                 {/* Progress */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-gray-600">Progression moyenne</span>
-                    <span className="text-xs font-medium text-gray-900">{pathway.completionRate}%</span>
+                    <span className="text-xs text-gray-600">
+                      Progression moyenne
+                    </span>
+                    <span className="text-xs font-medium text-gray-900">
+                      {pathway.completionRate}%
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <motion.div
@@ -356,7 +459,9 @@ export default function PathwaysManagement() {
                 {/* Footer */}
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
                   <span>{pathway.enrolledUsers} inscrits</span>
-                  <span>Créé le {new Date(pathway.created_at).toLocaleDateString()}</span>
+                  <span>
+                    Créé le {new Date(pathway.created_at).toLocaleDateString()}
+                  </span>
                 </div>
 
                 {/* Actions */}
@@ -380,7 +485,7 @@ export default function PathwaysManagement() {
 
       {/* Playlists */}
       {selectedTab === "playlists" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           {playlists.map((playlist, index) => (
             <motion.div
               key={playlist.id}
@@ -393,28 +498,38 @@ export default function PathwaysManagement() {
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <div className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
-                      playlist.isPublic
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}>
+                    <div
+                      className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
+                        playlist.isPublic
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
                       {playlist.isPublic ? "Public" : "Privé"}
                     </div>
                   </div>
                 </div>
 
                 {/* Content */}
-                <h3 className="font-semibold text-gray-900 mb-2">{playlist.title}</h3>
-                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{playlist.description}</p>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {playlist.title}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                  {playlist.description}
+                </p>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">{playlist.videos.length}</div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {playlist.videos.length}
+                    </div>
                     <div className="text-xs text-gray-600">Vidéos</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">{Math.floor(playlist.totalDuration / 60)}h</div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {Math.floor(playlist.totalDuration / 60)}h
+                    </div>
                     <div className="text-xs text-gray-600">Durée totale</div>
                   </div>
                 </div>
@@ -479,7 +594,9 @@ export default function PathwaysManagement() {
                   <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="Entrez un titre attrayant..."
                   />
@@ -490,7 +607,15 @@ export default function PathwaysManagement() {
                   </label>
                   <select
                     value={formData.difficulty}
-                    onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as "beginner" | "intermediate" | "advanced" })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        difficulty: e.target.value as
+                          | "beginner"
+                          | "intermediate"
+                          | "advanced",
+                      })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     <option value="beginner">Débutant</option>
@@ -507,7 +632,9 @@ export default function PathwaysManagement() {
                 <textarea
                   rows={4}
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="Décrivez le parcours d'apprentissage..."
                 />
@@ -531,21 +658,32 @@ export default function PathwaysManagement() {
                           if (e.target.checked) {
                             setFormData({
                               ...formData,
-                              selectedCourses: [...formData.selectedCourses, course.id],
+                              selectedCourses: [
+                                ...formData.selectedCourses,
+                                course.id,
+                              ],
                             });
                           } else {
                             setFormData({
                               ...formData,
-                              selectedCourses: formData.selectedCourses.filter(id => id !== course.id),
+                              selectedCourses: formData.selectedCourses.filter(
+                                (id) => id !== course.id
+                              ),
                             });
                           }
                         }}
                         className="mt-1"
                       />
                       <div className="flex-1">
-                        <div className="font-medium text-gray-900">{course.title}</div>
-                        <div className="text-xs text-gray-600">{course.category} • {course.level}</div>
-                        <div className="text-xs text-gray-500">{course.duration} minutes</div>
+                        <div className="font-medium text-gray-900">
+                          {course.title}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {course.category} • {course.level}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {course.duration} minutes
+                        </div>
                       </div>
                     </label>
                   ))}
@@ -559,10 +697,13 @@ export default function PathwaysManagement() {
                     Cours sélectionnés ({formData.selectedCourses.length})
                   </div>
                   <div className="space-y-1">
-                    {formData.selectedCourses.map(courseId => {
-                      const course = courses.find(c => c.id === courseId);
+                    {formData.selectedCourses.map((courseId) => {
+                      const course = courses.find((c) => c.id === courseId);
                       return course ? (
-                        <div key={courseId} className="text-sm text-blue-700 flex items-center gap-2">
+                        <div
+                          key={courseId}
+                          className="text-sm text-blue-700 flex items-center gap-2"
+                        >
                           <CheckCircle className="w-3 h-3" />
                           {course.title}
                         </div>
@@ -570,7 +711,8 @@ export default function PathwaysManagement() {
                     })}
                   </div>
                   <div className="text-sm text-blue-900 mt-2">
-                    Durée estimée : {formData.selectedCourses.length * 20} heures
+                    Durée estimée : {formData.selectedCourses.length * 20}{" "}
+                    heures
                   </div>
                 </div>
               )}

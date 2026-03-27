@@ -17,12 +17,13 @@ import {
 export default function StudentCoursesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
-  
+
   const [courses] = useState([
     {
       id: 1,
       title: "Management de l'Hôtellerie de Luxe",
-      description: "Maîtrisez les stratégies de gestion hôtelière haut de gamme",
+      description:
+        "Maîtrisez les stratégies de gestion hôtelière haut de gamme",
       category: "Management",
       level: "Avancé",
       duration: "12h",
@@ -82,9 +83,11 @@ export default function StudentCoursesPage() {
   ]);
 
   const filteredCourses = courses.filter((course) => {
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === "all" || course.category === filterCategory;
+    const matchesSearch =
+      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      filterCategory === "all" || course.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -95,7 +98,9 @@ export default function StudentCoursesPage() {
       Avancé: { color: "bg-orange-100 text-orange-700" },
       Expert: { color: "bg-red-100 text-red-700" },
     };
-    return levelConfig[level as keyof typeof levelConfig] || levelConfig.Débutant;
+    return (
+      levelConfig[level as keyof typeof levelConfig] || levelConfig.Débutant
+    );
   };
 
   return (
@@ -107,7 +112,9 @@ export default function StudentCoursesPage() {
         className="text-center"
       >
         <h1 className="text-3xl font-black text-white mb-2">Mes Cours</h1>
-        <p className="text-white/70">Explorez et poursuivez votre apprentissage</p>
+        <p className="text-white/70">
+          Explorez et poursuivez votre apprentissage
+        </p>
       </motion.div>
 
       {/* Search and Filter */}
@@ -157,14 +164,15 @@ export default function StudentCoursesPage() {
         {[
           {
             title: "Cours en cours",
-            value: courses.filter(c => c.progress > 0 && c.progress < 100).length,
+            value: courses.filter((c) => c.progress > 0 && c.progress < 100)
+              .length,
             icon: BookOpen,
             color: "text-blue-600",
             bg: "bg-blue-50",
           },
           {
             title: "Cours terminés",
-            value: courses.filter(c => c.progress === 100).length,
+            value: courses.filter((c) => c.progress === 100).length,
             icon: Award,
             color: "text-green-600",
             bg: "bg-green-50",
@@ -196,7 +204,9 @@ export default function StudentCoursesPage() {
                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
               </div>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">
+              {stat.value}
+            </h3>
             <p className="text-sm text-gray-600">{stat.title}</p>
           </motion.div>
         ))}
@@ -206,7 +216,7 @@ export default function StudentCoursesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
         {filteredCourses.map((course, index) => {
           const levelBadge = getLevelBadge(course.level);
-          
+
           return (
             <motion.div
               key={course.id}
@@ -219,7 +229,9 @@ export default function StudentCoursesPage() {
               <div className="relative h-48 bg-gradient-to-br from-primary to-primary/80 overflow-hidden">
                 <div className="absolute inset-0 bg-black/20" />
                 <div className="absolute top-4 left-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${levelBadge.color}`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${levelBadge.color}`}
+                  >
                     {course.level}
                   </span>
                 </div>
@@ -230,21 +242,27 @@ export default function StudentCoursesPage() {
                   </div>
                 </div>
                 <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-xl font-bold text-white mb-1">{course.title}</h3>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    {course.title}
+                  </h3>
                   <p className="text-white/80 text-sm">{course.instructor}</p>
                 </div>
               </div>
 
               {/* Course Content */}
               <div className="p-6">
-                <p className="text-gray-600 mb-4 line-clamp-2">{course.description}</p>
+                <p className="text-gray-600 mb-4 line-clamp-2">
+                  {course.description}
+                </p>
 
                 {/* Progress Bar */}
                 {course.progress > 0 && (
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm text-gray-600">Progression</span>
-                      <span className="text-sm font-medium text-primary">{course.progress}%</span>
+                      <span className="text-sm font-medium text-primary">
+                        {course.progress}%
+                      </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
@@ -301,8 +319,12 @@ export default function StudentCoursesPage() {
           className="bg-white rounded-3xl shadow-xl p-12 text-center"
         >
           <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Aucun cours trouvé</h3>
-          <p className="text-gray-600">Essayez de modifier vos critères de recherche</p>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            Aucun cours trouvé
+          </h3>
+          <p className="text-gray-600">
+            Essayez de modifier vos critères de recherche
+          </p>
         </motion.div>
       )}
     </div>

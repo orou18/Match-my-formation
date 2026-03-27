@@ -4,7 +4,7 @@ export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   withCredentials: true,
   headers: {
-    "Accept": "application/json",
+    Accept: "application/json",
     "Content-Type": "application/json",
   },
 });
@@ -12,8 +12,9 @@ export const api = axios.create({
 // Intercepteur pour ajouter le Token à chaque requête
 api.interceptors.request.use((config) => {
   // On récupère le token stocké dans le localStorage (ou cookies selon ta config)
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -28,7 +29,7 @@ api.interceptors.response.use(
       // Nettoyer le stockage local
       localStorage.removeItem("token");
       localStorage.removeItem("userRole");
-      
+
       // Rediriger vers login
       if (typeof window !== "undefined") {
         window.location.href = "/fr/login";

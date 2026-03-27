@@ -20,9 +20,13 @@ import {
   CheckCircle,
   Check,
   Bell,
-  Settings
+  Settings,
 } from "lucide-react";
-import { useSimpleNotification, NotificationContainer } from "@/components/ui/SimpleNotification";
+import {
+  useSimpleNotification,
+  NotificationContainer,
+} from "@/components/ui/SimpleNotification";
+import { dashboardService } from "@/lib/services/dashboard-service";
 
 interface DashboardStats {
   totalVideos: number;
@@ -52,15 +56,21 @@ interface DashboardStats {
   }>;
 }
 
+interface CreatorDashboardResponse {
+  success: boolean;
+  data: DashboardStats;
+}
+
 export default function CreatorDashboard() {
   const params = useParams();
-  const locale = (params.locale as string) || 'fr';
+  const locale = (params.locale as string) || "fr";
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview");
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const { notifications, success, error, removeNotification } = useSimpleNotification();
+  const { notifications, success, error, removeNotification } =
+    useSimpleNotification();
 
   useEffect(() => {
     loadDashboardData();
@@ -68,13 +78,8 @@ export default function CreatorDashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const response = await fetch("/api/creator/dashboard", {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      const data = await response.json();
-      
+      const data =
+        await dashboardService.getCreatorDashboard<CreatorDashboardResponse>();
       if (data.success) {
         setStats(data.data);
       } else {
@@ -94,29 +99,21 @@ export default function CreatorDashboard() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
     }).format(amount);
   };
 
   const currentStats = stats || {
-    totalVideos: 24,
-    totalEmployees: 156,
-    totalViews: 125430,
-    totalRevenue: 45678,
-    monthlyGrowth: 12.5,
-    recentVideos: [
-      { id: 1, title: "Formation complète en hôtellerie", views: 15420, revenue: 2340, created_at: new Date().toISOString() },
-      { id: 2, title: "Techniques de service client", views: 12350, revenue: 1890, created_at: new Date().toISOString() }
-    ],
-    topEmployees: [
-      { id: 1, name: "Marie Dubois", email: "marie@entreprise.com", completion_rate: 85, progress: 72 },
-      { id: 2, name: "Jean Martin", email: "jean@entreprise.com", completion_rate: 92, progress: 88 }
-    ],
-    recentActivity: [
-      { id: 1, type: "video_created", message: "Nouvelle vidéo publiée", created_at: new Date().toISOString() }
-    ]
+    totalVideos: 0,
+    totalEmployees: 0,
+    totalViews: 0,
+    totalRevenue: 0,
+    monthlyGrowth: 0,
+    recentVideos: [],
+    topEmployees: [],
+    recentActivity: [],
   };
 
   const quickActions = [
@@ -128,7 +125,7 @@ export default function CreatorDashboard() {
       color: "from-blue-600 to-blue-700",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
-      hoverBg: "hover:bg-blue-100"
+      hoverBg: "hover:bg-blue-100",
     },
     {
       title: "Gérer les employés",
@@ -138,7 +135,7 @@ export default function CreatorDashboard() {
       color: "from-green-600 to-green-700",
       bgColor: "bg-green-50",
       borderColor: "border-green-200",
-      hoverBg: "hover:bg-green-100"
+      hoverBg: "hover:bg-green-100",
     },
     {
       title: "Créer un parcours",
@@ -148,7 +145,7 @@ export default function CreatorDashboard() {
       color: "from-purple-600 to-purple-700",
       bgColor: "bg-purple-50",
       borderColor: "border-purple-200",
-      hoverBg: "hover:bg-purple-100"
+      hoverBg: "hover:bg-purple-100",
     },
     {
       title: "Personnaliser",
@@ -158,7 +155,7 @@ export default function CreatorDashboard() {
       color: "from-indigo-600 to-indigo-700",
       bgColor: "bg-indigo-50",
       borderColor: "border-indigo-200",
-      hoverBg: "hover:bg-indigo-100"
+      hoverBg: "hover:bg-indigo-100",
     },
     {
       title: "Voir les statistiques",
@@ -168,8 +165,8 @@ export default function CreatorDashboard() {
       color: "from-amber-600 to-amber-700",
       bgColor: "bg-amber-50",
       borderColor: "border-amber-200",
-      hoverBg: "hover:bg-amber-100"
-    }
+      hoverBg: "hover:bg-amber-100",
+    },
   ];
 
   if (loading) {
@@ -195,7 +192,7 @@ export default function CreatorDashboard() {
                 Vue d'ensemble de votre activité
               </p>
             </div>
-            
+
             <div className="flex items-center gap-2 sm:gap-4">
               <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
                 <Bell className="w-4 h-4" />
@@ -210,7 +207,7 @@ export default function CreatorDashboard() {
 
       {/* Stats principales */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -223,7 +220,9 @@ export default function CreatorDashboard() {
               </div>
               <div>
                 <p className="text-xs text-gray-600">Total vidéos</p>
-                <p className="text-base sm:text-lg font-bold text-gray-900">{formatNumber(currentStats.totalVideos)}</p>
+                <p className="text-base sm:text-lg font-bold text-gray-900">
+                  {formatNumber(currentStats.totalVideos)}
+                </p>
               </div>
             </div>
           </motion.div>
@@ -240,7 +239,9 @@ export default function CreatorDashboard() {
               </div>
               <div>
                 <p className="text-xs text-gray-600">Employés</p>
-                <p className="text-base sm:text-lg font-bold text-gray-900">{formatNumber(currentStats.totalEmployees)}</p>
+                <p className="text-base sm:text-lg font-bold text-gray-900">
+                  {formatNumber(currentStats.totalEmployees)}
+                </p>
               </div>
             </div>
           </motion.div>
@@ -257,7 +258,9 @@ export default function CreatorDashboard() {
               </div>
               <div>
                 <p className="text-xs text-gray-600">Vues totales</p>
-                <p className="text-base sm:text-lg font-bold text-gray-900">{formatNumber(currentStats.totalViews)}</p>
+                <p className="text-base sm:text-lg font-bold text-gray-900">
+                  {formatNumber(currentStats.totalViews)}
+                </p>
               </div>
             </div>
           </motion.div>
@@ -274,7 +277,9 @@ export default function CreatorDashboard() {
               </div>
               <div>
                 <p className="text-xs text-gray-600">Revenus</p>
-                <p className="text-base sm:text-lg font-bold text-gray-900">{formatCurrency(currentStats.totalRevenue)}</p>
+                <p className="text-base sm:text-lg font-bold text-gray-900">
+                  {formatCurrency(currentStats.totalRevenue)}
+                </p>
               </div>
             </div>
           </motion.div>
@@ -289,9 +294,11 @@ export default function CreatorDashboard() {
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center shadow-lg animate-pulse">
                 <Target className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
               </div>
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Actions Rapides</span>
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Actions Rapides
+              </span>
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               {quickActions.map((action, index) => (
                 <motion.div
                   key={action.title}
@@ -306,21 +313,29 @@ export default function CreatorDashboard() {
                     className={`block h-full p-4 sm:p-6 rounded-lg sm:rounded-xl ${action.bgColor} ${action.hoverBg} hover:shadow-xl transition-all duration-300 relative overflow-hidden border-2 ${action.borderColor}`}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br opacity-10">
-                      <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-20`}></div>
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-20`}
+                      ></div>
                     </div>
-                    
+
                     <div className="relative z-10">
-                      <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${action.color} rounded-lg flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      <div
+                        className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${action.color} rounded-lg flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                      >
                         <action.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </div>
-                      
+
                       <h3 className="font-bold text-gray-900 mb-2 text-xs sm:text-sm group-hover:text-transparent bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all duration-300">
                         {action.title}
                       </h3>
-                      <p className="text-gray-600 mb-3 sm:mb-4 text-xs leading-relaxed line-clamp-2">{action.description}</p>
-                      
+                      <p className="text-gray-600 mb-3 sm:mb-4 text-xs leading-relaxed line-clamp-2">
+                        {action.description}
+                      </p>
+
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Démarrer</span>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                          Démarrer
+                        </span>
                         <div className="flex items-center gap-2 text-purple-600 group-hover:text-pink-600 transition-colors">
                           <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-300" />
                         </div>
@@ -342,10 +357,30 @@ export default function CreatorDashboard() {
             <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200">
               <div className="flex flex-col sm:flex-row gap-2 p-2 sm:p-3 overflow-x-auto">
                 {[
-                  { id: "overview", label: "Vue d'ensemble", icon: BarChart3, color: "from-blue-500 to-purple-600" },
-                  { id: "videos", label: "Vidéos récentes", icon: Video, color: "from-red-500 to-pink-600" },
-                  { id: "employees", label: "Top employés", icon: Users, color: "from-emerald-500 to-teal-600" },
-                  { id: "activity", label: "Activité récente", icon: Activity, color: "from-purple-500 to-indigo-600" }
+                  {
+                    id: "overview",
+                    label: "Vue d'ensemble",
+                    icon: BarChart3,
+                    color: "from-blue-500 to-purple-600",
+                  },
+                  {
+                    id: "videos",
+                    label: "Vidéos récentes",
+                    icon: Video,
+                    color: "from-red-500 to-pink-600",
+                  },
+                  {
+                    id: "employees",
+                    label: "Top employés",
+                    icon: Users,
+                    color: "from-emerald-500 to-teal-600",
+                  },
+                  {
+                    id: "activity",
+                    label: "Activité récente",
+                    icon: Activity,
+                    color: "from-purple-500 to-indigo-600",
+                  },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -356,10 +391,16 @@ export default function CreatorDashboard() {
                         : "text-gray-600 hover:text-gray-900 hover:bg-white/80 border-2 border-transparent"
                     }`}
                   >
-                    <div className={`w-4 h-4 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      activeTab === tab.id ? `bg-gradient-to-br ${tab.color}` : 'bg-gray-300'
-                    }`}>
-                      <tab.icon className={`w-2 h-2 ${activeTab === tab.id ? 'text-white' : 'text-gray-600'}`} />
+                    <div
+                      className={`w-4 h-4 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        activeTab === tab.id
+                          ? `bg-gradient-to-br ${tab.color}`
+                          : "bg-gray-300"
+                      }`}
+                    >
+                      <tab.icon
+                        className={`w-2 h-2 ${activeTab === tab.id ? "text-white" : "text-gray-600"}`}
+                      />
                     </div>
                     <span className="font-medium truncate">{tab.label}</span>
                   </button>
@@ -370,43 +411,47 @@ export default function CreatorDashboard() {
             {/* Contenu des tabs */}
             <div className="p-4 sm:p-6 bg-gradient-to-br from-white to-purple-50">
               {activeTab === "overview" && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-6">
                   <div>
                     <div className="text-xs sm:text-sm font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
                       <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                         <Video className="w-2 h-2 sm:w-2 sm:h-2 text-white" />
                       </div>
-                      <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Vidéos Récentes</span>
+                      <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        Vidéos Récentes
+                      </span>
                     </div>
                     <div className="space-y-2 sm:space-y-3">
-                      {currentStats.recentVideos.slice(0, 3).map((video, index) => (
-                        <motion.div
-                          key={video.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
-                          className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-lg border border-purple-100 hover:shadow-lg hover:scale-101 transition-all duration-300 cursor-pointer group"
-                        >
-                          <div className="w-8 h-6 sm:w-10 sm:h-8 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
-                            <Play className="w-3 h-3 text-blue-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-900 text-xs group-hover:text-blue-600 transition-colors line-clamp-2 mb-1">
-                              {video.title}
-                            </h4>
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
-                              <span className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full">
-                                <Eye className="w-2 h-2 text-blue-600" />
-                                {formatNumber(video.views)}
-                              </span>
-                              <span className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
-                                <DollarSign className="w-2 h-2 text-green-600" />
-                                {formatCurrency(video.revenue)}
-                              </span>
+                      {currentStats.recentVideos
+                        .slice(0, 3)
+                        .map((video, index) => (
+                          <motion.div
+                            key={video.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                            className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-lg border border-purple-100 hover:shadow-lg hover:scale-101 transition-all duration-300 cursor-pointer group"
+                          >
+                            <div className="w-8 h-6 sm:w-10 sm:h-8 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+                              <Play className="w-3 h-3 text-blue-600" />
                             </div>
-                          </div>
-                        </motion.div>
-                      ))}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-xs group-hover:text-blue-600 transition-colors line-clamp-2 mb-1">
+                                {video.title}
+                              </h4>
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                                <span className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full">
+                                  <Eye className="w-2 h-2 text-blue-600" />
+                                  {formatNumber(video.views)}
+                                </span>
+                                <span className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
+                                  <DollarSign className="w-2 h-2 text-green-600" />
+                                  {formatCurrency(video.revenue)}
+                                </span>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
                     </div>
                   </div>
 
@@ -415,45 +460,54 @@ export default function CreatorDashboard() {
                       <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
                         <Users className="w-2 h-2 sm:w-2 sm:h-2 text-white" />
                       </div>
-                      <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Top Employés</span>
+                      <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                        Top Employés
+                      </span>
                     </div>
                     <div className="space-y-2 sm:space-y-3">
-                      {currentStats.topEmployees.slice(0, 3).map((employee, index) => (
-                        <motion.div
-                          key={employee.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
-                          className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-lg border border-emerald-100 hover:shadow-lg hover:scale-101 transition-all duration-300 cursor-pointer group"
-                        >
-                          <div className="relative flex-shrink-0">
-                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
-                              <span className="text-white font-bold text-xs">
-                                {employee.name.split(' ').map(n => n[0]).join('')}
-                              </span>
+                      {currentStats.topEmployees
+                        .slice(0, 3)
+                        .map((employee, index) => (
+                          <motion.div
+                            key={employee.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                            className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-lg border border-emerald-100 hover:shadow-lg hover:scale-101 transition-all duration-300 cursor-pointer group"
+                          >
+                            <div className="relative flex-shrink-0">
+                              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
+                                <span className="text-white font-bold text-xs">
+                                  {employee.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}
+                                </span>
+                              </div>
+                              <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-white animate-pulse flex items-center justify-center">
+                                <Check className="w-1 h-1 text-white" />
+                              </div>
                             </div>
-                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-white animate-pulse flex items-center justify-center">
-                              <Check className="w-1 h-1 text-white" />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-xs group-hover:text-emerald-600 transition-colors mb-1 truncate">
+                                {employee.name}
+                              </h4>
+                              <p className="text-xs text-gray-600 mb-2 truncate">
+                                {employee.email}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                                <span className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-full">
+                                  <Award className="w-2 h-2 text-amber-600" />
+                                  {employee.completion_rate}%
+                                </span>
+                                <span className="flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-full">
+                                  <TrendingUp className="w-2 h-2 text-purple-600" />
+                                  {employee.progress}%
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-900 text-xs group-hover:text-emerald-600 transition-colors mb-1 truncate">
-                              {employee.name}
-                            </h4>
-                            <p className="text-xs text-gray-600 mb-2 truncate">{employee.email}</p>
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
-                              <span className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-full">
-                                <Award className="w-2 h-2 text-amber-600" />
-                                {employee.completion_rate}%
-                              </span>
-                              <span className="flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-full">
-                                <TrendingUp className="w-2 h-2 text-purple-600" />
-                                {employee.progress}%
-                              </span>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        ))}
                     </div>
                   </div>
                 </div>
@@ -462,24 +516,36 @@ export default function CreatorDashboard() {
               {activeTab === "videos" && (
                 <div className="text-center py-8 sm:py-12">
                   <Video className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">Vidéos récentes</h3>
-                  <p className="text-xs text-gray-600 px-4">Toutes vos vidéos récentes apparaîtront ici</p>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">
+                    Vidéos récentes
+                  </h3>
+                  <p className="text-xs text-gray-600 px-4">
+                    Toutes vos vidéos récentes apparaîtront ici
+                  </p>
                 </div>
               )}
 
               {activeTab === "employees" && (
                 <div className="text-center py-8 sm:py-12">
                   <Users className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">Top employés</h3>
-                  <p className="text-xs text-gray-600 px-4">Vos meilleurs employés apparaîtront ici</p>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">
+                    Top employés
+                  </h3>
+                  <p className="text-xs text-gray-600 px-4">
+                    Vos meilleurs employés apparaîtront ici
+                  </p>
                 </div>
               )}
 
               {activeTab === "activity" && (
                 <div className="text-center py-8 sm:py-12">
                   <Activity className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">Activité récente</h3>
-                  <p className="text-xs text-gray-600 px-4">L'activité récente apparaîtra ici</p>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">
+                    Activité récente
+                  </h3>
+                  <p className="text-xs text-gray-600 px-4">
+                    L'activité récente apparaîtra ici
+                  </p>
                 </div>
               )}
             </div>
@@ -487,9 +553,9 @@ export default function CreatorDashboard() {
         </div>
       </div>
 
-      <NotificationContainer 
-        notifications={notifications} 
-        onRemove={removeNotification} 
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
       />
     </div>
   );

@@ -30,7 +30,7 @@ import {
   Move,
   Archive,
   FolderPlus,
-  FilePlus
+  FilePlus,
 } from "lucide-react";
 
 interface LibraryItem {
@@ -67,7 +67,7 @@ export default function LibraryPage() {
       visibility: "public",
       starred: true,
       path: "/formations/tourisme",
-      children: []
+      children: [],
     },
     {
       id: "2",
@@ -81,7 +81,7 @@ export default function LibraryPage() {
       tags: ["tourisme", "durable", "introduction"],
       visibility: "public",
       starred: true,
-      path: "/videos/intro-tourisme-durable"
+      path: "/videos/intro-tourisme-durable",
     },
     {
       id: "3",
@@ -93,7 +93,7 @@ export default function LibraryPage() {
       visibility: "public",
       starred: false,
       path: "/formations/marketing-digital",
-      children: []
+      children: [],
     },
     {
       id: "4",
@@ -106,7 +106,7 @@ export default function LibraryPage() {
       tags: ["thumbnail", "hôtellerie"],
       visibility: "private",
       starred: false,
-      path: "/images/thumbnails/hotellerie"
+      path: "/images/thumbnails/hotellerie",
     },
     {
       id: "5",
@@ -119,7 +119,7 @@ export default function LibraryPage() {
       tags: ["musique", "intro"],
       visibility: "public",
       starred: true,
-      path: "/audio/intro-music"
+      path: "/audio/intro-music",
     },
     {
       id: "6",
@@ -131,7 +131,7 @@ export default function LibraryPage() {
       tags: ["guide", "hôtellerie", "pdf"],
       visibility: "public",
       starred: false,
-      path: "/documents/guide-hotellerie"
+      path: "/documents/guide-hotellerie",
     },
     {
       id: "7",
@@ -145,7 +145,7 @@ export default function LibraryPage() {
       tags: ["service", "client", "excellence"],
       visibility: "public",
       starred: false,
-      path: "/videos/service-client"
+      path: "/videos/service-client",
     },
     {
       id: "8",
@@ -157,16 +157,19 @@ export default function LibraryPage() {
       visibility: "private",
       starred: false,
       path: "/ressources/pedagogiques",
-      children: []
-    }
+      children: [],
+    },
   ];
 
-  const filteredItems = libraryItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+  const filteredItems = libraryItems.filter((item) => {
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.tags.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
     const matchesType = filterType === "all" || item.type === filterType;
-    
+
     return matchesSearch && matchesType;
   });
 
@@ -175,9 +178,13 @@ export default function LibraryPage() {
       case "name":
         return a.name.localeCompare(b.name);
       case "date":
-        return new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime();
+        return (
+          new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime()
+        );
       case "size":
-        return (b.size ? parseInt(b.size) : 0) - (a.size ? parseInt(a.size) : 0);
+        return (
+          (b.size ? parseInt(b.size) : 0) - (a.size ? parseInt(a.size) : 0)
+        );
       case "type":
         return a.type.localeCompare(b.type);
       default:
@@ -225,9 +232,9 @@ export default function LibraryPage() {
   };
 
   const toggleItemSelection = (itemId: string) => {
-    setSelectedItems(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
+    setSelectedItems((prev) =>
+      prev.includes(itemId)
+        ? prev.filter((id) => id !== itemId)
         : [...prev, itemId]
     );
   };
@@ -242,13 +249,13 @@ export default function LibraryPage() {
 
   const stats = {
     total: libraryItems.length,
-    folders: libraryItems.filter(item => item.type === "folder").length,
-    videos: libraryItems.filter(item => item.type === "video").length,
-    images: libraryItems.filter(item => item.type === "image").length,
-    audio: libraryItems.filter(item => item.type === "audio").length,
-    documents: libraryItems.filter(item => item.type === "document").length,
-    starred: libraryItems.filter(item => item.starred).length,
-    totalSize: "645 MB"
+    folders: libraryItems.filter((item) => item.type === "folder").length,
+    videos: libraryItems.filter((item) => item.type === "video").length,
+    images: libraryItems.filter((item) => item.type === "image").length,
+    audio: libraryItems.filter((item) => item.type === "audio").length,
+    documents: libraryItems.filter((item) => item.type === "document").length,
+    starred: libraryItems.filter((item) => item.starred).length,
+    totalSize: "645 MB",
   };
 
   return (
@@ -261,10 +268,14 @@ export default function LibraryPage() {
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Bibliothèque</h1>
-            <p className="text-gray-600">Gérez tous vos fichiers et ressources</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Bibliothèque
+            </h1>
+            <p className="text-gray-600">
+              Gérez tous vos fichiers et ressources
+            </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -276,7 +287,7 @@ export default function LibraryPage() {
                 className="pl-9 pr-4 py-2 w-64 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
-            
+
             <button className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
               <Upload className="w-4 h-4" />
               Upload
@@ -304,7 +315,9 @@ export default function LibraryPage() {
           <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center mx-auto mb-2">
             <Folder className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.folders}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.folders}
+          </span>
           <p className="text-xs text-gray-600">Dossiers</p>
         </div>
 
@@ -312,7 +325,9 @@ export default function LibraryPage() {
           <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-pink-500 rounded-lg flex items-center justify-center mx-auto mb-2">
             <Video className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.videos}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.videos}
+          </span>
           <p className="text-xs text-gray-600">Vidéos</p>
         </div>
 
@@ -320,7 +335,9 @@ export default function LibraryPage() {
           <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-teal-500 rounded-lg flex items-center justify-center mx-auto mb-2">
             <Image className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.images}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.images}
+          </span>
           <p className="text-xs text-gray-600">Images</p>
         </div>
 
@@ -336,7 +353,9 @@ export default function LibraryPage() {
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mx-auto mb-2">
             <FileText className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.documents}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.documents}
+          </span>
           <p className="text-xs text-gray-600">Docs</p>
         </div>
 
@@ -344,7 +363,9 @@ export default function LibraryPage() {
           <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center mx-auto mb-2">
             <Star className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.starred}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.starred}
+          </span>
           <p className="text-xs text-gray-600">Favoris</p>
         </div>
 
@@ -352,7 +373,9 @@ export default function LibraryPage() {
           <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center mx-auto mb-2">
             <Download className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.totalSize}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.totalSize}
+          </span>
           <p className="text-xs text-gray-600">Taille</p>
         </div>
       </motion.div>
@@ -471,30 +494,36 @@ export default function LibraryPage() {
                       onChange={() => toggleItemSelection(item.id)}
                       className="absolute top-2 left-2 z-10 w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary opacity-0 group-hover:opacity-100 transition-opacity"
                     />
-                    
+
                     <button
                       onClick={() => toggleStar(item.id)}
                       className="absolute top-2 right-2 z-10 p-1 bg-white/80 backdrop-blur-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <Star className={`w-4 h-4 ${item.starred ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`} />
+                      <Star
+                        className={`w-4 h-4 ${item.starred ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`}
+                      />
                     </button>
 
                     <div className="aspect-square bg-gray-50 rounded-xl border border-gray-200 overflow-hidden group-hover:border-primary transition-colors">
                       {item.type === "folder" ? (
                         <div className="w-full h-full flex items-center justify-center">
-                          <div className={`w-16 h-16 bg-gradient-to-br ${getItemColor(item.type)} rounded-2xl flex items-center justify-center shadow-lg`}>
+                          <div
+                            className={`w-16 h-16 bg-gradient-to-br ${getItemColor(item.type)} rounded-2xl flex items-center justify-center shadow-lg`}
+                          >
                             <ItemIcon className="w-8 h-8 text-white" />
                           </div>
                         </div>
                       ) : item.thumbnail ? (
-                        <img 
-                          src={item.thumbnail} 
+                        <img
+                          src={item.thumbnail}
                           alt={item.name}
                           className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <div className={`w-16 h-16 bg-gradient-to-br ${getItemColor(item.type)} rounded-2xl flex items-center justify-center shadow-lg`}>
+                          <div
+                            className={`w-16 h-16 bg-gradient-to-br ${getItemColor(item.type)} rounded-2xl flex items-center justify-center shadow-lg`}
+                          >
                             <ItemIcon className="w-8 h-8 text-white" />
                           </div>
                         </div>
@@ -502,15 +531,22 @@ export default function LibraryPage() {
                     </div>
 
                     <div className="mt-2">
-                      <h3 className="font-medium text-gray-900 text-sm truncate" title={item.name}>
+                      <h3
+                        className="font-medium text-gray-900 text-sm truncate"
+                        title={item.name}
+                      >
                         {item.name}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
                         {item.size && (
-                          <span className="text-xs text-gray-500">{item.size}</span>
+                          <span className="text-xs text-gray-500">
+                            {item.size}
+                          </span>
                         )}
                         {item.duration && (
-                          <span className="text-xs text-gray-500">{item.duration}</span>
+                          <span className="text-xs text-gray-500">
+                            {item.duration}
+                          </span>
                         )}
                       </div>
                       <div className="flex items-center gap-1 mt-1">
@@ -519,7 +555,9 @@ export default function LibraryPage() {
                         ) : (
                           <Lock className="w-3 h-3 text-gray-400" />
                         )}
-                        <span className="text-xs text-gray-500">{item.modifiedAt}</span>
+                        <span className="text-xs text-gray-500">
+                          {item.modifiedAt}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -546,13 +584,17 @@ export default function LibraryPage() {
                     className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                   />
 
-                  <div className={`w-12 h-12 bg-gradient-to-br ${getItemColor(item.type)} rounded-xl flex items-center justify-center shadow-md`}>
+                  <div
+                    className={`w-12 h-12 bg-gradient-to-br ${getItemColor(item.type)} rounded-xl flex items-center justify-center shadow-md`}
+                  >
                     <ItemIcon className="w-6 h-6 text-white" />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-gray-900 truncate">{item.name}</h3>
+                      <h3 className="font-medium text-gray-900 truncate">
+                        {item.name}
+                      </h3>
                       {item.starred && (
                         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                       )}
@@ -565,12 +607,17 @@ export default function LibraryPage() {
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       {item.tags.slice(0, 3).map((tag, tagIndex) => (
-                        <span key={tagIndex} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs">
+                        <span
+                          key={tagIndex}
+                          className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs"
+                        >
                           {tag}
                         </span>
                       ))}
                       {item.tags.length > 3 && (
-                        <span className="text-xs text-gray-500">+{item.tags.length - 3}</span>
+                        <span className="text-xs text-gray-500">
+                          +{item.tags.length - 3}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -581,15 +628,15 @@ export default function LibraryPage() {
                     ) : (
                       <Lock className="w-4 h-4 text-gray-400" />
                     )}
-                    
+
                     <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                       <Eye className="w-4 h-4" />
                     </button>
-                    
+
                     <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                       <Download className="w-4 h-4" />
                     </button>
-                    
+
                     <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                       <MoreHorizontal className="w-4 h-4" />
                     </button>
@@ -603,7 +650,9 @@ export default function LibraryPage() {
         {sortedItems.length === 0 && (
           <div className="text-center py-12">
             <Folder className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun fichier trouvé</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Aucun fichier trouvé
+            </h3>
             <p className="text-gray-600 mb-6">
               {searchQuery || filterType !== "all"
                 ? "Essayez de modifier vos filtres de recherche"

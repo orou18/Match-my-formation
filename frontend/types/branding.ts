@@ -42,7 +42,7 @@ export interface BrandingSettings {
 
 export interface FontOption {
   family: string;
-  category: 'serif' | 'sans-serif' | 'monospace' | 'display' | 'handwriting';
+  category: "serif" | "sans-serif" | "monospace" | "display" | "handwriting";
   variants: string[];
   subsets: string[];
   popular?: boolean;

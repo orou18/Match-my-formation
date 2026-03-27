@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Menu, X, ArrowRight, Loader2, Globe } from "lucide-react";
+import { ChevronDown, Menu, X, ArrowRight, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function Navbar() {
@@ -14,10 +14,8 @@ export default function Navbar() {
 
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
-    setIsPending(false);
     setOpen(false); // Ferme le menu mobile lors du changement de page
   }, [pathname]);
 
@@ -26,6 +24,13 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   const navItems = [
     { label: "Accueil", href: `/${locale}` },
@@ -44,20 +49,11 @@ export default function Navbar() {
         scrolled || open ? "py-3 bg-white/90 shadow-lg" : "py-5 bg-transparent"
       } backdrop-blur-xl`}
     >
-      {isPending && (
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: "100%" }}
-          className="absolute top-0 left-0 h-1 bg-accent z-[60]"
-        />
-      )}
-
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
         {/* LOGO */}
         <Link
           href={`/${locale}`}
-          onClick={() => setIsPending(true)}
-          className="relative h-10 w-40 md:h-12 md:w-48 transition-transform hover:scale-105"
+          className="relative h-10 w-32 sm:w-36 md:h-12 md:w-48 transition-transform hover:scale-105"
         >
           <Image
             src="/matchmyformation_footer.png"
@@ -77,9 +73,10 @@ export default function Navbar() {
               <Link
                 key={item.label}
                 href={item.href}
-                onClick={() => !active && setIsPending(true)}
                 className={`relative px-5 py-2 text-sm font-semibold transition-all ${
-                  active ? "text-primary" : `${textColorClass} hover:text-accent`
+                  active
+                    ? "text-primary"
+                    : `${textColorClass} hover:text-accent`
                 }`}
               >
                 <span className="relative z-10 flex items-center gap-1">
@@ -99,7 +96,10 @@ export default function Navbar() {
 
         {/* DESKTOP ACTIONS */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href={`/${locale}/login`} className={`font-bold text-sm ${textColorClass}`}>
+          <Link
+            href={`/${locale}/login`}
+            className={`font-bold text-sm ${textColorClass}`}
+          >
             Connexion
           </Link>
           <Link
@@ -114,9 +114,13 @@ export default function Navbar() {
         {/* MOBILE HAMBURGER BUTTON */}
         <button
           onClick={() => setOpen(!open)}
-          className={`md:hidden p-2 rounded-xl transition-colors ${
-            scrolled || open ? "bg-primary/10 text-primary" : "bg-white/10 text-white"
+          className={`md:hidden p-2.5 rounded-xl transition-colors active:scale-95 ${
+            scrolled || open
+              ? "bg-primary/10 text-primary"
+              : "bg-white/10 text-white"
           }`}
+          aria-expanded={open}
+          aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
         >
           {open ? <X size={28} /> : <Menu size={28} />}
         </button>
@@ -127,11 +131,11 @@ export default function Navbar() {
         {open && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "100vh" }}
+            animate={{ opacity: 1, height: "calc(100vh - 4.5rem)" }}
             exit={{ opacity: 0, height: 0 }}
-            className="fixed top-[64px] left-0 w-full bg-white z-40 overflow-hidden flex flex-col md:hidden"
+            className="fixed inset-x-0 top-full bg-white z-40 overflow-hidden flex flex-col md:hidden border-t border-gray-100 shadow-2xl"
           >
-            <div className="flex-1 px-8 py-12 flex flex-col gap-8">
+            <div className="flex-1 px-5 sm:px-8 py-8 sm:py-10 flex flex-col gap-6 panel-scroll">
               {navItems.map((item, i) => (
                 <motion.div
                   key={item.label}
@@ -141,6 +145,7 @@ export default function Navbar() {
                 >
                   <Link
                     href={item.href}
+                    onClick={() => setOpen(false)}
                     className={`text-3xl font-black ${
                       pathname === item.href ? "text-primary" : "text-secondary"
                     }`}
@@ -160,14 +165,16 @@ export default function Navbar() {
               >
                 <Link
                   href={`/${locale}/login`}
+                  onClick={() => setOpen(false)}
                   className="flex items-center justify-between p-6 bg-gray-50 rounded-[2rem] text-secondary font-bold"
                 >
                   Espace Connexion
                   <ArrowRight size={20} className="text-primary" />
                 </Link>
-                
+
                 <Link
                   href={`/${locale}/login`}
+                  onClick={() => setOpen(false)}
                   className="flex items-center justify-center gap-3 p-6 bg-primary text-white rounded-[2rem] font-black text-xl shadow-xl shadow-primary/20"
                 >
                   Démarrer l&apos;aventure
@@ -177,12 +184,12 @@ export default function Navbar() {
             </div>
 
             {/* Footer Menu Mobile */}
-            <div className="p-8 bg-gray-50 flex justify-between items-center">
+            <div className="px-5 sm:px-8 py-5 bg-gray-50 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
               <div className="flex items-center gap-2 text-secondary font-bold">
                 <Globe size={18} className="text-primary" />
                 {String(locale).toUpperCase()}
               </div>
-              <p className="text-xs text-gray-400 font-medium tracking-widest uppercase">
+              <p className="text-[11px] text-gray-400 font-medium tracking-[0.22em] uppercase">
                 Match My Formation © 2026
               </p>
             </div>

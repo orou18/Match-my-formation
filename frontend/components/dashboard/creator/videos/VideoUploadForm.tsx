@@ -19,7 +19,7 @@ import {
   Globe,
   Lock,
   FolderPlus,
-  Check
+  Check,
 } from "lucide-react";
 
 interface VideoUploadErrors {
@@ -49,7 +49,10 @@ interface VideoUploadFormProps {
   onSubmit: (data: VideoUploadData) => void;
 }
 
-export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormProps) {
+export default function VideoUploadForm({
+  onClose,
+  onSubmit,
+}: VideoUploadFormProps) {
   const [formData, setFormData] = useState<VideoUploadData>({
     title: "",
     description: "",
@@ -76,13 +79,13 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
 
   const categories = [
     "Tourisme",
-    "Hôtellerie", 
+    "Hôtellerie",
     "Restauration",
     "Marketing Digital",
     "Gestion",
     "Service Client",
     "Développement Durable",
-    "Autre"
+    "Autre",
   ];
 
   const pathways = [
@@ -91,7 +94,7 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
     "Marketing Digital",
     "Gestion Restaurant",
     "Service Client Excellence",
-    "Développement Durable"
+    "Développement Durable",
   ];
 
   const validateForm = () => {
@@ -129,30 +132,32 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFileChange = (field: 'video' | 'thumbnail') => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData(prev => ({ ...prev, [field]: file }));
-      
-      // Créer un preview
-      if (field === 'video') {
-        const videoUrl = URL.createObjectURL(file);
-        setVideoPreview(videoUrl);
-      } else {
-        const imageUrl = URL.createObjectURL(file);
-        setThumbnailPreview(imageUrl);
-      }
+  const handleFileChange =
+    (field: "video" | "thumbnail") =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setFormData((prev) => ({ ...prev, [field]: file }));
 
-      // Clear error for this field
-      if (errors[field]) {
-        setErrors(prev => ({ ...prev, [field]: undefined }));
-      }
-    }
-  };
+        // Créer un preview
+        if (field === "video") {
+          const videoUrl = URL.createObjectURL(file);
+          setVideoPreview(videoUrl);
+        } else {
+          const imageUrl = URL.createObjectURL(file);
+          setThumbnailPreview(imageUrl);
+        }
 
-  const removeFile = (field: 'video' | 'thumbnail') => {
-    setFormData(prev => ({ ...prev, [field]: null }));
-    if (field === 'video') {
+        // Clear error for this field
+        if (errors[field]) {
+          setErrors((prev) => ({ ...prev, [field]: undefined }));
+        }
+      }
+    };
+
+  const removeFile = (field: "video" | "thumbnail") => {
+    setFormData((prev) => ({ ...prev, [field]: null }));
+    if (field === "video") {
       setVideoPreview(null);
     } else {
       setThumbnailPreview(null);
@@ -171,29 +176,29 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
     try {
       // Simulation d'upload
       const uploadData = new FormData();
-      uploadData.append('title', formData.title);
-      uploadData.append('description', formData.description);
-      uploadData.append('category', formData.category);
-      uploadData.append('tags', formData.tags);
-      uploadData.append('visibility', formData.visibility);
-      if (formData.pathway) uploadData.append('pathway', formData.pathway);
-      if (formData.video) uploadData.append('video', formData.video);
-      if (formData.thumbnail) uploadData.append('thumbnail', formData.thumbnail);
+      uploadData.append("title", formData.title);
+      uploadData.append("description", formData.description);
+      uploadData.append("category", formData.category);
+      uploadData.append("tags", formData.tags);
+      uploadData.append("visibility", formData.visibility);
+      if (formData.pathway) uploadData.append("pathway", formData.pathway);
+      if (formData.video) uploadData.append("video", formData.video);
+      if (formData.thumbnail)
+        uploadData.append("thumbnail", formData.thumbnail);
 
       // Simuler progression
       for (let i = 0; i <= 100; i += 10) {
-        setUploadProgress(prev => ({ ...prev, video: i, thumbnail: i }));
-        await new Promise(resolve => setTimeout(resolve, 100));
+        setUploadProgress((prev) => ({ ...prev, video: i, thumbnail: i }));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       // Simuler succès
-      console.log('Video uploaded:', formData);
-      
+      console.log("Video uploaded:", formData);
+
       // Appeler le callback avec les données
       onSubmit(formData);
-      
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       setErrors({ video: "Erreur lors de l'upload de la vidéo" });
     } finally {
       setIsSubmitting(false);
@@ -211,8 +216,12 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Créer une nouvelle vidéo</h1>
-              <p className="text-gray-600">Partagez votre expertise avec la communauté</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Créer une nouvelle vidéo
+              </h1>
+              <p className="text-gray-600">
+                Partagez votre expertise avec la communauté
+              </p>
             </div>
             <button
               onClick={onClose}
@@ -239,7 +248,9 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, title: e.target.value }))
+                  }
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="Donnez un titre accrocheur..."
                 />
@@ -257,12 +268,19 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                 </label>
                 <select
                   value={formData.category}
-                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      category: e.target.value,
+                    }))
+                  }
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   <option value="">Sélectionner une catégorie</option>
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
                   ))}
                 </select>
                 {errors.category && (
@@ -280,7 +298,12 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
                 placeholder="Décrivez le contenu de votre vidéo..."
@@ -289,7 +312,7 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                 <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                   <AlertCircle className="w-4 h-4" />
                   {errors.description}
-                  </p>
+                </p>
               )}
             </div>
 
@@ -300,7 +323,9 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
               <input
                 type="text"
                 value={formData.tags}
-                onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, tags: e.target.value }))
+                }
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="tourisme, hôtellerie, formation..."
               />
@@ -318,14 +343,21 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                       name="visibility"
                       value="public"
                       checked={formData.visibility === "public"}
-                      onChange={(e) => setFormData(prev => ({ ...prev, visibility: e.target.value as any }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          visibility: e.target.value as any,
+                        }))
+                      }
                       className="w-4 h-4 text-primary"
                     />
                     <div className="flex items-center gap-2">
                       <Globe className="w-4 h-4 text-green-600" />
                       <span className="text-sm font-medium">Public</span>
                     </div>
-                    <span className="text-xs text-gray-500 ml-7">Visible par tout le monde</span>
+                    <span className="text-xs text-gray-500 ml-7">
+                      Visible par tout le monde
+                    </span>
                   </label>
 
                   <label className="flex items-center gap-3 cursor-pointer">
@@ -334,14 +366,21 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                       name="visibility"
                       value="private"
                       checked={formData.visibility === "private"}
-                      onChange={(e) => setFormData(prev => ({ ...prev, visibility: e.target.value as any }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          visibility: e.target.value as any,
+                        }))
+                      }
                       className="w-4 h-4 text-primary"
                     />
                     <div className="flex items-center gap-2">
                       <Lock className="w-4 h-4 text-red-600" />
                       <span className="text-sm font-medium">Privé</span>
                     </div>
-                    <span className="text-xs text-gray-500 ml-7">Uniquement pour les abonnés</span>
+                    <span className="text-xs text-gray-500 ml-7">
+                      Uniquement pour les abonnés
+                    </span>
                   </label>
 
                   <label className="flex items-center gap-3 cursor-pointer">
@@ -350,14 +389,21 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                       name="visibility"
                       value="unlisted"
                       checked={formData.visibility === "unlisted"}
-                      onChange={(e) => setFormData(prev => ({ ...prev, visibility: e.target.value as any }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          visibility: e.target.value as any,
+                        }))
+                      }
                       className="w-4 h-4 text-primary"
                     />
                     <div className="flex items-center gap-2">
                       <Lock className="w-4 h-4 text-yellow-600" />
                       <span className="text-sm font-medium">Non listé</span>
                     </div>
-                    <span className="text-xs text-gray-500 ml-7">Accessible par lien uniquement</span>
+                    <span className="text-xs text-gray-500 ml-7">
+                      Accessible par lien uniquement
+                    </span>
                   </label>
                 </div>
               </div>
@@ -368,18 +414,27 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                 </label>
                 <select
                   value={formData.pathway}
-                  onChange={(e) => setFormData(prev => ({ ...prev, pathway: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      pathway: e.target.value,
+                    }))
+                  }
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   <option value="">Aucun parcours</option>
-                  {pathways.map(pathway => (
-                    <option key={pathway} value={pathway}>{pathway}</option>
+                  {pathways.map((pathway) => (
+                    <option key={pathway} value={pathway}>
+                      {pathway}
+                    </option>
                   ))}
                 </select>
                 {formData.pathway && (
                   <div className="mt-2 flex items-center gap-2 text-xs text-primary">
                     <FolderPlus className="w-3 h-3" />
-                    <span>Cette vidéo sera intégrée dans le parcours sélectionné</span>
+                    <span>
+                      Cette vidéo sera intégrée dans le parcours sélectionné
+                    </span>
                   </div>
                 )}
               </div>
@@ -401,14 +456,14 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                 </label>
                 {videoPreview ? (
                   <div className="relative">
-                    <video 
-                      src={videoPreview} 
+                    <video
+                      src={videoPreview}
                       className="w-full h-48 object-cover rounded-xl"
                       controls
                     />
                     <button
                       type="button"
-                      onClick={() => removeFile('video')}
+                      onClick={() => removeFile("video")}
                       className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -428,7 +483,7 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                     <input
                       type="file"
                       accept="video/*"
-                      onChange={handleFileChange('video')}
+                      onChange={handleFileChange("video")}
                       className="hidden"
                     />
                   </label>
@@ -457,14 +512,14 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                 </label>
                 {thumbnailPreview ? (
                   <div className="relative">
-                    <img 
-                      src={thumbnailPreview} 
+                    <img
+                      src={thumbnailPreview}
                       alt="Thumbnail preview"
                       className="w-full h-48 object-cover rounded-xl"
                     />
                     <button
                       type="button"
-                      onClick={() => removeFile('thumbnail')}
+                      onClick={() => removeFile("thumbnail")}
                       className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -484,7 +539,7 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={handleFileChange('thumbnail')}
+                      onChange={handleFileChange("thumbnail")}
                       className="hidden"
                     />
                   </label>
@@ -518,7 +573,7 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
               >
                 Annuler
               </button>
-              
+
               <div className="flex gap-3">
                 <button
                   type="button"
@@ -527,7 +582,7 @@ export default function VideoUploadForm({ onClose, onSubmit }: VideoUploadFormPr
                   <Eye className="w-4 h-4" />
                   Aperçu
                 </button>
-                
+
                 <button
                   type="submit"
                   disabled={isSubmitting}

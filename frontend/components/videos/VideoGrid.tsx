@@ -24,11 +24,11 @@ interface VideoGridProps {
   maxVideos?: number;
 }
 
-export default function VideoGrid({ 
-  videos, 
-  variant = "default", 
+export default function VideoGrid({
+  videos,
+  variant = "default",
   showCreator = true,
-  maxVideos 
+  maxVideos,
 }: VideoGridProps) {
   const displayVideos = maxVideos ? videos.slice(0, maxVideos) : videos;
 
@@ -39,9 +39,10 @@ export default function VideoGrid({
           key={video.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          whileHover={{ 
+          whileHover={{
             y: -5,
-            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 5px -5px rgba(0, 0, 0, 0.04)"
+            boxShadow:
+              "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 5px -5px rgba(0, 0, 0, 0.04)",
           }}
           transition={{ duration: 0.3, delay: index * 0.05 }}
           className="bg-white rounded-xl shadow-lg overflow-hidden group cursor-pointer"
@@ -49,8 +50,8 @@ export default function VideoGrid({
           <div className="flex gap-4 p-4">
             {/* Thumbnail */}
             <div className="relative w-32 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-              <img 
-                src={video.thumbnail} 
+              <img
+                src={video.thumbnail}
                 alt={video.title}
                 className="w-full h-full object-cover"
               />
@@ -93,10 +94,11 @@ export default function VideoGrid({
           key={video.id}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ 
+          whileHover={{
             y: -8,
             scale: 1.02,
-            boxShadow: "0 25px 50px -12px rgba(0, 122, 122, 0.15), 0 12px 12px -6px rgba(0, 122, 122, 0.08)"
+            boxShadow:
+              "0 25px 50px -12px rgba(0, 122, 122, 0.15), 0 12px 12px -6px rgba(0, 122, 122, 0.08)",
           }}
           transition={{ duration: 0.4, delay: index * 0.1 }}
           className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl overflow-hidden group cursor-pointer border border-gray-100"
@@ -111,12 +113,12 @@ export default function VideoGrid({
 
           {/* Thumbnail Container */}
           <div className="relative h-48 bg-gray-200">
-            <img 
-              src={video.thumbnail} 
+            <img
+              src={video.thumbnail}
               alt={video.title}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
-            
+
             {/* Overlay on hover */}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
               <Play className="w-12 h-12 text-white" />
@@ -139,7 +141,7 @@ export default function VideoGrid({
                   {video.description}
                 </p>
               </div>
-              
+
               {/* Category Badge */}
               {video.category && (
                 <div className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
@@ -171,7 +173,9 @@ export default function VideoGrid({
               <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
                 <div className="w-10 h-10 bg-gray-200 rounded-full" />
                 <div>
-                  <div className="font-medium text-gray-900">{video.creator}</div>
+                  <div className="font-medium text-gray-900">
+                    {video.creator}
+                  </div>
                   <div className="text-xs text-gray-500">Créateur</div>
                 </div>
               </div>
@@ -187,21 +191,22 @@ export default function VideoGrid({
         key={video.id}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={{ 
+        whileHover={{
           y: -5,
-          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 5px -5px rgba(0, 0, 0, 0.04)"
+          boxShadow:
+            "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 5px -5px rgba(0, 0, 0, 0.04)",
         }}
         transition={{ duration: 0.3, delay: index * 0.05 }}
         className="bg-white rounded-2xl shadow-lg overflow-hidden group cursor-pointer"
       >
         {/* Thumbnail */}
         <div className="relative h-48 bg-gray-200">
-          <img 
-            src={video.thumbnail} 
+          <img
+            src={video.thumbnail}
             alt={video.title}
             className="w-full h-full object-cover"
           />
-          
+
           {/* Duration Badge */}
           <div className="absolute bottom-3 right-3 bg-black/70 text-white px-2 py-1 rounded text-xs">
             {video.duration}
@@ -256,13 +261,15 @@ export default function VideoGrid({
   };
 
   return (
-    <div className={`grid gap-6 ${
-      variant === "compact" 
-        ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
-        : variant === "featured"
-        ? "grid-cols-1 lg:grid-cols-2"
-        : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-    }`}>
+    <div
+      className={`grid gap-4 sm:gap-6 ${
+        variant === "compact"
+          ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          : variant === "featured"
+            ? "grid-cols-1 lg:grid-cols-2"
+            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+      }`}
+    >
       {displayVideos.map((video, index) => getVideoCard(video, index))}
     </div>
   );

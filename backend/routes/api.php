@@ -7,6 +7,7 @@ use App\Http\Controllers\EmployeeAuthController;
 use App\Http\Controllers\EmployeeProgressController;
 use App\Http\Controllers\PathwayManagementController;
 use App\Http\Controllers\Analytics\AnalyticsController;
+use App\Http\Controllers\Admin\BrandingController;
 use App\Http\Controllers\Course\CourseController;
 use App\Http\Controllers\Course\ModuleController;
 use App\Http\Controllers\Course\VideoController as CourseVideoController;
@@ -95,6 +96,8 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // --- 4. DASHBOARD ADMIN & ANALYTICS ---
     Route::get('/admin/stats', [AnalyticsController::class, 'getDashboardStats']);
+    Route::get('/admin/branding', [BrandingController::class, 'show']);
+    Route::put('/admin/branding', [BrandingController::class, 'update']);
     
     // --- 5. DASHBOARD STUDENT ---
     Route::get('/student/courses', [CourseController::class, 'index']);

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Course;
 
 use App\Http\Controllers\Controller;
+use App\Models\Video;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CourseController extends Controller
@@ -92,25 +94,27 @@ class CourseController extends Controller
         $employee = $request->user();
         
         // Récupérer les vidéos créées par le créateur de cet employé
-        $videos = Video::where('creator_id', $employee->creator_id)
+        $videos = Video::with('uploader')
+            ->where('uploader_id', $employee->creator_id)
             ->where('visibility', 'public')
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($video) {
+            ->map(function ($video) use ($employee) {
                 return [
                     'id' => $video->id,
                     'title' => $video->title,
                     'description' => $video->description,
-                    'thumbnail' => $video->thumbnail_url,
+                    'thumbnail' => $video->thumbnail,
+                    'video_url' => $video->url,
                     'duration' => $video->duration ?? '00:00',
                     'views' => $video->views ?? 0,
-                    'likes' => $video->likes ?? 0,
-                    'comments' => $video->comments_count ?? 0,
+                    'likes' => 0,
+                    'comments' => 0,
                     'publishedAt' => $video->created_at->diffForHumans(),
                     'visibility' => $video->visibility,
-                    'status' => $video->published_immediately ? 'published' : 'draft',
+                    'status' => $video->visibility === 'public' ? 'published' : 'draft',
                     'creator' => [
-                        'name' => $video->creator->name ?? 'Formateur',
+                        'name' => $video->uploader->name ?? 'Formateur',
                         'domain' => $employee->domain
                     ]
                 ];

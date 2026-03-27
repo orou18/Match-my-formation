@@ -2,15 +2,15 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { 
-  BellRing, 
-  Mail, 
-  MessageSquare, 
-  Megaphone, 
-  Check, 
-  X, 
-  Trash2, 
-  Eye, 
+import {
+  BellRing,
+  Mail,
+  MessageSquare,
+  Megaphone,
+  Check,
+  X,
+  Trash2,
+  Eye,
   EyeOff,
   Settings,
   Filter,
@@ -23,7 +23,7 @@ import {
   BookOpen,
   Calendar,
   ChevronDown,
-  MoreHorizontal
+  MoreHorizontal,
 } from "lucide-react";
 
 interface Notification {
@@ -70,13 +70,13 @@ export default function NotificationsPage() {
   const loadNotifications = async () => {
     try {
       setLoading(true);
-      
+
       if (session?.user) {
-        const response = await fetch('/api/user/notifications', {
+        const response = await fetch("/api/user/notifications", {
           headers: {
-            'Authorization': `Bearer ${(session.user as any)?.accessToken}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${(session.user as any)?.accessToken}`,
+            "Content-Type": "application/json",
+          },
         });
 
         if (response.ok) {
@@ -88,13 +88,17 @@ export default function NotificationsPage() {
             {
               id: "1",
               title: "Nouveau cours disponible",
-              message: "React Avancé est maintenant disponible dans votre parcours",
+              message:
+                "React Avancé est maintenant disponible dans votre parcours",
               type: "info",
               category: "course",
               isRead: false,
               createdAt: "2024-06-18T10:30:00Z",
               actionUrl: "/courses/react-advanced",
-              metadata: { courseName: "React Avancé", instructor: "Jean Dupont" }
+              metadata: {
+                courseName: "React Avancé",
+                instructor: "Jean Dupont",
+              },
             },
             {
               id: "2",
@@ -104,17 +108,18 @@ export default function NotificationsPage() {
               category: "achievement",
               isRead: false,
               createdAt: "2024-06-17T15:45:00Z",
-              metadata: { courseName: "TypeScript" }
+              metadata: { courseName: "TypeScript" },
             },
             {
               id: "3",
               title: "Message de votre instructeur",
-              message: "Bonjour ! J'ai regardé votre dernier exercice, excellent travail.",
+              message:
+                "Bonjour ! J'ai regardé votre dernier exercice, excellent travail.",
               type: "info",
               category: "message",
               isRead: true,
               createdAt: "2024-06-16T09:20:00Z",
-              metadata: { instructor: "Marie Curie" }
+              metadata: { instructor: "Marie Curie" },
             },
             {
               id: "4",
@@ -123,7 +128,7 @@ export default function NotificationsPage() {
               type: "warning",
               category: "system",
               isRead: true,
-              createdAt: "2024-06-15T14:00:00Z"
+              createdAt: "2024-06-15T14:00:00Z",
             },
             {
               id: "5",
@@ -133,8 +138,8 @@ export default function NotificationsPage() {
               category: "marketing",
               isRead: false,
               createdAt: "2024-06-14T11:30:00Z",
-              metadata: { amount: "-30%" }
-            }
+              metadata: { amount: "-30%" },
+            },
           ]);
         }
       }
@@ -148,11 +153,11 @@ export default function NotificationsPage() {
   const loadSettings = async () => {
     try {
       if (session?.user) {
-        const response = await fetch('/api/user/notification-settings', {
+        const response = await fetch("/api/user/notification-settings", {
           headers: {
-            'Authorization': `Bearer ${(session.user as any)?.accessToken}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${(session.user as any)?.accessToken}`,
+            "Content-Type": "application/json",
+          },
         });
 
         if (response.ok) {
@@ -166,7 +171,7 @@ export default function NotificationsPage() {
             directMessages: true,
             systemAnnouncements: true,
             achievementAlerts: true,
-            weeklyDigest: true
+            weeklyDigest: true,
           });
         }
       }
@@ -177,17 +182,22 @@ export default function NotificationsPage() {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch(`/api/user/notifications/${notificationId}/read`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${(session?.user as any)?.accessToken}`,
-          'Content-Type': 'application/json'
+      const response = await fetch(
+        `/api/user/notifications/${notificationId}/read`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
 
       if (response.ok) {
-        setNotifications(prev => 
-          prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.id === notificationId ? { ...n, isRead: true } : n
+          )
         );
         showMessage("Notification marquée comme lue");
       }
@@ -198,17 +208,22 @@ export default function NotificationsPage() {
 
   const markAsUnread = async (notificationId: string) => {
     try {
-      const response = await fetch(`/api/user/notifications/${notificationId}/unread`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${(session?.user as any)?.accessToken}`,
-          'Content-Type': 'application/json'
+      const response = await fetch(
+        `/api/user/notifications/${notificationId}/unread`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
 
       if (response.ok) {
-        setNotifications(prev => 
-          prev.map(n => n.id === notificationId ? { ...n, isRead: false } : n)
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.id === notificationId ? { ...n, isRead: false } : n
+          )
         );
         showMessage("Notification marquée comme non lue");
       }
@@ -219,16 +234,19 @@ export default function NotificationsPage() {
 
   const deleteNotification = async (notificationId: string) => {
     try {
-      const response = await fetch(`/api/user/notifications/${notificationId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${(session?.user as any)?.accessToken}`,
-          'Content-Type': 'application/json'
+      const response = await fetch(
+        `/api/user/notifications/${notificationId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
 
       if (response.ok) {
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
         showMessage("Notification supprimée");
       }
     } catch (error) {
@@ -238,16 +256,16 @@ export default function NotificationsPage() {
 
   const markAllAsRead = async () => {
     try {
-      const response = await fetch('/api/user/notifications/mark-all-read', {
-        method: 'POST',
+      const response = await fetch("/api/user/notifications/mark-all-read", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${(session?.user as any)?.accessToken}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         showMessage("Toutes les notifications marquées comme lues");
       }
     } catch (error) {
@@ -257,12 +275,12 @@ export default function NotificationsPage() {
 
   const clearAllNotifications = async () => {
     try {
-      const response = await fetch('/api/user/notifications/clear-all', {
-        method: 'DELETE',
+      const response = await fetch("/api/user/notifications/clear-all", {
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${(session?.user as any)?.accessToken}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
@@ -276,13 +294,13 @@ export default function NotificationsPage() {
 
   const updateSettings = async (newSettings: NotificationSettings) => {
     try {
-      const response = await fetch('/api/user/notification-settings', {
-        method: 'PUT',
+      const response = await fetch("/api/user/notification-settings", {
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${(session?.user as any)?.accessToken}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(newSettings)
+        body: JSON.stringify(newSettings),
       });
 
       if (response.ok) {
@@ -329,20 +347,23 @@ export default function NotificationsPage() {
     }
   };
 
-  const filteredNotifications = notifications.filter(notification => {
-    const matchesFilter = filter === "all" || 
-      (filter === "read" && notification.isRead) || 
+  const filteredNotifications = notifications.filter((notification) => {
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "read" && notification.isRead) ||
       (filter === "unread" && !notification.isRead);
-    
-    const matchesCategory = categoryFilter === "all" || notification.category === categoryFilter;
-    
-    const matchesSearch = notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         notification.message.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
+    const matchesCategory =
+      categoryFilter === "all" || notification.category === categoryFilter;
+
+    const matchesSearch =
+      notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      notification.message.toLowerCase().includes(searchQuery.toLowerCase());
+
     return matchesFilter && matchesCategory && matchesSearch;
   });
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   if (loading) {
     return (
@@ -370,7 +391,7 @@ export default function NotificationsPage() {
             </span>
           )}
         </div>
-        
+
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowSettings(!showSettings)}
@@ -378,7 +399,7 @@ export default function NotificationsPage() {
           >
             <Settings className="w-5 h-5" />
           </button>
-          
+
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
@@ -409,21 +430,30 @@ export default function NotificationsPage() {
           animate={{ opacity: 1, height: "auto" }}
           className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm"
         >
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Paramètres de notification</h3>
-          
+          <h3 className="text-xl font-bold text-gray-900 mb-6">
+            Paramètres de notification
+          </h3>
+
           <div className="space-y-4">
             <label className="flex items-center justify-between p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100">
               <div className="flex items-center gap-3">
                 <BookOpen className="w-5 h-5 text-primary" />
                 <div>
                   <div className="font-medium">Alertes de cours</div>
-                  <div className="text-sm text-gray-500">Recevoir des rappels pour vos leçons</div>
+                  <div className="text-sm text-gray-500">
+                    Recevoir des rappels pour vos leçons
+                  </div>
                 </div>
               </div>
               <input
                 type="checkbox"
                 checked={settings.courseAlerts}
-                onChange={(e) => updateSettings({ ...settings, courseAlerts: e.target.checked })}
+                onChange={(e) =>
+                  updateSettings({
+                    ...settings,
+                    courseAlerts: e.target.checked,
+                  })
+                }
                 className="w-5 h-5 text-primary rounded"
               />
             </label>
@@ -433,13 +463,20 @@ export default function NotificationsPage() {
                 <Mail className="w-5 h-5 text-primary" />
                 <div>
                   <div className="font-medium">Emails marketing</div>
-                  <div className="text-sm text-gray-500">Nouveautés et offres spéciales</div>
+                  <div className="text-sm text-gray-500">
+                    Nouveautés et offres spéciales
+                  </div>
                 </div>
               </div>
               <input
                 type="checkbox"
                 checked={settings.marketingEmails}
-                onChange={(e) => updateSettings({ ...settings, marketingEmails: e.target.checked })}
+                onChange={(e) =>
+                  updateSettings({
+                    ...settings,
+                    marketingEmails: e.target.checked,
+                  })
+                }
                 className="w-5 h-5 text-primary rounded"
               />
             </label>
@@ -449,13 +486,20 @@ export default function NotificationsPage() {
                 <MessageSquare className="w-5 h-5 text-primary" />
                 <div>
                   <div className="font-medium">Messages directs</div>
-                  <div className="text-sm text-gray-500">Notifications de vos instructeurs</div>
+                  <div className="text-sm text-gray-500">
+                    Notifications de vos instructeurs
+                  </div>
                 </div>
               </div>
               <input
                 type="checkbox"
                 checked={settings.directMessages}
-                onChange={(e) => updateSettings({ ...settings, directMessages: e.target.checked })}
+                onChange={(e) =>
+                  updateSettings({
+                    ...settings,
+                    directMessages: e.target.checked,
+                  })
+                }
                 className="w-5 h-5 text-primary rounded"
               />
             </label>
@@ -465,13 +509,20 @@ export default function NotificationsPage() {
                 <Megaphone className="w-5 h-5 text-primary" />
                 <div>
                   <div className="font-medium">Annonces plateforme</div>
-                  <div className="text-sm text-gray-500">Mises à jour importantes du système</div>
+                  <div className="text-sm text-gray-500">
+                    Mises à jour importantes du système
+                  </div>
                 </div>
               </div>
               <input
                 type="checkbox"
                 checked={settings.systemAnnouncements}
-                onChange={(e) => updateSettings({ ...settings, systemAnnouncements: e.target.checked })}
+                onChange={(e) =>
+                  updateSettings({
+                    ...settings,
+                    systemAnnouncements: e.target.checked,
+                  })
+                }
                 className="w-5 h-5 text-primary rounded"
               />
             </label>
@@ -481,13 +532,20 @@ export default function NotificationsPage() {
                 <Award className="w-5 h-5 text-primary" />
                 <div>
                   <div className="font-medium">Réalisations</div>
-                  <div className="text-sm text-gray-500">Célébrer vos succès</div>
+                  <div className="text-sm text-gray-500">
+                    Célébrer vos succès
+                  </div>
                 </div>
               </div>
               <input
                 type="checkbox"
                 checked={settings.achievementAlerts}
-                onChange={(e) => updateSettings({ ...settings, achievementAlerts: e.target.checked })}
+                onChange={(e) =>
+                  updateSettings({
+                    ...settings,
+                    achievementAlerts: e.target.checked,
+                  })
+                }
                 className="w-5 h-5 text-primary rounded"
               />
             </label>
@@ -497,13 +555,20 @@ export default function NotificationsPage() {
                 <Calendar className="w-5 h-5 text-primary" />
                 <div>
                   <div className="font-medium">Digest hebdomadaire</div>
-                  <div className="text-sm text-gray-500">Résumé de votre activité</div>
+                  <div className="text-sm text-gray-500">
+                    Résumé de votre activité
+                  </div>
                 </div>
               </div>
               <input
                 type="checkbox"
                 checked={settings.weeklyDigest}
-                onChange={(e) => updateSettings({ ...settings, weeklyDigest: e.target.checked })}
+                onChange={(e) =>
+                  updateSettings({
+                    ...settings,
+                    weeklyDigest: e.target.checked,
+                  })
+                }
                 className="w-5 h-5 text-primary rounded"
               />
             </label>
@@ -524,7 +589,7 @@ export default function NotificationsPage() {
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
-          
+
           <div className="flex gap-2">
             <select
               value={filter}
@@ -535,7 +600,7 @@ export default function NotificationsPage() {
               <option value="unread">Non lues</option>
               <option value="read">Lues</option>
             </select>
-            
+
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
@@ -558,8 +623,8 @@ export default function NotificationsPage() {
           <div className="p-12 text-center">
             <BellRing className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {searchQuery || filter !== "all" || categoryFilter !== "all" 
-                ? "Aucune notification trouvée" 
+              {searchQuery || filter !== "all" || categoryFilter !== "all"
+                ? "Aucune notification trouvée"
                 : "Aucune notification"}
             </h3>
             <p className="text-gray-600">
@@ -571,8 +636,11 @@ export default function NotificationsPage() {
         ) : (
           <div className="divide-y divide-gray-100">
             {filteredNotifications.map((notification) => {
-              const Icon = getNotificationIcon(notification.type, notification.category);
-              
+              const Icon = getNotificationIcon(
+                notification.type,
+                notification.category
+              );
+
               return (
                 <motion.div
                   key={notification.id}
@@ -583,37 +651,45 @@ export default function NotificationsPage() {
                   }`}
                 >
                   <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-xl border ${getNotificationColor(notification.type)}`}>
+                    <div
+                      className={`p-3 rounded-xl border ${getNotificationColor(notification.type)}`}
+                    >
                       <Icon className="w-5 h-5" />
                     </div>
-                    
+
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className={`font-semibold text-gray-900 mb-1 ${
-                            !notification.isRead ? "font-bold" : ""
-                          }`}>
+                          <h3
+                            className={`font-semibold text-gray-900 mb-1 ${
+                              !notification.isRead ? "font-bold" : ""
+                            }`}
+                          >
                             {notification.title}
                           </h3>
-                          <p className="text-gray-600 mb-2">{notification.message}</p>
-                          
+                          <p className="text-gray-600 mb-2">
+                            {notification.message}
+                          </p>
+
                           <div className="flex items-center gap-4 text-sm text-gray-500">
                             <span>
-                              {new Date(notification.createdAt).toLocaleDateString('fr-FR', {
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit'
+                              {new Date(
+                                notification.createdAt
+                              ).toLocaleDateString("fr-FR", {
+                                day: "numeric",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
                               })}
                             </span>
-                            
+
                             {notification.metadata?.courseName && (
                               <span className="flex items-center gap-1">
                                 <BookOpen className="w-3 h-3" />
                                 {notification.metadata.courseName}
                               </span>
                             )}
-                            
+
                             {notification.metadata?.instructor && (
                               <span className="flex items-center gap-1">
                                 <MessageSquare className="w-3 h-3" />
@@ -622,7 +698,7 @@ export default function NotificationsPage() {
                             )}
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-2 ml-4">
                           {!notification.isRead && (
                             <button
@@ -633,7 +709,7 @@ export default function NotificationsPage() {
                               <Eye className="w-4 h-4" />
                             </button>
                           )}
-                          
+
                           {notification.isRead && (
                             <button
                               onClick={() => markAsUnread(notification.id)}
@@ -643,7 +719,7 @@ export default function NotificationsPage() {
                               <EyeOff className="w-4 h-4" />
                             </button>
                           )}
-                          
+
                           <button
                             onClick={() => deleteNotification(notification.id)}
                             className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
@@ -660,7 +736,7 @@ export default function NotificationsPage() {
             })}
           </div>
         )}
-        
+
         {notifications.length > 0 && (
           <div className="p-6 border-t border-gray-100">
             <button

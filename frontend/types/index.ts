@@ -5,7 +5,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'student' | 'creator' | 'admin';
+  role: "student" | "creator" | "admin";
   avatar?: string;
   subscription?: string;
   level?: number;
@@ -15,7 +15,7 @@ export interface User {
 }
 
 export interface Student extends User {
-  role: 'student';
+  role: "student";
   enrolled_courses: number;
   completed_courses: number;
   certificates: Certificate[];
@@ -23,7 +23,7 @@ export interface Student extends User {
 }
 
 export interface Creator extends User {
-  role: 'creator';
+  role: "creator";
   specialty: string;
   total_videos: number;
   total_views: number;
@@ -40,7 +40,7 @@ export interface Course {
   thumbnail: string;
   price: number;
   duration: number;
-  level: 'beginner' | 'intermediate' | 'advanced';
+  level: "beginner" | "intermediate" | "advanced";
   category: Category;
   creator: Creator;
   modules: Module[];
@@ -122,7 +122,7 @@ export interface Video {
   comments: Comment[];
   tags: string[];
   is_published: boolean;
-  visibility: 'public' | 'private' | 'unlisted';
+  visibility: "public" | "private" | "unlisted";
   created_at: string;
   updated_at: string;
   // Nouvelles propriétés pour le flux complet
@@ -179,7 +179,7 @@ export interface Notification {
   user_id: number;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: "info" | "success" | "warning" | "error";
   is_read: boolean;
   created_at: string;
 }
@@ -230,7 +230,7 @@ export interface VideoUploadData {
   thumbnail: File;
   video_file: File;
   tags: string[];
-  visibility: 'public' | 'private' | 'unlisted';
+  visibility: "public" | "private" | "unlisted";
   category_id?: number;
 }
 
@@ -287,8 +287,8 @@ export interface PremiumCourse {
   price: number;
   original_price: number;
   duration: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  category: 'luxe' | 'ecotourisme' | 'digital' | 'revenue';
+  level: "beginner" | "intermediate" | "advanced";
+  category: "luxe" | "ecotourisme" | "digital" | "revenue";
   instructor: {
     name: string;
     title: string;
@@ -301,7 +301,7 @@ export interface PremiumCourse {
     lessons: {
       title: string;
       duration: string;
-      type: 'video' | 'reading' | 'exercise';
+      type: "video" | "reading" | "exercise";
     }[];
   }[];
   features: string[];

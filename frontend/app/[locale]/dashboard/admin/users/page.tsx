@@ -18,7 +18,7 @@ import {
   Calendar,
   Download,
   RefreshCw,
-  ChevronDown
+  ChevronDown,
 } from "lucide-react";
 
 interface User {
@@ -26,7 +26,7 @@ interface User {
   name: string;
   email: string;
   role: string;
-  status: 'active' | 'inactive' | 'suspended';
+  status: "active" | "inactive" | "suspended";
   joinDate: string;
   lastActive: string;
   subscription: string;
@@ -37,16 +37,22 @@ interface User {
 export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'student', bio: '', expertise: '' });
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    role: "student",
+    bio: "",
+    expertise: "",
+  });
 
   const mockUsers: User[] = [
     {
-      id: '1',
+      id: "1",
       name: "Alice Martin",
       email: "alice.martin@email.com",
       role: "student",
@@ -55,10 +61,10 @@ export default function AdminUsers() {
       lastActive: "2024-03-18",
       subscription: "Premium",
       coursesCompleted: 12,
-      avatar: "/temoignage.png"
+      avatar: "/temoignage.png",
     },
     {
-      id: '2',
+      id: "2",
       name: "Bob Dubois",
       email: "bob.dubois@email.com",
       role: "creator",
@@ -67,10 +73,10 @@ export default function AdminUsers() {
       lastActive: "2024-03-17",
       subscription: "Pro",
       coursesCompleted: 8,
-      avatar: "/temoignage.png"
+      avatar: "/temoignage.png",
     },
     {
-      id: '3',
+      id: "3",
       name: "Claire Durand",
       email: "claire.durand@email.com",
       role: "student",
@@ -79,10 +85,10 @@ export default function AdminUsers() {
       lastActive: "2024-03-10",
       subscription: "Free",
       coursesCompleted: 3,
-      avatar: "/temoignage.png"
+      avatar: "/temoignage.png",
     },
     {
-      id: '4',
+      id: "4",
       name: "David Lefebvre",
       email: "david.lefebvre@email.com",
       role: "admin",
@@ -91,10 +97,10 @@ export default function AdminUsers() {
       lastActive: "2024-03-18",
       subscription: "Admin",
       coursesCompleted: 0,
-      avatar: "/temoignage.png"
+      avatar: "/temoignage.png",
     },
     {
-      id: '5',
+      id: "5",
       name: "Emma Bernard",
       email: "emma.bernard@email.com",
       role: "student",
@@ -103,22 +109,22 @@ export default function AdminUsers() {
       lastActive: "2024-03-05",
       subscription: "Free",
       coursesCompleted: 0,
-      avatar: "/temoignage.png"
-    }
+      avatar: "/temoignage.png",
+    },
   ];
 
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const response = await fetch('/api/admin/users');
+        const response = await fetch("/api/admin/users");
         if (response.ok) {
           const data = await response.json();
           setUsers(data.users);
         } else {
-          console.error('Erreur lors du chargement des utilisateurs');
+          console.error("Erreur lors du chargement des utilisateurs");
         }
       } catch (error) {
-        console.error('Erreur:', error);
+        console.error("Erreur:", error);
       } finally {
         setIsLoading(false);
       }
@@ -127,44 +133,46 @@ export default function AdminUsers() {
     loadUsers();
   }, []);
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
-    const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = filterRole === "all" || user.role === filterRole;
+    const matchesStatus =
+      filterStatus === "all" || user.status === filterStatus;
     return matchesSearch && matchesRole && matchesStatus;
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-700';
-      case 'suspended':
-        return 'bg-red-100 text-red-700';
-      case 'inactive':
-        return 'bg-gray-100 text-gray-700';
+      case "active":
+        return "bg-green-100 text-green-700";
+      case "suspended":
+        return "bg-red-100 text-red-700";
+      case "inactive":
+        return "bg-gray-100 text-gray-700";
       default:
-        return 'bg-gray-100 text-gray-700';
+        return "bg-gray-100 text-gray-700";
     }
   };
 
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case 'admin':
-        return 'bg-purple-100 text-purple-700';
-      case 'creator':
-        return 'bg-blue-100 text-blue-700';
-      case 'student':
-        return 'bg-green-100 text-green-700';
+      case "admin":
+        return "bg-purple-100 text-purple-700";
+      case "creator":
+        return "bg-blue-100 text-blue-700";
+      case "student":
+        return "bg-green-100 text-green-700";
       default:
-        return 'bg-gray-100 text-gray-700';
+        return "bg-gray-100 text-gray-700";
     }
   };
 
   const handleSelectUser = (userId: string) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId)
+    setSelectedUsers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
         : [...prev, userId]
     );
   };
@@ -173,21 +181,21 @@ export default function AdminUsers() {
     if (selectedUsers.length === filteredUsers.length) {
       setSelectedUsers([]);
     } else {
-      setSelectedUsers(filteredUsers.map(user => user.id));
+      setSelectedUsers(filteredUsers.map((user) => user.id));
     }
   };
 
   const handleCreateUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.role) {
-      alert('Veuillez remplir tous les champs obligatoires');
+      alert("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
     try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(newUser),
       });
@@ -196,91 +204,106 @@ export default function AdminUsers() {
         const createdUser = await response.json();
         setUsers([...users, createdUser]);
         setShowCreateModal(false);
-        setNewUser({ name: '', email: '', role: 'student', bio: '', expertise: '' });
-        alert('Utilisateur créé avec succès!');
+        setNewUser({
+          name: "",
+          email: "",
+          role: "student",
+          bio: "",
+          expertise: "",
+        });
+        alert("Utilisateur créé avec succès!");
       } else {
         const error = await response.json();
-        alert(error.error || 'Erreur lors de la création');
+        alert(error.error || "Erreur lors de la création");
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la création');
+      console.error("Erreur:", error);
+      alert("Erreur lors de la création");
     }
   };
 
   const handleUpdateUser = async (userId: string, updates: any) => {
     try {
-      const response = await fetch('/api/admin/users', {
-        method: 'PUT',
+      const response = await fetch("/api/admin/users", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ id: userId, ...updates }),
       });
 
       if (response.ok) {
         const updatedUser = await response.json();
-        setUsers(users.map(user => user.id === userId ? updatedUser : user));
-        alert('Utilisateur mis à jour avec succès!');
+        setUsers(
+          users.map((user) => (user.id === userId ? updatedUser : user))
+        );
+        alert("Utilisateur mis à jour avec succès!");
       } else {
         const error = await response.json();
-        alert(error.error || 'Erreur lors de la mise à jour');
+        alert(error.error || "Erreur lors de la mise à jour");
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la mise à jour');
+      console.error("Erreur:", error);
+      alert("Erreur lors de la mise à jour");
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')) {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur?")) {
       return;
     }
 
     try {
       const response = await fetch(`/api/admin/users?id=${userId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (response.ok) {
-        setUsers(users.filter(user => user.id !== userId));
-        alert('Utilisateur supprimé avec succès!');
+        setUsers(users.filter((user) => user.id !== userId));
+        alert("Utilisateur supprimé avec succès!");
       } else {
         const error = await response.json();
-        alert(error.error || 'Erreur lors de la suppression');
+        alert(error.error || "Erreur lors de la suppression");
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la suppression');
+      console.error("Erreur:", error);
+      alert("Erreur lors de la suppression");
     }
   };
 
   const handleBulkAction = async (action: string) => {
     if (selectedUsers.length === 0) {
-      alert('Veuillez sélectionner au moins un utilisateur');
+      alert("Veuillez sélectionner au moins un utilisateur");
       return;
     }
 
-    if (!confirm(`Êtes-vous sûr de vouloir ${action} les utilisateurs sélectionnés?`)) {
+    if (
+      !confirm(
+        `Êtes-vous sûr de vouloir ${action} les utilisateurs sélectionnés?`
+      )
+    ) {
       return;
     }
 
     try {
       // Pour chaque utilisateur sélectionné
       for (const userId of selectedUsers) {
-        if (action === 'delete') {
-          await fetch(`/api/admin/users?id=${userId}`, { method: 'DELETE' });
-        } else if (action === 'activate' || action === 'suspend') {
-          await fetch('/api/admin/users', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: userId, status: action === 'activate' ? 'active' : 'suspended' }),
+        if (action === "delete") {
+          await fetch(`/api/admin/users?id=${userId}`, { method: "DELETE" });
+        } else if (action === "activate" || action === "suspend") {
+          await fetch("/api/admin/users", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: userId,
+              status: action === "activate" ? "active" : "suspended",
+            }),
           });
         }
       }
 
       // Recharger les utilisateurs
-      const response = await fetch('/api/admin/users');
+      const response = await fetch("/api/admin/users");
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users);
@@ -288,8 +311,8 @@ export default function AdminUsers() {
         alert(`${action} effectuée avec succès!`);
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de l\'action en masse');
+      console.error("Erreur:", error);
+      alert("Erreur lors de l'action en masse");
     }
   };
 
@@ -306,29 +329,35 @@ export default function AdminUsers() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion Utilisateurs</h1>
-          <p className="text-gray-600 mt-1">{filteredUsers.length} utilisateurs trouvés</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Gestion Utilisateurs
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {filteredUsers.length} utilisateurs trouvés
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           {selectedUsers.length > 0 && (
             <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 px-3 py-2 rounded-lg">
-              <span className="text-sm text-blue-700">{selectedUsers.length} sélectionné(s)</span>
-              <button 
-                onClick={() => handleBulkAction('activate')}
+              <span className="text-sm text-blue-700">
+                {selectedUsers.length} sélectionné(s)
+              </span>
+              <button
+                onClick={() => handleBulkAction("activate")}
                 className="text-green-600 hover:text-green-700"
                 title="Activer"
               >
                 <Check size={16} />
               </button>
-              <button 
-                onClick={() => handleBulkAction('suspend')}
+              <button
+                onClick={() => handleBulkAction("suspend")}
                 className="text-yellow-600 hover:text-yellow-700"
                 title="Suspendre"
               >
                 <X size={16} />
               </button>
-              <button 
-                onClick={() => handleBulkAction('delete')}
+              <button
+                onClick={() => handleBulkAction("delete")}
                 className="text-red-600 hover:text-red-700"
                 title="Supprimer"
               >
@@ -336,7 +365,7 @@ export default function AdminUsers() {
               </button>
             </div>
           )}
-          <button 
+          <button
             onClick={() => setShowCreateModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
@@ -355,7 +384,10 @@ export default function AdminUsers() {
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              />
               <input
                 type="text"
                 placeholder="Rechercher par nom ou email..."
@@ -453,41 +485,52 @@ export default function AdminUsers() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${getRoleBadge(user.role)}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-bold ${getRoleBadge(user.role)}`}
+                    >
                       {user.role}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusBadge(user.status)}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusBadge(user.status)}`}
+                    >
                       {user.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(user.joinDate).toLocaleDateString('fr-FR')}
+                    {new Date(user.joinDate).toLocaleDateString("fr-FR")}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(user.lastActive).toLocaleDateString('fr-FR')}
+                    {new Date(user.lastActive).toLocaleDateString("fr-FR")}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <button 
+                      <button
                         onClick={() => alert(`Voir le profil de ${user.name}`)}
                         className="text-blue-600 hover:text-blue-700"
                         title="Voir le profil"
                       >
                         <Eye size={16} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => {
-                          const newStatus = user.status === 'active' ? 'suspended' : 'active';
+                          const newStatus =
+                            user.status === "active" ? "suspended" : "active";
                           handleUpdateUser(user.id, { status: newStatus });
                         }}
                         className="text-gray-600 hover:text-gray-700"
-                        title={user.status === 'active' ? 'Suspendre' : 'Activer'}
+                        title={
+                          user.status === "active" ? "Suspendre" : "Activer"
+                        }
                       >
-                        {user.status === 'active' ? <X size={16} /> : <Check size={16} />}
+                        {user.status === "active" ? (
+                          <X size={16} />
+                        ) : (
+                          <Check size={16} />
+                        )}
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDeleteUser(user.id)}
                         className="text-red-600 hover:text-red-700"
                         title="Supprimer"
@@ -511,25 +554,33 @@ export default function AdminUsers() {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-xl p-6 w-full max-w-md"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Créer un utilisateur</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Créer un utilisateur
+            </h2>
             <div className="space-y-4">
               <input
                 type="text"
                 placeholder="Nom complet"
                 value={newUser.name}
-                onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, name: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
                 type="email"
                 placeholder="Email"
                 value={newUser.email}
-                onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, email: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <select 
+              <select
                 value={newUser.role}
-                onChange={(e) => setNewUser({...newUser, role: e.target.value})}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, role: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="student">Étudiant</option>
@@ -539,7 +590,9 @@ export default function AdminUsers() {
               <textarea
                 placeholder="Biographie (optionnel)"
                 value={newUser.bio}
-                onChange={(e) => setNewUser({...newUser, bio: e.target.value})}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, bio: e.target.value })
+                }
                 rows={3}
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -547,18 +600,20 @@ export default function AdminUsers() {
                 type="text"
                 placeholder="Expertise (optionnel)"
                 value={newUser.expertise}
-                onChange={(e) => setNewUser({...newUser, expertise: e.target.value})}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, expertise: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="flex gap-3 mt-6">
-              <button 
+              <button
                 onClick={() => setShowCreateModal(false)}
                 className="flex-1 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Annuler
               </button>
-              <button 
+              <button
                 onClick={handleCreateUser}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >

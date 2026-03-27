@@ -51,13 +51,17 @@ export default function RootLayout({
       <head>
         {/* Préchargement critique des polices */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link 
-          rel="preload" 
-          as="style" 
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          as="style"
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         />
-        
+
         {/* Optimisation du cache et performance */}
         <meta name="theme-color" content="#007A7A" />
         <meta name="msapplication-TileColor" content="#007A7A" />
@@ -65,26 +69,29 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        
+
         {/* DNS prefetch pour les ressources externes */}
         <link rel="dns-prefetch" href="//images.unsplash.com" />
         <link rel="dns-prefetch" href="//api.unsplash.com" />
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
-        
+
         {/* Preload des ressources critiques */}
         <link rel="preload" href="/logo.svg" as="image" />
         <link rel="preload" href="/hero-bg.png" as="image" />
-        
+
         {/* Security headers */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
-        
+
         {/* Performance optimization */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
       </head>
-      <body 
+      <body
         className="antialiased font-sans text-gray-900 bg-gray-50 selection:bg-primary/20 selection:text-primary"
         suppressHydrationWarning={true}
       >
@@ -95,13 +102,13 @@ export default function RootLayout({
                 <NotificationsProvider>
                   <div className="min-h-screen flex flex-col">
                     {/* Skip to main content for accessibility */}
-                    <a 
-                      href="#main-content" 
+                    <a
+                      href="#main-content"
                       className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-white px-4 py-2 rounded-lg z-50"
                     >
                       Aller au contenu principal
                     </a>
-                    
+
                     {/* Main content wrapper */}
                     <main id="main-content" className="flex-1">
                       {children}
@@ -112,7 +119,7 @@ export default function RootLayout({
             </NextAuthProvider>
           </TranslationProvider>
         </ThemeProvider>
-        
+
         {/* Performance monitoring script */}
         <script
           defer

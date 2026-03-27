@@ -24,7 +24,7 @@ import {
   LayoutDashboard,
   BarChart3,
   UserCheck,
-  Palette
+  Palette,
 } from "lucide-react";
 
 export default function AdminSidebar() {
@@ -32,12 +32,23 @@ export default function AdminSidebar() {
   const { locale } = useParams();
   const { data: session, status } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<string[]>(['users']);
+  const [expandedSections, setExpandedSections] = useState<string[]>(["users"]);
 
-  const currentLocale = locale || 'fr';
+  const currentLocale = locale || "fr";
+
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   // Éviter l'hydratation en attendant que la session soit chargée
-  if (status === 'loading') {
+  if (status === "loading") {
     return (
       <aside className="fixed lg:static inset-y-0 left-0 z-40 w-80 bg-white border-r border-gray-200">
         <div className="h-full flex flex-col">
@@ -59,40 +70,95 @@ export default function AdminSidebar() {
     {
       title: "Principal",
       items: [
-        { name: "Tableau de bord", href: `/${currentLocale}/dashboard/admin`, icon: LayoutDashboard, badge: null },
-        { name: "Analytics", href: `/${currentLocale}/dashboard/admin/analytics`, icon: BarChart3, badge: null },
-      ]
+        {
+          name: "Tableau de bord",
+          href: `/${currentLocale}/dashboard/admin`,
+          icon: LayoutDashboard,
+          badge: null,
+        },
+        {
+          name: "Analytics",
+          href: `/${currentLocale}/dashboard/admin/analytics`,
+          icon: BarChart3,
+          badge: null,
+        },
+      ],
     },
     {
       title: "Gestion",
       items: [
-        { name: "Utilisateurs", href: `/${currentLocale}/dashboard/admin/users`, icon: Users, badge: "2,847" },
-        { name: "Créateurs", href: `/${currentLocale}/dashboard/admin/creators`, icon: UserCheck, badge: "156" },
-        { name: "Administrateurs", href: `/${currentLocale}/dashboard/admin/admins`, icon: Shield, badge: "5" },
-      ]
+        {
+          name: "Utilisateurs",
+          href: `/${currentLocale}/dashboard/admin/users`,
+          icon: Users,
+          badge: "2,847",
+        },
+        {
+          name: "Créateurs",
+          href: `/${currentLocale}/dashboard/admin/creators`,
+          icon: UserCheck,
+          badge: "156",
+        },
+        {
+          name: "Administrateurs",
+          href: `/${currentLocale}/dashboard/admin/admins`,
+          icon: Shield,
+          badge: "5",
+        },
+      ],
     },
     {
       title: "Contenu",
       items: [
-        { name: "Publicités", href: `/${currentLocale}/dashboard/admin/ads`, icon: DollarSign, badge: null },
-        { name: "Webinaires", href: `/${currentLocale}/dashboard/admin/webinars`, icon: Video, badge: "12" },
-        { name: "Blog", href: `/${currentLocale}/dashboard/admin/blog`, icon: FileText, badge: null },
-      ]
+        {
+          name: "Publicités",
+          href: `/${currentLocale}/dashboard/admin/ads`,
+          icon: DollarSign,
+          badge: null,
+        },
+        {
+          name: "Webinaires",
+          href: `/${currentLocale}/dashboard/admin/webinars`,
+          icon: Video,
+          badge: "12",
+        },
+        {
+          name: "Blog",
+          href: `/${currentLocale}/dashboard/admin/blog`,
+          icon: FileText,
+          badge: null,
+        },
+      ],
     },
     {
       title: "Système",
       items: [
-        { name: "Paramètres", href: `/${currentLocale}/dashboard/admin/settings`, icon: Settings, badge: null },
-        { name: "Marque Blanche", href: `/${currentLocale}/dashboard/admin/branding`, icon: Palette, badge: null },
-        { name: "Notifications", href: `/${currentLocale}/dashboard/admin/notifications`, icon: Bell, badge: "3" },
-      ]
-    }
+        {
+          name: "Paramètres",
+          href: `/${currentLocale}/dashboard/admin/settings`,
+          icon: Settings,
+          badge: null,
+        },
+        {
+          name: "Marque Blanche",
+          href: `/${currentLocale}/dashboard/admin/branding`,
+          icon: Palette,
+          badge: null,
+        },
+        {
+          name: "Notifications",
+          href: `/${currentLocale}/dashboard/admin/notifications`,
+          icon: Bell,
+          badge: "3",
+        },
+      ],
+    },
   ];
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => 
-      prev.includes(section) 
-        ? prev.filter(s => s !== section)
+    setExpandedSections((prev) =>
+      prev.includes(section)
+        ? prev.filter((s) => s !== section)
         : [...prev, section]
     );
   };
@@ -104,21 +170,32 @@ export default function AdminSidebar() {
       {/* Mobile menu button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-white p-3 rounded-xl shadow-lg border border-gray-200"
+        className="lg:hidden fixed top-4 left-4 z-50 bg-white/95 backdrop-blur p-3 rounded-xl shadow-lg border border-gray-200 active:scale-95"
+        aria-expanded={isMobileMenuOpen}
+        aria-label={
+          isMobileMenuOpen
+            ? "Fermer le menu d'administration"
+            : "Ouvrir le menu d'administration"
+        }
       >
         {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
       {/* Sidebar */}
-      <aside className={`
-        fixed lg:static inset-y-0 left-0 z-40 w-80 bg-white border-r border-gray-200
+      <aside
+        className={`
+        fixed lg:static inset-y-0 left-0 z-40 w-[min(20rem,calc(100vw-1.25rem))] lg:w-80 bg-white border-r border-gray-200 shadow-2xl lg:shadow-none
         transform transition-transform duration-300 ease-in-out
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+        ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}
+      >
         <div className="h-full flex flex-col">
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
-            <Link href={`/${currentLocale}/dashboard/admin/profile`} className="block">
+            <Link
+              href={`/${currentLocale}/dashboard/admin/profile`}
+              className="block"
+            >
               <div className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors">
                 <div className="relative">
                   <Image
@@ -132,7 +209,9 @@ export default function AdminSidebar() {
                   <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-gray-900">{session?.user?.name || "Admin"}</h3>
+                  <h3 className="font-bold text-gray-900">
+                    {session?.user?.name || "Admin"}
+                  </h3>
                   <div className="flex items-center gap-2 text-sm">
                     <Crown size={14} className="text-yellow-500" />
                     <span className="text-gray-600">Super Admin</span>
@@ -161,7 +240,7 @@ export default function AdminSidebar() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+          <nav className="flex-1 p-4 space-y-6 panel-scroll">
             {navSections.map((section) => (
               <div key={section.title}>
                 <button
@@ -171,14 +250,16 @@ export default function AdminSidebar() {
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     {section.title}
                   </span>
-                  <ChevronDown 
-                    size={16} 
+                  <ChevronDown
+                    size={16}
                     className={`transition-transform ${
-                      expandedSections.includes(section.title) ? 'rotate-180' : ''
+                      expandedSections.includes(section.title)
+                        ? "rotate-180"
+                        : ""
                     }`}
                   />
                 </button>
-                
+
                 {expandedSections.includes(section.title) && (
                   <div className="mt-2 space-y-1">
                     {section.items.map((item) => (
@@ -187,15 +268,18 @@ export default function AdminSidebar() {
                         href={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={`
-                          flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
-                          ${isActive(item.href)
-                            ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 min-w-0
+                          ${
+                            isActive(item.href)
+                              ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600"
+                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                           }
                         `}
                       >
                         <item.icon size={18} />
-                        <span className="flex-1 text-sm font-medium">{item.name}</span>
+                        <span className="flex-1 text-sm font-medium text-safe">
+                          {item.name}
+                        </span>
                         {item.badge && (
                           <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-bold">
                             {item.badge}

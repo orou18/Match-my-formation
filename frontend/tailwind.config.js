@@ -20,8 +20,23 @@ module.exports = {
         mutedText: "#BDC3C7",
       },
       fontFamily: {
-        sans: ["Inter", "Space Grotesk", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-        mono: ["JetBrains Mono", "Fira Code", "Monaco", "Cascadia Code", "Roboto Mono", "monospace"],
+        sans: [
+          "Inter",
+          "Space Grotesk",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
+        mono: [
+          "JetBrains Mono",
+          "Fira Code",
+          "Monaco",
+          "Cascadia Code",
+          "Roboto Mono",
+          "monospace",
+        ],
       },
       fontSize: {
         xs: ["0.75rem", { lineHeight: "1rem" }],

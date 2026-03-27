@@ -35,7 +35,7 @@ import {
   File,
   FolderOpen,
   X,
-  Check
+  Check,
 } from "lucide-react";
 
 interface MediaItem {
@@ -85,8 +85,8 @@ export default function MediaPage() {
       isFavorite: true,
       metadata: {
         resolution: "1920x1080",
-        bitrate: "8.2 Mbps"
-      }
+        bitrate: "8.2 Mbps",
+      },
     },
     {
       id: "2",
@@ -106,8 +106,8 @@ export default function MediaPage() {
         resolution: "1920x1080",
         bitrate: "4.5 Mbps",
         fps: "30",
-        codec: "H.264"
-      }
+        codec: "H.264",
+      },
     },
     {
       id: "3",
@@ -123,8 +123,8 @@ export default function MediaPage() {
       isFavorite: false,
       metadata: {
         bitrate: "320 kbps",
-        codec: "MP3"
-      }
+        codec: "MP3",
+      },
     },
     {
       id: "4",
@@ -137,7 +137,7 @@ export default function MediaPage() {
       tags: ["guide", "marketing", "pdf"],
       description: "Guide complet sur le marketing digital",
       isFavorite: false,
-      metadata: {}
+      metadata: {},
     },
     {
       id: "5",
@@ -153,8 +153,8 @@ export default function MediaPage() {
       isFavorite: false,
       metadata: {
         resolution: "1200x400",
-        bitrate: "2.1 Mbps"
-      }
+        bitrate: "2.1 Mbps",
+      },
     },
     {
       id: "6",
@@ -174,8 +174,8 @@ export default function MediaPage() {
         resolution: "1920x1080",
         bitrate: "3.8 Mbps",
         fps: "30",
-        codec: "H.264"
-      }
+        codec: "H.264",
+      },
     },
     {
       id: "7",
@@ -191,8 +191,8 @@ export default function MediaPage() {
       isFavorite: false,
       metadata: {
         resolution: "512x512",
-        bitrate: "1.2 Mbps"
-      }
+        bitrate: "1.2 Mbps",
+      },
     },
     {
       id: "8",
@@ -208,18 +208,22 @@ export default function MediaPage() {
       isFavorite: false,
       metadata: {
         bitrate: "320 kbps",
-        codec: "MP3"
-      }
-    }
+        codec: "MP3",
+      },
+    },
   ];
 
-  const filteredItems = mediaItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                         (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+  const filteredItems = mediaItems.filter((item) => {
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.tags.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase())
+      ) ||
+      (item.description &&
+        item.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
     const matchesType = filterType === "all" || item.type === filterType;
-    
+
     return matchesSearch && matchesType;
   });
 
@@ -228,7 +232,9 @@ export default function MediaPage() {
       case "name":
         return a.name.localeCompare(b.name);
       case "date":
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       case "size":
         return parseFloat(b.size) - parseFloat(a.size);
       case "type":
@@ -269,9 +275,9 @@ export default function MediaPage() {
   };
 
   const toggleItemSelection = (itemId: string) => {
-    setSelectedItems(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
+    setSelectedItems((prev) =>
+      prev.includes(itemId)
+        ? prev.filter((id) => id !== itemId)
         : [...prev, itemId]
     );
   };
@@ -292,12 +298,12 @@ export default function MediaPage() {
 
   const stats = {
     total: mediaItems.length,
-    images: mediaItems.filter(item => item.type === "image").length,
-    videos: mediaItems.filter(item => item.type === "video").length,
-    audio: mediaItems.filter(item => item.type === "audio").length,
-    documents: mediaItems.filter(item => item.type === "document").length,
-    favorites: mediaItems.filter(item => item.isFavorite).length,
-    totalSize: "380 MB"
+    images: mediaItems.filter((item) => item.type === "image").length,
+    videos: mediaItems.filter((item) => item.type === "video").length,
+    audio: mediaItems.filter((item) => item.type === "audio").length,
+    documents: mediaItems.filter((item) => item.type === "document").length,
+    favorites: mediaItems.filter((item) => item.isFavorite).length,
+    totalSize: "380 MB",
   };
 
   return (
@@ -313,7 +319,7 @@ export default function MediaPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Médias</h1>
             <p className="text-gray-600">Gérez votre bibliothèque multimédia</p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -325,7 +331,7 @@ export default function MediaPage() {
                 className="pl-9 pr-4 py-2 w-64 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
-            
+
             <button className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
               <Upload className="w-4 h-4" />
               Upload
@@ -353,7 +359,9 @@ export default function MediaPage() {
           <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-teal-500 rounded-lg flex items-center justify-center mx-auto mb-2">
             <Image className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.images}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.images}
+          </span>
           <p className="text-xs text-gray-600">Images</p>
         </div>
 
@@ -361,7 +369,9 @@ export default function MediaPage() {
           <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-pink-500 rounded-lg flex items-center justify-center mx-auto mb-2">
             <Video className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.videos}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.videos}
+          </span>
           <p className="text-xs text-gray-600">Vidéos</p>
         </div>
 
@@ -377,7 +387,9 @@ export default function MediaPage() {
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mx-auto mb-2">
             <FileText className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.documents}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.documents}
+          </span>
           <p className="text-xs text-gray-600">Docs</p>
         </div>
 
@@ -385,7 +397,9 @@ export default function MediaPage() {
           <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center mx-auto mb-2">
             <Heart className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.favorites}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.favorites}
+          </span>
           <p className="text-xs text-gray-600">Favoris</p>
         </div>
       </motion.div>
@@ -477,7 +491,7 @@ export default function MediaPage() {
                       }}
                       className="absolute top-2 left-2 z-10 w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary opacity-0 group-hover:opacity-100 transition-opacity"
                     />
-                    
+
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -485,19 +499,21 @@ export default function MediaPage() {
                       }}
                       className="absolute top-2 right-2 z-10 p-1 bg-white/80 backdrop-blur-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <Heart className={`w-4 h-4 ${item.isFavorite ? "text-red-500 fill-red-500" : "text-gray-400"}`} />
+                      <Heart
+                        className={`w-4 h-4 ${item.isFavorite ? "text-red-500 fill-red-500" : "text-gray-400"}`}
+                      />
                     </button>
 
                     {item.type === "image" ? (
-                      <img 
-                        src={item.url} 
+                      <img
+                        src={item.url}
                         alt={item.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : item.type === "video" && item.thumbnail ? (
                       <div className="relative">
-                        <img 
-                          src={item.thumbnail} 
+                        <img
+                          src={item.thumbnail}
                           alt={item.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
@@ -510,7 +526,9 @@ export default function MediaPage() {
                       </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                        <div className={`w-16 h-16 bg-gradient-to-br ${getItemColor(item.type)} rounded-2xl flex items-center justify-center shadow-lg`}>
+                        <div
+                          className={`w-16 h-16 bg-gradient-to-br ${getItemColor(item.type)} rounded-2xl flex items-center justify-center shadow-lg`}
+                        >
                           <ItemIcon className="w-8 h-8 text-white" />
                         </div>
                       </div>
@@ -518,15 +536,22 @@ export default function MediaPage() {
                   </div>
 
                   <div className="mt-2">
-                    <h3 className="font-medium text-gray-900 text-sm truncate" title={item.name}>
+                    <h3
+                      className="font-medium text-gray-900 text-sm truncate"
+                      title={item.name}
+                    >
                       {item.name}
                     </h3>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-xs text-gray-500">{item.size}</span>
-                      <span className="text-xs text-gray-500">{item.format}</span>
+                      <span className="text-xs text-gray-500">
+                        {item.format}
+                      </span>
                     </div>
                     {item.dimensions && (
-                      <span className="text-xs text-gray-500">{item.dimensions}</span>
+                      <span className="text-xs text-gray-500">
+                        {item.dimensions}
+                      </span>
                     )}
                   </div>
                 </motion.div>
@@ -552,20 +577,20 @@ export default function MediaPage() {
                     className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                   />
 
-                  <div 
+                  <div
                     className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden cursor-pointer flex-shrink-0"
                     onClick={() => openPreview(item)}
                   >
                     {item.type === "image" ? (
-                      <img 
-                        src={item.url} 
+                      <img
+                        src={item.url}
                         alt={item.name}
                         className="w-full h-full object-cover"
                       />
                     ) : item.type === "video" && item.thumbnail ? (
                       <div className="relative">
-                        <img 
-                          src={item.thumbnail} 
+                        <img
+                          src={item.thumbnail}
                           alt={item.name}
                           className="w-full h-full object-cover"
                         />
@@ -575,7 +600,9 @@ export default function MediaPage() {
                       </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <div className={`w-10 h-10 bg-gradient-to-br ${getItemColor(item.type)} rounded-xl flex items-center justify-center`}>
+                        <div
+                          className={`w-10 h-10 bg-gradient-to-br ${getItemColor(item.type)} rounded-xl flex items-center justify-center`}
+                        >
                           <ItemIcon className="w-5 h-5 text-white" />
                         </div>
                       </div>
@@ -584,7 +611,9 @@ export default function MediaPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-gray-900 truncate">{item.name}</h3>
+                      <h3 className="font-medium text-gray-900 truncate">
+                        {item.name}
+                      </h3>
                       {item.isFavorite && (
                         <Heart className="w-4 h-4 text-red-500 fill-red-500" />
                       )}
@@ -600,16 +629,23 @@ export default function MediaPage() {
                       {item.duration && <span>{item.duration}</span>}
                     </div>
                     {item.description && (
-                      <p className="text-sm text-gray-600 mt-1 truncate">{item.description}</p>
+                      <p className="text-sm text-gray-600 mt-1 truncate">
+                        {item.description}
+                      </p>
                     )}
                     <div className="flex items-center gap-2 mt-1">
                       {item.tags.slice(0, 3).map((tag, tagIndex) => (
-                        <span key={tagIndex} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs">
+                        <span
+                          key={tagIndex}
+                          className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs"
+                        >
                           {tag}
                         </span>
                       ))}
                       {item.tags.length > 3 && (
-                        <span className="text-xs text-gray-500">+{item.tags.length - 3}</span>
+                        <span className="text-xs text-gray-500">
+                          +{item.tags.length - 3}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -637,7 +673,9 @@ export default function MediaPage() {
         {sortedItems.length === 0 && (
           <div className="text-center py-12">
             <Image className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun média trouvé</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Aucun média trouvé
+            </h3>
             <p className="text-gray-600 mb-6">
               {searchQuery || filterType !== "all"
                 ? "Essayez de modifier vos filtres de recherche"
@@ -666,7 +704,9 @@ export default function MediaPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">{previewItem.name}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {previewItem.name}
+              </h3>
               <button
                 onClick={closePreview}
                 className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
@@ -680,8 +720,8 @@ export default function MediaPage() {
                 {/* Preview Area */}
                 <div className="flex-1">
                   {previewItem.type === "image" ? (
-                    <img 
-                      src={previewItem.url} 
+                    <img
+                      src={previewItem.url}
                       alt={previewItem.name}
                       className="w-full h-auto max-h-[60vh] object-contain rounded-lg"
                     />
@@ -696,13 +736,21 @@ export default function MediaPage() {
                   ) : previewItem.type === "audio" ? (
                     <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg p-8 text-white text-center">
                       <Music className="w-16 h-16 mx-auto mb-4" />
-                      <h4 className="text-xl font-semibold mb-2">{previewItem.name}</h4>
-                      <audio controls className="w-full mt-4" src={previewItem.url} />
+                      <h4 className="text-xl font-semibold mb-2">
+                        {previewItem.name}
+                      </h4>
+                      <audio
+                        controls
+                        className="w-full mt-4"
+                        src={previewItem.url}
+                      />
                     </div>
                   ) : (
                     <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg p-8 text-white text-center">
                       <FileText className="w-16 h-16 mx-auto mb-4" />
-                      <h4 className="text-xl font-semibold mb-2">{previewItem.name}</h4>
+                      <h4 className="text-xl font-semibold mb-2">
+                        {previewItem.name}
+                      </h4>
                       <p className="mb-4">{previewItem.description}</p>
                       <button className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition-colors">
                         <Download className="w-4 h-4 inline mr-2" />
@@ -714,42 +762,63 @@ export default function MediaPage() {
 
                 {/* Metadata */}
                 <div className="lg:w-80">
-                  <h4 className="font-semibold text-gray-900 mb-4">Informations</h4>
+                  <h4 className="font-semibold text-gray-900 mb-4">
+                    Informations
+                  </h4>
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm text-gray-600">Type</label>
-                      <p className="font-medium text-gray-900 capitalize">{previewItem.type}</p>
+                      <p className="font-medium text-gray-900 capitalize">
+                        {previewItem.type}
+                      </p>
                     </div>
                     <div>
                       <label className="text-sm text-gray-600">Format</label>
-                      <p className="font-medium text-gray-900">{previewItem.format}</p>
+                      <p className="font-medium text-gray-900">
+                        {previewItem.format}
+                      </p>
                     </div>
                     <div>
                       <label className="text-sm text-gray-600">Taille</label>
-                      <p className="font-medium text-gray-900">{previewItem.size}</p>
+                      <p className="font-medium text-gray-900">
+                        {previewItem.size}
+                      </p>
                     </div>
                     {previewItem.dimensions && (
                       <div>
-                        <label className="text-sm text-gray-600">Dimensions</label>
-                        <p className="font-medium text-gray-900">{previewItem.dimensions}</p>
+                        <label className="text-sm text-gray-600">
+                          Dimensions
+                        </label>
+                        <p className="font-medium text-gray-900">
+                          {previewItem.dimensions}
+                        </p>
                       </div>
                     )}
                     {previewItem.duration && (
                       <div>
                         <label className="text-sm text-gray-600">Durée</label>
-                        <p className="font-medium text-gray-900">{previewItem.duration}</p>
+                        <p className="font-medium text-gray-900">
+                          {previewItem.duration}
+                        </p>
                       </div>
                     )}
                     <div>
-                      <label className="text-sm text-gray-600">Date de création</label>
-                      <p className="font-medium text-gray-900">{previewItem.createdAt}</p>
+                      <label className="text-sm text-gray-600">
+                        Date de création
+                      </label>
+                      <p className="font-medium text-gray-900">
+                        {previewItem.createdAt}
+                      </p>
                     </div>
                     {previewItem.tags.length > 0 && (
                       <div>
                         <label className="text-sm text-gray-600">Tags</label>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {previewItem.tags.map((tag, index) => (
-                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+                            <span
+                              key={index}
+                              className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs"
+                            >
                               {tag}
                             </span>
                           ))}

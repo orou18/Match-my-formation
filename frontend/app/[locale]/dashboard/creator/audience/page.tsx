@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, TrendingUp, Target, Eye } from "lucide-react";
@@ -18,13 +18,17 @@ export default function AudiencePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <p className="text-xs text-muted-foreground">
+              +12% from last month
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Engagement Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Engagement Rate
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -35,7 +39,9 @@ export default function AudiencePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Target Audience</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Target Audience
+            </CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -66,21 +72,30 @@ export default function AudiencePage() {
               <div className="flex items-center justify-between">
                 <span>18-24 years</span>
                 <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '35%' }}></div>
+                  <div
+                    className="bg-blue-600 h-2 rounded-full"
+                    style={{ width: "35%" }}
+                  ></div>
                 </div>
                 <span>35%</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>25-34 years</span>
                 <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '45%' }}></div>
+                  <div
+                    className="bg-blue-600 h-2 rounded-full"
+                    style={{ width: "45%" }}
+                  ></div>
                 </div>
                 <span>45%</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>35-44 years</span>
                 <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '20%' }}></div>
+                  <div
+                    className="bg-blue-600 h-2 rounded-full"
+                    style={{ width: "20%" }}
+                  ></div>
                 </div>
                 <span>20%</span>
               </div>
@@ -97,21 +112,30 @@ export default function AudiencePage() {
               <div className="flex items-center justify-between">
                 <span>France</span>
                 <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-600 h-2 rounded-full" style={{ width: '60%' }}></div>
+                  <div
+                    className="bg-green-600 h-2 rounded-full"
+                    style={{ width: "60%" }}
+                  ></div>
                 </div>
                 <span>60%</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Canada</span>
                 <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-600 h-2 rounded-full" style={{ width: '25%' }}></div>
+                  <div
+                    className="bg-green-600 h-2 rounded-full"
+                    style={{ width: "25%" }}
+                  ></div>
                 </div>
                 <span>25%</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Belgium</span>
                 <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-600 h-2 rounded-full" style={{ width: '15%' }}></div>
+                  <div
+                    className="bg-green-600 h-2 rounded-full"
+                    style={{ width: "15%" }}
+                  ></div>
                 </div>
                 <span>15%</span>
               </div>

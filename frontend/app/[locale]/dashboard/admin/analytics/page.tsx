@@ -18,8 +18,9 @@ import {
   RefreshCw,
   Target,
   Award,
-  Activity
+  Activity,
 } from "lucide-react";
+import { dashboardService } from "@/lib/services/dashboard-service";
 
 interface AnalyticsData {
   period: string;
@@ -34,7 +35,7 @@ interface AnalyticsData {
 interface TopPerformer {
   id: string;
   name: string;
-  type: 'course' | 'creator';
+  type: "course" | "creator";
   metric: string;
   value: number;
   change: number;
@@ -42,119 +43,139 @@ interface TopPerformer {
 
 export default function AdminAnalytics() {
   const [isLoading, setIsLoading] = useState(true);
-  const [dateRange, setDateRange] = useState('30d');
+  const [dateRange, setDateRange] = useState("30d");
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedMetric, setSelectedMetric] = useState('revenue');
+  const [selectedMetric, setSelectedMetric] = useState("revenue");
 
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [topPerformers, setTopPerformers] = useState<any[]>([]);
+  const overview = analyticsData?.overview || {};
+  const growth = overview.monthlyGrowth || {};
 
   useEffect(() => {
     const loadAnalytics = async () => {
       try {
-        const response = await fetch(`/api/admin/analytics?period=${dateRange}&metric=${selectedMetric}`);
-        if (response.ok) {
-          const data = await response.json();
-          setAnalyticsData(data);
-          setTopPerformers(data.topPerformers);
-        } else {
-          console.error('Erreur lors du chargement des analytics');
-        }
+        const data = await dashboardService.getAdminAnalytics(
+          dateRange,
+          selectedMetric
+        );
+        setAnalyticsData(data);
+        setTopPerformers(
+          Array.isArray(data.topPerformers) ? data.topPerformers : []
+        );
       } catch (error) {
-        console.error('Erreur:', error);
+        console.error("Erreur:", error);
       } finally {
         setIsLoading(false);
+        setRefreshing(false);
       }
     };
 
     loadAnalytics();
-  }, [dateRange, selectedMetric]);
+  }, [dateRange, selectedMetric, refreshing]);
+
+  function formatCurrency(amount: number) {
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
+    }).format(amount);
+  }
 
   const kpiCards = [
     {
       title: "Revenus Totaux",
-      value: "€156,810",
-      change: 23.7,
+      value: formatCurrency(overview.totalRevenue || 0),
+      change: growth.revenue || 0,
       icon: DollarSign,
       color: "green",
-      trend: "up"
+      trend: (growth.revenue || 0) >= 0 ? "up" : "down",
     },
     {
       title: "Utilisateurs Actifs",
-      value: "28,743",
-      change: 12.5,
+      value: new Intl.NumberFormat("fr-FR").format(overview.totalUsers || 0),
+      change: growth.users || 0,
       icon: Users,
       color: "blue",
-      trend: "up"
+      trend: (growth.users || 0) >= 0 ? "up" : "down",
     },
     {
       title: "Créateurs",
-      value: "1,234",
-      change: 8.3,
+      value: new Intl.NumberFormat("fr-FR").format(overview.totalCreators || 0),
+      change: growth.creators || 0,
       icon: UserCheck,
       color: "purple",
-      trend: "up"
+      trend: (growth.creators || 0) >= 0 ? "up" : "down",
     },
     {
       title: "Cours Actifs",
-      value: "892",
-      change: -2.1,
+      value: new Intl.NumberFormat("fr-FR").format(overview.totalCourses || 0),
+      change: growth.courses || 0,
       icon: Video,
       color: "orange",
-      trend: "down"
+      trend: (growth.courses || 0) >= 0 ? "up" : "down",
     },
     {
       title: "Taux d'Engagement",
-      value: "79.4%",
-      change: 5.2,
+      value: `${overview.engagementRate || 0}%`,
+      change: growth.engagement || 0,
       icon: Target,
       color: "indigo",
-      trend: "up"
+      trend: (growth.engagement || 0) >= 0 ? "up" : "down",
     },
     {
       title: "Taux de Completion",
-      value: "86.2%",
-      change: 3.8,
+      value: `${overview.completionRate || 0}%`,
+      change: growth.completion || 0,
       icon: Award,
       color: "pink",
-      trend: "up"
-    }
+      trend: (growth.completion || 0) >= 0 ? "up" : "down",
+    },
   ];
-
-  useEffect(() => {
-    setTimeout(() => setIsLoading(false), 1500);
-  }, []);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
+    setIsLoading(true);
   };
 
   const getMetricData = () => {
     if (!analyticsData || !analyticsData.timeSeries) return [];
-    
+
     switch (selectedMetric) {
-      case 'revenue':
-        return analyticsData.timeSeries.map((d: any) => ({ period: d.period, value: d.revenue }));
-      case 'users':
-        return analyticsData.timeSeries.map((d: any) => ({ period: d.period, value: d.users }));
-      case 'creators':
-        return analyticsData.timeSeries.map((d: any) => ({ period: d.period, value: d.creators }));
-      case 'courses':
-        return analyticsData.timeSeries.map((d: any) => ({ period: d.period, value: d.courses }));
-      case 'engagement':
-        return analyticsData.timeSeries.map((d: any) => ({ period: d.period, value: d.engagement }));
-      case 'completion':
-        return analyticsData.timeSeries.map((d: any) => ({ period: d.period, value: d.completion }));
+      case "revenue":
+        return analyticsData.timeSeries.map((d: any) => ({
+          period: d.period,
+          value: d.revenue,
+        }));
+      case "users":
+        return analyticsData.timeSeries.map((d: any) => ({
+          period: d.period,
+          value: d.users,
+        }));
+      case "creators":
+        return analyticsData.timeSeries.map((d: any) => ({
+          period: d.period,
+          value: d.creators,
+        }));
+      case "courses":
+        return analyticsData.timeSeries.map((d: any) => ({
+          period: d.period,
+          value: d.courses,
+        }));
+      case "engagement":
+        return analyticsData.timeSeries.map((d: any) => ({
+          period: d.period,
+          value: d.engagement,
+        }));
+      case "completion":
+        return analyticsData.timeSeries.map((d: any) => ({
+          period: d.period,
+          value: d.completion,
+        }));
       default:
-        return analyticsData.timeSeries.map((d: any) => ({ period: d.period, value: d.revenue }));
+        return analyticsData.timeSeries.map((d: any) => ({
+          period: d.period,
+          value: d.revenue,
+        }));
     }
   };
 
@@ -171,14 +192,18 @@ export default function AdminAnalytics() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics Avancés</h1>
-          <p className="text-gray-600 mt-1">Statistiques détaillées de la plateforme</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Analytics Avancés
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Statistiques détaillées de la plateforme
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-4 py-2">
             <Calendar size={18} className="text-gray-500" />
-            <select 
-              value={dateRange} 
+            <select
+              value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
               className="outline-none bg-transparent text-sm"
             >
@@ -188,11 +213,14 @@ export default function AdminAnalytics() {
               <option value="1y">Dernière année</option>
             </select>
           </div>
-          <button 
+          <button
             onClick={handleRefresh}
             className="bg-white rounded-lg border border-gray-200 p-2 hover:bg-gray-50 transition-colors"
           >
-            <RefreshCw size={18} className={`text-gray-600 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              size={18}
+              className={`text-gray-600 ${refreshing ? "animate-spin" : ""}`}
+            />
           </button>
           <button className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors flex items-center gap-2">
             <Download size={18} />
@@ -215,10 +243,18 @@ export default function AdminAnalytics() {
               <div className={`p-3 rounded-lg bg-${kpi.color}-50`}>
                 <kpi.icon size={20} className={`text-${kpi.color}-600`} />
               </div>
-              <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
-                kpi.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-              }`}>
-                {kpi.trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+              <div
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
+                  kpi.trend === "up"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {kpi.trend === "up" ? (
+                  <TrendingUp size={12} />
+                ) : (
+                  <TrendingDown size={12} />
+                )}
                 {Math.abs(kpi.change)}%
               </div>
             </div>
@@ -238,8 +274,10 @@ export default function AdminAnalytics() {
           className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Évolution Temporelle</h2>
-            <select 
+            <h2 className="text-lg font-bold text-gray-900">
+              Évolution Temporelle
+            </h2>
+            <select
               value={selectedMetric}
               onChange={(e) => setSelectedMetric(e.target.value)}
               className="px-3 py-1 border border-gray-200 rounded-lg text-sm"
@@ -257,15 +295,23 @@ export default function AdminAnalytics() {
               <BarChart3 size={48} className="mx-auto text-gray-400 mb-3" />
               <p className="text-gray-500">Graphique d'évolution interactif</p>
               <div className="mt-4 space-y-1">
-                {getMetricData().slice(-3).map((data: any, index: number) => (
-                  <div key={index} className="flex justify-between text-sm">
-                    <span className="text-gray-600">{data.period}:</span>
-                    <span className="font-bold">
-                      {selectedMetric === 'revenue' ? formatCurrency(data.value) : data.value}
-                      {selectedMetric.includes('rate') || selectedMetric.includes('engagement') || selectedMetric.includes('completion') ? '%' : ''}
-                    </span>
-                  </div>
-                ))}
+                {getMetricData()
+                  .slice(-3)
+                  .map((data: any, index: number) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span className="text-gray-600">{data.period}:</span>
+                      <span className="font-bold">
+                        {selectedMetric === "revenue"
+                          ? formatCurrency(data.value)
+                          : data.value}
+                        {selectedMetric.includes("rate") ||
+                        selectedMetric.includes("engagement") ||
+                        selectedMetric.includes("completion")
+                          ? "%"
+                          : ""}
+                      </span>
+                    </div>
+                  ))}
               </div>
             </div>
           </div>
@@ -279,7 +325,9 @@ export default function AdminAnalytics() {
           className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Répartition par Catégorie</h2>
+            <h2 className="text-lg font-bold text-gray-900">
+              Répartition par Catégorie
+            </h2>
             <button className="text-gray-400 hover:text-gray-600">
               <Filter size={18} />
             </button>
@@ -329,33 +377,54 @@ export default function AdminAnalytics() {
         <div className="p-6">
           <div className="space-y-4">
             {topPerformers.map((performer, index) => (
-              <div key={performer.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div
+                key={performer.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              >
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    performer.type === 'course' ? 'bg-blue-100' : 'bg-purple-100'
-                  }`}>
-                    {performer.type === 'course' ? 
-                      <Video size={20} className="text-blue-600" /> : 
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      performer.type === "course"
+                        ? "bg-blue-100"
+                        : "bg-purple-100"
+                    }`}
+                  >
+                    {performer.type === "course" ? (
+                      <Video size={20} className="text-blue-600" />
+                    ) : (
                       <UserCheck size={20} className="text-purple-600" />
-                    }
+                    )}
                   </div>
                   <div>
                     <p className="font-bold text-gray-900">{performer.name}</p>
                     <p className="text-sm text-gray-500">
-                      {performer.type === 'course' ? 'Cours' : 'Créateur'} • {performer.metric}
+                      {performer.type === "course" ? "Cours" : "Créateur"} •{" "}
+                      {performer.metric}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-gray-900">
-                    {performer.type === 'course' && performer.metric === 'Revenus' ? formatCurrency(performer.value) : performer.value}
-                    {performer.metric === 'Note' ? '/5' : ''}
-                    {performer.metric === 'Completion' || performer.metric === 'Engagement' ? '%' : ''}
+                    {performer.type === "course" &&
+                    performer.metric === "Revenus"
+                      ? formatCurrency(performer.value)
+                      : performer.value}
+                    {performer.metric === "Note" ? "/5" : ""}
+                    {performer.metric === "Completion" ||
+                    performer.metric === "Engagement"
+                      ? "%"
+                      : ""}
                   </p>
-                  <div className={`flex items-center gap-1 text-sm font-bold ${
-                    performer.change > 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {performer.change > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  <div
+                    className={`flex items-center gap-1 text-sm font-bold ${
+                      performer.change > 0 ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    {performer.change > 0 ? (
+                      <TrendingUp size={14} />
+                    ) : (
+                      <TrendingDown size={14} />
+                    )}
                     {Math.abs(performer.change)}%
                   </div>
                 </div>
@@ -373,7 +442,9 @@ export default function AdminAnalytics() {
         className="bg-white rounded-xl shadow-sm border border-gray-100"
       >
         <div className="p-6 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">Activité par Heure</h2>
+          <h2 className="text-lg font-bold text-gray-900">
+            Activité par Heure
+          </h2>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-7 gap-2">
@@ -384,10 +455,15 @@ export default function AdminAnalytics() {
                 <div
                   key={i}
                   className={`h-8 rounded flex items-center justify-center text-xs ${
-                    intensity > 0.8 ? 'bg-green-500 text-white' :
-                    intensity > 0.6 ? 'bg-green-400 text-white' :
-                    intensity > 0.4 ? 'bg-green-300' :
-                    intensity > 0.2 ? 'bg-green-200' : 'bg-gray-100'
+                    intensity > 0.8
+                      ? "bg-green-500 text-white"
+                      : intensity > 0.6
+                        ? "bg-green-400 text-white"
+                        : intensity > 0.4
+                          ? "bg-green-300"
+                          : intensity > 0.2
+                            ? "bg-green-200"
+                            : "bg-gray-100"
                   }`}
                 >
                   {hour}h

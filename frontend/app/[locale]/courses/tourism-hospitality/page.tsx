@@ -2,13 +2,7 @@
 
 import { motion } from "framer-motion";
 import TourismCourseGrid from "@/components/courses/TourismCourseGrid";
-import {
-  BookOpen,
-  Star,
-  Users,
-  TrendingUp,
-  Award,
-} from "lucide-react";
+import { BookOpen, Star, Users, TrendingUp, Award } from "lucide-react";
 
 export default function TourismHospitalityPage() {
   // Statistiques pour cette catégorie
@@ -22,7 +16,7 @@ export default function TourismHospitalityPage() {
       { name: "Digital & Tech", count: 2103 },
       { name: "Écotourisme", count: 856 },
       { name: "Revenue Management", count: 567 },
-    ]
+    ],
   };
 
   return (
@@ -38,10 +32,11 @@ export default function TourismHospitalityPage() {
             Tourisme & Hôtellerie
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Formations d'excellence pour les professionnels du tourisme et de l'hôtellerie. 
-            Développez votre expertise avec nos cours premium animés par des experts de l'industrie.
+            Formations d'excellence pour les professionnels du tourisme et de
+            l'hôtellerie. Développez votre expertise avec nos cours premium
+            animés par des experts de l'industrie.
           </p>
-          
+
           {/* Key Features */}
           <div className="flex flex-wrap justify-center gap-6 mb-8">
             <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -77,7 +72,7 @@ export default function TourismHospitalityPage() {
               icon: BookOpen,
               color: "text-blue-600",
               bg: "bg-blue-50",
-              trend: "+2 ce mois"
+              trend: "+2 ce mois",
             },
             {
               title: "Étudiants actifs",
@@ -85,7 +80,7 @@ export default function TourismHospitalityPage() {
               icon: Users,
               color: "text-green-600",
               bg: "bg-green-50",
-              trend: "+15% ce mois"
+              trend: "+15% ce mois",
             },
             {
               title: "Note moyenne",
@@ -93,7 +88,7 @@ export default function TourismHospitalityPage() {
               icon: Star,
               color: "text-yellow-600",
               bg: "bg-yellow-50",
-              trend: "+0.2"
+              trend: "+0.2",
             },
             {
               title: "Avis reçus",
@@ -101,8 +96,8 @@ export default function TourismHospitalityPage() {
               icon: TrendingUp,
               color: "text-purple-600",
               bg: "bg-purple-50",
-              trend: "+28 ce mois"
-            }
+              trend: "+28 ce mois",
+            },
           ].map((stat, index) => (
             <motion.div
               key={index}
@@ -122,7 +117,9 @@ export default function TourismHospitalityPage() {
                   </div>
                 </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                {stat.value}
+              </h3>
               <p className="text-sm text-gray-600">{stat.title}</p>
             </motion.div>
           ))}
@@ -135,7 +132,9 @@ export default function TourismHospitalityPage() {
           transition={{ delay: 0.3 }}
           className="bg-white rounded-3xl shadow-xl p-8 mb-12"
         >
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Catégories Populaires</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Catégories Populaires
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.popularCategories.map((category, index) => (
               <motion.div
@@ -148,7 +147,9 @@ export default function TourismHospitalityPage() {
                 <div className="w-12 h-12 bg-[#002B24]/10 rounded-xl flex items-center justify-center mx-auto mb-3">
                   <BookOpen className="w-6 h-6 text-[#002B24]" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1">{category.name}</h3>
+                <h3 className="font-semibold text-gray-900 mb-1">
+                  {category.name}
+                </h3>
                 <p className="text-sm text-gray-600">{category.count} cours</p>
               </motion.div>
             ))}
@@ -162,15 +163,17 @@ export default function TourismHospitalityPage() {
           transition={{ delay: 0.5 }}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold text-gray-900">Cours en Vedette</h2>
+            <h2 className="text-3xl font-bold text-gray-900">
+              Cours en Vedette
+            </h2>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <TrendingUp className="w-4 h-4" />
               <span>Tendances actuelles</span>
             </div>
           </div>
-          
-          <TourismCourseGrid 
-            variant="featured" 
+
+          <TourismCourseGrid
+            variant="featured"
             maxCourses={4}
             showFilters={false}
           />
@@ -184,16 +187,16 @@ export default function TourismHospitalityPage() {
           className="mt-16"
         >
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Tous les Cours</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Tous les Cours
+            </h2>
             <p className="text-lg text-gray-600">
-              Explorez notre catalogue complet de formations en tourisme et hôtellerie
+              Explorez notre catalogue complet de formations en tourisme et
+              hôtellerie
             </p>
           </div>
-          
-          <TourismCourseGrid 
-            variant="default"
-            showFilters={true}
-          />
+
+          <TourismCourseGrid variant="default" showFilters={true} />
         </motion.div>
 
         {/* CTA Section */}
@@ -205,13 +208,14 @@ export default function TourismHospitalityPage() {
         >
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24" />
-          
+
           <div className="relative z-10 max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold mb-4">
               Prêt à Booster Votre Carrière ?
             </h2>
             <p className="text-xl mb-8 text-white/90">
-              Rejoignez des milliers de professionnels qui ont transformé leur carrière avec nos formations.
+              Rejoignez des milliers de professionnels qui ont transformé leur
+              carrière avec nos formations.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="px-8 py-4 bg-white text-[#002B24] rounded-xl font-semibold hover:bg-gray-100 transition-colors">

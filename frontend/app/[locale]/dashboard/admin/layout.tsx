@@ -5,7 +5,11 @@ import { useEffect } from "react";
 import UserIdManager from "@/lib/user-id-manager";
 import AdminSidebar from "@/components/dashboard/admin/AdminSidebar";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const params = useParams();
@@ -27,16 +31,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [router, locale]);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 overflow-x-hidden">
       <AdminSidebar />
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 min-w-0 overflow-x-hidden">
         <motion.div
           key={pathname}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="h-full"
+          className="h-full min-w-0"
         >
           {children}
         </motion.div>

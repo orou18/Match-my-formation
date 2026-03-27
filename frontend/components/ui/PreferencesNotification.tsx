@@ -1,22 +1,22 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Check, X } from 'lucide-react';
-import { usePreferencesSync } from '@/lib/use-preferences-sync';
-import { useTranslation } from '@/lib/i18n-provider';
+import { useState, useEffect } from "react";
+import { Check, X } from "lucide-react";
+import { usePreferencesSync } from "@/lib/use-preferences-sync";
+import { useTranslation } from "@/lib/i18n-provider";
 
 export default function PreferencesNotification() {
   const { t } = useTranslation();
   const preferences = usePreferencesSync();
   const [showNotification, setShowNotification] = useState(false);
-  const [lastChange, setLastChange] = useState<string>('');
+  const [lastChange, setLastChange] = useState<string>("");
 
   useEffect(() => {
     if (preferences) {
       // Afficher une notification quand les préférences changent
       setShowNotification(true);
       setLastChange(new Date().toLocaleTimeString());
-      
+
       // Cacher automatiquement après 3 secondes
       const timer = setTimeout(() => {
         setShowNotification(false);
@@ -32,21 +32,28 @@ export default function PreferencesNotification() {
 
   const getChangeMessage = () => {
     const changes = [];
-    
+
     if (preferences.theme) {
-      changes.push(preferences.theme === 'dark' ? t('preferences.dark_theme', 'Thème sombre') : t('preferences.light_theme', 'Thème clair'));
+      changes.push(
+        preferences.theme === "dark"
+          ? t("preferences.dark_theme", "Thème sombre")
+          : t("preferences.light_theme", "Thème clair")
+      );
     }
-    
+
     if (preferences.language) {
       const langNames = {
-        fr: 'Français',
-        en: 'English',
-        es: 'Español'
+        fr: "Français",
+        en: "English",
+        es: "Español",
       };
-      changes.push(langNames[preferences.language as keyof typeof langNames] || preferences.language);
+      changes.push(
+        langNames[preferences.language as keyof typeof langNames] ||
+          preferences.language
+      );
     }
-    
-    return changes.join(' • ');
+
+    return changes.join(" • ");
   };
 
   return (
@@ -57,10 +64,10 @@ export default function PreferencesNotification() {
             <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
           </div>
         </div>
-        
+
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            {t('preferences.updated', 'Préférences mises à jour')}
+            {t("preferences.updated", "Préférences mises à jour")}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {getChangeMessage()}
@@ -69,7 +76,7 @@ export default function PreferencesNotification() {
             {lastChange}
           </p>
         </div>
-        
+
         <button
           onClick={() => setShowNotification(false)}
           className="flex-shrink-0 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"

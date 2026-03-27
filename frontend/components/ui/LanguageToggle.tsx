@@ -9,19 +9,20 @@ export default function LanguageToggle() {
   const [isOpen, setIsOpen] = useState(false);
 
   const languages = [
-    { code: 'fr', name: 'Français', flag: '🇫🇷' },
-    { code: 'en', name: 'English', flag: '🇬🇧' },
-    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: "fr", name: "Français", flag: "🇫🇷" },
+    { code: "en", name: "English", flag: "🇬🇧" },
+    { code: "es", name: "Español", flag: "🇪🇸" },
   ];
 
-  const currentLanguage = languages.find(lang => lang.code === language) || languages[0];
+  const currentLanguage =
+    languages.find((lang) => lang.code === language) || languages[0];
 
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        title={t('preferences.change_language', 'Changer de langue')}
+        title={t("preferences.change_language", "Changer de langue")}
       >
         <Globe className="w-4 h-4" />
         <span className="text-sm font-medium">{currentLanguage.flag}</span>
@@ -30,8 +31,8 @@ export default function LanguageToggle() {
       {isOpen && (
         <>
           {/* Overlay */}
-          <div 
-            className="fixed inset-0 z-10" 
+          <div
+            className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
 
@@ -42,11 +43,13 @@ export default function LanguageToggle() {
                 <button
                   key={lang.code}
                   onClick={() => {
-                    setLanguage(lang.code as 'fr' | 'en' | 'es');
+                    setLanguage(lang.code as "fr" | "en" | "es");
                     setIsOpen(false);
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                    lang.code === language ? 'bg-primary/10 text-primary font-medium' : 'text-gray-700 dark:text-gray-300'
+                    lang.code === language
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-gray-700 dark:text-gray-300"
                   }`}
                 >
                   <span className="text-lg">{lang.flag}</span>

@@ -70,13 +70,20 @@ export default function Carousel({
         clearInterval(autoPlayRef.current);
       }
     };
-  }, [autoPlay, isPaused, currentIndex, totalItems, itemsPerView, autoPlayInterval]);
+  }, [
+    autoPlay,
+    isPaused,
+    currentIndex,
+    totalItems,
+    itemsPerView,
+    autoPlayInterval,
+  ]);
 
   // Calculate translate value
   const translateValue = currentIndex * (100 / itemsPerView);
 
   return (
-    <div 
+    <div
       className={`relative w-full ${className}`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -95,7 +102,7 @@ export default function Carousel({
               key={index}
               className="flex-shrink-0"
               style={{
-                width: `calc(${100 / itemsPerView}% - ${gap * (itemsPerView - 1) / itemsPerView}px)`,
+                width: `calc(${100 / itemsPerView}% - ${(gap * (itemsPerView - 1)) / itemsPerView}px)`,
               }}
             >
               {child}
@@ -162,8 +169,8 @@ export function useResponsiveCarousel() {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return itemsPerView;

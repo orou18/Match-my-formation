@@ -19,7 +19,7 @@ import {
   Filter,
   Calendar,
   Star,
-  Flame
+  Flame,
 } from "lucide-react";
 
 export default function EngagementPage() {
@@ -32,29 +32,29 @@ export default function EngagementPage() {
       value: 12450,
       change: 12.5,
       icon: Heart,
-      color: "from-red-500 to-red-600"
+      color: "from-red-500 to-red-600",
     },
     {
       metric: "Commentaires",
       value: 3420,
       change: 8.3,
       icon: MessageSquare,
-      color: "from-blue-500 to-blue-600"
+      color: "from-blue-500 to-blue-600",
     },
     {
       metric: "Partages",
       value: 890,
       change: -2.1,
       icon: Share2,
-      color: "from-green-500 to-green-600"
+      color: "from-green-500 to-green-600",
     },
     {
       metric: "Durée moyenne",
       value: "4:32",
       change: 15.7,
       icon: Clock,
-      color: "from-purple-500 to-purple-600"
-    }
+      color: "from-purple-500 to-purple-600",
+    },
   ];
 
   const topVideos = [
@@ -67,7 +67,7 @@ export default function EngagementPage() {
       comments: 45,
       shares: 78,
       engagement: 6.4,
-      duration: "12:34"
+      duration: "12:34",
     },
     {
       id: 2,
@@ -78,7 +78,7 @@ export default function EngagementPage() {
       comments: 34,
       shares: 56,
       engagement: 6.8,
-      duration: "15:45"
+      duration: "15:45",
     },
     {
       id: 3,
@@ -89,7 +89,7 @@ export default function EngagementPage() {
       comments: 28,
       shares: 45,
       engagement: 7.1,
-      duration: "22:10"
+      duration: "22:10",
     },
     {
       id: 4,
@@ -100,8 +100,8 @@ export default function EngagementPage() {
       comments: 23,
       shares: 34,
       engagement: 6.9,
-      duration: "18:22"
-    }
+      duration: "18:22",
+    },
   ];
 
   const engagementTimeline = [
@@ -111,14 +111,34 @@ export default function EngagementPage() {
     { date: "Jeu", likes: 189, comments: 61, shares: 22, engagement: 7.1 },
     { date: "Ven", likes: 234, comments: 72, shares: 28, engagement: 7.8 },
     { date: "Sam", likes: 198, comments: 58, shares: 20, engagement: 6.9 },
-    { date: "Dim", likes: 156, comments: 43, shares: 16, engagement: 6.1 }
+    { date: "Dim", likes: 156, comments: 43, shares: 16, engagement: 6.1 },
   ];
 
   const audienceSegments = [
-    { segment: "18-24 ans", percentage: 35, engagement: 8.2, color: "from-purple-500 to-purple-600" },
-    { segment: "25-34 ans", percentage: 42, engagement: 7.5, color: "from-blue-500 to-blue-600" },
-    { segment: "35-44 ans", percentage: 18, engagement: 6.8, color: "from-green-500 to-green-600" },
-    { segment: "45+ ans", percentage: 5, engagement: 5.9, color: "from-orange-500 to-orange-600" }
+    {
+      segment: "18-24 ans",
+      percentage: 35,
+      engagement: 8.2,
+      color: "from-purple-500 to-purple-600",
+    },
+    {
+      segment: "25-34 ans",
+      percentage: 42,
+      engagement: 7.5,
+      color: "from-blue-500 to-blue-600",
+    },
+    {
+      segment: "35-44 ans",
+      percentage: 18,
+      engagement: 6.8,
+      color: "from-green-500 to-green-600",
+    },
+    {
+      segment: "45+ ans",
+      percentage: 5,
+      engagement: 5.9,
+      color: "from-orange-500 to-orange-600",
+    },
   ];
 
   const recentComments = [
@@ -130,7 +150,7 @@ export default function EngagementPage() {
       video: "Introduction au Tourisme Durable",
       timestamp: "Il y a 2 heures",
       likes: 12,
-      sentiment: "positive"
+      sentiment: "positive",
     },
     {
       id: 2,
@@ -140,18 +160,19 @@ export default function EngagementPage() {
       video: "Marketing Digital pour le Tourisme",
       timestamp: "Il y a 4 heures",
       likes: 8,
-      sentiment: "neutral"
+      sentiment: "neutral",
     },
     {
       id: 3,
       user: "Sophie Laurent",
       avatar: "/avatars/user3.jpg",
-      comment: "Merci beaucoup pour ces précieux conseils ! J'ai pu améliorer mon service.",
+      comment:
+        "Merci beaucoup pour ces précieux conseils ! J'ai pu améliorer mon service.",
       video: "Service Client d'Excellence",
       timestamp: "Il y a 6 heures",
       likes: 24,
-      sentiment: "positive"
-    }
+      sentiment: "positive",
+    },
   ];
 
   return (
@@ -164,10 +185,14 @@ export default function EngagementPage() {
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Engagement</h1>
-            <p className="text-gray-600">Analysez l'engagement de votre audience et optimisez votre contenu</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Engagement
+            </h1>
+            <p className="text-gray-600">
+              Analysez l'engagement de votre audience et optimisez votre contenu
+            </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <select
               value={selectedPeriod}
@@ -179,7 +204,7 @@ export default function EngagementPage() {
               <option value="month">Ce mois</option>
               <option value="year">Cette année</option>
             </select>
-            
+
             <button className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
               <Filter className="w-4 h-4" />
               Filtrer
@@ -204,24 +229,31 @@ export default function EngagementPage() {
             className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className={`w-12 h-12 bg-gradient-to-br ${metric.color} rounded-xl flex items-center justify-center`}>
+              <div
+                className={`w-12 h-12 bg-gradient-to-br ${metric.color} rounded-xl flex items-center justify-center`}
+              >
                 <metric.icon className="w-6 h-6 text-white" />
               </div>
-              <div className={`flex items-center gap-1 ${
-                metric.change > 0 ? "text-green-600" : "text-red-600"
-              }`}>
+              <div
+                className={`flex items-center gap-1 ${
+                  metric.change > 0 ? "text-green-600" : "text-red-600"
+                }`}
+              >
                 {metric.change > 0 ? (
                   <TrendingUp className="w-4 h-4" />
                 ) : (
                   <TrendingDown className="w-4 h-4" />
                 )}
                 <span className="text-sm font-medium">
-                  {metric.change > 0 ? "+" : ""}{metric.change}%
+                  {metric.change > 0 ? "+" : ""}
+                  {metric.change}%
                 </span>
               </div>
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-1">
-              {typeof metric.value === "number" ? metric.value.toLocaleString() : metric.value}
+              {typeof metric.value === "number"
+                ? metric.value.toLocaleString()
+                : metric.value}
             </h3>
             <p className="text-sm text-gray-600">{metric.metric}</p>
           </motion.div>
@@ -245,8 +277,8 @@ export default function EngagementPage() {
               <button
                 onClick={() => setSelectedMetric("likes")}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                  selectedMetric === "likes" 
-                    ? "bg-primary text-white" 
+                  selectedMetric === "likes"
+                    ? "bg-primary text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -255,8 +287,8 @@ export default function EngagementPage() {
               <button
                 onClick={() => setSelectedMetric("comments")}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                  selectedMetric === "comments" 
-                    ? "bg-primary text-white" 
+                  selectedMetric === "comments"
+                    ? "bg-primary text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -265,8 +297,8 @@ export default function EngagementPage() {
               <button
                 onClick={() => setSelectedMetric("shares")}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                  selectedMetric === "shares" 
-                    ? "bg-primary text-white" 
+                  selectedMetric === "shares"
+                    ? "bg-primary text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -277,18 +309,32 @@ export default function EngagementPage() {
 
           <div className="h-64 flex items-end justify-between gap-2">
             {engagementTimeline.map((data, index) => {
-              const maxValue = Math.max(...engagementTimeline.map(d => 
-                selectedMetric === "likes" ? d.likes : 
-                selectedMetric === "comments" ? d.comments : d.shares
-              ));
-              const value = selectedMetric === "likes" ? data.likes : 
-                           selectedMetric === "comments" ? data.comments : data.shares;
+              const maxValue = Math.max(
+                ...engagementTimeline.map((d) =>
+                  selectedMetric === "likes"
+                    ? d.likes
+                    : selectedMetric === "comments"
+                      ? d.comments
+                      : d.shares
+                )
+              );
+              const value =
+                selectedMetric === "likes"
+                  ? data.likes
+                  : selectedMetric === "comments"
+                    ? data.comments
+                    : data.shares;
               const height = (value / maxValue) * 100;
 
               return (
-                <div key={data.date} className="flex-1 flex flex-col items-center gap-2">
+                <div
+                  key={data.date}
+                  className="flex-1 flex flex-col items-center gap-2"
+                >
                   <div className="w-full flex flex-col items-center">
-                    <span className="text-xs font-medium text-gray-700 mb-1">{value}</span>
+                    <span className="text-xs font-medium text-gray-700 mb-1">
+                      {value}
+                    </span>
                     <motion.div
                       initial={{ height: 0 }}
                       animate={{ height: `${height}%` }}
@@ -325,10 +371,16 @@ export default function EngagementPage() {
                 className="space-y-2"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">{segment.segment}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {segment.segment}
+                  </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-900">{segment.percentage}%</span>
-                    <span className="text-xs text-primary">{segment.engagement}%</span>
+                    <span className="text-sm font-bold text-gray-900">
+                      {segment.percentage}%
+                    </span>
+                    <span className="text-xs text-primary">
+                      {segment.engagement}%
+                    </span>
                   </div>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -372,8 +424,8 @@ export default function EngagementPage() {
               className="group cursor-pointer"
             >
               <div className="relative mb-3">
-                <img 
-                  src={video.thumbnail} 
+                <img
+                  src={video.thumbnail}
                   alt={video.title}
                   className="w-full h-32 object-cover rounded-xl"
                 />
@@ -384,11 +436,11 @@ export default function EngagementPage() {
                   {video.engagement}%
                 </div>
               </div>
-              
+
               <h3 className="font-semibold text-gray-900 text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors">
                 {video.title}
               </h3>
-              
+
               <div className="flex items-center justify-between text-xs text-gray-600">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1">
@@ -437,28 +489,38 @@ export default function EngagementPage() {
               className="flex gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors"
             >
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-sm">{comment.user.charAt(0)}</span>
+                <span className="text-white font-bold text-sm">
+                  {comment.user.charAt(0)}
+                </span>
               </div>
-              
+
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <span className="font-semibold text-gray-900">{comment.user}</span>
-                    <span className="text-sm text-gray-500 ml-2">{comment.timestamp}</span>
+                    <span className="font-semibold text-gray-900">
+                      {comment.user}
+                    </span>
+                    <span className="text-sm text-gray-500 ml-2">
+                      {comment.timestamp}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      comment.sentiment === "positive" 
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}>
-                      {comment.sentiment === "positive" ? "😊 Positif" : "😐 Neutre"}
+                    <div
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        comment.sentiment === "positive"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {comment.sentiment === "positive"
+                        ? "😊 Positif"
+                        : "😐 Neutre"}
                     </div>
                   </div>
                 </div>
-                
+
                 <p className="text-gray-700 text-sm mb-2">{comment.comment}</p>
-                
+
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 text-xs text-gray-500">
                     <Eye className="w-3 h-3" />

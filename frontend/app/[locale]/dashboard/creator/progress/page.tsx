@@ -18,9 +18,12 @@ import {
   ChevronDown,
   ChevronUp,
   Building,
-  Calendar
+  Calendar,
 } from "lucide-react";
-import { useSimpleNotification, NotificationContainer } from "@/components/ui/SimpleNotification";
+import {
+  useSimpleNotification,
+  NotificationContainer,
+} from "@/components/ui/SimpleNotification";
 
 interface EmployeeProgress {
   employee: {
@@ -57,15 +60,19 @@ interface GlobalStats {
 
 export default function EmployeeProgressPage() {
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
-  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeProgress | null>(null);
+  const [selectedEmployee, setSelectedEmployee] =
+    useState<EmployeeProgress | null>(null);
   const [employeeDetails, setEmployeeDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDomain, setFilterDomain] = useState("all");
-  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "active" | "inactive"
+  >("all");
   const [expandedEmployee, setExpandedEmployee] = useState<number | null>(null);
 
-  const { notifications, success, error, removeNotification } = useSimpleNotification();
+  const { notifications, success, error, removeNotification } =
+    useSimpleNotification();
 
   useEffect(() => {
     loadGlobalProgress();
@@ -75,11 +82,11 @@ export default function EmployeeProgressPage() {
     try {
       const response = await fetch("/api/creator/employees/progress/global", {
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       const data = await response.json();
-      
+
       if (data.success) {
         setGlobalStats(data.data);
       } else {
@@ -94,13 +101,16 @@ export default function EmployeeProgressPage() {
 
   const loadEmployeeProgress = async (employeeId: number) => {
     try {
-      const response = await fetch(`/api/creator/employees/${employeeId}/progress`, {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await fetch(
+        `/api/creator/employees/${employeeId}/progress`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       const data = await response.json();
-      
+
       if (data.success) {
         setEmployeeDetails(data.data);
         setSelectedEmployee(data.data.employee);
@@ -124,10 +134,12 @@ export default function EmployeeProgressPage() {
     return "text-red-600 bg-red-100";
   };
 
-  const filteredTopPerformers = globalStats?.top_performers?.filter(emp => 
-    emp.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.employee.domain.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredTopPerformers =
+    globalStats?.top_performers?.filter(
+      (emp) =>
+        emp.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.employee.domain.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   if (loading) {
     return (
@@ -167,35 +179,45 @@ export default function EmployeeProgressPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Total employés</p>
-                  <p className="text-2xl font-bold text-gray-900">{globalStats.total_employees}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {globalStats.total_employees}
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Taux de complétion moyen</p>
-                  <p className="text-2xl font-bold text-gray-900">{globalStats.average_completion_rate}%</p>
+                  <p className="text-sm text-gray-600">
+                    Taux de complétion moyen
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {globalStats.average_completion_rate}%
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                   <Clock className="w-6 h-6 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Temps total de formation</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatTime(globalStats.total_watch_time)}</p>
+                  <p className="text-sm text-gray-600">
+                    Temps total de formation
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formatTime(globalStats.total_watch_time)}
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -203,7 +225,9 @@ export default function EmployeeProgressPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Employés actifs</p>
-                  <p className="text-2xl font-bold text-gray-900">{globalStats.active_employees}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {globalStats.active_employees}
+                  </p>
                 </div>
               </div>
             </div>
@@ -229,24 +253,34 @@ export default function EmployeeProgressPage() {
                   className="border border-gray-200 rounded-xl p-4"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900">{domain.domain}</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getProgressColor(domain.average_completion_rate)}`}>
+                    <h3 className="font-semibold text-gray-900">
+                      {domain.domain}
+                    </h3>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getProgressColor(domain.average_completion_rate)}`}
+                    >
                       {domain.average_completion_rate}%
                     </span>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Employés:</span>
-                      <span className="font-medium">{domain.total_employees}</span>
+                      <span className="font-medium">
+                        {domain.total_employees}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Temps total:</span>
-                      <span className="font-medium">{formatTime(domain.total_watch_time)}</span>
+                      <span className="font-medium">
+                        {formatTime(domain.total_watch_time)}
+                      </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
-                      <div 
+                      <div
                         className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(domain.average_completion_rate, 100)}%` }}
+                        style={{
+                          width: `${Math.min(domain.average_completion_rate, 100)}%`,
+                        }}
                       />
                     </div>
                   </div>
@@ -277,17 +311,29 @@ export default function EmployeeProgressPage() {
                 />
               </div>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employé</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domaine</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progression</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temps de formation</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vidéos terminées</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Employé
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Domaine
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Progression
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Temps de formation
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Vidéos terminées
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -305,8 +351,12 @@ export default function EmployeeProgressPage() {
                             <Users className="w-5 h-5 text-gray-600" />
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{employeeProgress.employee.name}</p>
-                            <p className="text-sm text-gray-600">{employeeProgress.employee.email}</p>
+                            <p className="font-medium text-gray-900">
+                              {employeeProgress.employee.name}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {employeeProgress.employee.email}
+                            </p>
                           </div>
                         </div>
                       </td>
@@ -318,26 +368,37 @@ export default function EmployeeProgressPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="flex-1 bg-gray-200 rounded-full h-2">
-                            <div 
+                            <div
                               className="bg-gradient-to-r from-green-600 to-green-700 h-2 rounded-full transition-all duration-500"
-                              style={{ width: `${Math.min(employeeProgress.stats.completion_rate, 100)}%` }}
+                              style={{
+                                width: `${Math.min(employeeProgress.stats.completion_rate, 100)}%`,
+                              }}
                             />
                           </div>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getProgressColor(employeeProgress.stats.completion_rate)}`}>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${getProgressColor(employeeProgress.stats.completion_rate)}`}
+                          >
                             {employeeProgress.stats.completion_rate}%
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {formatTime(employeeProgress.stats.total_watch_time_minutes)}
+                        {formatTime(
+                          employeeProgress.stats.total_watch_time_minutes
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-gray-900">
-                            {employeeProgress.stats.completed_videos}/{employeeProgress.stats.total_videos}
+                            {employeeProgress.stats.completed_videos}/
+                            {employeeProgress.stats.total_videos}
                           </span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getProgressColor(employeeProgress.stats.completion_rate)}`}>
-                            {employeeProgress.stats.completed_videos > 0 ? 'Actif' : 'Inactif'}
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${getProgressColor(employeeProgress.stats.completion_rate)}`}
+                          >
+                            {employeeProgress.stats.completed_videos > 0
+                              ? "Actif"
+                              : "Inactif"}
                           </span>
                         </div>
                       </td>
@@ -345,18 +406,30 @@ export default function EmployeeProgressPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => {
-                              if (expandedEmployee === employeeProgress.employee.id) {
+                              if (
+                                expandedEmployee ===
+                                employeeProgress.employee.id
+                              ) {
                                 setExpandedEmployee(null);
                                 setEmployeeDetails(null);
                               } else {
-                                setExpandedEmployee(employeeProgress.employee.id);
-                                loadEmployeeProgress(employeeProgress.employee.id);
+                                setExpandedEmployee(
+                                  employeeProgress.employee.id
+                                );
+                                loadEmployeeProgress(
+                                  employeeProgress.employee.id
+                                );
                               }
                             }}
                             className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Voir les détails"
                           >
-                            {expandedEmployee === employeeProgress.employee.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            {expandedEmployee ===
+                            employeeProgress.employee.id ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -371,7 +444,7 @@ export default function EmployeeProgressPage() {
               {expandedEmployee && employeeDetails && (
                 <motion.tr
                   initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
+                  animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3 }}
                   className="border-l-4 border-blue-600 bg-blue-50"
@@ -384,34 +457,65 @@ export default function EmployeeProgressPage() {
                           Progression par vidéo
                         </h4>
                         <div className="space-y-3 max-h-64 overflow-y-auto">
-                          {employeeDetails.detailed_progress?.map((progress: any) => (
-                            <div key={progress.video_id} className="bg-white rounded-lg p-3 border border-gray-200">
-                              <div className="flex items-center justify-between mb-2">
-                                <h5 className="font-medium text-gray-900 text-sm">{progress.video_title}</h5>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${progress.completed ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
-                                  {progress.completed ? 'Terminé' : 'En cours'}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                  <div 
-                                    className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full"
-                                    style={{ width: `${Math.min(progress.progress_percentage, 100)}%` }}
-                                  />
+                          {employeeDetails.detailed_progress?.map(
+                            (progress: any) => (
+                              <div
+                                key={progress.video_id}
+                                className="bg-white rounded-lg p-3 border border-gray-200"
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <h5 className="font-medium text-gray-900 text-sm">
+                                    {progress.video_title}
+                                  </h5>
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${progress.completed ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}
+                                  >
+                                    {progress.completed
+                                      ? "Terminé"
+                                      : "En cours"}
+                                  </span>
                                 </div>
-                                <span className="text-sm font-medium text-gray-600">
-                                  {progress.progress_percentage}%
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full"
+                                      style={{
+                                        width: `${Math.min(progress.progress_percentage, 100)}%`,
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-600">
+                                    {progress.progress_percentage}%
+                                  </span>
+                                </div>
+                                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                                  <span>
+                                    Temps:{" "}
+                                    {Math.floor(
+                                      progress.watch_time_seconds / 60
+                                    )}
+                                    :
+                                    {(progress.watch_time_seconds % 60)
+                                      .toString()
+                                      .padStart(2, "0")}
+                                  </span>
+                                  <span>
+                                    Durée:{" "}
+                                    {Math.floor(
+                                      progress.total_duration_seconds / 60
+                                    )}
+                                    :
+                                    {(progress.total_duration_seconds % 60)
+                                      .toString()
+                                      .padStart(2, "0")}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex justify-between text-xs text-gray-500 mt-2">
-                                <span>Temps: {Math.floor(progress.watch_time_seconds / 60)}:{(progress.watch_time_seconds % 60).toString().padStart(2, '0')}</span>
-                                <span>Durée: {Math.floor(progress.total_duration_seconds / 60)}:{(progress.total_duration_seconds % 60).toString().padStart(2, '0')}</span>
-                              </div>
-                            </div>
-                          ))}
+                            )
+                          )}
                         </div>
                       </div>
-                      
+
                       <div>
                         <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                           <BarChart3 className="w-4 h-4 text-blue-600" />
@@ -419,28 +523,54 @@ export default function EmployeeProgressPage() {
                         </h4>
                         <div className="bg-white rounded-lg p-4 border border-gray-200 space-y-3">
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Total vidéos:</span>
-                            <span className="font-medium">{employeeDetails.stats.total_videos}</span>
+                            <span className="text-sm text-gray-600">
+                              Total vidéos:
+                            </span>
+                            <span className="font-medium">
+                              {employeeDetails.stats.total_videos}
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Vidéos terminées:</span>
-                            <span className="font-medium text-green-600">{employeeDetails.stats.completed_videos}</span>
+                            <span className="text-sm text-gray-600">
+                              Vidéos terminées:
+                            </span>
+                            <span className="font-medium text-green-600">
+                              {employeeDetails.stats.completed_videos}
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">En cours:</span>
-                            <span className="font-medium text-amber-600">{employeeDetails.stats.in_progress_videos}</span>
+                            <span className="text-sm text-gray-600">
+                              En cours:
+                            </span>
+                            <span className="font-medium text-amber-600">
+                              {employeeDetails.stats.in_progress_videos}
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Progression moyenne:</span>
-                            <span className="font-medium">{employeeDetails.stats.average_progress}%</span>
+                            <span className="text-sm text-gray-600">
+                              Progression moyenne:
+                            </span>
+                            <span className="font-medium">
+                              {employeeDetails.stats.average_progress}%
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Temps total:</span>
-                            <span className="font-medium">{formatTime(employeeDetails.stats.total_watch_time_minutes)}</span>
+                            <span className="text-sm text-gray-600">
+                              Temps total:
+                            </span>
+                            <span className="font-medium">
+                              {formatTime(
+                                employeeDetails.stats.total_watch_time_minutes
+                              )}
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Taux de complétion:</span>
-                            <span className={`font-medium ${getProgressColor(employeeDetails.stats.completion_rate)}`}>
+                            <span className="text-sm text-gray-600">
+                              Taux de complétion:
+                            </span>
+                            <span
+                              className={`font-medium ${getProgressColor(employeeDetails.stats.completion_rate)}`}
+                            >
                               {employeeDetails.stats.completion_rate}%
                             </span>
                           </div>
@@ -455,9 +585,9 @@ export default function EmployeeProgressPage() {
         </div>
       )}
 
-      <NotificationContainer 
-        notifications={notifications} 
-        onRemove={removeNotification} 
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
       />
     </div>
   );

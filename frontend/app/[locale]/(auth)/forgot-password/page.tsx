@@ -3,13 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import {
-  Mail,
-  ArrowLeft,
-  CheckCircle,
-  Clock,
-  ArrowRight,
-} from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle, Clock, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function ForgotPasswordPage() {
@@ -18,7 +12,7 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isEmailSent, setIsEmailSent] = useState(false);
-  
+
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
@@ -44,11 +38,11 @@ export default function ForgotPasswordPage() {
     try {
       const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       const baseUrl = rawUrl.replace(/\/$/, "");
-      
+
       // Créer un timeout manuel
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
-      
+
       const res = await fetch(`${baseUrl}/api/forgot-password`, {
         method: "POST",
         headers: {
@@ -58,35 +52,48 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
       const data = await res.json();
 
       if (res.ok) {
-        setSuccessMessage("Un email de réinitialisation a été envoyé à votre adresse email.");
+        setSuccessMessage(
+          "Un email de réinitialisation a été envoyé à votre adresse email."
+        );
         setIsEmailSent(true);
-        
+
         // Simuler l'envoi d'email en mode démo
         setTimeout(() => {
           console.log("Email de réinitialisation envoyé à:", email);
-          console.log("Token de réinitialisation (démo):", "demo-reset-token-" + Date.now());
+          console.log(
+            "Token de réinitialisation (démo):",
+            "demo-reset-token-" + Date.now()
+          );
         }, 1000);
       } else {
-        setError(data.message || "Erreur lors de l'envoi de l'email de réinitialisation");
+        setError(
+          data.message ||
+            "Erreur lors de l'envoi de l'email de réinitialisation"
+        );
       }
     } catch (error: any) {
       console.error("Forgot password error:", error);
-      
+
       // Fallback immédiat pour développement
       console.log("Mode fallback: simulation d'envoi d'email");
-      setSuccessMessage("Un email de réinitialisation a été envoyé à votre adresse email (mode démo).");
+      setSuccessMessage(
+        "Un email de réinitialisation a été envoyé à votre adresse email (mode démo)."
+      );
       setIsEmailSent(true);
-      
+
       setTimeout(() => {
         console.log("Email de réinitialisation envoyé à:", email);
-        console.log("Token de réinitialisation (démo):", "demo-reset-token-" + Date.now());
+        console.log(
+          "Token de réinitialisation (démo):",
+          "demo-reset-token-" + Date.now()
+        );
       }, 1000);
-      
+
       setLoading(false);
     }
   };
@@ -123,7 +130,7 @@ export default function ForgotPasswordPage() {
               {error}
             </motion.div>
           )}
-          
+
           {successMessage && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -180,13 +187,14 @@ export default function ForgotPasswordPage() {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Email envoyé !
                 </h3>
                 <p className="text-gray-600 text-sm mb-4">
-                  Nous avons envoyé un email de réinitialisation à <strong>{email}</strong>
+                  Nous avons envoyé un email de réinitialisation à{" "}
+                  <strong>{email}</strong>
                 </p>
                 <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl text-sm">
                   <div className="flex items-center gap-2 mb-2">
@@ -212,8 +220,8 @@ export default function ForgotPasswordPage() {
                 >
                   Renvoyer l'email
                 </button>
-                
-                <Link 
+
+                <Link
                   href={`/${locale}/login`}
                   className="w-full bg-primary text-white py-3 px-4 rounded-xl font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
                 >
@@ -226,7 +234,7 @@ export default function ForgotPasswordPage() {
 
           {/* Back to Login */}
           <div className="mt-6 text-center">
-            <Link 
+            <Link
               href={`/${locale}/login`}
               className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition-colors"
             >

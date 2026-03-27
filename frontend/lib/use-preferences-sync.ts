@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface UserPreferences {
   emailNotifications: boolean;
@@ -18,13 +18,13 @@ export function usePreferencesSync() {
     // Charger les préférences au démarrage
     const loadPreferences = () => {
       try {
-        const saved = localStorage.getItem('userPreferences');
+        const saved = localStorage.getItem("userPreferences");
         if (saved) {
           const parsed = JSON.parse(saved);
           setPreferences(parsed);
         }
       } catch (error) {
-        console.error('Erreur lors du chargement des préférences:', error);
+        console.error("Erreur lors du chargement des préférences:", error);
       }
     };
 
@@ -35,10 +35,16 @@ export function usePreferencesSync() {
       setPreferences(event.detail);
     };
 
-    window.addEventListener('preferencesChanged', handlePreferencesChange as EventListener);
+    window.addEventListener(
+      "preferencesChanged",
+      handlePreferencesChange as EventListener
+    );
 
     return () => {
-      window.removeEventListener('preferencesChanged', handlePreferencesChange as EventListener);
+      window.removeEventListener(
+        "preferencesChanged",
+        handlePreferencesChange as EventListener
+      );
     };
   }, []);
 

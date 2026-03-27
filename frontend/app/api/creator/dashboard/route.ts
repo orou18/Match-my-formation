@@ -1,93 +1,81 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
 
 export async function GET(request: NextRequest) {
   try {
-    // Mock data pour le dashboard creator
-    const mockStats = {
-      totalVideos: 24,
-      totalEmployees: 156,
-      totalViews: 125430,
-      totalRevenue: 45678,
-      monthlyGrowth: 12.5,
-      recentVideos: [
+    const [dashboardResponse, employeeStatsResponse, employeesResponse] =
+      await Promise.all([
+        laravelFetch("/api/creator/dashboard", { request }),
+        laravelFetch("/api/creator/employees/stats", { request }),
+        laravelFetch("/api/creator/employees", { request }),
+      ]);
+
+    const [dashboardPayload, employeeStatsPayload, employeesPayload] =
+      await Promise.all([
+        parseLaravelJson(dashboardResponse),
+        parseLaravelJson(employeeStatsResponse),
+        parseLaravelJson(employeesResponse),
+      ]);
+
+    if (!dashboardResponse.ok) {
+      return NextResponse.json(
         {
-          id: 1,
-          title: "Formation complète en hôtellerie - Module 1",
-          views: 15420,
-          revenue: 2340,
-          created_at: new Date().toISOString()
+          success: false,
+          message:
+            dashboardPayload?.message ||
+            dashboardPayload?.error ||
+            "Impossible de charger le dashboard créateur",
         },
-        {
-          id: 2,
-          title: "Techniques de service client",
-          views: 12350,
-          revenue: 1890,
-          created_at: new Date().toISOString()
-        },
-        {
-          id: 3,
-          title: "Gestion des réservations",
-          views: 9870,
-          revenue: 1450,
-          created_at: new Date().toISOString()
-        }
-      ],
-      topEmployees: [
-        {
-          id: 1,
-          name: "Marie Dubois",
-          email: "marie.dubois@entreprise.com",
-          completion_rate: 85,
-          progress: 72
-        },
-        {
-          id: 2,
-          name: "Jean Martin",
-          email: "jean.martin@entreprise.com",
-          completion_rate: 92,
-          progress: 88
-        },
-        {
-          id: 3,
-          name: "Sophie Bernard",
-          email: "sophie.bernard@entreprise.com",
-          completion_rate: 78,
-          progress: 65
-        }
-      ],
-      recentActivity: [
-        {
-          id: 1,
-          type: "video_created",
-          message: "Nouvelle vidéo 'Formation complète en hôtellerie' publiée",
-          created_at: new Date().toISOString()
-        },
-        {
-          id: 2,
-          type: "employee_assigned",
-          message: "Marie Dubois a été assignée au parcours 'Hôtellerie 101'",
-          created_at: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-          id: 3,
-          type: "milestone_reached",
-          message: "Jean Martin a atteint 90% de complétion",
-          created_at: new Date(Date.now() - 7200000).toISOString()
-        }
-      ]
+        { status: dashboardResponse.status }
+      );
+    }
+
+    const overview = dashboardPayload?.overview || {};
+    const employees = Array.isArray(employeesPayload?.data)
+      ? employeesPayload.data
+      : [];
+    const employeeStats = employeeStatsPayload?.data || {};
+    const recentVideos = Array.isArray(dashboardPayload?.recentVideos)
+      ? dashboardPayload.recentVideos
+      : [];
+
+    const data = {
+      totalVideos: overview.totalVideos || 0,
+      totalEmployees: employeeStats.total_employees || employees.length || 0,
+      totalViews: overview.totalViews || 0,
+      totalRevenue: overview.totalRevenue || 0,
+      monthlyGrowth: 0,
+      recentVideos: recentVideos.map((video: any) => ({
+        id: Number(video.id),
+        title: video.title,
+        views: Number(video.views || 0),
+        revenue: Number(video.revenue || (video.views || 0) * 0.01),
+        created_at: video.created_at,
+      })),
+      topEmployees: employees
+        .slice(0, 3)
+        .map((employee: any, index: number) => ({
+          id: Number(employee.id),
+          name: employee.name,
+          email: employee.email,
+          completion_rate: 0,
+          progress: Math.max(0, 70 - index * 10),
+        })),
+      recentActivity: recentVideos.slice(0, 5).map((video: any) => ({
+        id: Number(video.id),
+        type: "video_created",
+        message: `Nouvelle vidéo "${video.title}" synchronisée depuis Laravel`,
+        created_at: video.created_at,
+      })),
     };
 
-    return NextResponse.json({
-      success: true,
-      data: mockStats
-    });
-
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error('Dashboard API Error:', error);
+    console.error("Creator dashboard proxy error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: "Erreur lors du chargement du dashboard" 
+      {
+        success: false,
+        message: "Erreur lors du chargement du dashboard",
       },
       { status: 500 }
     );

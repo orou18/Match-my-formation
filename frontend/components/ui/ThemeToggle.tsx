@@ -12,10 +12,18 @@ export default function ThemeToggle() {
     <button
       onClick={toggleTheme}
       className="theme-toggle p-2 rounded-lg transition-all duration-200 hover:scale-105"
-      title={theme === 'dark' ? t('preferences.switch_to_light', 'Passer au mode clair') : t('preferences.switch_to_dark', 'Passer au mode sombre')}
-      aria-label={theme === 'dark' ? t('preferences.switch_to_light', 'Passer au mode clair') : t('preferences.switch_to_dark', 'Passer au mode sombre')}
+      title={
+        theme === "dark"
+          ? t("preferences.switch_to_light", "Passer au mode clair")
+          : t("preferences.switch_to_dark", "Passer au mode sombre")
+      }
+      aria-label={
+        theme === "dark"
+          ? t("preferences.switch_to_light", "Passer au mode clair")
+          : t("preferences.switch_to_dark", "Passer au mode sombre")
+      }
     >
-      {theme === 'dark' ? (
+      {theme === "dark" ? (
         <Sun className="w-5 h-5 text-yellow-500" />
       ) : (
         <Moon className="w-5 h-5 text-blue-600" />

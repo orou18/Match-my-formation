@@ -3,13 +3,13 @@
 import React from "react";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Video, 
-  Plus, 
-  Eye, 
-  ThumbsUp, 
-  MessageSquare, 
-  Calendar, 
+import {
+  Video,
+  Plus,
+  Eye,
+  ThumbsUp,
+  MessageSquare,
+  Calendar,
   Filter,
   Search,
   MoreHorizontal,
@@ -17,7 +17,7 @@ import {
   Trash2,
   Lock,
   Globe,
-  FolderPlus
+  FolderPlus,
 } from "lucide-react";
 import VideoUploadForm from "./VideoUploadForm";
 
@@ -42,7 +42,8 @@ export default function VideoManager() {
     {
       id: "1",
       title: "Introduction au Tourisme Durable",
-      description: "Découvrez les fondamentaux du tourisme écologique et les pratiques durables.",
+      description:
+        "Découvrez les fondamentaux du tourisme écologique et les pratiques durables.",
       thumbnail: "/videos/video1-thumb.jpg",
       duration: "12:34",
       views: 15420,
@@ -50,12 +51,13 @@ export default function VideoManager() {
       comments: 45,
       publishedAt: "Il y a 2 jours",
       visibility: "public",
-      status: "published"
+      status: "published",
     },
     {
       id: "2",
       title: "Gestion Hôtelière Avancée - Module 1",
-      description: "Première partie de notre formation complète en gestion hôtelière.",
+      description:
+        "Première partie de notre formation complète en gestion hôtelière.",
       thumbnail: "/videos/video2-thumb.jpg",
       duration: "18:22",
       views: 8750,
@@ -64,12 +66,13 @@ export default function VideoManager() {
       publishedAt: "Il y a 5 jours",
       visibility: "private",
       pathway: "Certificat Hôtellerie",
-      status: "published"
+      status: "published",
     },
     {
       id: "3",
       title: "Marketing Digital pour le Tourisme",
-      description: "Stratégies digitales et marketing pour les professionnels du secteur touristique.",
+      description:
+        "Stratégies digitales et marketing pour les professionnels du secteur touristique.",
       thumbnail: "/videos/video3-thumb.jpg",
       duration: "15:45",
       views: 6230,
@@ -77,12 +80,13 @@ export default function VideoManager() {
       comments: 18,
       publishedAt: "Il y a 1 semaine",
       visibility: "public",
-      status: "published"
+      status: "published",
     },
     {
       id: "4",
       title: "Service Client d'Excellence",
-      description: "Les meilleures pratiques du service client dans l'hôtellerie.",
+      description:
+        "Les meilleures pratiques du service client dans l'hôtellerie.",
       thumbnail: "/videos/video4-thumb.jpg",
       duration: "22:10",
       views: 9870,
@@ -90,33 +94,48 @@ export default function VideoManager() {
       comments: 31,
       publishedAt: "Il y a 3 jours",
       visibility: "private",
-      status: "draft"
-    }
+      status: "draft",
+    },
   ]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterVisibility, setFilterVisibility] = useState("all");
 
-  const filteredVideos = videos.filter(video => {
-    const matchesSearch = video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         video.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "all" || video.status === filterStatus;
-    const matchesVisibility = filterVisibility === "all" || video.visibility === filterVisibility;
-    
+  const filteredVideos = videos.filter((video) => {
+    const matchesSearch =
+      video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      filterStatus === "all" || video.status === filterStatus;
+    const matchesVisibility =
+      filterVisibility === "all" || video.visibility === filterVisibility;
+
     return matchesSearch && matchesStatus && matchesVisibility;
   });
 
   const getVisibilityBadge = (visibility: string) => {
     switch (visibility) {
       case "public":
-        return { icon: Globe, label: "Public", color: "bg-green-100 text-green-700" };
+        return {
+          icon: Globe,
+          label: "Public",
+          color: "bg-green-100 text-green-700",
+        };
       case "private":
         return { icon: Lock, label: "Privé", color: "bg-red-100 text-red-700" };
       case "unlisted":
-        return { icon: Lock, label: "Non listé", color: "bg-yellow-100 text-yellow-700" };
+        return {
+          icon: Lock,
+          label: "Non listé",
+          color: "bg-yellow-100 text-yellow-700",
+        };
       default:
-        return { icon: Lock, label: "Brouillon", color: "bg-gray-100 text-gray-700" };
+        return {
+          icon: Lock,
+          label: "Brouillon",
+          color: "bg-gray-100 text-gray-700",
+        };
     }
   };
 
@@ -141,7 +160,7 @@ export default function VideoManager() {
       likes: 0,
       comments: 0,
       publishedAt: "À l'instant",
-      status: "processing"
+      status: "processing",
     };
     setVideos([newVideo, ...videos]);
     setShowUploadForm(false);
@@ -149,7 +168,7 @@ export default function VideoManager() {
 
   if (showUploadForm) {
     return (
-      <VideoUploadForm 
+      <VideoUploadForm
         onClose={() => setShowUploadForm(false)}
         onSubmit={handleVideoUpload}
       />
@@ -166,10 +185,14 @@ export default function VideoManager() {
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Mes Vidéos</h1>
-            <p className="text-gray-600">Gérez votre contenu vidéo et vos formations</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Mes Vidéos
+            </h1>
+            <p className="text-gray-600">
+              Gérez votre contenu vidéo et vos formations
+            </p>
           </div>
-          
+
           <div className="flex gap-3">
             <button
               onClick={() => setShowUploadForm(true)}
@@ -193,7 +216,9 @@ export default function VideoManager() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Total Vidéos</p>
-              <p className="text-2xl font-bold text-gray-900">{videos.length}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {videos.length}
+              </p>
             </div>
             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
               <Video className="w-6 h-6 text-primary" />
@@ -234,7 +259,9 @@ export default function VideoManager() {
             <div>
               <p className="text-sm text-gray-600 mb-1">Commentaires</p>
               <p className="text-2xl font-bold text-gray-900">
-                {videos.reduce((sum, v) => sum + v.comments, 0).toLocaleString()}
+                {videos
+                  .reduce((sum, v) => sum + v.comments, 0)
+                  .toLocaleString()}
               </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -264,7 +291,7 @@ export default function VideoManager() {
               />
             </div>
           </div>
-          
+
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -301,32 +328,40 @@ export default function VideoManager() {
             key={video.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            whileHover={{ 
+            whileHover={{
               y: -5,
-              boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 5px -5px rgba(0, 0, 0, 0.04)"
+              boxShadow:
+                "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 5px -5px rgba(0, 0, 0, 0.04)",
             }}
             transition={{ duration: 0.3, delay: index * 0.05 }}
             className="bg-white rounded-2xl shadow-lg overflow-hidden group cursor-pointer"
           >
             {/* Thumbnail */}
             <div className="relative h-48 bg-gray-200">
-              <img 
-                src={video.thumbnail} 
+              <img
+                src={video.thumbnail}
                 alt={video.title}
                 className="w-full h-full object-cover"
               />
-              
+
               {/* Status Badge */}
               <div className="absolute top-3 left-3">
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(video.status).color}`}>
+                <span
+                  className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(video.status).color}`}
+                >
                   {getStatusBadge(video.status).label}
                 </span>
               </div>
 
               {/* Visibility Badge */}
               <div className="absolute top-3 right-3">
-                <span className={`px-2 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${getVisibilityBadge(video.visibility).color}`}>
-                  {React.createElement(getVisibilityBadge(video.visibility).icon, { className: "w-3 h-3" })}
+                <span
+                  className={`px-2 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${getVisibilityBadge(video.visibility).color}`}
+                >
+                  {React.createElement(
+                    getVisibilityBadge(video.visibility).icon,
+                    { className: "w-3 h-3" }
+                  )}
                   {getVisibilityBadge(video.visibility).label}
                 </span>
               </div>
@@ -407,21 +442,25 @@ export default function VideoManager() {
           className="text-center py-12"
         >
           <Video className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune vidéo trouvée</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Aucune vidéo trouvée
+          </h3>
           <p className="text-gray-600 mb-6">
             {searchTerm || filterStatus !== "all" || filterVisibility !== "all"
               ? "Essayez de modifier vos filtres de recherche"
               : "Commencez par créer votre première vidéo"}
           </p>
-          {!searchTerm && filterStatus === "all" && filterVisibility === "all" && (
-            <button
-              onClick={() => setShowUploadForm(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Créer une vidéo
-            </button>
-          )}
+          {!searchTerm &&
+            filterStatus === "all" &&
+            filterVisibility === "all" && (
+              <button
+                onClick={() => setShowUploadForm(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                Créer une vidéo
+              </button>
+            )}
         </motion.div>
       )}
     </div>

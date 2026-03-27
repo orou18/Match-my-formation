@@ -10,9 +10,7 @@ export default function DemoLayout({
 }) {
   return (
     <ThemeProvider>
-      <TranslationProvider>
-        {children}
-      </TranslationProvider>
+      <TranslationProvider>{children}</TranslationProvider>
     </ThemeProvider>
   );
 }

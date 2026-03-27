@@ -14,25 +14,26 @@ const authOptions: AuthOptions = {
       name: "Laravel Backend",
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
           // Correction de l'URL avec un fallback localhost
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-          
+          const apiUrl =
+            process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
           const res = await fetch(`${apiUrl.replace(/\/$/, "")}/api/login`, {
             method: "POST",
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,
             }),
-            headers: { 
+            headers: {
               "Content-Type": "application/json",
-              "Accept": "application/json" 
-            }
+              Accept: "application/json",
+            },
           });
 
           const data = await res.json();
@@ -52,7 +53,7 @@ const authOptions: AuthOptions = {
           console.error("Erreur connexion Laravel:", error);
           return null;
         }
-      }
+      },
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "temp",
@@ -88,11 +89,13 @@ const authOptions: AuthOptions = {
     },
   },
   pages: {
-    signIn: "/fr/login", 
+    signIn: "/fr/login",
     error: "/fr/login",
   },
   // Vérifie bien que cette variable est définie dans ton .env
-  secret: process.env.NEXTAUTH_SECRET || "panafrican_tourism_academy_secret_key_12345",
+  secret:
+    process.env.NEXTAUTH_SECRET ||
+    "panafrican_tourism_academy_secret_key_12345",
 };
 
 const handler = NextAuth(authOptions);

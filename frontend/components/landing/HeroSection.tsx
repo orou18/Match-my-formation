@@ -2,7 +2,15 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Play, Users, Star, ArrowRight, Sparkles, TrendingUp, Award } from "lucide-react";
+import {
+  Play,
+  Users,
+  Star,
+  ArrowRight,
+  Sparkles,
+  TrendingUp,
+  Award,
+} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -37,7 +45,7 @@ export default function HeroSection() {
           backgroundImage: "url('/hero-bg.png')",
         }}
       />
-      
+
       {/* Overlay gradients */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/10" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -49,7 +57,7 @@ export default function HeroSection() {
           const left = (i * 5.3) % 100;
           const top = (i * 7.1) % 100;
           const delay = i * 0.2;
-          
+
           return (
             <motion.div
               key={i}
@@ -74,7 +82,7 @@ export default function HeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 text-center text-white">
+      <div className="relative z-0 max-w-7xl mx-auto px-6 text-center text-white">
         {/* Badge supérieur */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -104,7 +112,8 @@ export default function HeroSection() {
           transition={{ delay: 0.2 }}
           className="mt-6 max-w-4xl mx-auto text-lg md:text-xl text-gray-300 leading-relaxed"
         >
-          Des formations premium pour maîtriser l'expertise, le management et l'innovation dans l'industrie touristique.
+          Des formations premium pour maîtriser l'expertise, le management et
+          l'innovation dans l'industrie touristique.
         </motion.p>
 
         <motion.div

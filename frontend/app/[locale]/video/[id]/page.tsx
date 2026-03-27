@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
-import { 
-  Play, 
-  Clock, 
-  Eye, 
-  Users, 
-  Star, 
-  Download, 
+import {
+  Play,
+  Clock,
+  Eye,
+  Users,
+  Star,
+  Download,
   FileText,
   CheckCircle,
   ArrowLeft,
@@ -20,7 +20,7 @@ import {
   Award,
   BookOpen,
   Target,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -40,9 +40,10 @@ export default function VideoPreviewPage() {
   const mockVideo: Video = {
     id: parseInt(videoId),
     title: "Introduction au Tourisme Durable",
-    description: "Découvrez les fondamentaux du tourisme écologique et les pratiques durables qui transforment l'industrie. Cette formation complète vous donnera les clés pour comprendre et mettre en œuvre des stratégies de tourisme responsable.",
+    description:
+      "Découvrez les fondamentaux du tourisme écologique et les pratiques durables qui transforment l'industrie. Cette formation complète vous donnera les clés pour comprendre et mettre en œuvre des stratégies de tourisme responsable.",
     thumbnail: "/videos/video1-thumb.jpg",
-    video_url: "/videos/video1.mp4",
+    video_url: "https://www.youtube.com/watch?v=ysz5S6PUM-U",
     duration: "12:34",
     order: 1,
     creator_id: 1,
@@ -59,30 +60,33 @@ export default function VideoPreviewPage() {
       name: "Dr. Marie Laurent",
       email: "marie.laurent@example.com",
       avatar: "/avatars/creator1.jpg",
-      specialty: "Tourisme Durable & Environnement"
+      specialty: "Tourisme Durable & Environnement",
     },
     learning_objectives: [
       {
         id: 1,
         video_id: parseInt(videoId),
         title: "Comprendre les principes du tourisme durable",
-        description: "Maîtriser les concepts fondamentaux et les 3 piliers du développement durable appliqués au tourisme",
-        order: 1
+        description:
+          "Maîtriser les concepts fondamentaux et les 3 piliers du développement durable appliqués au tourisme",
+        order: 1,
       },
       {
         id: 2,
         video_id: parseInt(videoId),
         title: "Analyser l'impact environnemental",
-        description: "Évaluer et mesurer l'empreinte écologique des activités touristiques",
-        order: 2
+        description:
+          "Évaluer et mesurer l'empreinte écologique des activités touristiques",
+        order: 2,
       },
       {
         id: 3,
         video_id: parseInt(videoId),
         title: "Mettre en œuvre des pratiques éco-responsables",
-        description: "Appliquer concrètement des solutions durables dans le secteur touristique",
-        order: 3
-      }
+        description:
+          "Appliquer concrètement des solutions durables dans le secteur touristique",
+        order: 3,
+      },
     ],
     resources: [
       {
@@ -92,8 +96,9 @@ export default function VideoPreviewPage() {
         file_path: "/resources/guide-tourisme-durable.pdf",
         file_size: 2048000,
         file_type: "application/pdf",
-        description: "Un guide complet avec les meilleures pratiques et check-lists",
-        created_at: "2024-01-15"
+        description:
+          "Un guide complet avec les meilleures pratiques et check-lists",
+        created_at: "2024-01-15",
       },
       {
         id: 2,
@@ -101,9 +106,10 @@ export default function VideoPreviewPage() {
         name: "Template d'audit environnemental",
         file_path: "/resources/audit-environnemental.xlsx",
         file_size: 512000,
-        file_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        file_type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         description: "Feuille de calcul pour évaluer l'impact de vos activités",
-        created_at: "2024-01-15"
+        created_at: "2024-01-15",
       },
       {
         id: 3,
@@ -112,11 +118,12 @@ export default function VideoPreviewPage() {
         file_path: "/resources/etudes-cas-hotellerie.pdf",
         file_size: 3072000,
         file_type: "application/pdf",
-        description: "5 exemples concrets d'hôtels ayant réussi leur transition écologique",
-        created_at: "2024-01-15"
-      }
+        description:
+          "5 exemples concrets d'hôtels ayant réussi leur transition écologique",
+        created_at: "2024-01-15",
+      },
     ],
-    is_free: true
+    is_free: true,
   };
 
   useEffect(() => {
@@ -125,12 +132,22 @@ export default function VideoPreviewPage() {
     setIsAuthenticated(!!token);
 
     // Simuler le chargement de la vidéo
-    const timer = setTimeout(() => {
-      setVideo(mockVideo);
-      setLoading(false);
-    }, 800);
+    const loadVideo = async () => {
+      try {
+        const response = await fetch("/api/final-videos");
+        const data = await response.json();
+        const storedVideo = (data.videos || []).find(
+          (entry: any) => String(entry.id) === videoId
+        );
+        setVideo((storedVideo as Video) || mockVideo);
+      } catch {
+        setVideo(mockVideo);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    loadVideo();
   }, [videoId]);
 
   const handleWatchVideo = () => {
@@ -144,17 +161,20 @@ export default function VideoPreviewPage() {
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.includes('pdf')) return <FileText className="w-5 h-5 text-red-500" />;
-    if (fileType.includes('sheet')) return <FileText className="w-5 h-5 text-green-500" />;
-    if (fileType.includes('word')) return <FileText className="w-5 h-5 text-blue-500" />;
+    if (fileType.includes("pdf"))
+      return <FileText className="w-5 h-5 text-red-500" />;
+    if (fileType.includes("sheet"))
+      return <FileText className="w-5 h-5 text-green-500" />;
+    if (fileType.includes("word"))
+      return <FileText className="w-5 h-5 text-blue-500" />;
     return <FileText className="w-5 h-5 text-gray-500" />;
   };
 
@@ -170,8 +190,13 @@ export default function VideoPreviewPage() {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Vidéo non trouvée</h2>
-          <Link href={`/${locale}/dashboard/student`} className="text-[#002B24] hover:underline">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Vidéo non trouvée
+          </h2>
+          <Link
+            href={`/${locale}/dashboard/student`}
+            className="text-[#002B24] hover:underline"
+          >
             Retour au dashboard
           </Link>
         </div>
@@ -190,7 +215,9 @@ export default function VideoPreviewPage() {
                 <div className="w-8 h-8 bg-[#002B24] rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">MM</span>
                 </div>
-                <span className="font-bold text-xl text-[#002B24]">MatchMy</span>
+                <span className="font-bold text-xl text-[#002B24]">
+                  MatchMy
+                </span>
               </Link>
             </div>
 
@@ -199,11 +226,17 @@ export default function VideoPreviewPage() {
                 <Share2 className="w-5 h-5 text-gray-600" />
               </button>
               {isAuthenticated ? (
-                <Link href={`/${locale}/dashboard/student`} className="px-4 py-2 bg-[#002B24] text-white rounded-lg hover:bg-[#003d34]">
+                <Link
+                  href={`/${locale}/dashboard/student`}
+                  className="px-4 py-2 bg-[#002B24] text-white rounded-lg hover:bg-[#003d34]"
+                >
                   Dashboard
                 </Link>
               ) : (
-                <Link href={`/${locale}/login`} className="px-4 py-2 bg-[#002B24] text-white rounded-lg hover:bg-[#003d34]">
+                <Link
+                  href={`/${locale}/login`}
+                  className="px-4 py-2 bg-[#002B24] text-white rounded-lg hover:bg-[#003d34]"
+                >
                   Se connecter
                 </Link>
               )}
@@ -216,7 +249,7 @@ export default function VideoPreviewPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* En-tête avec retour */}
         <div className="mb-6">
-          <button 
+          <button
             onClick={() => router.back()}
             className="flex items-center space-x-2 text-gray-600 hover:text-[#002B24] transition-colors"
           >
@@ -241,7 +274,7 @@ export default function VideoPreviewPage() {
                 fill
                 className="object-cover opacity-80 group-hover:opacity-100 transition-opacity"
               />
-              
+
               {/* Bouton play central */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <motion.div
@@ -256,7 +289,7 @@ export default function VideoPreviewPage() {
               {/* Badge de statut */}
               <div className="absolute top-4 left-4">
                 <span className="px-3 py-1 bg-green-500 text-white text-sm font-medium rounded-full">
-                  {video.is_free ? 'Gratuit' : 'Premium'}
+                  {video.is_free ? "Gratuit" : "Premium"}
                 </span>
               </div>
 
@@ -275,13 +308,20 @@ export default function VideoPreviewPage() {
               transition={{ delay: 0.1 }}
               className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
             >
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">{video.title}</h1>
-              <p className="text-gray-600 leading-relaxed mb-6">{video.description}</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                {video.title}
+              </h1>
+              <p className="text-gray-600 leading-relaxed mb-6">
+                {video.description}
+              </p>
 
               {/* Tags */}
               <div className="flex flex-wrap gap-2 mb-6">
                 {video.tags?.map((tag, index) => (
-                  <span key={index} className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full"
+                  >
                     #{tag}
                   </span>
                 ))}
@@ -299,7 +339,10 @@ export default function VideoPreviewPage() {
                 </div>
                 <div className="flex items-center space-x-1">
                   <Calendar className="w-4 h-4" />
-                  <span>Publié le {new Date(video.created_at).toLocaleDateString('fr-FR')}</span>
+                  <span>
+                    Publié le{" "}
+                    {new Date(video.created_at).toLocaleDateString("fr-FR")}
+                  </span>
                 </div>
               </div>
             </motion.div>
@@ -313,18 +356,29 @@ export default function VideoPreviewPage() {
             >
               <div className="flex items-center space-x-2 mb-4">
                 <Target className="w-5 h-5 text-[#002B24]" />
-                <h2 className="text-xl font-bold text-gray-900">Objectifs d'apprentissage</h2>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Objectifs d'apprentissage
+                </h2>
               </div>
-              
+
               <div className="space-y-3">
                 {video.learning_objectives?.map((objective, index) => (
-                  <div key={objective.id} className="flex items-start space-x-3">
+                  <div
+                    key={objective.id}
+                    className="flex items-start space-x-3"
+                  >
                     <div className="w-6 h-6 rounded-full bg-[#002B24]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-[#002B24] text-xs font-bold">{index + 1}</span>
+                      <span className="text-[#002B24] text-xs font-bold">
+                        {index + 1}
+                      </span>
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900 mb-1">{objective.title}</h3>
-                      <p className="text-sm text-gray-600">{objective.description}</p>
+                      <h3 className="font-medium text-gray-900 mb-1">
+                        {objective.title}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {objective.description}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -340,18 +394,29 @@ export default function VideoPreviewPage() {
             >
               <div className="flex items-center space-x-2 mb-4">
                 <BookOpen className="w-5 h-5 text-[#002B24]" />
-                <h2 className="text-xl font-bold text-gray-900">Ressources téléchargeables</h2>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Ressources téléchargeables
+                </h2>
               </div>
-              
+
               <div className="space-y-3">
                 {video.resources?.map((resource) => (
-                  <div key={resource.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                  <div
+                    key={resource.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  >
                     <div className="flex items-center space-x-3">
                       {getFileIcon(resource.file_type)}
                       <div>
-                        <h3 className="font-medium text-gray-900">{resource.name}</h3>
-                        <p className="text-sm text-gray-500">{resource.description}</p>
-                        <p className="text-xs text-gray-400">{formatFileSize(resource.file_size)}</p>
+                        <h3 className="font-medium text-gray-900">
+                          {resource.name}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {resource.description}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {formatFileSize(resource.file_size)}
+                        </p>
                       </div>
                     </div>
                     <button className="p-2 bg-[#002B24] text-white rounded-lg hover:bg-[#003d34] transition-colors">
@@ -372,13 +437,14 @@ export default function VideoPreviewPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-bold text-white mb-2">
-                    {isAuthenticated ? 'Commencer la lecture' : 'Connectez-vous pour regarder'}
+                    {isAuthenticated
+                      ? "Commencer la lecture"
+                      : "Connectez-vous pour regarder"}
                   </h3>
                   <p className="text-white/80">
-                    {isAuthenticated 
-                      ? 'Accédez à la vidéo complète et aux ressources associées'
-                      : 'Créez un compte gratuit pour accéder à ce contenu'
-                    }
+                    {isAuthenticated
+                      ? "Accédez à la vidéo complète et aux ressources associées"
+                      : "Créez un compte gratuit pour accéder à ce contenu"}
                   </p>
                 </div>
                 <motion.button
@@ -388,7 +454,7 @@ export default function VideoPreviewPage() {
                   className="px-6 py-3 bg-white text-[#002B24] rounded-xl font-bold hover:bg-gray-100 transition-colors flex items-center space-x-2"
                 >
                   <Play className="w-5 h-5" />
-                  <span>{isAuthenticated ? 'Regarder' : 'Se connecter'}</span>
+                  <span>{isAuthenticated ? "Regarder" : "Se connecter"}</span>
                 </motion.button>
               </div>
             </motion.div>
@@ -402,12 +468,19 @@ export default function VideoPreviewPage() {
               animate={{ opacity: 1, x: 0 }}
               className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
             >
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Votre formateur</h3>
-              
+              <h3 className="text-lg font-bold text-gray-900 mb-4">
+                Votre formateur
+              </h3>
+
               <div className="flex items-center space-x-4 mb-4">
                 <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
                   {video.creator?.avatar ? (
-                    <Image src={video.creator.avatar} alt={video.creator.name} fill className="rounded-full object-cover" />
+                    <Image
+                      src={video.creator.avatar}
+                      alt={video.creator.name}
+                      fill
+                      className="rounded-full object-cover"
+                    />
                   ) : (
                     <span className="text-2xl font-bold text-gray-600">
                       {video.creator?.name?.charAt(0)}
@@ -415,8 +488,12 @@ export default function VideoPreviewPage() {
                   )}
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-900">{video.creator?.name}</h4>
-                  <p className="text-sm text-gray-600">{video.creator?.specialty}</p>
+                  <h4 className="font-bold text-gray-900">
+                    {video.creator?.name}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {video.creator?.specialty}
+                  </p>
                 </div>
               </div>
 
@@ -452,13 +529,16 @@ export default function VideoPreviewPage() {
             >
               <div className="flex items-center space-x-2 mb-3">
                 <Award className="w-5 h-5 text-yellow-600" />
-                <h3 className="text-lg font-bold text-gray-900">Certification</h3>
+                <h3 className="text-lg font-bold text-gray-900">
+                  Certification
+                </h3>
               </div>
-              
+
               <p className="text-sm text-gray-600 mb-4">
-                Recevez un certificat de completion après avoir terminé cette formation
+                Recevez un certificat de completion après avoir terminé cette
+                formation
               </p>
-              
+
               <div className="space-y-2 text-sm">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
@@ -482,13 +562,17 @@ export default function VideoPreviewPage() {
               transition={{ delay: 0.2 }}
               className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
             >
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Formations similaires</h3>
-              
+              <h3 className="text-lg font-bold text-gray-900 mb-4">
+                Formations similaires
+              </h3>
+
               <div className="space-y-4">
                 <div className="flex space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
                   <div className="w-20 h-14 bg-gray-200 rounded-lg flex-shrink-0"></div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 text-sm truncate">Gestion Hôtelière Avancée</h4>
+                    <h4 className="font-medium text-gray-900 text-sm truncate">
+                      Gestion Hôtelière Avancée
+                    </h4>
                     <p className="text-xs text-gray-500">Dr. Sophie Martin</p>
                     <div className="flex items-center space-x-2 text-xs text-gray-400">
                       <span>4.9</span>
@@ -497,11 +581,13 @@ export default function VideoPreviewPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
                   <div className="w-20 h-14 bg-gray-200 rounded-lg flex-shrink-0"></div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 text-sm truncate">Marketing Digital Touristique</h4>
+                    <h4 className="font-medium text-gray-900 text-sm truncate">
+                      Marketing Digital Touristique
+                    </h4>
                     <p className="text-xs text-gray-500">Julie Bernard</p>
                     <div className="flex items-center space-x-2 text-xs text-gray-400">
                       <span>4.7</span>

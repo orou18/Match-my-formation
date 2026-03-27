@@ -1,7 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Play, Clock, Eye, Heart, Star, Download, FileText, User, Calendar, Target, Share2, BookmarkPlus } from "lucide-react";
+import {
+  Play,
+  Clock,
+  Eye,
+  Heart,
+  Star,
+  Download,
+  FileText,
+  User,
+  Calendar,
+  Target,
+  Share2,
+  BookmarkPlus,
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
@@ -17,22 +30,22 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
   const currentLocale = locale || params.locale || "fr";
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const getFileIcon = (type: string) => {
     switch (type.toLowerCase()) {
-      case 'pdf':
+      case "pdf":
         return <FileText className="w-3 h-3" />;
-      case 'image':
+      case "image":
         return <div className="w-3 h-3 bg-blue-500 rounded" />;
-      case 'video':
+      case "video":
         return <Play className="w-3 h-3" />;
-      case 'audio':
+      case "audio":
         return <div className="w-3 h-3 bg-green-500 rounded-full" />;
       default:
         return <FileText className="w-3 h-3 text-gray-500" />;
@@ -56,7 +69,7 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             loading="lazy"
           />
-          
+
           {/* Overlay au survol amélioré */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
             <motion.div
@@ -71,7 +84,7 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
           {/* Badge de statut premium */}
           <div className="absolute top-2 left-2 z-10">
             {video.is_free ? (
-              <motion.span 
+              <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2 }}
@@ -81,7 +94,7 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
                 Gratuit
               </motion.span>
             ) : (
-              <motion.span 
+              <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2 }}
@@ -95,7 +108,7 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
 
           {/* Durée avec design amélioré */}
           <div className="absolute bottom-2 right-2 z-10">
-            <motion.span 
+            <motion.span
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
@@ -109,7 +122,7 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
           {/* Badge de ressources amélioré */}
           {video.resources && video.resources.length > 0 && (
             <div className="absolute top-2 right-2 z-10">
-              <motion.span 
+              <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.4 }}
@@ -123,7 +136,7 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
 
           {/* Indicateur de qualité */}
           <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10">
-            <motion.span 
+            <motion.span
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.5 }}
@@ -155,7 +168,9 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
             <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
               <User className="w-3 h-3 text-gray-500" />
             </div>
-            <span className="text-xs text-gray-600">{video.creator?.name || 'Anonyme'}</span>
+            <span className="text-xs text-gray-600">
+              {video.creator?.name || "Anonyme"}
+            </span>
           </div>
           <div className="flex items-center gap-1 text-xs text-gray-500">
             <Calendar className="w-3 h-3" />
@@ -209,7 +224,10 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
             </div>
             <div className="space-y-0.5">
               {video.learning_objectives.slice(0, 2).map((objective, index) => (
-                <div key={index} className="flex items-center gap-1 text-xs text-gray-600">
+                <div
+                  key={index}
+                  className="flex items-center gap-1 text-xs text-gray-600"
+                >
                   <div className="w-1 h-1 bg-green-500 rounded-full" />
                   <span className="line-clamp-1">{objective.title}</span>
                 </div>
@@ -232,9 +250,14 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
             </div>
             <div className="flex flex-wrap gap-1">
               {video.resources.slice(0, 3).map((resource, index) => (
-                <div key={index} className="flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded">
-                  {getFileIcon(resource.file_type || 'document')}
-                  <span className="max-w-20 truncate">{resource.name || 'Ressource'}</span>
+                <div
+                  key={index}
+                  className="flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded"
+                >
+                  {getFileIcon(resource.file_type || "document")}
+                  <span className="max-w-20 truncate">
+                    {resource.name || "Ressource"}
+                  </span>
                 </div>
               ))}
               {video.resources.length > 3 && (

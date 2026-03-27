@@ -135,7 +135,9 @@ export default function EnhancedCreatorPage() {
               </span>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">{session?.user?.name}</p>
+              <p className="text-sm font-medium text-gray-900">
+                {session?.user?.name}
+              </p>
               <p className="text-xs text-gray-600">Créateur</p>
             </div>
           </div>
@@ -156,7 +158,7 @@ export default function EnhancedCreatorPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {menuItems.find(item => item.id === activeSection)?.label}
+                {menuItems.find((item) => item.id === activeSection)?.label}
               </h1>
               <p className="text-gray-600 text-sm mt-1">
                 Gérez votre contenu et vos formations
@@ -171,7 +173,9 @@ export default function EnhancedCreatorPage() {
                   {initial}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900 truncate max-w-[100px]">{session?.user?.name}</p>
+                  <p className="text-sm font-medium text-gray-900 truncate max-w-[100px]">
+                    {session?.user?.name}
+                  </p>
                   <p className="text-xs text-primary font-medium">En ligne</p>
                 </div>
               </div>
@@ -180,9 +184,7 @@ export default function EnhancedCreatorPage() {
         </header>
 
         {/* Content */}
-        <div className="p-8">
-          {renderContent()}
-        </div>
+        <div className="p-8">{renderContent()}</div>
       </main>
     </div>
   );

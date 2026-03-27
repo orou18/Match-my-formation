@@ -45,10 +45,7 @@ export default function SetupCreatorPage() {
 
           {/* Step 2 */}
           {step === 2 && (
-            <LegalInfoStep
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-            />
+            <LegalInfoStep onNext={handleNext} onPrevious={handlePrevious} />
           )}
         </div>
       </div>

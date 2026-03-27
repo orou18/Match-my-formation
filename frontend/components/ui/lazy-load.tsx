@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from "react";
 
 interface LazyLoadProps {
   children: React.ReactNode;
@@ -9,11 +9,11 @@ interface LazyLoadProps {
   className?: string;
 }
 
-export function LazyLoad({ 
-  children, 
-  threshold = 0.1, 
-  rootMargin = '50px',
-  className = '' 
+export function LazyLoad({
+  children,
+  threshold = 0.1,
+  rootMargin = "50px",
+  className = "",
 }: LazyLoadProps) {
   const [isIntersecting, setIsIntersecting] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -44,11 +44,11 @@ export function LazyLoad({
   }, [threshold, rootMargin, hasLoaded]);
 
   return (
-    <div 
-      ref={elementRef} 
+    <div
+      ref={elementRef}
       className={`lazy-load-container ${className}`}
       style={{
-        minHeight: isIntersecting ? 'auto' : '200px',
+        minHeight: isIntersecting ? "auto" : "200px",
       }}
     >
       {isIntersecting ? (
@@ -64,7 +64,7 @@ export function LazyLoad({
 
 // Hook pour le lazy loading des images
 export function useLazyLoad(src: string, threshold = 0.1) {
-  const [imageSrc, setImageSrc] = useState<string>('');
+  const [imageSrc, setImageSrc] = useState<string>("");
   const [imageRef, setImageRef] = useState<HTMLImageElement | null>(null);
 
   useEffect(() => {

@@ -17,7 +17,7 @@ import {
   FileText,
   Image as ImageIcon,
   Tag,
-  MessageSquare
+  MessageSquare,
 } from "lucide-react";
 
 interface BlogPost {
@@ -28,7 +28,7 @@ interface BlogPost {
   author: string;
   category: string;
   tags: string[];
-  status: 'published' | 'draft' | 'scheduled';
+  status: "published" | "draft" | "scheduled";
   publishedAt: string;
   views: number;
   likes: number;
@@ -40,17 +40,19 @@ interface BlogPost {
 export default function AdminBlog() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterCategory, setFilterCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const mockPosts: BlogPost[] = [
     {
-      id: '1',
+      id: "1",
       title: "Les Tendances de la Restauration 2024",
-      excerpt: "Découvrez les dernières innovations qui transforment le secteur de la restauration",
-      content: "Le secteur de la restauration connaît une transformation sans précédent...",
+      excerpt:
+        "Découvrez les dernières innovations qui transforment le secteur de la restauration",
+      content:
+        "Le secteur de la restauration connaît une transformation sans précédent...",
       author: "Jean Dupont",
       category: "Restauration",
       tags: ["tendances", "innovation", "restauration"],
@@ -60,13 +62,15 @@ export default function AdminBlog() {
       likes: 89,
       comments: 23,
       featured: true,
-      thumbnail: "/temoignage.png"
+      thumbnail: "/temoignage.png",
     },
     {
-      id: '2',
+      id: "2",
       title: "Optimiser votre Expérience Client",
-      excerpt: "Stratégies pour améliorer la satisfaction client dans l'hôtellerie",
-      content: "L'expérience client est au cœur de la réussite dans le secteur hôtelier...",
+      excerpt:
+        "Stratégies pour améliorer la satisfaction client dans l'hôtellerie",
+      content:
+        "L'expérience client est au cœur de la réussite dans le secteur hôtelier...",
       author: "Marie Dubois",
       category: "Hôtellerie",
       tags: ["client", "expérience", "hôtellerie"],
@@ -76,13 +80,14 @@ export default function AdminBlog() {
       likes: 56,
       comments: 15,
       featured: false,
-      thumbnail: "/temoignage.png"
+      thumbnail: "/temoignage.png",
     },
     {
-      id: '3',
+      id: "3",
       title: "Marketing Digital pour les Créateurs",
       excerpt: "Comment promouvoir efficacement vos cours en ligne",
-      content: "Le marketing digital est essentiel pour les créateurs de contenu...",
+      content:
+        "Le marketing digital est essentiel pour les créateurs de contenu...",
       author: "Sophie Martin",
       category: "Marketing",
       tags: ["marketing", "digital", "créateurs"],
@@ -92,8 +97,8 @@ export default function AdminBlog() {
       likes: 0,
       comments: 0,
       featured: false,
-      thumbnail: "/temoignage.png"
-    }
+      thumbnail: "/temoignage.png",
+    },
   ];
 
   useEffect(() => {
@@ -103,25 +108,28 @@ export default function AdminBlog() {
     }, 1000);
   }, []);
 
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.author.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || post.status === filterStatus;
-    const matchesCategory = filterCategory === 'all' || post.category === filterCategory;
+  const filteredPosts = posts.filter((post) => {
+    const matchesSearch =
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.author.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      filterStatus === "all" || post.status === filterStatus;
+    const matchesCategory =
+      filterCategory === "all" || post.category === filterCategory;
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'published':
-        return 'bg-green-100 text-green-700';
-      case 'draft':
-        return 'bg-yellow-100 text-yellow-700';
-      case 'scheduled':
-        return 'bg-blue-100 text-blue-700';
+      case "published":
+        return "bg-green-100 text-green-700";
+      case "draft":
+        return "bg-yellow-100 text-yellow-700";
+      case "scheduled":
+        return "bg-blue-100 text-blue-700";
       default:
-        return 'bg-gray-100 text-gray-700';
+        return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -146,7 +154,7 @@ export default function AdminBlog() {
             <BarChart3 size={18} />
             Analytics
           </button>
-          <button 
+          <button
             onClick={() => setShowCreateModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
@@ -159,10 +167,36 @@ export default function AdminBlog() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {[
-          { label: "Total Articles", value: posts.length, icon: FileText, color: "blue", change: "+12%" },
-          { label: "Vues Totales", value: posts.reduce((sum, p) => sum + p.views, 0).toLocaleString(), icon: Eye, color: "green", change: "+23%" },
-          { label: "Likes", value: posts.reduce((sum, p) => sum + p.likes, 0).toLocaleString(), icon: TrendingUp, color: "purple", change: "+18%" },
-          { label: "Commentaires", value: posts.reduce((sum, p) => sum + p.comments, 0).toLocaleString(), icon: MessageSquare, color: "orange", change: "+31%" },
+          {
+            label: "Total Articles",
+            value: posts.length,
+            icon: FileText,
+            color: "blue",
+            change: "+12%",
+          },
+          {
+            label: "Vues Totales",
+            value: posts.reduce((sum, p) => sum + p.views, 0).toLocaleString(),
+            icon: Eye,
+            color: "green",
+            change: "+23%",
+          },
+          {
+            label: "Likes",
+            value: posts.reduce((sum, p) => sum + p.likes, 0).toLocaleString(),
+            icon: TrendingUp,
+            color: "purple",
+            change: "+18%",
+          },
+          {
+            label: "Commentaires",
+            value: posts
+              .reduce((sum, p) => sum + p.comments, 0)
+              .toLocaleString(),
+            icon: MessageSquare,
+            color: "orange",
+            change: "+31%",
+          },
         ].map((stat, index) => (
           <motion.div
             key={stat.label}
@@ -175,7 +209,9 @@ export default function AdminBlog() {
               <div className={`p-3 rounded-lg bg-${stat.color}-50`}>
                 <stat.icon size={20} className={`text-${stat.color}-600`} />
               </div>
-              <span className="text-green-600 text-sm font-bold">{stat.change}</span>
+              <span className="text-green-600 text-sm font-bold">
+                {stat.change}
+              </span>
             </div>
             <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
             <p className="text-sm text-gray-600 mt-1">{stat.label}</p>
@@ -188,7 +224,10 @@ export default function AdminBlog() {
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              />
               <input
                 type="text"
                 placeholder="Rechercher un article..."
@@ -244,21 +283,33 @@ export default function AdminBlog() {
                 </div>
               )}
               <div className="absolute top-2 right-2">
-                <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusBadge(post.status)}`}>
-                  {post.status === 'published' ? 'Publié' : 
-                   post.status === 'draft' ? 'Brouillon' : 'Programmé'}
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusBadge(post.status)}`}
+                >
+                  {post.status === "published"
+                    ? "Publié"
+                    : post.status === "draft"
+                      ? "Brouillon"
+                      : "Programmé"}
                 </span>
               </div>
             </div>
 
             <div className="p-6">
-              <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{post.title}</h3>
-              <p className="text-sm text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
+              <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">
+                {post.title}
+              </h3>
+              <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                {post.excerpt}
+              </p>
 
               {/* Tags */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {post.tags.slice(0, 3).map((tag, tagIndex) => (
-                  <span key={tagIndex} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                  <span
+                    key={tagIndex}
+                    className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
+                  >
                     #{tag}
                   </span>
                 ))}
@@ -272,7 +323,9 @@ export default function AdminBlog() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar size={14} />
-                  <span>{new Date(post.publishedAt).toLocaleDateString('fr-FR')}</span>
+                  <span>
+                    {new Date(post.publishedAt).toLocaleDateString("fr-FR")}
+                  </span>
                 </div>
               </div>
 
@@ -316,15 +369,17 @@ export default function AdminBlog() {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Nouvel Article</h2>
-            
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Nouvel Article
+            </h2>
+
             <div className="space-y-4">
               <input
                 type="text"
                 placeholder="Titre de l'article"
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              
+
               <textarea
                 placeholder="Extrait"
                 rows={3}
@@ -376,7 +431,7 @@ export default function AdminBlog() {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button 
+              <button
                 onClick={() => setShowCreateModal(false)}
                 className="flex-1 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >

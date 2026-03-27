@@ -8,11 +8,11 @@ interface PageLoaderProps {
   fullScreen?: boolean;
 }
 
-export default function PageLoader({ 
-  text = "Chargement...", 
-  fullScreen = true 
+export default function PageLoader({
+  text = "Chargement...",
+  fullScreen = true,
 }: PageLoaderProps) {
-  const containerClass = fullScreen 
+  const containerClass = fullScreen
     ? "min-h-screen flex items-center justify-center bg-gray-50"
     : "flex items-center justify-center py-12";
 

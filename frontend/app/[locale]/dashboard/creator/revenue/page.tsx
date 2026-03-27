@@ -11,7 +11,7 @@ import {
   CreditCard,
   Users,
   Eye,
-  Download
+  Download,
 } from "lucide-react";
 
 export default function RevenuePage() {
@@ -20,7 +20,7 @@ export default function RevenuePage() {
     totalRevenue: 45680,
     monthlyRevenue: 12450,
     growth: 15.8,
-    averageOrderValue: 89.50,
+    averageOrderValue: 89.5,
     totalOrders: 511,
     conversionRate: 3.2,
     topProducts: [
@@ -36,7 +36,7 @@ export default function RevenuePage() {
       { month: "Avr", revenue: 11800, orders: 85 },
       { month: "Mai", revenue: 13500, orders: 98 },
       { month: "Juin", revenue: 14200, orders: 103 },
-    ]
+    ],
   };
 
   return (
@@ -74,7 +74,7 @@ export default function RevenuePage() {
               <div>
                 <p className="text-sm text-gray-600">Revenu total</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {stats.totalRevenue.toLocaleString('fr-FR')} €
+                  {stats.totalRevenue.toLocaleString("fr-FR")} €
                 </p>
                 <div className="flex items-center gap-1 text-sm">
                   {stats.growth > 0 ? (
@@ -82,8 +82,13 @@ export default function RevenuePage() {
                   ) : (
                     <TrendingDown className="w-4 h-4 text-red-600" />
                   )}
-                  <span className={stats.growth > 0 ? "text-green-600" : "text-red-600"}>
-                    {stats.growth > 0 ? "+" : ""}{stats.growth}%
+                  <span
+                    className={
+                      stats.growth > 0 ? "text-green-600" : "text-red-600"
+                    }
+                  >
+                    {stats.growth > 0 ? "+" : ""}
+                    {stats.growth}%
                   </span>
                 </div>
               </div>
@@ -103,7 +108,7 @@ export default function RevenuePage() {
               <div>
                 <p className="text-sm text-gray-600">Revenu mensuel</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {stats.monthlyRevenue.toLocaleString('fr-FR')} €
+                  {stats.monthlyRevenue.toLocaleString("fr-FR")} €
                 </p>
               </div>
             </div>
@@ -141,7 +146,7 @@ export default function RevenuePage() {
               <div>
                 <p className="text-sm text-gray-600">Panier moyen</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {stats.averageOrderValue.toLocaleString('fr-FR')} €
+                  {stats.averageOrderValue.toLocaleString("fr-FR")} €
                 </p>
               </div>
             </div>
@@ -156,7 +161,7 @@ export default function RevenuePage() {
             <BarChart3 className="w-5 h-5 text-blue-600" />
             Évolution mensuelle
           </h2>
-          
+
           <div className="space-y-4">
             {stats.monthlyData.map((data, index) => (
               <motion.div
@@ -172,7 +177,7 @@ export default function RevenuePage() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-gray-600">
-                      {data.revenue.toLocaleString('fr-FR')} €
+                      {data.revenue.toLocaleString("fr-FR")} €
                     </span>
                     <span className="text-sm text-gray-500">
                       {data.orders} commandes
@@ -181,7 +186,9 @@ export default function RevenuePage() {
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${(data.revenue / Math.max(...stats.monthlyData.map(d => d.revenue))) * 100}%` }}
+                      style={{
+                        width: `${(data.revenue / Math.max(...stats.monthlyData.map((d) => d.revenue))) * 100}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -198,7 +205,7 @@ export default function RevenuePage() {
             <Target className="w-5 h-5 text-green-600" />
             Top formations
           </h2>
-          
+
           <div className="space-y-4">
             {stats.topProducts.map((product, index) => (
               <motion.div
@@ -215,20 +222,20 @@ export default function RevenuePage() {
                     </span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{product.name}</h3>
+                    <h3 className="font-semibold text-gray-900">
+                      {product.name}
+                    </h3>
                     <p className="text-sm text-gray-600">
                       {product.orders} commandes
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
                   <p className="text-lg font-bold text-green-600">
-                    {product.revenue.toLocaleString('fr-FR')} €
+                    {product.revenue.toLocaleString("fr-FR")} €
                   </p>
-                  <p className="text-sm text-gray-500">
-                    Revenu total
-                  </p>
+                  <p className="text-sm text-gray-500">Revenu total</p>
                 </div>
               </motion.div>
             ))}

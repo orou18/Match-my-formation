@@ -38,7 +38,7 @@ interface Module {
   course: string;
   date: string;
   duration: string;
-  type: 'video' | 'interactive' | 'workshop' | 'exam' | 'project';
+  type: "video" | "interactive" | "workshop" | "exam" | "project";
   completed: boolean;
   score?: number;
   certificate?: {
@@ -53,7 +53,7 @@ interface Certification {
   description: string;
   date?: string;
   progress?: number;
-  status: 'Obtenu' | 'En cours';
+  status: "Obtenu" | "En cours";
   score?: number;
   downloadUrl?: string | null;
   issuer: string;
@@ -95,10 +95,10 @@ const containerVariants: Variants = {
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { duration: 0.5, ease: "easeOut" } 
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" },
   },
 };
 
@@ -112,28 +112,28 @@ export default function ParcoursPage() {
       try {
         // Vérifier l'authentification
         if (!UserIdManager.isAuthenticated()) {
-          setError('Utilisateur non authentifié');
+          setError("Utilisateur non authentifié");
           setLoading(false);
           return;
         }
 
-        const token = localStorage.getItem('token');
-        const response = await fetch('/api/student/parcours', {
+        const token = localStorage.getItem("token");
+        const response = await fetch("/api/student/parcours", {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         });
 
         if (response.ok) {
           const data = await response.json();
           setParcoursData(data.data);
         } else {
-          setError('Erreur lors du chargement des parcours');
+          setError("Erreur lors du chargement des parcours");
         }
       } catch (error) {
-        console.error('Erreur:', error);
-        setError('Erreur de connexion au serveur');
+        console.error("Erreur:", error);
+        setError("Erreur de connexion au serveur");
       } finally {
         setLoading(false);
       }
@@ -146,7 +146,9 @@ export default function ParcoursPage() {
     return (
       <div className="min-h-screen bg-[#F8FAFB] flex flex-col items-center justify-center">
         <Loader2 className="animate-spin text-primary mb-4" size={40} />
-        <p className="text-gray-600 font-medium">Chargement de vos parcours...</p>
+        <p className="text-gray-600 font-medium">
+          Chargement de vos parcours...
+        </p>
       </div>
     );
   }
@@ -156,10 +158,12 @@ export default function ParcoursPage() {
       <div className="min-h-screen bg-[#F8FAFB] flex flex-col items-center justify-center p-6">
         <div className="bg-red-50 p-8 rounded-2xl border border-red-100 max-w-md text-center">
           <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-red-800 mb-2">Erreur de chargement</h2>
+          <h2 className="text-xl font-bold text-red-800 mb-2">
+            Erreur de chargement
+          </h2>
           <p className="text-red-600 mb-6">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors"
           >
             Réessayer
@@ -178,7 +182,7 @@ export default function ParcoursPage() {
   }
   return (
     <div className="min-h-screen bg-[#F8FAFB] pb-20">
-      <motion.div 
+      <motion.div
         initial="hidden"
         animate="visible"
         variants={containerVariants}
@@ -190,13 +194,16 @@ export default function ParcoursPage() {
         </motion.section>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          
           {/* COLONNE GAUCHE */}
           <div className="lg:col-span-8 space-y-10">
             <motion.section variants={itemVariants}>
               <div className="flex justify-between items-end mb-6">
-                <h2 className="text-xl font-black text-[#002B24] tracking-tight">Formations en cours</h2>
-                <button className="text-primary text-xs font-black uppercase tracking-widest hover:underline">Voir tout</button>
+                <h2 className="text-xl font-black text-[#002B24] tracking-tight">
+                  Formations en cours
+                </h2>
+                <button className="text-primary text-xs font-black uppercase tracking-widest hover:underline">
+                  Voir tout
+                </button>
               </div>
               <div className="grid grid-cols-1 gap-6">
                 {parcoursData.coursesInProgress.map((course: Course) => (
@@ -206,7 +213,9 @@ export default function ParcoursPage() {
             </motion.section>
 
             <motion.section variants={itemVariants}>
-              <h2 className="text-xl font-black text-[#002B24] tracking-tight mb-6">Derniers modules visionnés</h2>
+              <h2 className="text-xl font-black text-[#002B24] tracking-tight mb-6">
+                Derniers modules visionnés
+              </h2>
               <div className="space-y-2">
                 {parcoursData.recentModules.map((mod: Module) => (
                   <RecentModuleItem key={mod.id} {...mod} />
@@ -222,17 +231,21 @@ export default function ParcoursPage() {
             </motion.section>
 
             <motion.section variants={itemVariants}>
-              <h2 className="text-xl font-black text-[#002B24] tracking-tight mb-6">Certifications</h2>
+              <h2 className="text-xl font-black text-[#002B24] tracking-tight mb-6">
+                Certifications
+              </h2>
               <div className="space-y-6">
-                {parcoursData.certifications.map((certification: Certification, index) => (
-                  <CertificationCard 
-                    key={certification.id}
-                    title={certification.title} 
-                    date={certification.date} 
-                    progress={certification.progress}
-                    status={certification.status} 
-                  />
-                ))}
+                {parcoursData.certifications.map(
+                  (certification: Certification, index) => (
+                    <CertificationCard
+                      key={certification.id}
+                      title={certification.title}
+                      date={certification.date}
+                      progress={certification.progress}
+                      status={certification.status}
+                    />
+                  )
+                )}
               </div>
             </motion.section>
           </div>

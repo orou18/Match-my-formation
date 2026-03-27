@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
@@ -36,7 +36,7 @@ import {
   Zap,
   Shield,
   Globe,
-  Target
+  Target,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -53,6 +53,17 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
   const locale = params.locale || "fr";
   const { data: session, status } = useSession();
 
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
   const user = {
     name: session?.user?.name || "Jean Formateur",
     email: session?.user?.email || "creator@match.com",
@@ -62,7 +73,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
     followers: "3.4K",
     views: "45.6K",
     revenue: "€2,850",
-    avatar: session?.user?.image || null
+    avatar: session?.user?.image || null,
   };
 
   const navigation = [
@@ -71,145 +82,145 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
       icon: LayoutDashboard,
       href: `/${locale}/dashboard/creator`,
       badge: null,
-      color: "from-blue-500 to-blue-600"
+      color: "from-blue-500 to-blue-600",
     },
     {
       name: "Contenu",
       icon: Video,
       href: `/${locale}/dashboard/creator/videos`,
       badge: "12",
-      color: "from-purple-500 to-purple-600"
+      color: "from-purple-500 to-purple-600",
     },
     {
       name: "Créer une vidéo",
       icon: Video,
       href: `/${locale}/dashboard/creator/videos/create`,
       badge: null,
-      color: "from-green-500 to-green-600"
+      color: "from-green-500 to-green-600",
     },
     {
       name: "Employés",
       icon: Users,
       href: `/${locale}/dashboard/creator/employees`,
       badge: null,
-      color: "from-indigo-500 to-indigo-600"
+      color: "from-indigo-500 to-indigo-600",
     },
     {
       name: "Progression",
       icon: BarChart3,
       href: `/${locale}/dashboard/creator/progress`,
       badge: null,
-      color: "from-cyan-500 to-cyan-600"
+      color: "from-cyan-500 to-cyan-600",
     },
     {
       name: "Parcours",
       icon: Target,
       href: `/${locale}/dashboard/creator/pathways`,
       badge: null,
-      color: "from-purple-500 to-purple-600"
+      color: "from-purple-500 to-purple-600",
     },
     {
       name: "Analytiques",
       icon: BarChart3,
       href: `/${locale}/dashboard/creator/stats`,
       badge: null,
-      color: "from-orange-500 to-orange-600"
+      color: "from-orange-500 to-orange-600",
     },
     {
       name: "Audience",
       icon: Users,
       href: `/${locale}/dashboard/creator/audience`,
       badge: "3.4K",
-      color: "from-pink-500 to-pink-600"
+      color: "from-pink-500 to-pink-600",
     },
     {
       name: "Revenus",
       icon: DollarSign,
       href: `/${locale}/dashboard/creator/revenue`,
       badge: "+18%",
-      color: "from-emerald-500 to-emerald-600"
+      color: "from-emerald-500 to-emerald-600",
     },
     {
       name: "Engagement",
       icon: Heart,
       href: `/${locale}/dashboard/creator/engagement`,
       badge: "89%",
-      color: "from-rose-500 to-rose-600"
+      color: "from-rose-500 to-rose-600",
     },
     {
       name: "Commentaires",
       icon: MessageSquare,
       href: `/${locale}/dashboard/creator/comments`,
       badge: "5",
-      color: "from-indigo-500 to-indigo-600"
+      color: "from-indigo-500 to-indigo-600",
     },
     {
       name: "Partages",
       icon: Share2,
       href: `/${locale}/dashboard/creator/shares`,
       badge: "234",
-      color: "from-cyan-500 to-cyan-600"
+      color: "from-cyan-500 to-cyan-600",
     },
     {
       name: "Bibliothèque",
       icon: Folder,
       href: `/${locale}/dashboard/creator/library`,
       badge: null,
-      color: "from-amber-500 to-amber-600"
+      color: "from-amber-500 to-amber-600",
     },
     {
       name: "Médias",
       icon: Image,
       href: `/${locale}/dashboard/creator/media`,
       badge: null,
-      color: "from-teal-500 to-teal-600"
+      color: "from-teal-500 to-teal-600",
     },
     {
       name: "Planning",
       icon: Calendar,
       href: `/${locale}/dashboard/creator/schedule`,
       badge: null,
-      color: "from-violet-500 to-violet-600"
+      color: "from-violet-500 to-violet-600",
     },
     {
       name: "Historique",
       icon: Clock,
       href: `/${locale}/dashboard/creator/history`,
       badge: null,
-      color: "from-gray-500 to-gray-600"
+      color: "from-gray-500 to-gray-600",
     },
     {
       name: "Notifications",
       icon: Bell,
       href: `/${locale}/dashboard/creator/notifications`,
       badge: "5",
-      color: "from-yellow-500 to-yellow-600"
+      color: "from-yellow-500 to-yellow-600",
     },
     {
       name: "Marque blanche",
       icon: Palette,
       href: `/${locale}/dashboard/creator/branding`,
       badge: "PRO",
-      color: "from-gradient-to-r from-yellow-400 to-orange-400"
+      color: "from-gradient-to-r from-yellow-400 to-orange-400",
     },
     {
       name: "Paramètres",
       icon: Settings,
       href: `/${locale}/dashboard/creator/settings`,
       badge: null,
-      color: "from-slate-500 to-slate-600"
+      color: "from-slate-500 to-slate-600",
     },
     {
       name: "Mon profil",
       icon: User,
       href: `/${locale}/dashboard/creator/profile`,
       badge: null,
-      color: "from-zinc-500 to-zinc-600"
-    }
+      color: "from-zinc-500 to-zinc-600",
+    },
   ];
 
   const handleLogout = () => {
-    console.log('Déconnexion depuis le dashboard creator...');
+    console.log("Déconnexion depuis le dashboard creator...");
     UserIdManager.logout();
     // Rediriger vers la landing page (page d'accueil)
     window.location.href = `/${locale}`;
@@ -220,7 +231,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex overflow-x-hidden">
       {/* Overlay mobile */}
       {sidebarOpen && (
         <motion.div
@@ -233,22 +244,28 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 z-50 w-72 h-screen bg-white/95 backdrop-blur-md border-r border-gray-200/50 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <aside
+        className={`fixed top-0 left-0 z-50 w-[min(18rem,calc(100vw-1rem))] lg:w-72 bg-white/95 backdrop-blur-md border-r border-gray-200/50 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static shadow-2xl lg:shadow-none ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         {/* Header */}
-        <div className="h-16 border-b border-gray-200/50 flex items-center justify-between px-4 bg-gradient-to-r from-blue-50 to-purple-50">
+        <div className="h-16 border-b border-gray-200/50 flex items-center justify-between px-4 bg-gradient-to-r from-blue-50 to-purple-50 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-sm">{user.name?.charAt(0) || 'J'}</span>
+                <span className="text-white font-bold text-sm">
+                  {user.name?.charAt(0) || "J"}
+                </span>
               </div>
               <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
             <div>
               <p className="font-bold text-gray-900 text-sm">{user.name}</p>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-600">{user.subscription}</span>
+                <span className="text-xs text-gray-600">
+                  {user.subscription}
+                </span>
                 <Award className="w-3 h-3 text-yellow-500" />
               </div>
             </div>
@@ -262,7 +279,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
         </div>
 
         {/* Stats */}
-        <div className="px-4 py-4 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200/50">
+        <div className="px-4 py-4 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200/50 flex-shrink-0">
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="bg-white/60 backdrop-blur-sm rounded-lg p-2">
               <div className="flex items-center justify-center gap-1 mb-1">
@@ -274,7 +291,9 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
             <div className="bg-white/60 backdrop-blur-sm rounded-lg p-2">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Users className="w-3 h-3 text-purple-500" />
-                <p className="text-sm font-bold text-gray-900">{user.followers}</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {user.followers}
+                </p>
               </div>
               <p className="text-xs text-gray-600">Abonnés</p>
             </div>
@@ -289,7 +308,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto p-3">
+        <div className="flex-1 panel-scroll p-3 pb-20">
           <div className="space-y-1">
             {navigation.map((item, index) => (
               <Link
@@ -297,32 +316,47 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
                 href={item.href}
                 className={`group relative flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
                   isActiveRoute(item.href)
-                    ? 'bg-gradient-to-r ' + item.color + ' text-white shadow-lg shadow-blue-500/25'
-                    : 'text-gray-700 hover:bg-gray-100/80 hover:shadow-md'
+                    ? "bg-gradient-to-r " +
+                      item.color +
+                      " text-white shadow-lg shadow-blue-500/25"
+                    : "text-gray-700 hover:bg-gray-100/80 hover:shadow-md"
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className={`p-1.5 rounded-lg ${
-                    isActiveRoute(item.href) 
-                      ? 'bg-white/20' 
-                      : 'bg-gray-100/80 group-hover:bg-gray-200/80'
-                  }`}>
-                    <item.icon size={16} className={isActiveRoute(item.href) ? 'text-white' : 'text-gray-600'} />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`p-1.5 rounded-lg ${
+                      isActiveRoute(item.href)
+                        ? "bg-white/20"
+                        : "bg-gray-100/80 group-hover:bg-gray-200/80"
+                    }`}
+                  >
+                    <item.icon
+                      size={16}
+                      className={
+                        isActiveRoute(item.href)
+                          ? "text-white"
+                          : "text-gray-600"
+                      }
+                    />
                   </div>
-                  <span className={`font-medium ${isActiveRoute(item.href) ? 'text-white' : 'text-gray-700'}`}>
+                  <span
+                    className={`font-medium text-safe ${isActiveRoute(item.href) ? "text-white" : "text-gray-700"}`}
+                  >
                     {item.name}
                   </span>
                 </div>
                 {item.badge && (
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full transition-all duration-200 ${
-                    item.badge === "PRO" 
-                      ? isActiveRoute(item.href)
-                        ? "bg-white/20 text-white"
-                        : "bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-sm"
-                      : isActiveRoute(item.href)
-                        ? "bg-white/20 text-white"
-                        : "bg-gray-100/80 text-gray-700 group-hover:bg-gray-200/80"
-                  }`}>
+                  <span
+                    className={`px-2 py-0.5 text-xs font-medium rounded-full transition-all duration-200 ${
+                      item.badge === "PRO"
+                        ? isActiveRoute(item.href)
+                          ? "bg-white/20 text-white"
+                          : "bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-sm"
+                        : isActiveRoute(item.href)
+                          ? "bg-white/20 text-white"
+                          : "bg-gray-100/80 text-gray-700 group-hover:bg-gray-200/80"
+                    }`}
+                  >
                     {item.badge}
                   </span>
                 )}
@@ -340,7 +374,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-gray-200/50 bg-gradient-to-r from-gray-50 to-gray-100">
+        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-200/50 bg-gradient-to-r from-gray-50 to-gray-100">
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50/80 rounded-xl transition-all duration-200 group"
@@ -354,18 +388,22 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col">
         {/* Navbar */}
-        <nav className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
+        <nav className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/50 flex items-center justify-between px-3 sm:px-4 lg:px-6 sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2.5 text-gray-500 hover:bg-gray-100 rounded-xl transition-colors"
+              className="lg:hidden p-2.5 text-gray-500 hover:bg-gray-100 rounded-xl transition-colors active:scale-95"
+              aria-label="Ouvrir le menu createur"
             >
               <Menu size={20} />
             </button>
             <div className="relative hidden md:block">
-              <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              />
               <input
                 type="text"
                 placeholder="Rechercher..."
@@ -391,7 +429,9 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
               </div>
               <div className="relative">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-sm">{user.name?.charAt(0) || 'J'}</span>
+                  <span className="text-white font-bold text-sm">
+                    {user.name?.charAt(0) || "J"}
+                  </span>
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
               </div>
@@ -400,10 +440,8 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
         </nav>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100">
-          <div className="p-4 lg:p-6">
-            {children}
-          </div>
+        <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="p-4 lg:p-6">{children}</div>
         </main>
       </div>
     </div>

@@ -35,14 +35,15 @@ export default function CoursesPage() {
 
     const fetchVideos = async () => {
       try {
-        const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const rawUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
         const baseUrl = rawUrl.replace(/\/$/, "");
         const targetUrl = `${baseUrl}/api/public/videos`;
 
         const response = await fetch(targetUrl, {
-          method: 'GET',
+          method: "GET",
           signal: controller.signal,
-          headers: { 'Accept': 'application/json' },
+          headers: { Accept: "application/json" },
         });
 
         if (response.ok) {
@@ -53,7 +54,7 @@ export default function CoursesPage() {
           throw new Error("Erreur API");
         }
       } catch (error: any) {
-        if (error.name === 'AbortError') return;
+        if (error.name === "AbortError") return;
         console.error("Mode Fallback activé (Données locales utilisées)");
         // Fallback : On utilise tes données statiques initiales
         setCourses(MOCK_FALLBACK);
@@ -69,9 +70,12 @@ export default function CoursesPage() {
   // 2. Logique de filtrage (useMemo pour la performance)
   const filteredCourses = useMemo(() => {
     return courses.filter((course) => {
-      const categoryLabel = course.category || (course.tags?.[0]) || "Général";
-      const matchesCat = activeCategory === "Tous" || categoryLabel === activeCategory;
-      const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const categoryLabel = course.category || course.tags?.[0] || "Général";
+      const matchesCat =
+        activeCategory === "Tous" || categoryLabel === activeCategory;
+      const matchesSearch = course.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
       return matchesCat && matchesSearch;
     });
   }, [activeCategory, searchQuery, courses]);
@@ -79,7 +83,9 @@ export default function CoursesPage() {
   const handleToggleView = (newView: "landing" | "all") => {
     setView(newView);
     setTimeout(() => {
-      document.getElementById("courses-content")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document
+        .getElementById("courses-content")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
   };
 
@@ -104,15 +110,23 @@ export default function CoursesPage() {
                   Formations Phares
                 </h2>
                 <div className="w-24 h-1.5 bg-[#FFB74D] mx-auto rounded-full mb-6" />
-                <p className="text-gray-400 font-medium">L&apos;excellence du tourisme à portée de main.</p>
+                <p className="text-gray-400 font-medium">
+                  L&apos;excellence du tourisme à portée de main.
+                </p>
               </div>
 
               {loading ? (
-                <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#FFB74D]" size={40} /></div>
+                <div className="flex justify-center py-20">
+                  <Loader2 className="animate-spin text-[#FFB74D]" size={40} />
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
                   {courses.slice(0, 4).map((course, index) => (
-                    <CourseCard key={course.id || index} course={course} index={index} />
+                    <CourseCard
+                      key={course.id || index}
+                      course={course}
+                      index={index}
+                    />
                   ))}
                 </div>
               )}
@@ -125,7 +139,9 @@ export default function CoursesPage() {
                   className="group flex items-center gap-6 bg-[#FFB74D] text-[#004D40] px-12 py-5 rounded-full font-black shadow-2xl transition-all"
                 >
                   DÉCOUVRIR TOUS LES CURSUS
-                  <span className="bg-[#004D40] text-white w-8 h-8 flex items-center justify-center rounded-full group-hover:rotate-45 transition-transform">→</span>
+                  <span className="bg-[#004D40] text-white w-8 h-8 flex items-center justify-center rounded-full group-hover:rotate-45 transition-transform">
+                    →
+                  </span>
                 </motion.button>
               </div>
             </motion.div>
@@ -140,10 +156,15 @@ export default function CoursesPage() {
               <div className="flex flex-col gap-12">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                   <div>
-                    <button onClick={() => handleToggleView("landing")} className="group mb-4 flex items-center gap-2 text-xs font-black text-[#004D40]/60 hover:text-[#004D40]">
+                    <button
+                      onClick={() => handleToggleView("landing")}
+                      className="group mb-4 flex items-center gap-2 text-xs font-black text-[#004D40]/60 hover:text-[#004D40]"
+                    >
                       ← RETOUR À LA SÉLECTION
                     </button>
-                    <h2 className="text-5xl font-black text-[#004D40] tracking-tighter">Exploration du catalogue</h2>
+                    <h2 className="text-5xl font-black text-[#004D40] tracking-tighter">
+                      Exploration du catalogue
+                    </h2>
                   </div>
                   <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] bg-white px-4 py-2 rounded-full border border-gray-100 shadow-sm">
                     {filteredCourses.length} Résultats
@@ -159,17 +180,26 @@ export default function CoursesPage() {
                 />
 
                 {filteredCourses.length > 0 ? (
-                  <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-8">
+                  <motion.div
+                    layout
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-8"
+                  >
                     <AnimatePresence mode="popLayout">
                       {filteredCourses.map((course, index) => (
-                        <CourseCard key={course.id || index} course={course} index={index} />
+                        <CourseCard
+                          key={course.id || index}
+                          course={course}
+                          index={index}
+                        />
                       ))}
                     </AnimatePresence>
                   </motion.div>
                 ) : (
                   <div className="text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-gray-100">
                     <Film className="mx-auto text-gray-200 mb-4" size={48} />
-                    <p className="text-gray-400 font-medium">Aucune formation ne correspond à votre recherche.</p>
+                    <p className="text-gray-400 font-medium">
+                      Aucune formation ne correspond à votre recherche.
+                    </p>
                   </div>
                 )}
               </div>
@@ -186,8 +216,36 @@ export default function CoursesPage() {
 
 // Données de secours (Mock) pour éviter que la page soit vide si l'API est éteinte
 const MOCK_FALLBACK = [
-  { id: 1, title: "Management Hôtelier", duration: "12 mois", rating: "4.9", image: "/sofitel.jpg", category: "Management" },
-  { id: 2, title: "Guide Touristique Pro", duration: "8 mois", rating: "4.7", image: "/guide2.jpg", category: "Terrain" },
-  { id: 3, title: "Marketing Digital Touristique", duration: "6 mois", rating: "4.8", image: "/guide1.jpg", category: "Digital" },
-  { id: 4, title: "Tourisme Durable & Eco", duration: "10 mois", rating: "4.6", image: "/guide3.png", category: "Eco" },
+  {
+    id: 1,
+    title: "Management Hôtelier",
+    duration: "12 mois",
+    rating: "4.9",
+    image: "/sofitel.jpg",
+    category: "Management",
+  },
+  {
+    id: 2,
+    title: "Guide Touristique Pro",
+    duration: "8 mois",
+    rating: "4.7",
+    image: "/guide2.jpg",
+    category: "Terrain",
+  },
+  {
+    id: 3,
+    title: "Marketing Digital Touristique",
+    duration: "6 mois",
+    rating: "4.8",
+    image: "/guide1.jpg",
+    category: "Digital",
+  },
+  {
+    id: 4,
+    title: "Tourisme Durable & Eco",
+    duration: "10 mois",
+    rating: "4.6",
+    image: "/guide3.png",
+    category: "Eco",
+  },
 ];

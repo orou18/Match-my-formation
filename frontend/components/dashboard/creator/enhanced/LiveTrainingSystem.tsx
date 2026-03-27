@@ -93,7 +93,8 @@ export default function LiveTrainingSystem() {
       {
         id: 2,
         title: "Techniques de Service Haut de Gamme",
-        description: "Maîtrisez les techniques de service dans l'hôtellerie de luxe",
+        description:
+          "Maîtrisez les techniques de service dans l'hôtellerie de luxe",
         date: "2024-03-28",
         time: "16:00",
         duration: "1.5 heures",
@@ -109,7 +110,8 @@ export default function LiveTrainingSystem() {
       {
         id: 3,
         title: "Marketing Digital pour l'Hôtellerie",
-        description: "Stratégies marketing digitales appliquées au secteur hôtelier",
+        description:
+          "Stratégies marketing digitales appliquées au secteur hôtelier",
         date: "2024-03-22",
         time: "10:00",
         duration: "3 heures",
@@ -128,7 +130,8 @@ export default function LiveTrainingSystem() {
         id: 1,
         userId: 1,
         userName: "Marie Dubois",
-        message: "Bonjour à tous ! Bienvenue dans ce webinaire sur le revenue management.",
+        message:
+          "Bonjour à tous ! Bienvenue dans ce webinaire sur le revenue management.",
         timestamp: "14:00",
         isCreator: true,
       },
@@ -152,7 +155,8 @@ export default function LiveTrainingSystem() {
         id: 4,
         userId: 1,
         userName: "Marie Dubois",
-        message: "Excellente question ! Le RevPAR (Revenue Per Available Room) est calculé comme suit : (Total Room Revenue / Available Rooms) x Occupancy Rate. C'est l'un des KPI les plus importants en hôtellerie.",
+        message:
+          "Excellente question ! Le RevPAR (Revenue Per Available Room) est calculé comme suit : (Total Room Revenue / Available Rooms) x Occupancy Rate. C'est l'un des KPI les plus importants en hôtellerie.",
         timestamp: "14:08",
         isCreator: true,
       },
@@ -211,7 +215,10 @@ export default function LiveTrainingSystem() {
       userId: 999, // Current user ID
       userName: "Vous",
       message: messageInput,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
       isCreator: false,
     };
 
@@ -262,11 +269,13 @@ export default function LiveTrainingSystem() {
 
   const getTypeBadge = (type: string) => {
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
-        type === "online"
-          ? "bg-green-100 text-green-700"
-          : "bg-orange-100 text-orange-700"
-      }`}>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
+          type === "online"
+            ? "bg-green-100 text-green-700"
+            : "bg-orange-100 text-orange-700"
+        }`}
+      >
         {type === "online" ? (
           <>
             <Wifi className="w-3 h-3" />
@@ -286,11 +295,16 @@ export default function LiveTrainingSystem() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Formation en Direct</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Formation en Direct
+          </h1>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+            <div
+              key={i}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse"
+            >
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
               <div className="h-32 bg-gray-200 rounded mb-4"></div>
               <div className="h-3 bg-gray-200 rounded w-2/3"></div>
@@ -323,7 +337,7 @@ export default function LiveTrainingSystem() {
       </div>
 
       {/* Webinars Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-6">
         {webinars.map((webinar, index) => (
           <motion.div
             key={webinar.id}
@@ -342,8 +356,12 @@ export default function LiveTrainingSystem() {
               </div>
 
               {/* Content */}
-              <h3 className="font-semibold text-gray-900 mb-2">{webinar.title}</h3>
-              <p className="text-sm text-gray-600 mb-4 line-clamp-2">{webinar.description}</p>
+              <h3 className="font-semibold text-gray-900 mb-2">
+                {webinar.title}
+              </h3>
+              <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                {webinar.description}
+              </p>
 
               {/* Event Details */}
               <div className="space-y-2 mb-4">
@@ -357,7 +375,8 @@ export default function LiveTrainingSystem() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-900">
                   <Users className="w-4 h-4 text-gray-400" />
-                  {webinar.currentParticipants}/{webinar.maxParticipants} participants
+                  {webinar.currentParticipants}/{webinar.maxParticipants}{" "}
+                  participants
                 </div>
                 {webinar.location === "onsite" && webinar.address && (
                   <div className="flex items-center gap-2 text-sm text-gray-900">
@@ -372,13 +391,19 @@ export default function LiveTrainingSystem() {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-gray-600">Inscriptions</span>
                   <span className="text-xs font-medium text-gray-900">
-                    {Math.round((webinar.currentParticipants / webinar.maxParticipants) * 100)}%
+                    {Math.round(
+                      (webinar.currentParticipants / webinar.maxParticipants) *
+                        100
+                    )}
+                    %
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <motion.div
                     initial={{ width: 0 }}
-                    animate={{ width: `${(webinar.currentParticipants / webinar.maxParticipants) * 100}%` }}
+                    animate={{
+                      width: `${(webinar.currentParticipants / webinar.maxParticipants) * 100}%`,
+                    }}
                     transition={{ delay: index * 0.1 + 0.5, duration: 0.8 }}
                     className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full"
                   />
@@ -392,7 +417,9 @@ export default function LiveTrainingSystem() {
                   className="flex-1 px-3 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors text-sm flex items-center justify-center gap-2"
                 >
                   <Play className="w-4 h-4" />
-                  {webinar.status === "live" ? "Rejoindre en direct" : "Voir les détails"}
+                  {webinar.status === "live"
+                    ? "Rejoindre en direct"
+                    : "Voir les détails"}
                 </button>
                 <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
                   <Edit className="w-4 h-4" />
@@ -428,7 +455,9 @@ export default function LiveTrainingSystem() {
                       <div className="w-2 h-2 bg-white rounded-full" />
                       EN DIRECT
                     </span>
-                    <span className="text-sm">{selectedWebinar.currentParticipants} participants</span>
+                    <span className="text-sm">
+                      {selectedWebinar.currentParticipants} participants
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -436,7 +465,11 @@ export default function LiveTrainingSystem() {
                     onClick={() => setIsMuted(!isMuted)}
                     className="p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
                   >
-                    {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    {isMuted ? (
+                      <MicOff className="w-4 h-4" />
+                    ) : (
+                      <Mic className="w-4 h-4" />
+                    )}
                   </button>
                   <button
                     onClick={() => setIsCameraOn(!isCameraOn)}
@@ -464,7 +497,9 @@ export default function LiveTrainingSystem() {
                 <div className="text-center">
                   <Play className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-400">Webinar en cours</p>
-                  <p className="text-sm text-gray-500 mt-2">{selectedWebinar.description}</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {selectedWebinar.description}
+                  </p>
                 </div>
               </div>
 
@@ -484,24 +519,34 @@ export default function LiveTrainingSystem() {
                         message.isCreator ? "flex-row" : "flex-row-reverse"
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        message.isCreator ? "bg-primary text-white" : "bg-gray-600 text-white"
-                      }`}>
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          message.isCreator
+                            ? "bg-primary text-white"
+                            : "bg-gray-600 text-white"
+                        }`}
+                      >
                         <span className="text-sm font-medium">
                           {message.userName.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div className={`max-w-xs ${
-                        message.isCreator ? "text-left" : "text-right"
-                      }`}>
-                        <div className={`text-xs text-gray-400 mb-1 ${
+                      <div
+                        className={`max-w-xs ${
                           message.isCreator ? "text-left" : "text-right"
-                        }`}>
+                        }`}
+                      >
+                        <div
+                          className={`text-xs text-gray-400 mb-1 ${
+                            message.isCreator ? "text-left" : "text-right"
+                          }`}
+                        >
                           {message.userName} • {message.timestamp}
                         </div>
-                        <div className={`text-sm ${
-                          message.isCreator ? "text-white" : "text-gray-200"
-                        } bg-gray-700 rounded-lg px-3 py-2`}>
+                        <div
+                          className={`text-sm ${
+                            message.isCreator ? "text-white" : "text-gray-200"
+                          } bg-gray-700 rounded-lg px-3 py-2`}
+                        >
                           {message.message}
                         </div>
                       </div>
@@ -571,7 +616,9 @@ export default function LiveTrainingSystem() {
                   <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="Entrez un titre attrayant..."
                   />
@@ -582,7 +629,12 @@ export default function LiveTrainingSystem() {
                   </label>
                   <select
                     value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value as "online" | "onsite" })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        type: e.target.value as "online" | "onsite",
+                      })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     <option value="online">En ligne</option>
@@ -598,7 +650,9 @@ export default function LiveTrainingSystem() {
                 <textarea
                   rows={4}
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="Décrivez le contenu du webinaire..."
                 />
@@ -612,7 +666,9 @@ export default function LiveTrainingSystem() {
                   <input
                     type="date"
                     value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
@@ -623,7 +679,9 @@ export default function LiveTrainingSystem() {
                   <input
                     type="time"
                     value={formData.time}
-                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, time: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
@@ -634,7 +692,9 @@ export default function LiveTrainingSystem() {
                   <input
                     type="text"
                     value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, duration: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="ex: 2 heures"
                   />
@@ -649,7 +709,12 @@ export default function LiveTrainingSystem() {
                   <input
                     type="number"
                     value={formData.maxParticipants}
-                    onChange={(e) => setFormData({ ...formData, maxParticipants: parseInt(e.target.value) })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        maxParticipants: parseInt(e.target.value),
+                      })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
@@ -661,7 +726,9 @@ export default function LiveTrainingSystem() {
                     <input
                       type="text"
                       value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, location: e.target.value })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                       placeholder="Adresse complète..."
                     />

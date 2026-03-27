@@ -1,7 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import type { BrandingSettings } from '@/types/branding';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import type { BrandingSettings } from "@/types/branding";
 
 interface BrandingContextType {
   settings: BrandingSettings | null;
@@ -15,7 +21,7 @@ const BrandingContext = createContext<BrandingContextType | null>(null);
 export function useBranding() {
   const context = useContext(BrandingContext);
   if (!context) {
-    throw new Error('useBranding must be used within BrandingProvider');
+    throw new Error("useBranding must be used within BrandingProvider");
   }
   return context;
 }
@@ -33,75 +39,138 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
 
     // Appliquer les variables CSS personnalisées
     const root = document.documentElement;
-    
+
     // Variables de couleurs
-    root.style.setProperty('--brand-primary', brandingSettings.primary_color);
-    root.style.setProperty('--brand-secondary', brandingSettings.secondary_color);
-    root.style.setProperty('--brand-accent', brandingSettings.accent_color);
-    root.style.setProperty('--brand-background', brandingSettings.background_color);
-    root.style.setProperty('--brand-surface', brandingSettings.surface_color);
-    root.style.setProperty('--brand-text', brandingSettings.text_color);
-    root.style.setProperty('--brand-text-secondary', brandingSettings.text_secondary);
-    root.style.setProperty('--brand-border', brandingSettings.border_color);
+    root.style.setProperty("--brand-primary", brandingSettings.primary_color);
+    root.style.setProperty(
+      "--brand-secondary",
+      brandingSettings.secondary_color
+    );
+    root.style.setProperty("--brand-accent", brandingSettings.accent_color);
+    root.style.setProperty(
+      "--brand-background",
+      brandingSettings.background_color
+    );
+    root.style.setProperty("--brand-surface", brandingSettings.surface_color);
+    root.style.setProperty("--brand-text", brandingSettings.text_color);
+    root.style.setProperty(
+      "--brand-text-secondary",
+      brandingSettings.text_secondary
+    );
+    root.style.setProperty("--brand-border", brandingSettings.border_color);
 
     // Variables de polices
-    root.style.setProperty('--brand-title-font', brandingSettings.font_settings.title_font);
-    root.style.setProperty('--brand-subtitle-font', brandingSettings.font_settings.subtitle_font);
-    root.style.setProperty('--brand-body-font', brandingSettings.font_settings.body_font);
-    
-    root.style.setProperty('--brand-title-size', brandingSettings.font_settings.title_font_size);
-    root.style.setProperty('--brand-subtitle-size', brandingSettings.font_settings.subtitle_font_size);
-    root.style.setProperty('--brand-body-size', brandingSettings.font_settings.body_font_size);
-    
-    root.style.setProperty('--brand-title-weight', brandingSettings.font_settings.title_font_weight);
-    root.style.setProperty('--brand-subtitle-weight', brandingSettings.font_settings.subtitle_font_weight);
-    root.style.setProperty('--brand-body-weight', brandingSettings.font_settings.body_font_weight);
-    
-    root.style.setProperty('--brand-title-color', brandingSettings.font_settings.title_color);
-    root.style.setProperty('--brand-subtitle-color', brandingSettings.font_settings.subtitle_color);
-    root.style.setProperty('--brand-body-color', brandingSettings.font_settings.body_color);
-    
-    root.style.setProperty('--brand-title-spacing', brandingSettings.font_settings.title_letter_spacing);
-    root.style.setProperty('--brand-subtitle-spacing', brandingSettings.font_settings.subtitle_letter_spacing);
-    root.style.setProperty('--brand-body-spacing', brandingSettings.font_settings.body_letter_spacing);
-    
-    root.style.setProperty('--brand-title-height', brandingSettings.font_settings.title_line_height);
-    root.style.setProperty('--brand-subtitle-height', brandingSettings.font_settings.subtitle_line_height);
-    root.style.setProperty('--brand-body-height', brandingSettings.font_settings.body_line_height);
+    root.style.setProperty(
+      "--brand-title-font",
+      brandingSettings.font_settings.title_font
+    );
+    root.style.setProperty(
+      "--brand-subtitle-font",
+      brandingSettings.font_settings.subtitle_font
+    );
+    root.style.setProperty(
+      "--brand-body-font",
+      brandingSettings.font_settings.body_font
+    );
+
+    root.style.setProperty(
+      "--brand-title-size",
+      brandingSettings.font_settings.title_font_size
+    );
+    root.style.setProperty(
+      "--brand-subtitle-size",
+      brandingSettings.font_settings.subtitle_font_size
+    );
+    root.style.setProperty(
+      "--brand-body-size",
+      brandingSettings.font_settings.body_font_size
+    );
+
+    root.style.setProperty(
+      "--brand-title-weight",
+      brandingSettings.font_settings.title_font_weight
+    );
+    root.style.setProperty(
+      "--brand-subtitle-weight",
+      brandingSettings.font_settings.subtitle_font_weight
+    );
+    root.style.setProperty(
+      "--brand-body-weight",
+      brandingSettings.font_settings.body_font_weight
+    );
+
+    root.style.setProperty(
+      "--brand-title-color",
+      brandingSettings.font_settings.title_color
+    );
+    root.style.setProperty(
+      "--brand-subtitle-color",
+      brandingSettings.font_settings.subtitle_color
+    );
+    root.style.setProperty(
+      "--brand-body-color",
+      brandingSettings.font_settings.body_color
+    );
+
+    root.style.setProperty(
+      "--brand-title-spacing",
+      brandingSettings.font_settings.title_letter_spacing
+    );
+    root.style.setProperty(
+      "--brand-subtitle-spacing",
+      brandingSettings.font_settings.subtitle_letter_spacing
+    );
+    root.style.setProperty(
+      "--brand-body-spacing",
+      brandingSettings.font_settings.body_letter_spacing
+    );
+
+    root.style.setProperty(
+      "--brand-title-height",
+      brandingSettings.font_settings.title_line_height
+    );
+    root.style.setProperty(
+      "--brand-subtitle-height",
+      brandingSettings.font_settings.subtitle_line_height
+    );
+    root.style.setProperty(
+      "--brand-body-height",
+      brandingSettings.font_settings.body_line_height
+    );
 
     // Appliquer les polices Google Fonts
     const fonts = [
       brandingSettings.font_settings.title_font,
       brandingSettings.font_settings.subtitle_font,
-      brandingSettings.font_settings.body_font
+      brandingSettings.font_settings.body_font,
     ];
-    
+
     const uniqueFonts = [...new Set(fonts)];
-    
-    uniqueFonts.forEach(font => {
+
+    uniqueFonts.forEach((font) => {
       if (!document.querySelector(`link[href*="family=${font}"]`)) {
-        const link = document.createElement('link');
-        link.href = `https://fonts.googleapis.com/css2?family=${font.replace(' ', '+')}:wght@300;400;500;600;700&display=swap`;
-        link.rel = 'stylesheet';
+        const link = document.createElement("link");
+        link.href = `https://fonts.googleapis.com/css2?family=${font.replace(" ", "+")}:wght@300;400;500;600;700&display=swap`;
+        link.rel = "stylesheet";
         document.head.appendChild(link);
       }
     });
 
     // Appliquer le CSS personnalisé
-    let customCSS = '';
-    
+    let customCSS = "";
+
     if (brandingSettings.custom_css) {
       customCSS = brandingSettings.custom_css;
     }
 
     // Mettre à jour ou créer la balise style
-    let styleElement = document.getElementById('branding-custom-css');
+    let styleElement = document.getElementById("branding-custom-css");
     if (!styleElement) {
-      styleElement = document.createElement('style');
-      styleElement.id = 'branding-custom-css';
+      styleElement = document.createElement("style");
+      styleElement.id = "branding-custom-css";
       document.head.appendChild(styleElement);
     }
-    
+
     styleElement.textContent = `
       :root {
         --brand-primary: ${brandingSettings.primary_color};
@@ -189,65 +258,84 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
 
     // Mettre à jour le favicon
     if (brandingSettings.favicon_url) {
-      let favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
+      let favicon = document.querySelector(
+        'link[rel="icon"]'
+      ) as HTMLLinkElement;
       if (!favicon) {
-        favicon = document.createElement('link');
-        favicon.rel = 'icon';
+        favicon = document.createElement("link");
+        favicon.rel = "icon";
         document.head.appendChild(favicon);
       }
       favicon.href = brandingSettings.favicon_url;
     }
 
     // Mettre à jour le logo si nécessaire
-    const logoElements = document.querySelectorAll('.brand-logo');
-    logoElements.forEach(element => {
+    const logoElements = document.querySelectorAll(".brand-logo");
+    logoElements.forEach((element) => {
       if (element instanceof HTMLImageElement) {
-        element.src = brandingSettings.logo_url || '/logo.png';
+        element.src = brandingSettings.logo_url || "/logo.png";
       }
     });
 
-    console.log('Branding appliqué:', brandingSettings.company_name);
+    console.log("Branding appliqué:", brandingSettings.company_name);
   };
 
   const resetBranding = () => {
     // Supprimer les styles personnalisés
-    const styleElement = document.getElementById('branding-custom-css');
+    const styleElement = document.getElementById("branding-custom-css");
     if (styleElement) {
       styleElement.remove();
     }
-    
+
     // Réinitialiser les variables CSS
     const root = document.documentElement;
     const cssVariables = [
-      '--brand-primary', '--brand-secondary', '--brand-accent',
-      '--brand-background', '--brand-surface', '--brand-text',
-      '--brand-text-secondary', '--brand-border',
-      '--brand-title-font', '--brand-subtitle-font', '--brand-body-font',
-      '--brand-title-size', '--brand-subtitle-size', '--brand-body-size',
-      '--brand-title-weight', '--brand-subtitle-weight', '--brand-body-weight',
-      '--brand-title-color', '--brand-subtitle-color', '--brand-body-color',
-      '--brand-title-spacing', '--brand-subtitle-spacing', '--brand-body-spacing',
-      '--brand-title-height', '--brand-subtitle-height', '--brand-body-height'
+      "--brand-primary",
+      "--brand-secondary",
+      "--brand-accent",
+      "--brand-background",
+      "--brand-surface",
+      "--brand-text",
+      "--brand-text-secondary",
+      "--brand-border",
+      "--brand-title-font",
+      "--brand-subtitle-font",
+      "--brand-body-font",
+      "--brand-title-size",
+      "--brand-subtitle-size",
+      "--brand-body-size",
+      "--brand-title-weight",
+      "--brand-subtitle-weight",
+      "--brand-body-weight",
+      "--brand-title-color",
+      "--brand-subtitle-color",
+      "--brand-body-color",
+      "--brand-title-spacing",
+      "--brand-subtitle-spacing",
+      "--brand-body-spacing",
+      "--brand-title-height",
+      "--brand-subtitle-height",
+      "--brand-body-height",
     ];
-    
-    cssVariables.forEach(variable => {
+
+    cssVariables.forEach((variable) => {
       root.style.removeProperty(variable);
     });
-    
-    console.log('Branding réinitialisé');
+
+    console.log("Branding réinitialisé");
   };
 
   useEffect(() => {
     const loadBranding = async () => {
       try {
-        const response = await fetch('/api/branding');
+        const response = await fetch("/api/branding");
         if (response.ok) {
           const brandingSettings = await response.json();
           setSettings(brandingSettings);
           applyBranding(brandingSettings);
         }
       } catch (error) {
-        console.error('Erreur chargement branding:', error);
+        console.error("Erreur chargement branding:", error);
       } finally {
         setIsLoading(false);
       }
@@ -262,7 +350,7 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
         settings,
         isLoading,
         applyBranding,
-        resetBranding
+        resetBranding,
       }}
     >
       {children}

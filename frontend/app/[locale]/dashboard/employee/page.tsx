@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
-import { useSimpleNotification, NotificationContainer } from "@/components/ui/SimpleNotification";
+import { useParams, useRouter } from "next/navigation";
+import {
+  useSimpleNotification,
+  NotificationContainer,
+} from "@/components/ui/SimpleNotification";
 import {
   Users,
   Play,
@@ -20,7 +23,7 @@ import {
   Target,
   BarChart3,
   Filter,
-  Search
+  Search,
 } from "lucide-react";
 import type { Employee } from "@/types/employee";
 
@@ -29,6 +32,7 @@ interface Course {
   title: string;
   description: string;
   thumbnail: string;
+  video_url?: string;
   duration: string;
   views: number;
   likes: number;
@@ -36,6 +40,8 @@ interface Course {
   publishedAt: string;
   visibility: string;
   status: string;
+  progress?: number;
+  completed?: boolean;
   creator: {
     name: string;
     domain: string;
@@ -58,41 +64,50 @@ export default function EmployeeDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  
+
   const router = useRouter();
-  const { notifications, success, error, removeNotification } = useSimpleNotification();
+  const params = useParams<{ locale?: string }>();
+  const locale = typeof params?.locale === "string" ? params.locale : "fr";
+  const { notifications, success, error, removeNotification } =
+    useSimpleNotification();
 
   useEffect(() => {
     loadEmployeeData();
     loadCourses();
-    loadStats();
   }, []);
+
+  useEffect(() => {
+    loadStats(courses);
+  }, [courses]);
+
+  const withLocale = (path: string) =>
+    `/${locale}${path.startsWith("/") ? path : `/${path}`}`;
 
   const loadEmployeeData = async () => {
     try {
       const token = localStorage.getItem("employee_token");
       if (!token) {
-        router.push("/auth/employee");
+        router.push(withLocale("/auth/employee"));
         return;
       }
 
       const response = await fetch("/api/employee/me", {
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setEmployee(data.data);
       } else {
         error("Erreur", "Impossible de charger vos informations");
-        router.push("/auth/employee");
+        router.push(withLocale("/auth/employee"));
       }
     } catch (err) {
       error("Erreur", "Une erreur technique est survenue");
-      router.push("/auth/employee");
+      router.push(withLocale("/auth/employee"));
     } finally {
       setLoading(false);
     }
@@ -105,12 +120,12 @@ export default function EmployeeDashboard() {
 
       const response = await fetch("/api/employee/courses", {
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setCourses(data.data);
       }
@@ -119,23 +134,46 @@ export default function EmployeeDashboard() {
     }
   };
 
-  const loadStats = async () => {
-    try {
-      const token = localStorage.getItem("employee_token");
-      if (!token) return;
-
-      // Simuler des stats pour l'instant
-      const mockStats: EmployeeStats = {
-        total_courses: 12,
-        completed_courses: 3,
-        in_progress_courses: 5,
-        total_watch_time: 847, // minutes
-        certificates_earned: 2
-      };
-      setStats(mockStats);
-    } catch (err) {
-      console.error("Erreur stats:", err);
+  const parseDurationToMinutes = (duration: string) => {
+    const parts = duration
+      .split(":")
+      .map((value) => Number.parseInt(value, 10) || 0);
+    if (parts.length === 2) {
+      return (parts[0] * 60 + parts[1]) / 60;
     }
+    if (parts.length === 3) {
+      return parts[0] * 60 + parts[1] + parts[2] / 60;
+    }
+    return 0;
+  };
+
+  const loadStats = (courseList: Course[]) => {
+    const completedCourses = courseList.filter(
+      (course) =>
+        course.completed === true ||
+        (typeof course.progress === "number" && course.progress >= 100)
+    ).length;
+
+    const inProgressCourses = courseList.filter(
+      (course) =>
+        course.completed !== true &&
+        (typeof course.progress !== "number" || course.progress < 100)
+    ).length;
+
+    const totalWatchTime = Math.round(
+      courseList.reduce(
+        (sum, course) => sum + parseDurationToMinutes(course.duration),
+        0
+      )
+    );
+
+    setStats({
+      total_courses: courseList.length,
+      completed_courses: completedCourses,
+      in_progress_courses: inProgressCourses,
+      total_watch_time: totalWatchTime,
+      certificates_earned: completedCourses,
+    });
   };
 
   const handleLogout = async () => {
@@ -145,16 +183,16 @@ export default function EmployeeDashboard() {
         await fetch("/api/employee/logout", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
       }
-      
+
       localStorage.removeItem("employee_token");
       localStorage.removeItem("employee_remember");
-      
+
       success("Déconnexion", "Vous avez été déconnecté avec succès");
-      router.push("/auth/employee");
+      router.push(withLocale("/auth/employee"));
     } catch (err) {
       error("Erreur", "Une erreur est survenue lors de la déconnexion");
     }
@@ -162,12 +200,13 @@ export default function EmployeeDashboard() {
 
   const watchCourse = (course: Course) => {
     // Rediriger vers la page de visionnage
-    router.push(`/video/${course.id}`);
+    router.push(withLocale(`/video/${course.id}/watch`));
   };
 
-  const filteredCourses = courses.filter(course =>
-    course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    course.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCourses = courses.filter(
+    (course) =>
+      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -193,11 +232,13 @@ export default function EmployeeDashboard() {
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">Espace Employé</h1>
+                <h1 className="text-lg font-semibold text-gray-900">
+                  Espace Employé
+                </h1>
                 <p className="text-sm text-gray-600">{employee.domain}</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setShowProfileModal(true)}
@@ -233,15 +274,17 @@ export default function EmployeeDashboard() {
             <div className="text-right">
               <p className="text-sm text-blue-100 mb-1">Dernière connexion</p>
               <p className="text-lg font-medium">
-                {employee.last_login_at 
-                  ? new Date(employee.last_login_at).toLocaleDateString("fr-FR", {
-                      day: "numeric",
-                      month: "long",
-                      hour: "2-digit",
-                      minute: "2-digit"
-                    })
-                  : "Première connexion"
-                }
+                {employee.last_login_at
+                  ? new Date(employee.last_login_at).toLocaleDateString(
+                      "fr-FR",
+                      {
+                        day: "numeric",
+                        month: "long",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
+                    )
+                  : "Première connexion"}
               </p>
             </div>
           </div>
@@ -259,11 +302,13 @@ export default function EmployeeDashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Total des cours</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total_courses}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.total_courses}
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -271,11 +316,13 @@ export default function EmployeeDashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Cours terminés</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.completed_courses}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.completed_courses}
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
@@ -283,11 +330,14 @@ export default function EmployeeDashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Temps de visionnage</p>
-                  <p className="text-2xl font-bold text-gray-900">{Math.floor(stats.total_watch_time / 60)}h {stats.total_watch_time % 60}m</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {Math.floor(stats.total_watch_time / 60)}h{" "}
+                    {stats.total_watch_time % 60}m
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -295,7 +345,9 @@ export default function EmployeeDashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Certificats</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.certificates_earned}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.certificates_earned}
+                  </p>
                 </div>
               </div>
             </div>
@@ -328,18 +380,26 @@ export default function EmployeeDashboard() {
       {/* Courses Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         <div className="mb-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Mes formations</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            Mes formations
+          </h3>
           <p className="text-gray-600">
-            {filteredCourses.length} formation{filteredCourses.length > 1 ? 's' : ''} disponible{filteredCourses.length > 1 ? 's' : ''}
+            {filteredCourses.length} formation
+            {filteredCourses.length > 1 ? "s" : ""} disponible
+            {filteredCourses.length > 1 ? "s" : ""}
           </p>
         </div>
 
         {filteredCourses.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
             <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune formation trouvée</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Aucune formation trouvée
+            </h3>
             <p className="text-gray-600">
-              {searchTerm ? "Essayez de modifier votre recherche" : "Votre formateur n'a pas encore ajouté de formations"}
+              {searchTerm
+                ? "Essayez de modifier votre recherche"
+                : "Votre formateur n'a pas encore ajouté de formations"}
             </p>
           </div>
         ) : (
@@ -366,7 +426,7 @@ export default function EmployeeDashboard() {
                     {course.duration}
                   </div>
                 </div>
-                
+
                 <div className="p-4">
                   <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2">
                     {course.title}
@@ -374,7 +434,7 @@ export default function EmployeeDashboard() {
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                     {course.description}
                   </p>
-                  
+
                   <div className="flex items-center justify-between text-xs text-gray-500">
                     <div className="flex items-center gap-1">
                       <Eye className="w-3 h-3" />
@@ -385,11 +445,13 @@ export default function EmployeeDashboard() {
                       {course.publishedAt}
                     </div>
                   </div>
-                  
+
                   <div className="mt-3 pt-3 border-t border-gray-100">
                     <div className="flex items-center gap-2">
                       <Building className="w-3 h-3 text-gray-400" />
-                      <span className="text-xs text-gray-600">{course.creator.domain}</span>
+                      <span className="text-xs text-gray-600">
+                        {course.creator.domain}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -425,34 +487,44 @@ export default function EmployeeDashboard() {
                   ×
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
                     <User className="w-8 h-8 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{employee.name}</h3>
+                    <h3 className="font-semibold text-gray-900">
+                      {employee.name}
+                    </h3>
                     <p className="text-sm text-gray-600">{employee.email}</p>
                     <p className="text-sm text-blue-600">{employee.domain}</p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-600">ID de connexion</span>
-                    <span className="text-sm font-mono text-gray-900">{employee.login_id}</span>
+                    <span className="text-sm text-gray-600">
+                      ID de connexion
+                    </span>
+                    <span className="text-sm font-mono text-gray-900">
+                      {employee.login_id}
+                    </span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-100">
                     <span className="text-sm text-gray-600">Statut</span>
-                    <span className={`text-sm font-medium ${employee.is_active ? 'text-green-600' : 'text-red-600'}`}>
-                      {employee.is_active ? 'Actif' : 'Inactif'}
+                    <span
+                      className={`text-sm font-medium ${employee.is_active ? "text-green-600" : "text-red-600"}`}
+                    >
+                      {employee.is_active ? "Actif" : "Inactif"}
                     </span>
                   </div>
                   <div className="flex justify-between py-2">
                     <span className="text-sm text-gray-600">Date d'ajout</span>
                     <span className="text-sm text-gray-900">
-                      {new Date(employee.created_at).toLocaleDateString("fr-FR")}
+                      {new Date(employee.created_at).toLocaleDateString(
+                        "fr-FR"
+                      )}
                     </span>
                   </div>
                 </div>
@@ -462,9 +534,9 @@ export default function EmployeeDashboard() {
         )}
       </AnimatePresence>
 
-      <NotificationContainer 
-        notifications={notifications} 
-        onRemove={removeNotification} 
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
       />
     </div>
   );

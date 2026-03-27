@@ -100,15 +100,18 @@ export default function BrandingPage() {
     },
   ];
 
-  const handleColorChange = (colorType: keyof BrandingSettings, value: string) => {
-    setBranding(prev => ({ ...prev, [colorType]: value }));
+  const handleColorChange = (
+    colorType: keyof BrandingSettings,
+    value: string
+  ) => {
+    setBranding((prev) => ({ ...prev, [colorType]: value }));
   };
 
   const handleFileUpload = (file: File, type: "logo" | "favicon") => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setBranding(prev => ({
+        setBranding((prev) => ({
           ...prev,
           [type]: file,
           [`${type}Preview`]: reader.result as string,
@@ -118,8 +121,8 @@ export default function BrandingPage() {
     }
   };
 
-  const applyPresetTheme = (theme: typeof presetThemes[0]) => {
-    setBranding(prev => ({
+  const applyPresetTheme = (theme: (typeof presetThemes)[0]) => {
+    setBranding((prev) => ({
       ...prev,
       primaryColor: theme.colors.primary,
       secondaryColor: theme.colors.secondary,
@@ -129,15 +132,17 @@ export default function BrandingPage() {
 
   const saveBranding = async () => {
     setIsSaving(true);
-    
+
     // Simuler la sauvegarde
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     setIsSaving(false);
-    
+
     // Appliquer les changements au layout
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('brandingUpdated', { detail: branding }));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("brandingUpdated", { detail: branding })
+      );
     }
   };
 
@@ -176,16 +181,20 @@ export default function BrandingPage() {
             Configurez l'apparence de votre dashboard creator
           </p>
         </div>
-        
+
         <div className="flex gap-3">
           <button
             onClick={() => setShowPreview(!showPreview)}
             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2"
           >
-            {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            {showPreview ? (
+              <EyeOff className="w-4 h-4" />
+            ) : (
+              <Eye className="w-4 h-4" />
+            )}
             {showPreview ? "Masquer" : "Aperçu"}
           </button>
-          
+
           <button
             onClick={resetToDefault}
             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2"
@@ -193,7 +202,7 @@ export default function BrandingPage() {
             <RotateCcw className="w-4 h-4" />
             Réinitialiser
           </button>
-          
+
           <button
             onClick={saveBranding}
             disabled={isSaving}
@@ -212,7 +221,9 @@ export default function BrandingPage() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Aperçu du dashboard</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Aperçu du dashboard
+          </h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Aperçu sidebar */}
             <div
@@ -222,7 +233,11 @@ export default function BrandingPage() {
               <div className="text-white space-y-4">
                 <div className="flex items-center gap-3">
                   {branding.logoPreview ? (
-                    <img src={branding.logoPreview} alt="Logo" className="w-8 h-8 rounded" />
+                    <img
+                      src={branding.logoPreview}
+                      alt="Logo"
+                      className="w-8 h-8 rounded"
+                    />
                   ) : (
                     <div
                       className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold"
@@ -232,34 +247,44 @@ export default function BrandingPage() {
                     </div>
                   )}
                   <div>
-                    <p className="font-semibold text-sm" style={{ fontFamily: branding.fontFamily }}>
+                    <p
+                      className="font-semibold text-sm"
+                      style={{ fontFamily: branding.fontFamily }}
+                    >
                       {branding.companyName}
                     </p>
                     <p className="text-xs opacity-60">{branding.tagline}</p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   {["Dashboard", "Vidéos", "Statistiques"].map((item) => (
-                    <div key={item} className="px-3 py-2 bg-white/10 rounded-lg text-sm">
+                    <div
+                      key={item}
+                      className="px-3 py-2 bg-white/10 rounded-lg text-sm"
+                    >
                       {item}
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-            
+
             {/* Aperçu contenu */}
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-xl p-4">
-                <h4 className="font-semibold mb-2" style={{ color: branding.primaryColor }}>
+                <h4
+                  className="font-semibold mb-2"
+                  style={{ color: branding.primaryColor }}
+                >
                   Titre de l'exemple
                 </h4>
                 <p className="text-sm text-gray-600">
-                  Ceci est un aperçu de l'apparence de votre contenu avec les couleurs personnalisées.
+                  Ceci est un aperçu de l'apparence de votre contenu avec les
+                  couleurs personnalisées.
                 </p>
               </div>
-              
+
               <div className="flex gap-2">
                 <button
                   className="px-4 py-2 text-white rounded-lg text-sm"
@@ -269,7 +294,10 @@ export default function BrandingPage() {
                 </button>
                 <button
                   className="px-4 py-2 rounded-lg text-sm border"
-                  style={{ borderColor: branding.accentColor, color: branding.accentColor }}
+                  style={{
+                    borderColor: branding.accentColor,
+                    color: branding.accentColor,
+                  }}
                 >
                   Bouton secondaire
                 </button>
@@ -311,7 +339,9 @@ export default function BrandingPage() {
             >
               {/* Thèmes prédéfinis */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Thèmes prédéfinis</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Thèmes prédéfinis
+                </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {presetThemes.map((theme) => (
                     <button
@@ -341,7 +371,9 @@ export default function BrandingPage() {
 
               {/* Couleurs personnalisées */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Couleurs personnalisées</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Couleurs personnalisées
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -351,18 +383,22 @@ export default function BrandingPage() {
                       <input
                         type="color"
                         value={branding.primaryColor}
-                        onChange={(e) => handleColorChange("primaryColor", e.target.value)}
+                        onChange={(e) =>
+                          handleColorChange("primaryColor", e.target.value)
+                        }
                         className="w-12 h-12 rounded-lg border border-gray-300"
                       />
                       <input
                         type="text"
                         value={branding.primaryColor}
-                        onChange={(e) => handleColorChange("primaryColor", e.target.value)}
+                        onChange={(e) =>
+                          handleColorChange("primaryColor", e.target.value)
+                        }
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Couleur secondaire
@@ -371,18 +407,22 @@ export default function BrandingPage() {
                       <input
                         type="color"
                         value={branding.secondaryColor}
-                        onChange={(e) => handleColorChange("secondaryColor", e.target.value)}
+                        onChange={(e) =>
+                          handleColorChange("secondaryColor", e.target.value)
+                        }
                         className="w-12 h-12 rounded-lg border border-gray-300"
                       />
                       <input
                         type="text"
                         value={branding.secondaryColor}
-                        onChange={(e) => handleColorChange("secondaryColor", e.target.value)}
+                        onChange={(e) =>
+                          handleColorChange("secondaryColor", e.target.value)
+                        }
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Couleur d'accent
@@ -391,13 +431,17 @@ export default function BrandingPage() {
                       <input
                         type="color"
                         value={branding.accentColor}
-                        onChange={(e) => handleColorChange("accentColor", e.target.value)}
+                        onChange={(e) =>
+                          handleColorChange("accentColor", e.target.value)
+                        }
                         className="w-12 h-12 rounded-lg border border-gray-300"
                       />
                       <input
                         type="text"
                         value={branding.accentColor}
-                        onChange={(e) => handleColorChange("accentColor", e.target.value)}
+                        onChange={(e) =>
+                          handleColorChange("accentColor", e.target.value)
+                        }
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
@@ -412,11 +456,18 @@ export default function BrandingPage() {
                 </label>
                 <select
                   value={branding.fontFamily}
-                  onChange={(e) => setBranding(prev => ({ ...prev, fontFamily: e.target.value }))}
+                  onChange={(e) =>
+                    setBranding((prev) => ({
+                      ...prev,
+                      fontFamily: e.target.value,
+                    }))
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
-                  {fontFamilies.map(font => (
-                    <option key={font} value={font}>{font}</option>
+                  {fontFamilies.map((font) => (
+                    <option key={font} value={font}>
+                      {font}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -440,7 +491,10 @@ export default function BrandingPage() {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "logo")}
+                      onChange={(e) =>
+                        e.target.files?.[0] &&
+                        handleFileUpload(e.target.files[0], "logo")
+                      }
                       className="hidden"
                       id="logo-upload"
                     />
@@ -449,21 +503,31 @@ export default function BrandingPage() {
                       className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-primary transition-colors"
                     >
                       {branding.logoPreview ? (
-                        <img src={branding.logoPreview} alt="Logo" className="w-full h-full object-cover rounded-xl" />
+                        <img
+                          src={branding.logoPreview}
+                          alt="Logo"
+                          className="w-full h-full object-cover rounded-xl"
+                        />
                       ) : (
                         <Upload className="w-8 h-8 text-gray-400" />
                       )}
                     </label>
                     {branding.logoPreview && (
                       <button
-                        onClick={() => setBranding(prev => ({ ...prev, logo: null, logoPreview: null }))}
+                        onClick={() =>
+                          setBranding((prev) => ({
+                            ...prev,
+                            logo: null,
+                            logoPreview: null,
+                          }))
+                        }
                         className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     )}
                   </div>
-                  
+
                   <div className="flex-1">
                     <p className="text-sm text-gray-600 mb-2">
                       Upload votre logo (PNG, JPG, SVG). Recommandé: 200x200px
@@ -471,7 +535,9 @@ export default function BrandingPage() {
                     {branding.logoPreview && (
                       <div className="flex items-center gap-2 text-green-600">
                         <CheckCircle className="w-4 h-4" />
-                        <span className="text-sm">Logo uploadé avec succès</span>
+                        <span className="text-sm">
+                          Logo uploadé avec succès
+                        </span>
                       </div>
                     )}
                   </div>
@@ -487,11 +553,16 @@ export default function BrandingPage() {
                   <input
                     type="text"
                     value={branding.companyName}
-                    onChange={(e) => setBranding(prev => ({ ...prev, companyName: e.target.value }))}
+                    onChange={(e) =>
+                      setBranding((prev) => ({
+                        ...prev,
+                        companyName: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Slogan
@@ -499,7 +570,12 @@ export default function BrandingPage() {
                   <input
                     type="text"
                     value={branding.tagline}
-                    onChange={(e) => setBranding(prev => ({ ...prev, tagline: e.target.value }))}
+                    onChange={(e) =>
+                      setBranding((prev) => ({
+                        ...prev,
+                        tagline: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
@@ -515,7 +591,12 @@ export default function BrandingPage() {
                   <input
                     type="text"
                     value={branding.customDomain}
-                    onChange={(e) => setBranding(prev => ({ ...prev, customDomain: e.target.value }))}
+                    onChange={(e) =>
+                      setBranding((prev) => ({
+                        ...prev,
+                        customDomain: e.target.value,
+                      }))
+                    }
                     placeholder="votre-domaine.com"
                     className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
@@ -524,7 +605,8 @@ export default function BrandingPage() {
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 mt-2">
-                  Configurez votre propre domaine pour une marque blanche complète
+                  Configurez votre propre domaine pour une marque blanche
+                  complète
                 </p>
               </div>
 
@@ -538,7 +620,10 @@ export default function BrandingPage() {
                     <input
                       type="file"
                       accept="image/x-icon,image/png"
-                      onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "favicon")}
+                      onChange={(e) =>
+                        e.target.files?.[0] &&
+                        handleFileUpload(e.target.files[0], "favicon")
+                      }
                       className="hidden"
                       id="favicon-upload"
                     />
@@ -547,21 +632,31 @@ export default function BrandingPage() {
                       className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors"
                     >
                       {branding.faviconPreview ? (
-                        <img src={branding.faviconPreview} alt="Favicon" className="w-full h-full object-cover rounded-lg" />
+                        <img
+                          src={branding.faviconPreview}
+                          alt="Favicon"
+                          className="w-full h-full object-cover rounded-lg"
+                        />
                       ) : (
                         <Upload className="w-6 h-6 text-gray-400" />
                       )}
                     </label>
                     {branding.faviconPreview && (
                       <button
-                        onClick={() => setBranding(prev => ({ ...prev, favicon: null, faviconPreview: null }))}
+                        onClick={() =>
+                          setBranding((prev) => ({
+                            ...prev,
+                            favicon: null,
+                            faviconPreview: null,
+                          }))
+                        }
                         className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
                       >
                         <X className="w-2 h-2" />
                       </button>
                     )}
                   </div>
-                  
+
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">
                       Upload votre favicon (ICO, PNG). Recommandé: 32x32px
@@ -587,29 +682,46 @@ export default function BrandingPage() {
                 <textarea
                   rows={8}
                   value={branding.customCSS}
-                  onChange={(e) => setBranding(prev => ({ ...prev, customCSS: e.target.value }))}
+                  onChange={(e) =>
+                    setBranding((prev) => ({
+                      ...prev,
+                      customCSS: e.target.value,
+                    }))
+                  }
                   placeholder="/* Ajoutez votre CSS personnalisé ici */"
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
                 />
                 <p className="text-sm text-gray-600 mt-2">
-                  Ajoutez vos propres styles CSS pour personnaliser davantage l'apparence
+                  Ajoutez vos propres styles CSS pour personnaliser davantage
+                  l'apparence
                 </p>
               </div>
 
               {/* Options avancées */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Options avancées</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Options avancées
+                </h3>
                 <div className="space-y-4">
                   <label className="flex items-center">
                     <input
                       type="checkbox"
                       checked={branding.removeBranding}
-                      onChange={(e) => setBranding(prev => ({ ...prev, removeBranding: e.target.checked }))}
+                      onChange={(e) =>
+                        setBranding((prev) => ({
+                          ...prev,
+                          removeBranding: e.target.checked,
+                        }))
+                      }
                       className="mr-3 rounded text-primary focus:ring-primary"
                     />
                     <div>
-                      <span className="text-sm font-medium text-gray-700">Retirer la marque Match My Formation</span>
-                      <p className="text-xs text-gray-600">Option PRO uniquement</p>
+                      <span className="text-sm font-medium text-gray-700">
+                        Retirer la marque Match My Formation
+                      </span>
+                      <p className="text-xs text-gray-600">
+                        Option PRO uniquement
+                      </p>
                     </div>
                     <span className="ml-auto px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-medium rounded-full">
                       PRO
@@ -620,7 +732,9 @@ export default function BrandingPage() {
 
               {/* Export/Import */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Export/Import</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Export/Import
+                </h3>
                 <div className="flex gap-4">
                   <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2">
                     <Download className="w-4 h-4" />
@@ -651,10 +765,10 @@ export default function BrandingPage() {
               Passez à la version PRO
             </h3>
             <p className="text-white/90 mb-4">
-              Débloquez toutes les fonctionnalités de marque blanche : domaine personnalisé, 
-              retrait de branding, CSS avancé, et plus encore !
+              Débloquez toutes les fonctionnalités de marque blanche : domaine
+              personnalisé, retrait de branding, CSS avancé, et plus encore !
             </p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-center gap-2">
                 <Globe className="w-5 h-5" />
@@ -670,7 +784,7 @@ export default function BrandingPage() {
               </div>
             </div>
           </div>
-          
+
           <button className="bg-white text-orange-500 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors">
             Passer en PRO
           </button>

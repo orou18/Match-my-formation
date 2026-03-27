@@ -14,9 +14,12 @@ import {
   ArrowLeft,
   User,
   Shield,
-  Key
+  Key,
 } from "lucide-react";
-import { useSimpleNotification, NotificationContainer } from "@/components/ui/SimpleNotification";
+import {
+  useSimpleNotification,
+  NotificationContainer,
+} from "@/components/ui/SimpleNotification";
 
 interface EmployeeFormData {
   name: string;
@@ -35,7 +38,7 @@ export default function AddEmployeePage() {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
-  
+
   const [formData, setFormData] = useState<EmployeeFormData>({
     name: "",
     email: "",
@@ -45,23 +48,24 @@ export default function AddEmployeePage() {
     role: "employee",
     password: "",
     confirmPassword: "",
-    hire_date: new Date().toISOString().split('T')[0],
-    status: "active"
+    hire_date: new Date().toISOString().split("T")[0],
+    status: "active",
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<EmployeeFormData>>({});
-  const { notifications, success, error, removeNotification } = useSimpleNotification();
+  const { notifications, success, error, removeNotification } =
+    useSimpleNotification();
 
   const departments = [
     "Production",
-    "Marketing", 
+    "Marketing",
     "Ventes",
     "Support Client",
     "Ressources Humaines",
     "Finance",
     "Technologie",
-    "Opérations"
+    "Opérations",
   ];
 
   const positions = [
@@ -72,7 +76,7 @@ export default function AddEmployeePage() {
     "Coordinateur",
     "Analyste",
     "Technicien",
-    "Consultant"
+    "Consultant",
   ];
 
   const validateForm = () => {
@@ -105,11 +109,13 @@ export default function AddEmployeePage() {
     if (!formData.password) {
       newErrors.password = "Le mot de passe est obligatoire";
     } else if (formData.password.length < 8) {
-      newErrors.password = "Le mot de passe doit contenir au moins 8 caractères";
+      newErrors.password =
+        "Le mot de passe doit contenir au moins 8 caractères";
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "La confirmation du mot de passe est obligatoire";
+      newErrors.confirmPassword =
+        "La confirmation du mot de passe est obligatoire";
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
     }
@@ -120,46 +126,54 @@ export default function AddEmployeePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log('🚀 Soumission du formulaire:', formData);
-    
+
+    console.log("🚀 Soumission du formulaire:", formData);
+
     if (!validateForm()) {
-      error("Erreur de validation", "Veuillez corriger les erreurs dans le formulaire");
+      error(
+        "Erreur de validation",
+        "Veuillez corriger les erreurs dans le formulaire"
+      );
       return;
     }
 
     setLoading(true);
 
     try {
-      console.log('📤 Envoi à l\'API...');
-      
+      console.log("📤 Envoi à l'API...");
+
       const response = await fetch("/api/creator/employees", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(formData),
       });
 
-      console.log('📨 Réponse API:', response.status);
+      console.log("📨 Réponse API:", response.status);
 
       const data = await response.json();
-      console.log('📋 Données API:', data);
+      console.log("📋 Données API:", data);
 
       if (data.success) {
         success("Employé ajouté", "L'employé a été ajouté avec succès");
-        
+
         // Sauvegarder localement pour persistance
         try {
-          const existingEmployees = JSON.parse(localStorage.getItem('creator_employees') || '[]');
+          const existingEmployees = JSON.parse(
+            localStorage.getItem("creator_employees") || "[]"
+          );
           existingEmployees.push(data.data);
-          localStorage.setItem('creator_employees', JSON.stringify(existingEmployees));
-          console.log('💾 Données sauvegardées localement');
+          localStorage.setItem(
+            "creator_employees",
+            JSON.stringify(existingEmployees)
+          );
+          console.log("💾 Données sauvegardées localement");
         } catch (localError) {
-          console.error('❌ Erreur sauvegarde locale:', localError);
+          console.error("❌ Erreur sauvegarde locale:", localError);
         }
-        
+
         setTimeout(() => {
           router.push(`/${locale}/dashboard/creator/employees`);
         }, 1500);
@@ -167,40 +181,49 @@ export default function AddEmployeePage() {
         error("Erreur", data.message || "Impossible d'ajouter l'employé");
       }
     } catch (err) {
-      console.error('❌ Erreur complète:', err);
+      console.error("❌ Erreur complète:", err);
       error("Erreur", "Une erreur technique est survenue");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
+
     // Effacer l'erreur quand l'utilisateur corrige le champ
     if (errors[name as keyof EmployeeFormData]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ""
+        [name]: "",
       }));
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NotificationContainer notifications={notifications} onRemove={removeNotification} />
-      
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
+      />
+
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => router.push(`/${locale}/dashboard/creator/employees`)}
+                onClick={() =>
+                  router.push(`/${locale}/dashboard/creator/employees`)
+                }
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600" />
@@ -338,13 +361,17 @@ export default function AddEmployeePage() {
                       }`}
                     >
                       <option value="">Sélectionner un département</option>
-                      {departments.map(dept => (
-                        <option key={dept} value={dept}>{dept}</option>
+                      {departments.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
                       ))}
                     </select>
                   </div>
                   {errors.department && (
-                    <p className="mt-1 text-sm text-red-600">{errors.department}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.department}
+                    </p>
                   )}
                 </div>
 
@@ -363,13 +390,17 @@ export default function AddEmployeePage() {
                       }`}
                     >
                       <option value="">Sélectionner un poste</option>
-                      {positions.map(pos => (
-                        <option key={pos} value={pos}>{pos}</option>
+                      {positions.map((pos) => (
+                        <option key={pos} value={pos}>
+                          {pos}
+                        </option>
                       ))}
                     </select>
                   </div>
                   {errors.position && (
-                    <p className="mt-1 text-sm text-red-600">{errors.position}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.position}
+                    </p>
                   )}
                 </div>
               </div>
@@ -433,13 +464,16 @@ export default function AddEmployeePage() {
                     />
                   </div>
                   {errors.password && (
-                    <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.password}
+                    </p>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirmer le mot de passe <span className="text-red-500">*</span>
+                    Confirmer le mot de passe{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Key className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
@@ -449,13 +483,17 @@ export default function AddEmployeePage() {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                        errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                        errors.confirmPassword
+                          ? "border-red-500"
+                          : "border-gray-300"
                       }`}
                       placeholder="Confirmer le mot de passe"
                     />
                   </div>
                   {errors.confirmPassword && (
-                    <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.confirmPassword}
+                    </p>
                   )}
                 </div>
               </div>
@@ -465,13 +503,15 @@ export default function AddEmployeePage() {
             <div className="flex items-center justify-between pt-6 border-t border-gray-200">
               <button
                 type="button"
-                onClick={() => router.push(`/${locale}/dashboard/creator/employees`)}
+                onClick={() =>
+                  router.push(`/${locale}/dashboard/creator/employees`)
+                }
                 className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Annuler
               </button>
-              
+
               <button
                 type="submit"
                 disabled={loading}

@@ -45,13 +45,14 @@ export default function AuthPage() {
   const testUsers = {
     student: { email: "student@match.com", password: "Azerty123!" },
     creator: { email: "creator@match.com", password: "Azerty123!" },
-    admin: { email: "admin@match.com", password: "Azerty123!" }
+    admin: { email: "admin@match.com", password: "Azerty123!" },
   };
 
   const rawUrl = process.env.NEXT_PUBLIC_API_URL;
-  const baseUrl = (rawUrl && rawUrl !== "undefined") 
-    ? rawUrl.replace(/\/$/, "") 
-    : "http://localhost:3000";
+  const baseUrl =
+    rawUrl && rawUrl !== "undefined"
+      ? rawUrl.replace(/\/$/, "")
+      : "http://localhost:3000";
 
   // PAS de vérification automatique - l'utilisateur doit pouvoir s'authentifier manuellement
   // useEffect(() => {
@@ -81,221 +82,258 @@ export default function AuthPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  console.log('🔥 handleSubmit appelé - isLogin:', isLogin);
-  
-  setLoading(true);
-  setError(null);
-  setSuccessMessage(null);
+    e.preventDefault();
+    console.log("🔥 handleSubmit appelé - isLogin:", isLogin);
 
-  if (isLogin) {
-    try {
-      // Utiliser UserIdManager pour une gestion cohérente des IDs
-      let authData: AuthData | null = null;
-      
-      // Vérifier les comptes de test
-      authData = UserIdManager.createTestUser(formData.email, formData.password);
-      
-      if (!authData) {
-        // Vérifier les comptes créés via inscription
-        const storedUserData = UserIdManager.getStoredUserData();
-        if (storedUserData && storedUserData.email === formData.email) {
-          authData = {
-            token: localStorage.getItem("token") || `mock-token-${Date.now()}`,
-            user: storedUserData
-          };
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    if (isLogin) {
+      try {
+        // Utiliser UserIdManager pour une gestion cohérente des IDs
+        let authData: AuthData | null = null;
+
+        // Vérifier les comptes de test
+        authData = UserIdManager.createTestUser(
+          formData.email,
+          formData.password
+        );
+
+        if (!authData) {
+          // Vérifier les comptes créés via inscription
+          const storedUserData = UserIdManager.getStoredUserData();
+          if (storedUserData && storedUserData.email === formData.email) {
+            authData = {
+              token:
+                localStorage.getItem("token") || `mock-token-${Date.now()}`,
+              user: storedUserData,
+            };
+          }
         }
-      }
 
-      if (!authData) {
-        setError("Identifiants incorrects ou compte inexistant.");
+        if (!authData) {
+          setError("Identifiants incorrects ou compte inexistant.");
+          setLoading(false);
+          return;
+        }
+
+        // Stocker les données de manière cohérente
+        UserIdManager.storeAuthData(authData);
+
+        // Détermination de la destination selon le rôle
+        const role = authData.user.role;
+        const redirectPath = `/${locale}/dashboard/${role}`;
+
+        // Redirection forcée
+        window.location.href = redirectPath;
+      } catch (err) {
+        console.error("Login Error:", err);
+        setError(
+          "Le serveur Laravel est injoignable (Vérifiez qu'il tourne sur le port 8000)."
+        );
+        setLoading(false);
+      }
+    } else {
+      // --- LOGIQUE D'INSCRIPTION ---
+      console.log("🚀 DÉBUT INSCRIPTION - isLogin = false");
+
+      // Validation côté client simple
+      if (
+        !formData.name ||
+        !formData.email ||
+        !formData.password ||
+        !formData.password_confirmation
+      ) {
+        console.log("❌ Validation: champs manquants");
+        setError("Tous les champs sont obligatoires");
         setLoading(false);
         return;
       }
 
-      // Stocker les données de manière cohérente
-      UserIdManager.storeAuthData(authData);
+      if (formData.password !== formData.password_confirmation) {
+        console.log("❌ Validation: passwords ne correspondent pas");
+        setError("Les mots de passe ne correspondent pas");
+        setLoading(false);
+        return;
+      }
 
-      // Détermination de la destination selon le rôle
-      const role = authData.user.role;
-      const redirectPath = `/${locale}/dashboard/${role}`;
+      if (formData.password.length < 8) {
+        console.log("❌ Validation: mot de passe trop court");
+        setError("Le mot de passe doit contenir au moins 8 caractères");
+        setLoading(false);
+        return;
+      }
 
-      // Redirection forcée
-      window.location.href = redirectPath;
+      try {
+        console.log("🚀 DÉBUT INSCRIPTION COMPLET");
+        console.log("📧 Email:", formData.email);
+        console.log("👤 Name:", formData.name);
+        console.log("🔑 Password length:", formData.password?.length || 0);
+        console.log(
+          "🔑 Password Confirmation length:",
+          formData.password_confirmation?.length || 0
+        );
+        console.log("🔗 Base URL:", baseUrl);
+        console.log("🔗 API URL complète:", `${baseUrl}/api/auth/register`);
+        console.log("📋 FormData complet:", JSON.stringify(formData, null, 2));
 
-    } catch (err) {
-      console.error("Login Error:", err);
-      setError("Le serveur Laravel est injoignable (Vérifiez qu'il tourne sur le port 8000).");
-      setLoading(false);
-    }
-  } else {
-    // --- LOGIQUE D'INSCRIPTION ---
-    console.log('🚀 DÉBUT INSCRIPTION - isLogin = false');
-    
-    // Validation côté client simple
-    if (!formData.name || !formData.email || !formData.password || !formData.password_confirmation) {
-      console.log('❌ Validation: champs manquants');
-      setError("Tous les champs sont obligatoires");
-      setLoading(false);
-      return;
-    }
+        const response = await fetch(`${baseUrl}/api/auth/register`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            password_confirmation: formData.password_confirmation,
+          }),
+        });
 
-    if (formData.password !== formData.password_confirmation) {
-      console.log('❌ Validation: passwords ne correspondent pas');
-      setError("Les mots de passe ne correspondent pas");
-      setLoading(false);
-      return;
-    }
+        console.log("📨 Response status:", response.status);
+        console.log("📨 Response ok:", response.ok);
+        console.log(
+          "📨 Response headers:",
+          Object.fromEntries(response.headers.entries())
+        );
 
-    if (formData.password.length < 8) {
-      console.log('❌ Validation: mot de passe trop court');
-      setError("Le mot de passe doit contenir au moins 8 caractères");
-      setLoading(false);
-      return;
-    }
+        const data = await response.json();
+        console.log("📋 Response data:", data);
+        console.log("📋 Response data type:", typeof data);
 
-    try {
-      console.log('🚀 DÉBUT INSCRIPTION COMPLET');
-      console.log('📧 Email:', formData.email);
-      console.log('👤 Name:', formData.name);
-      console.log('🔑 Password length:', formData.password?.length || 0);
-      console.log('🔑 Password Confirmation length:', formData.password_confirmation?.length || 0);
-      console.log('🔗 Base URL:', baseUrl);
-      console.log('🔗 API URL complète:', `${baseUrl}/api/auth/register`);
-      console.log('📋 FormData complet:', JSON.stringify(formData, null, 2));
-      
-      const response = await fetch(`${baseUrl}/api/auth/register`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          password_confirmation: formData.password_confirmation,
-        }),
-      });
+        if (response.ok) {
+          console.log("✅ INSCRIPTION RÉUSSIE - Sauvegarde locale");
 
-      console.log('📨 Response status:', response.status);
-      console.log('📨 Response ok:', response.ok);
-      console.log('📨 Response headers:', Object.fromEntries(response.headers.entries()));
-      
-      const data = await response.json();
-      console.log('📋 Response data:', data);
-      console.log('📋 Response data type:', typeof data);
-
-      if (response.ok) {
-        console.log('✅ INSCRIPTION RÉUSSIE - Sauvegarde locale');
-        
-        // Sauvegarder l'utilisateur localement pour persistance
-        try {
-          const userData = {
-            id: data.user.id,
-            name: data.user.name,
-            email: data.user.email,
-            role: data.user.role,
-            token: data.token,
-            createdAt: new Date().toISOString()
-          };
-          
-          // Sauvegarder dans UserIdManager avec la bonne méthode
-          UserIdManager.storeAuthData({
-            token: data.token,
-            user: {
+          // Sauvegarder l'utilisateur localement pour persistance
+          try {
+            const userData = {
               id: data.user.id,
               name: data.user.name,
               email: data.user.email,
-              role: data.user.role as 'student' | 'creator' | 'admin'
+              role: data.user.role,
+              token: data.token,
+              createdAt: new Date().toISOString(),
+            };
+
+            // Sauvegarder dans UserIdManager avec la bonne méthode
+            UserIdManager.storeAuthData({
+              token: data.token,
+              user: {
+                id: data.user.id,
+                name: data.user.name,
+                email: data.user.email,
+                role: data.user.role as "student" | "creator" | "admin",
+              },
+            });
+
+            // Sauvegarder aussi dans localStorage directement pour backup
+            localStorage.setItem("user_backup", JSON.stringify(userData));
+
+            // Sauvegarder dans la liste des utilisateurs inscrits
+            const registeredUsers = JSON.parse(
+              localStorage.getItem("registered_users") || "[]"
+            );
+            const userExists = registeredUsers.some(
+              (user: any) => user.email === userData.email
+            );
+            if (!userExists) {
+              registeredUsers.push(userData);
+              localStorage.setItem(
+                "registered_users",
+                JSON.stringify(registeredUsers)
+              );
             }
-          });
-          
-          // Sauvegarder aussi dans localStorage directement pour backup
-          localStorage.setItem('user_backup', JSON.stringify(userData));
-          
-          // Sauvegarder dans la liste des utilisateurs inscrits
-          const registeredUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
-          const userExists = registeredUsers.some((user: any) => user.email === userData.email);
-          if (!userExists) {
-            registeredUsers.push(userData);
-            localStorage.setItem('registered_users', JSON.stringify(registeredUsers));
+
+            console.log("💾 Utilisateur sauvegardé localement:", userData);
+            console.log(
+              "📊 Total utilisateurs locaux:",
+              registeredUsers.length
+            );
+          } catch (saveError) {
+            console.error("❌ Erreur sauvegarde locale:", saveError);
           }
-          
-          console.log('💾 Utilisateur sauvegardé localement:', userData);
-          console.log('📊 Total utilisateurs locaux:', registeredUsers.length);
-        } catch (saveError) {
-          console.error('❌ Erreur sauvegarde locale:', saveError);
+
+          // Redirection automatique vers le dashboard étudiant
+          setSuccessMessage(
+            "Compte créé avec succès ! Redirection vers votre dashboard..."
+          );
+          setTimeout(() => {
+            const redirectPath = `/${locale}/dashboard/student`;
+            console.log("🔄 Redirection vers:", redirectPath);
+            window.location.href = redirectPath;
+          }, 1500);
+        } else {
+          setError(
+            data.message ||
+              "L'inscription a échoué. Cet email est peut-être déjà utilisé."
+          );
         }
-        
-        // Redirection automatique vers le dashboard étudiant
-        setSuccessMessage("Compte créé avec succès ! Redirection vers votre dashboard...");
+      } catch (err: any) {
+        console.error("❌ ERREUR INSCRIPTION DÉTAILLÉE:", err);
+        console.error("❌ Type d'erreur:", err?.constructor?.name || "Unknown");
+        console.error("❌ Message:", err?.message || "No message");
+        console.error("❌ Stack:", err?.stack || "No stack");
+
+        // Vérifier si c'est une erreur réseau
+        if (err instanceof TypeError && err.message.includes("fetch")) {
+          setError(
+            "Erreur réseau: Impossible de contacter le serveur. Vérifiez votre connexion."
+          );
+        } else if (err instanceof TypeError && err.message.includes("JSON")) {
+          setError("Erreur serveur: La réponse n'est pas valide. Réessayez.");
+        } else {
+          setError(
+            "Erreur lors de l'inscription. Vérifiez vos informations et réessayez."
+          );
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Fonction pour gérer la connexion avec les réseaux sociaux
+  const handleSocialLogin = async (provider: string) => {
+    setLoading(true);
+    setError("");
+
+    try {
+      // Clés arbitraires pour démonstration
+      const socialKeys = {
+        google: "demo-google-key-12345",
+        linkedIn: "demo-linkedin-key-67890",
+        facebook: "demo-facebook-key-09876",
+      };
+
+      console.log(`Connexion avec ${provider}...`);
+      console.log(
+        `Clé API (démo): ${socialKeys[provider as keyof typeof socialKeys]}`
+      );
+
+      // Simulation de connexion sociale réussie
+      setTimeout(() => {
+        const authData = UserIdManager.createSocialUser(provider);
+        UserIdManager.storeAuthData(authData);
+
+        setSuccessMessage(
+          `Connexion avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie !`
+        );
+
         setTimeout(() => {
-          const redirectPath = `/${locale}/dashboard/student`;
-          console.log('🔄 Redirection vers:', redirectPath);
-          window.location.href = redirectPath;
-        }, 1500);
-      } else {
-        setError(data.message || "L'inscription a échoué. Cet email est peut-être déjà utilisé.");
-      }
-    } catch (err: any) {
-      console.error("❌ ERREUR INSCRIPTION DÉTAILLÉE:", err);
-      console.error("❌ Type d'erreur:", err?.constructor?.name || 'Unknown');
-      console.error("❌ Message:", err?.message || 'No message');
-      console.error("❌ Stack:", err?.stack || 'No stack');
-      
-      // Vérifier si c'est une erreur réseau
-      if (err instanceof TypeError && err.message.includes('fetch')) {
-        setError("Erreur réseau: Impossible de contacter le serveur. Vérifiez votre connexion.");
-      } else if (err instanceof TypeError && err.message.includes('JSON')) {
-        setError("Erreur serveur: La réponse n'est pas valide. Réessayez.");
-      } else {
-        setError("Erreur lors de l'inscription. Vérifiez vos informations et réessayez.");
-      }
-    } finally {
+          window.location.href = `/${locale}/dashboard/student`;
+        }, 1000);
+      }, 1500);
+    } catch (error) {
+      console.error("Social login error:", error);
+      setError(`Erreur lors de la connexion avec ${provider}`);
       setLoading(false);
     }
-  }
-};
-
-// Fonction pour gérer la connexion avec les réseaux sociaux
-const handleSocialLogin = async (provider: string) => {
-  setLoading(true);
-  setError("");
-  
-  try {
-    // Clés arbitraires pour démonstration
-    const socialKeys = {
-      google: "demo-google-key-12345",
-      linkedIn: "demo-linkedin-key-67890", 
-      facebook: "demo-facebook-key-09876"
-    };
-    
-    console.log(`Connexion avec ${provider}...`);
-    console.log(`Clé API (démo): ${socialKeys[provider as keyof typeof socialKeys]}`);
-    
-    // Simulation de connexion sociale réussie
-    setTimeout(() => {
-      const authData = UserIdManager.createSocialUser(provider);
-      UserIdManager.storeAuthData(authData);
-      
-      setSuccessMessage(`Connexion avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie !`);
-      
-      setTimeout(() => {
-        window.location.href = `/${locale}/dashboard/student`;
-      }, 1000);
-    }, 1500);
-    
-  } catch (error) {
-    console.error("Social login error:", error);
-    setError(`Erreur lors de la connexion avec ${provider}`);
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-white lg:overflow-hidden font-sans relative">
-      
       {/* --- BOUTON RETOUR --- */}
       <motion.button
         initial={{ opacity: 0, x: -10 }}
@@ -304,7 +342,9 @@ const handleSocialLogin = async (provider: string) => {
         className="fixed top-6 left-6 z-[110] flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-white lg:text-gray-400 lg:border-gray-100 lg:bg-white lg:hover:text-primary lg:hover:border-primary transition-all shadow-xl lg:shadow-none"
       >
         <ArrowLeft size={18} />
-        <span className="text-[10px] font-black uppercase tracking-widest">Retour</span>
+        <span className="text-[10px] font-black uppercase tracking-widest">
+          Retour
+        </span>
       </motion.button>
 
       {/* --- NOTIFICATION DE SUCCÈS MODERNE --- */}
@@ -320,8 +360,13 @@ const handleSocialLogin = async (provider: string) => {
               <div className="bg-white/20 p-2 rounded-2xl">
                 <CheckCircle size={24} />
               </div>
-              <p className="text-sm font-bold flex-1 leading-tight">{successMessage}</p>
-              <button onClick={() => setSuccessMessage(null)} className="hover:rotate-90 transition-transform">
+              <p className="text-sm font-bold flex-1 leading-tight">
+                {successMessage}
+              </p>
+              <button
+                onClick={() => setSuccessMessage(null)}
+                className="hover:rotate-90 transition-transform"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -356,7 +401,13 @@ const handleSocialLogin = async (provider: string) => {
             animate={{ x: 0, opacity: 1 }}
             className="w-40 h-12 lg:w-48 lg:h-16 relative"
           >
-            <Image src="/matchmyformation_footer.png" fill className="object-contain" alt="Logo" priority />
+            <Image
+              src="/matchmyformation_footer.png"
+              fill
+              className="object-contain"
+              alt="Logo"
+              priority
+            />
           </motion.div>
 
           <div className="max-w-lg hidden lg:block">
@@ -366,14 +417,30 @@ const handleSocialLogin = async (provider: string) => {
               className="text-6xl font-black text-white leading-[1.1] mb-8"
             >
               L&apos;excellence du <br />
-              <span className="text-primary italic">tourisme</span> commence ici.
+              <span className="text-primary italic">tourisme</span> commence
+              ici.
             </motion.h1>
 
             <div className="grid grid-cols-1 gap-4 mt-12">
               {[
-                { icon: GraduationCap, title: "Certifications", desc: "Reconnues par l'État", color: "bg-blue-500" },
-                { icon: ShieldCheck, title: "Sécurité", desc: "Données protégées", color: "bg-emerald-500" },
-                { icon: Globe, title: "Réseau", desc: "40+ Experts Panafricains", color: "bg-orange-500" },
+                {
+                  icon: GraduationCap,
+                  title: "Certifications",
+                  desc: "Reconnues par l'État",
+                  color: "bg-blue-500",
+                },
+                {
+                  icon: ShieldCheck,
+                  title: "Sécurité",
+                  desc: "Données protégées",
+                  color: "bg-emerald-500",
+                },
+                {
+                  icon: Globe,
+                  title: "Réseau",
+                  desc: "40+ Experts Panafricains",
+                  color: "bg-orange-500",
+                },
               ].map((item, i) => (
                 <motion.div
                   key={i}
@@ -382,11 +449,15 @@ const handleSocialLogin = async (provider: string) => {
                   transition={{ delay: 0.5 + i * 0.1 }}
                   className="flex items-center gap-4 bg-white/5 backdrop-blur-xl border border-white/10 p-4 rounded-2xl"
                 >
-                  <div className={`w-10 h-10 rounded-xl ${item.color}/20 flex items-center justify-center text-white`}>
+                  <div
+                    className={`w-10 h-10 rounded-xl ${item.color}/20 flex items-center justify-center text-white`}
+                  >
                     <item.icon size={20} />
                   </div>
                   <div>
-                    <h4 className="text-white font-bold text-sm">{item.title}</h4>
+                    <h4 className="text-white font-bold text-sm">
+                      {item.title}
+                    </h4>
                     <p className="text-white/50 text-xs">{item.desc}</p>
                   </div>
                 </motion.div>
@@ -396,7 +467,9 @@ const handleSocialLogin = async (provider: string) => {
 
           <div className="flex gap-6 text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold mb-8 lg:mb-0">
             <span>© 2026 MatchMyFormation</span>
-            <Link href="#" className="hover:text-primary transition-colors">Confidentialité</Link>
+            <Link href="#" className="hover:text-primary transition-colors">
+              Confidentialité
+            </Link>
           </div>
         </div>
       </div>
@@ -432,45 +505,62 @@ const handleSocialLogin = async (provider: string) => {
           </div>
 
           {error && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }} 
-              animate={{ opacity: 1, y: 0 }} 
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
               className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl text-[10px] lg:text-xs font-bold border border-red-100"
             >
-               {error}
+              {error}
             </motion.div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-6">
             <AnimatePresence mode="wait">
               {!isLogin && (
-                <motion.div 
-                  key="register" 
-                  initial={{ opacity: 0, height: 0 }} 
-                  animate={{ opacity: 1, height: "auto" }} 
-                  exit={{ opacity: 0, height: 0 }} 
+                <motion.div
+                  key="register"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
                   className="space-y-2"
                 >
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-4 tracking-widest">Nom complet</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-4 tracking-widest">
+                    Nom complet
+                  </label>
                   <div className="relative group">
-                    <User className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors" size={20} />
-                    <input name="name" type="text" onChange={handleChange} placeholder="Jean Kouassi" className="w-full pl-16 pr-6 py-4 lg:py-5.5 bg-gray-50 border border-transparent rounded-[1.5rem] lg:rounded-[1.8rem] focus:bg-white focus:border-primary outline-none transition-all font-semibold text-base" required={!isLogin} />
+                    <User
+                      className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors"
+                      size={20}
+                    />
+                    <input
+                      name="name"
+                      type="text"
+                      onChange={handleChange}
+                      placeholder="Jean Kouassi"
+                      className="w-full pl-16 pr-6 py-4 lg:py-5.5 bg-gray-50 border border-transparent rounded-[1.5rem] lg:rounded-[1.8rem] focus:bg-white focus:border-primary outline-none transition-all font-semibold text-base"
+                      required={!isLogin}
+                    />
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase ml-4 tracking-widest">Adresse Email</label>
+              <label className="text-[10px] font-black text-gray-400 uppercase ml-4 tracking-widest">
+                Adresse Email
+              </label>
               <div className="relative group">
-                <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors" size={20} />
-                <input 
-                  name="email" 
-                  type="email" 
-                  onChange={handleChange} 
-                  placeholder="student@match.com" 
-                  className="w-full pl-16 pr-6 py-4 lg:py-5.5 bg-gray-50 border border-transparent rounded-[1.5rem] lg:rounded-[1.8rem] focus:bg-white focus:border-primary outline-none transition-all font-semibold text-base" 
-                  required 
+                <Mail
+                  className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors"
+                  size={20}
+                />
+                <input
+                  name="email"
+                  type="email"
+                  onChange={handleChange}
+                  placeholder="student@match.com"
+                  className="w-full pl-16 pr-6 py-4 lg:py-5.5 bg-gray-50 border border-transparent rounded-[1.5rem] lg:rounded-[1.8rem] focus:bg-white focus:border-primary outline-none transition-all font-semibold text-base"
+                  required
                 />
               </div>
               <div className="ml-4 text-xs text-gray-400">
@@ -481,12 +571,33 @@ const handleSocialLogin = async (provider: string) => {
             <div className="space-y-2">
               <div className="flex justify-between items-center px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 <label>Mot de passe</label>
-                {isLogin && <Link href={`/${locale}/forgot-password`} className="text-primary hover:underline">Oublié ?</Link>}
+                {isLogin && (
+                  <Link
+                    href={`/${locale}/forgot-password`}
+                    className="text-primary hover:underline"
+                  >
+                    Oublié ?
+                  </Link>
+                )}
               </div>
               <div className="relative group">
-                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors" size={20} />
-                <input name="password" type={showPassword ? "text" : "password"} onChange={handleChange} placeholder="Azerty123!" className="w-full pl-16 pr-16 py-4 lg:py-5.5 bg-gray-50 border border-transparent rounded-[1.5rem] lg:rounded-[1.8rem] focus:bg-white focus:border-primary outline-none transition-all font-semibold text-base" required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 transition-colors">
+                <Lock
+                  className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors"
+                  size={20}
+                />
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  onChange={handleChange}
+                  placeholder="Azerty123!"
+                  className="w-full pl-16 pr-16 py-4 lg:py-5.5 bg-gray-50 border border-transparent rounded-[1.5rem] lg:rounded-[1.8rem] focus:bg-white focus:border-primary outline-none transition-all font-semibold text-base"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 transition-colors"
+                >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
@@ -497,23 +608,28 @@ const handleSocialLogin = async (provider: string) => {
 
             <AnimatePresence mode="wait">
               {!isLogin && (
-                <motion.div 
-                  key="password-confirm" 
-                  initial={{ opacity: 0, height: 0 }} 
-                  animate={{ opacity: 1, height: "auto" }} 
-                  exit={{ opacity: 0, height: 0 }} 
+                <motion.div
+                  key="password-confirm"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
                   className="space-y-2"
                 >
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-4 tracking-widest">Confirmation mot de passe</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-4 tracking-widest">
+                    Confirmation mot de passe
+                  </label>
                   <div className="relative group">
-                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors" size={20} />
-                    <input 
-                      name="password_confirmation" 
-                      type={showPassword ? "text" : "password"} 
-                      onChange={handleChange} 
-                      placeholder="Confirmez votre mot de passe" 
-                      className="w-full pl-16 pr-6 py-4 lg:py-5.5 bg-gray-50 border border-transparent rounded-[1.5rem] lg:rounded-[1.8rem] focus:bg-white focus:border-primary outline-none transition-all font-semibold text-base" 
-                      required={!isLogin} 
+                    <Lock
+                      className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors"
+                      size={20}
+                    />
+                    <input
+                      name="password_confirmation"
+                      type={showPassword ? "text" : "password"}
+                      onChange={handleChange}
+                      placeholder="Confirmez votre mot de passe"
+                      className="w-full pl-16 pr-6 py-4 lg:py-5.5 bg-gray-50 border border-transparent rounded-[1.5rem] lg:rounded-[1.8rem] focus:bg-white focus:border-primary outline-none transition-all font-semibold text-base"
+                      required={!isLogin}
                     />
                   </div>
                 </motion.div>
@@ -526,24 +642,45 @@ const handleSocialLogin = async (provider: string) => {
                 disabled={loading}
                 className="w-full py-5 lg:py-6 bg-[#002B24] text-white rounded-[1.5rem] lg:rounded-[1.8rem] font-black uppercase tracking-[0.2em] text-[10px] lg:text-[11px] shadow-2xl shadow-[#002B24]/20 hover:bg-primary transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50"
               >
-                {loading ? <span className="animate-pulse">Traitement...</span> : (isLogin ? "Entrer dans l'académie" : "Créer mon profil")}
+                {loading ? (
+                  <span className="animate-pulse">Traitement...</span>
+                ) : isLogin ? (
+                  "Entrer dans l'académie"
+                ) : (
+                  "Créer mon profil"
+                )}
                 {!loading && <ArrowRight size={18} />}
               </button>
 
               {!isLogin && (
                 <p className="mt-6 text-center text-[10px] text-gray-400 font-medium px-4 leading-relaxed uppercase tracking-wider">
                   En créant un compte, vous acceptez nos{" "}
-                  <Link href="#" className="text-primary font-black hover:underline underline-offset-4">Conditions</Link>
+                  <Link
+                    href="#"
+                    className="text-primary font-black hover:underline underline-offset-4"
+                  >
+                    Conditions
+                  </Link>
                   {" & "}
-                  <Link href="#" className="text-primary font-black hover:underline underline-offset-4">Politique</Link>.
+                  <Link
+                    href="#"
+                    className="text-primary font-black hover:underline underline-offset-4"
+                  >
+                    Politique
+                  </Link>
+                  .
                 </p>
               )}
             </div>
 
             <div className="relative py-4">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"></div></div>
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-100"></div>
+              </div>
               <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.2em]">
-                <span className="bg-white px-4 text-gray-400 text-center">Ou continuer avec</span>
+                <span className="bg-white px-4 text-gray-400 text-center">
+                  Ou continuer avec
+                </span>
               </div>
             </div>
 
@@ -556,7 +693,12 @@ const handleSocialLogin = async (provider: string) => {
                   className="flex items-center justify-center py-4 lg:py-5 border border-gray-100 rounded-xl lg:rounded-2xl transition-all hover:bg-white hover:shadow-xl active:scale-95 bg-gray-50/50"
                 >
                   <div className="relative w-5 h-5 lg:w-6 lg:h-6">
-                    <Image src={`/${social}.png`} fill className="object-contain" alt={social} />
+                    <Image
+                      src={`/${social}.png`}
+                      fill
+                      className="object-contain"
+                      alt={social}
+                    />
                   </div>
                 </button>
               ))}

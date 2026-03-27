@@ -11,23 +11,26 @@ export default function TestNavigationPage() {
   const [logs, setLogs] = useState<string[]>([]);
 
   const addLog = (message: string) => {
-    setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+    setLogs((prev) => [
+      ...prev,
+      `${new Date().toLocaleTimeString()}: ${message}`,
+    ]);
   };
 
   const testRouterNavigation = () => {
     addLog("🚀 Test de navigation avec router.push()");
     addLog(`📍 Router disponible: ${!!router}`);
     addLog(`📍 Locale: ${locale}`);
-    
+
     const targetUrl = `/${locale}/dashboard/creator/employees/add`;
     addLog(`🔗 URL cible: ${targetUrl}`);
-    
+
     try {
       router.push(targetUrl);
       addLog("✅ Navigation demandée avec router.push()");
     } catch (error) {
       addLog(`❌ Erreur router.push(): ${error}`);
-      
+
       // Test fallback
       addLog("🔄 Test fallback avec window.location");
       window.location.href = targetUrl;
@@ -39,17 +42,17 @@ export default function TestNavigationPage() {
     addLog("🧪 Test de navigation directe");
     const targetUrl = `/${locale}/dashboard/creator/employees/add`;
     addLog(`🔗 URL directe: ${targetUrl}`);
-    
+
     window.location.href = targetUrl;
     addLog("✅ Navigation directe demandée");
   };
 
   const testPageAccess = async (pageName: string, path: string) => {
     addLog(`📄 Test accès page: ${pageName}`);
-    
+
     try {
-      const response = await fetch(`/${locale}${path}`, { method: 'HEAD' });
-      addLog(`${response.ok ? '✅' : '❌'} ${pageName}: ${response.status}`);
+      const response = await fetch(`/${locale}${path}`, { method: "HEAD" });
+      addLog(`${response.ok ? "✅" : "❌"} ${pageName}: ${response.status}`);
     } catch (error) {
       addLog(`❌ Erreur ${pageName}: ${error}`);
     }
@@ -66,7 +69,7 @@ export default function TestNavigationPage() {
           <TestTube className="w-8 h-8 text-blue-600" />
           Test de Navigation
         </h1>
-        
+
         <div className="bg-gray-100 rounded-lg p-6 mb-6 max-h-64 overflow-y-auto">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-blue-600" />
@@ -74,10 +77,14 @@ export default function TestNavigationPage() {
           </h2>
           <div className="space-y-1">
             {logs.length === 0 ? (
-              <p className="text-gray-500">Cliquez sur un test pour voir les logs</p>
+              <p className="text-gray-500">
+                Cliquez sur un test pour voir les logs
+              </p>
             ) : (
               logs.map((log, index) => (
-                <p key={index} className="text-sm font-mono">{log}</p>
+                <p key={index} className="text-sm font-mono">
+                  {log}
+                </p>
               ))
             )}
           </div>
@@ -105,22 +112,36 @@ export default function TestNavigationPage() {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-3">Tests d'Accessibilité:</h3>
+            <h3 className="text-lg font-semibold mb-3">
+              Tests d'Accessibilité:
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button
-                onClick={() => testPageAccess("Liste Employés", "/dashboard/creator/employees")}
+                onClick={() =>
+                  testPageAccess(
+                    "Liste Employés",
+                    "/dashboard/creator/employees"
+                  )
+                }
                 className="px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
               >
                 Test Liste
               </button>
               <button
-                onClick={() => testPageAccess("Ajout Employé", "/dashboard/creator/employees/add")}
+                onClick={() =>
+                  testPageAccess(
+                    "Ajout Employé",
+                    "/dashboard/creator/employees/add"
+                  )
+                }
                 className="px-4 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors"
               >
                 Test Ajout
               </button>
               <button
-                onClick={() => testPageAccess("Branding", "/dashboard/creator/branding")}
+                onClick={() =>
+                  testPageAccess("Branding", "/dashboard/creator/branding")
+                }
                 className="px-4 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
               >
                 Test Branding
@@ -135,10 +156,14 @@ export default function TestNavigationPage() {
             >
               Effacer les logs
             </button>
-            
+
             <div className="text-sm text-gray-600">
-              <p>Locale actuelle: <strong>{locale}</strong></p>
-              <p>Router disponible: <strong>{!!router ? 'Oui' : 'Non'}</strong></p>
+              <p>
+                Locale actuelle: <strong>{locale}</strong>
+              </p>
+              <p>
+                Router disponible: <strong>{!!router ? "Oui" : "Non"}</strong>
+              </p>
             </div>
           </div>
         </div>

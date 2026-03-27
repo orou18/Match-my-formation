@@ -38,50 +38,63 @@ import {
   FolderOpen,
   Search,
   Tag,
-  Music
+  Music,
 } from "lucide-react";
-import type { Video, VideoFormData, Resource, DashboardStats } from "@/types/creator";
-import { useSimpleNotification, NotificationContainer } from "@/components/ui/SimpleNotification";
+import { isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/video-utils";
+import type {
+  Video,
+  VideoFormData,
+  Resource,
+  DashboardStats,
+} from "@/types/creator";
+import {
+  useSimpleNotification,
+  NotificationContainer,
+} from "@/components/ui/SimpleNotification";
 
 export default function DashboardOverviewFixed() {
   const params = useParams();
-  const locale = (params.locale as string) || 'fr';
-  
+  const locale = (params.locale as string) || "fr";
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [previewVideo, setPreviewVideo] = useState<Video | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'published' | 'drafts'>('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'date' | 'views' | 'likes'>('date');
+  const [activeTab, setActiveTab] = useState<"all" | "published" | "drafts">(
+    "all"
+  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<"date" | "views" | "likes">("date");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [videoDuration, setVideoDuration] = useState('00:00');
+  const [videoDuration, setVideoDuration] = useState("00:00");
   const [thumbnailTime, setThumbnailTime] = useState(0);
   const [generatedThumbnails, setGeneratedThumbnails] = useState<string[]>([]);
-  const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(null);
-  
+  const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(
+    null
+  );
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [formData, setFormData] = useState<VideoFormData>({
-    title: '',
-    description: '',
-    category: '',
+    title: "",
+    description: "",
+    category: "",
     learning_objectives: [],
     resources: [],
-    visibility: 'private',
+    visibility: "private",
     allow_comments: true,
     publish_immediately: false,
     tags: [],
-    video_url: '',
-    thumbnail_url: ''
+    video_url: "",
+    thumbnail_url: "",
   });
-  
-  const [newObjective, setNewObjective] = useState('');
-  const [newTag, setNewTag] = useState('');
+
+  const [newObjective, setNewObjective] = useState("");
+  const [newTag, setNewTag] = useState("");
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
@@ -90,10 +103,11 @@ export default function DashboardOverviewFixed() {
     objectives: false,
     resources: false,
     files: true,
-    settings: false
+    settings: false,
   });
 
-  const { notifications, success, error, removeNotification } = useSimpleNotification();
+  const { notifications, success, error, removeNotification } =
+    useSimpleNotification();
 
   useEffect(() => {
     loadVideos();
@@ -102,15 +116,15 @@ export default function DashboardOverviewFixed() {
 
   const loadVideos = async () => {
     try {
-      const response = await fetch('/api/creator/dashboard');
+      const response = await fetch("/api/creator/dashboard");
       if (response.ok) {
         const data = await response.json();
         setVideos(data.videos || []);
       } else {
-        console.error('Erreur lors du chargement des vidéos');
+        console.error("Erreur lors du chargement des vidéos");
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des vidéos:', error);
+      console.error("Erreur lors du chargement des vidéos:", error);
     } finally {
       setLoading(false);
     }
@@ -118,18 +132,20 @@ export default function DashboardOverviewFixed() {
 
   const loadStats = async () => {
     try {
-      const response = await fetch('/api/creator/dashboard');
+      const response = await fetch("/api/creator/dashboard");
       if (response.ok) {
         const data = await response.json();
-        setStats(data.stats || {
-          totalVideos: 0,
-          totalViews: 0,
-          engagement: 0,
-          revenue: 0
-        });
+        setStats(
+          data.stats || {
+            totalVideos: 0,
+            totalViews: 0,
+            engagement: 0,
+            revenue: 0,
+          }
+        );
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des stats:', error);
+      console.error("Erreur lors du chargement des stats:", error);
     }
   };
 
@@ -138,34 +154,43 @@ export default function DashboardOverviewFixed() {
     setIsSubmitting(true);
     setUploadProgress(0);
 
-    success('Création en cours', 'Votre vidéo est en cours de création...');
+    success("Création en cours", "Votre vidéo est en cours de création...");
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('learning_objectives', JSON.stringify(formData.learning_objectives));
-      formDataToSend.append('resources', JSON.stringify(formData.resources));
-      formDataToSend.append('tags', JSON.stringify(formData.tags));
-      formDataToSend.append('visibility', formData.visibility);
-      formDataToSend.append('allow_comments', formData.allow_comments.toString());
-      formDataToSend.append('publish_immediately', formData.publish_immediately.toString());
-      formDataToSend.append('duration', videoDuration);
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("category", formData.category);
+      formDataToSend.append(
+        "learning_objectives",
+        JSON.stringify(formData.learning_objectives)
+      );
+      formDataToSend.append("resources", JSON.stringify(formData.resources));
+      formDataToSend.append("tags", JSON.stringify(formData.tags));
+      formDataToSend.append("visibility", formData.visibility);
+      formDataToSend.append(
+        "allow_comments",
+        formData.allow_comments.toString()
+      );
+      formDataToSend.append(
+        "publish_immediately",
+        formData.publish_immediately.toString()
+      );
+      formDataToSend.append("duration", videoDuration);
 
       if (formData.video_file) {
-        formDataToSend.append('video_file', formData.video_file);
+        formDataToSend.append("video_file", formData.video_file);
       }
       if (formData.thumbnail) {
-        formDataToSend.append('thumbnail', formData.thumbnail);
+        formDataToSend.append("thumbnail", formData.thumbnail);
       }
       if (selectedThumbnail) {
-        formDataToSend.append('selected_thumbnail', selectedThumbnail);
+        formDataToSend.append("selected_thumbnail", selectedThumbnail);
       }
 
       // Simuler la progression de l'upload
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
+        setUploadProgress((prev) => {
           if (prev >= 90) {
             clearInterval(progressInterval);
             return 90;
@@ -174,9 +199,9 @@ export default function DashboardOverviewFixed() {
         });
       }, 200);
 
-      const response = await fetch('/api/creator/videos', {
-        method: 'POST',
-        body: formDataToSend
+      const response = await fetch("/api/creator/videos", {
+        method: "POST",
+        body: formDataToSend,
       });
 
       clearInterval(progressInterval);
@@ -184,22 +209,28 @@ export default function DashboardOverviewFixed() {
 
       if (response.ok) {
         const result = await response.json();
-        setVideos(prev => [...prev, result.video]);
+        setVideos((prev) => [...prev, result.video]);
         setShowCreateModal(false);
         resetForm();
-        success('Vidéo créée avec succès', `"${result.video.title}" a été ajoutée à votre contenu`);
-        
+        success(
+          "Vidéo créée avec succès",
+          `"${result.video.title}" a été ajoutée à votre contenu`
+        );
+
         // Si la vidéo est publique, recharger les données
-        if (result.video.visibility === 'public') {
+        if (result.video.visibility === "public") {
           loadStats();
         }
       } else {
         const errorData = await response.json();
-        error('Erreur lors de la création', errorData.error || 'Une erreur est survenue');
+        error(
+          "Erreur lors de la création",
+          errorData.error || "Une erreur est survenue"
+        );
       }
     } catch (err) {
-      console.error('Erreur:', err);
-      error('Erreur lors de la création', 'Une erreur technique est survenue');
+      console.error("Erreur:", err);
+      error("Erreur lors de la création", "Une erreur technique est survenue");
     } finally {
       setIsSubmitting(false);
       setUploadProgress(0);
@@ -207,30 +238,43 @@ export default function DashboardOverviewFixed() {
   };
 
   const handleDeleteVideo = async (videoId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette vidéo? Cette action est irréversible.')) {
+    if (
+      !confirm(
+        "Êtes-vous sûr de vouloir supprimer cette vidéo? Cette action est irréversible."
+      )
+    ) {
       return;
     }
 
     try {
       const response = await fetch(`/api/creator/videos?id=${videoId}`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
 
       if (response.ok) {
-        const deletedVideo = videos.find(v => v.id === videoId);
-        setVideos(videos.filter(video => video.id !== videoId));
+        const deletedVideo = videos.find((v) => v.id === videoId);
+        setVideos(videos.filter((video) => video.id !== videoId));
         if (previewVideo?.id === videoId) {
           setPreviewVideo(null);
         }
-        success('Vidéo supprimée', `"${deletedVideo?.title}" a été supprimée avec succès`);
+        success(
+          "Vidéo supprimée",
+          `"${deletedVideo?.title}" a été supprimée avec succès`
+        );
         loadStats();
       } else {
         const errorData = await response.json();
-        error('Erreur lors de la suppression', errorData.error || 'Une erreur est survenue');
+        error(
+          "Erreur lors de la suppression",
+          errorData.error || "Une erreur est survenue"
+        );
       }
     } catch (err) {
-      console.error('Erreur:', err);
-      error('Erreur lors de la suppression', 'Une erreur technique est survenue');
+      console.error("Erreur:", err);
+      error(
+        "Erreur lors de la suppression",
+        "Une erreur technique est survenue"
+      );
     }
   };
 
@@ -240,96 +284,109 @@ export default function DashboardOverviewFixed() {
 
   const handleEdit = (video: Video) => {
     // Implémenter la logique d'édition
-    console.log('Éditer la vidéo:', video);
+    console.log("Éditer la vidéo:", video);
   };
 
   const addObjective = () => {
     if (newObjective.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        learning_objectives: [...prev.learning_objectives, newObjective.trim()]
+        learning_objectives: [...prev.learning_objectives, newObjective.trim()],
       }));
-      setNewObjective('');
+      setNewObjective("");
     }
   };
 
   const removeObjective = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      learning_objectives: prev.learning_objectives.filter((_, i) => i !== index)
+      learning_objectives: prev.learning_objectives.filter(
+        (_, i) => i !== index
+      ),
     }));
   };
 
   const addTag = () => {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, newTag.trim()]
+        tags: [...prev.tags, newTag.trim()],
       }));
-      setNewTag('');
+      setNewTag("");
     }
   };
 
   const removeTag = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter((_, i) => i !== index)
+      tags: prev.tags.filter((_, i) => i !== index),
     }));
   };
 
   const addResource = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      resources: [...prev.resources, {
-        type: 'link',
-        title: '',
-        description: '',
-        url: '',
-        file_size: 0,
-        created_at: new Date().toISOString()
-      }]
+      resources: [
+        ...prev.resources,
+        {
+          type: "link",
+          title: "",
+          description: "",
+          url: "",
+          file_size: 0,
+          created_at: new Date().toISOString(),
+        },
+      ],
     }));
   };
 
-  const updateResource = (index: number, field: string, value: string | File | number) => {
-    setFormData(prev => ({
+  const updateResource = (
+    index: number,
+    field: string,
+    value: string | File | number
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      resources: prev.resources.map((resource, i) => 
+      resources: prev.resources.map((resource, i) =>
         i === index ? { ...resource, [field]: value } : resource
-      )
+      ),
     }));
   };
 
   const removeResource = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      resources: prev.resources.filter((_, i) => i !== index)
+      resources: prev.resources.filter((_, i) => i !== index),
     }));
   };
 
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFormData(prev => ({ ...prev, video_file: file }));
+      setFormData((prev) => ({ ...prev, video_file: file }));
       setVideoPreview(URL.createObjectURL(file));
-      
+
       // Obtenir la durée de la vidéo
-      const video = document.createElement('video');
-      video.preload = 'metadata';
+      const video = document.createElement("video");
+      video.preload = "metadata";
       video.onloadedmetadata = () => {
         const duration = Math.floor(video.duration);
         const minutes = Math.floor(duration / 60);
         const seconds = duration % 60;
-        setVideoDuration(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        setVideoDuration(
+          `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+        );
       };
       video.src = URL.createObjectURL(file);
     }
   };
 
-  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleThumbnailUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFormData(prev => ({ ...prev, thumbnail: file }));
+      setFormData((prev) => ({ ...prev, thumbnail: file }));
       setThumbnailPreview(URL.createObjectURL(file));
       setSelectedThumbnail(null);
       setGeneratedThumbnails([]);
@@ -350,15 +407,15 @@ export default function DashboardOverviewFixed() {
     for (let i = 0; i < 6; i++) {
       const time = i * interval;
       video.currentTime = time;
-      
-      await new Promise(resolve => {
+
+      await new Promise((resolve) => {
         video.onseeked = () => {
-          const canvas = document.createElement('canvas');
+          const canvas = document.createElement("canvas");
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext("2d");
           ctx?.drawImage(video, 0, 0);
-          thumbnails.push(canvas.toDataURL('image/jpeg', 0.8));
+          thumbnails.push(canvas.toDataURL("image/jpeg", 0.8));
           resolve(true);
         };
       });
@@ -366,7 +423,10 @@ export default function DashboardOverviewFixed() {
 
     setGeneratedThumbnails(thumbnails);
     setIsGeneratingThumbnail(false);
-    success('Miniatures générées', '6 miniatures ont été générées à partir de la vidéo');
+    success(
+      "Miniatures générées",
+      "6 miniatures ont été générées à partir de la vidéo"
+    );
   };
 
   const selectThumbnail = (thumbnail: string) => {
@@ -379,84 +439,93 @@ export default function DashboardOverviewFixed() {
 
     try {
       const uploadFormData = new FormData();
-      uploadFormData.append('file', file);
-      uploadFormData.append('type', formData.resources[index].type);
+      uploadFormData.append("file", file);
+      uploadFormData.append("type", formData.resources[index].type);
 
-      const response = await fetch('/api/creator/upload-resource', {
-        method: 'POST',
-        body: uploadFormData
+      const response = await fetch("/api/creator/upload-resource", {
+        method: "POST",
+        body: uploadFormData,
       });
 
       if (response.ok) {
         const result = await response.json();
-        updateResource(index, 'url', result.url);
-        updateResource(index, 'file_size', file.size);
-        success('Ressource uploadée', 'Le fichier a été uploadé avec succès');
+        updateResource(index, "url", result.url);
+        updateResource(index, "file_size", file.size);
+        success("Ressource uploadée", "Le fichier a été uploadé avec succès");
       } else {
         const errorData = await response.json();
-        error('Erreur d\'upload', errorData.error || 'Impossible d\'uploader le fichier');
+        error(
+          "Erreur d'upload",
+          errorData.error || "Impossible d'uploader le fichier"
+        );
       }
     } catch (err) {
-      console.error('Erreur:', err);
-      error('Erreur technique', 'Une erreur est survenue lors de l\'upload');
+      console.error("Erreur:", err);
+      error("Erreur technique", "Une erreur est survenue lors de l'upload");
     }
   };
 
   const resetForm = () => {
     setFormData({
-      title: '',
-      description: '',
-      category: '',
+      title: "",
+      description: "",
+      category: "",
       learning_objectives: [],
       resources: [],
-      visibility: 'private',
+      visibility: "private",
       allow_comments: true,
       publish_immediately: false,
       tags: [],
-      video_url: '',
-      thumbnail_url: ''
+      video_url: "",
+      thumbnail_url: "",
     });
-    setNewObjective('');
-    setNewTag('');
+    setNewObjective("");
+    setNewTag("");
     setVideoPreview(null);
     setThumbnailPreview(null);
     setSelectedThumbnail(null);
     setGeneratedThumbnails([]);
-    setVideoDuration('00:00');
+    setVideoDuration("00:00");
     setExpandedSections({
       basic: true,
       objectives: false,
       resources: false,
       files: true,
-      settings: false
+      settings: false,
     });
   };
 
   const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
-  const filteredVideos = videos.filter(video => {
-    const matchesSearch = video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         video.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTab = activeTab === 'all' || 
-                      (activeTab === 'published' && video.is_published) ||
-                      (activeTab === 'drafts' && !video.is_published);
-    return matchesSearch && matchesTab;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case 'views':
-        return b.views - a.views;
-      case 'likes':
-        return b.likes - a.likes;
-      case 'date':
-      default:
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    }
-  });
+  const filteredVideos = videos
+    .filter((video) => {
+      const matchesSearch =
+        video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        video.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesTab =
+        activeTab === "all" ||
+        (activeTab === "published" && video.is_published) ||
+        (activeTab === "drafts" && !video.is_published);
+      return matchesSearch && matchesTab;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "views":
+          return b.views - a.views;
+        case "likes":
+          return b.likes - a.likes;
+        case "date":
+        default:
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+      }
+    });
 
   const statCards = [
     {
@@ -465,7 +534,7 @@ export default function DashboardOverviewFixed() {
       icon: VideoIcon,
       color: "bg-blue-500",
       change: "+12%",
-      changeType: "increase"
+      changeType: "increase",
     },
     {
       title: "Vues Totales",
@@ -473,7 +542,7 @@ export default function DashboardOverviewFixed() {
       icon: Eye,
       color: "bg-green-500",
       change: "+8%",
-      changeType: "increase"
+      changeType: "increase",
     },
     {
       title: "Engagement",
@@ -481,7 +550,7 @@ export default function DashboardOverviewFixed() {
       icon: Users,
       color: "bg-purple-500",
       change: "+5%",
-      changeType: "increase"
+      changeType: "increase",
     },
     {
       title: "Revenus",
@@ -489,8 +558,8 @@ export default function DashboardOverviewFixed() {
       icon: DollarSign,
       color: "bg-yellow-500",
       change: "+15%",
-      changeType: "increase"
-    }
+      changeType: "increase",
+    },
   ];
 
   return (
@@ -505,7 +574,9 @@ export default function DashboardOverviewFixed() {
                   <Film className="w-8 h-8 text-blue-600" />
                   Tableau de bord Créateur
                 </h1>
-                <p className="text-gray-600 mt-1">Gérez votre contenu et suivez vos performances</p>
+                <p className="text-gray-600 mt-1">
+                  Gérez votre contenu et suivez vos performances
+                </p>
               </div>
               <button
                 onClick={() => setShowCreateModal(true)}
@@ -537,7 +608,9 @@ export default function DashboardOverviewFixed() {
                     {stat.change}
                   </span>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  {stat.value}
+                </h3>
                 <p className="text-gray-600 text-sm mt-1">{stat.title}</p>
               </motion.div>
             ))}
@@ -547,93 +620,97 @@ export default function DashboardOverviewFixed() {
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           {/* Filters and Search */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-          <div className="p-4 lg:p-6">
-            <div className="flex flex-col xl:flex-row gap-4 lg:gap-6 items-start lg:items-center justify-between">
-              {/* Tabs */}
-              <div className="flex flex-wrap gap-2 lg:gap-3 w-full xl:w-auto">
-                <button
-                  onClick={() => setActiveTab('all')}
-                  className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-                    activeTab === 'all' 
-                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg transform scale-105' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
-                  }`}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <VideoIcon className="w-4 h-4" />
-                    Toutes
-                  </span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('published')}
-                  className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-                    activeTab === 'published' 
-                      ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg transform scale-105' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
-                  }`}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    Publiées
-                  </span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('drafts')}
-                  className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-                    activeTab === 'drafts' 
-                      ? 'bg-gradient-to-r from-yellow-600 to-yellow-700 text-white shadow-lg transform scale-105' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
-                  }`}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <Edit className="w-4 h-4" />
-                    Brouillons
-                  </span>
-                </button>
-              </div>
-              
-              {/* Search and Sort */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-                <div className="relative flex-1 sm:flex-initial">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Rechercher une vidéo..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full sm:w-64 lg:w-80 pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors"
-                  />
-                </div>
-                <div className="relative">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as 'date' | 'views' | 'likes')}
-                    className="appearance-none bg-gray-50 hover:bg-white border border-gray-300 rounded-xl px-4 py-2.5 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors cursor-pointer"
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
+            <div className="p-4 lg:p-6">
+              <div className="flex flex-col xl:flex-row gap-4 lg:gap-6 items-start lg:items-center justify-between">
+                {/* Tabs */}
+                <div className="flex flex-wrap gap-2 lg:gap-3 w-full xl:w-auto">
+                  <button
+                    onClick={() => setActiveTab("all")}
+                    className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                      activeTab === "all"
+                        ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg transform scale-105"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
+                    }`}
                   >
-                    <option value="date">📅 Trier par date</option>
-                    <option value="views">👁️ Trier par vues</option>
-                    <option value="likes">❤️ Trier par likes</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                    <span className="flex items-center justify-center gap-2">
+                      <VideoIcon className="w-4 h-4" />
+                      Toutes
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("published")}
+                    className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                      activeTab === "published"
+                        ? "bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg transform scale-105"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
+                    }`}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      Publiées
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("drafts")}
+                    className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                      activeTab === "drafts"
+                        ? "bg-gradient-to-r from-yellow-600 to-yellow-700 text-white shadow-lg transform scale-105"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
+                    }`}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <Edit className="w-4 h-4" />
+                      Brouillons
+                    </span>
+                  </button>
+                </div>
+
+                {/* Search and Sort */}
+                <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+                  <div className="relative flex-1 sm:flex-initial">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Rechercher une vidéo..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full sm:w-64 lg:w-80 pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors"
+                    />
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={sortBy}
+                      onChange={(e) =>
+                        setSortBy(e.target.value as "date" | "views" | "likes")
+                      }
+                      className="appearance-none bg-gray-50 hover:bg-white border border-gray-300 rounded-xl px-4 py-2.5 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors cursor-pointer"
+                    >
+                      <option value="date">📅 Trier par date</option>
+                      <option value="views">👁️ Trier par vues</option>
+                      <option value="likes">❤️ Trier par likes</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Videos List */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="p-6 border-b border-gray-100">
-                  <h2 className="text-xl font-semibold text-gray-900">Votre contenu</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Votre contenu
+                  </h2>
                 </div>
-                
+
                 <div className="p-4 lg:p-6">
                   {loading ? (
                     <div className="flex items-center justify-center py-16">
@@ -643,13 +720,14 @@ export default function DashboardOverviewFixed() {
                     <div className="text-center py-16 px-4">
                       <VideoIcon className="w-20 h-20 text-gray-400 mx-auto mb-6" />
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        {searchTerm ? 'Aucune vidéo trouvée' : 'Vous n\'avez pas encore de contenu'}
+                        {searchTerm
+                          ? "Aucune vidéo trouvée"
+                          : "Vous n'avez pas encore de contenu"}
                       </h3>
                       <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                        {searchTerm 
-                          ? 'Essayez de modifier votre recherche ou les filtres' 
-                          : 'Commencez par créer votre première vidéo pour voir apparaître votre contenu ici'
-                        }
+                        {searchTerm
+                          ? "Essayez de modifier votre recherche ou les filtres"
+                          : "Commencez par créer votre première vidéo pour voir apparaître votre contenu ici"}
                       </p>
                       <button
                         onClick={() => setShowCreateModal(true)}
@@ -677,7 +755,7 @@ export default function DashboardOverviewFixed() {
                                 alt={video.title}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
-                              <div 
+                              <div
                                 className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center cursor-pointer transition-all duration-300"
                                 onClick={() => handlePreview(video)}
                               >
@@ -688,14 +766,16 @@ export default function DashboardOverviewFixed() {
                               </div>
                               {/* Status badges */}
                               <div className="absolute top-1 left-1 flex gap-1">
-                                <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                                  video.is_published 
-                                    ? 'bg-green-500 text-white' 
-                                    : 'bg-yellow-500 text-white'
-                                }`}>
-                                  {video.is_published ? 'Pub' : 'Brou'}
+                                <span
+                                  className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                    video.is_published
+                                      ? "bg-green-500 text-white"
+                                      : "bg-yellow-500 text-white"
+                                  }`}
+                                >
+                                  {video.is_published ? "Pub" : "Brou"}
                                 </span>
-                                {video.visibility === 'public' && (
+                                {video.visibility === "public" && (
                                   <span className="px-1.5 py-0.5 bg-blue-500 text-white rounded text-xs font-medium">
                                     Pub
                                   </span>
@@ -703,19 +783,19 @@ export default function DashboardOverviewFixed() {
                               </div>
                             </div>
                           </div>
-                          
+
                           {/* Content */}
                           <div className="p-3">
                             {/* Title */}
                             <h3 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
                               {video.title}
                             </h3>
-                            
+
                             {/* Description */}
                             <p className="text-xs text-gray-600 mb-2 line-clamp-2">
                               {video.description}
                             </p>
-                            
+
                             {/* Stats */}
                             <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
                               <span className="flex items-center gap-0.5">
@@ -728,18 +808,26 @@ export default function DashboardOverviewFixed() {
                               </span>
                               <span className="flex items-center gap-0.5">
                                 <Calendar className="w-3 h-3" />
-                                {new Date(video.created_at).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })}
+                                {new Date(video.created_at).toLocaleDateString(
+                                  "fr-FR",
+                                  { month: "short", day: "numeric" }
+                                )}
                               </span>
                             </div>
-                            
+
                             {/* Tags */}
                             {video.tags && video.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mb-2">
-                                {video.tags.slice(0, 2).map((tag: string, idx: number) => (
-                                  <span key={idx} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full">
-                                    #{tag}
-                                  </span>
-                                ))}
+                                {video.tags
+                                  .slice(0, 2)
+                                  .map((tag: string, idx: number) => (
+                                    <span
+                                      key={idx}
+                                      className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full"
+                                    >
+                                      #{tag}
+                                    </span>
+                                  ))}
                                 {video.tags.length > 2 && (
                                   <span className="px-1.5 py-0.5 bg-gray-50 text-gray-600 text-xs rounded-full">
                                     +{video.tags.length - 2}
@@ -747,7 +835,7 @@ export default function DashboardOverviewFixed() {
                                 )}
                               </div>
                             )}
-                            
+
                             {/* Actions */}
                             <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                               <div className="flex gap-1">
@@ -758,7 +846,12 @@ export default function DashboardOverviewFixed() {
                                   <Play className="w-3 h-3" />
                                 </button>
                                 <button
-                                  onClick={() => window.open(`/${locale}/video/${video.id}/watch`, '_blank')}
+                                  onClick={() =>
+                                    window.open(
+                                      `/${locale}/video/${video.id}/watch`,
+                                      "_blank"
+                                    )
+                                  }
                                   className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                 >
                                   <ExternalLink className="w-3 h-3" />
@@ -795,21 +888,34 @@ export default function DashboardOverviewFixed() {
                     Aperçu
                   </h3>
                 </div>
-                
+
                 <div className="p-4 lg:p-6">
                   {previewVideo ? (
                     <div className="space-y-4">
                       {/* Video Player */}
                       <div className="aspect-video relative rounded-xl overflow-hidden bg-black shadow-lg">
-                        <video
-                          src={previewVideo.video_url}
-                          poster={previewVideo.thumbnail}
-                          className="w-full h-full object-cover"
-                          controls
-                          autoPlay
-                        />
+                        {isYouTubeUrl(previewVideo.video_url) ? (
+                          <iframe
+                            src={
+                              toYouTubeEmbedUrl(previewVideo.video_url) ||
+                              undefined
+                            }
+                            title={previewVideo.title}
+                            className="w-full h-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        ) : (
+                          <video
+                            src={previewVideo.video_url}
+                            poster={previewVideo.thumbnail}
+                            className="w-full h-full object-cover"
+                            controls
+                            autoPlay
+                          />
+                        )}
                       </div>
-                      
+
                       {/* Video Info */}
                       <div className="space-y-4">
                         <div>
@@ -820,7 +926,7 @@ export default function DashboardOverviewFixed() {
                             {previewVideo.description}
                           </p>
                         </div>
-                        
+
                         {/* Stats */}
                         <div className="flex flex-wrap gap-3 text-sm text-gray-500 p-3 bg-gray-50 rounded-lg">
                           <span className="flex items-center gap-1.5">
@@ -837,10 +943,12 @@ export default function DashboardOverviewFixed() {
                           </span>
                           <span className="flex items-center gap-1.5">
                             <Calendar className="w-4 h-4" />
-                            {new Date(previewVideo.created_at).toLocaleDateString()}
+                            {new Date(
+                              previewVideo.created_at
+                            ).toLocaleDateString()}
                           </span>
                         </div>
-                        
+
                         {/* Tags */}
                         {previewVideo.tags && previewVideo.tags.length > 0 && (
                           <div className="space-y-2">
@@ -849,71 +957,106 @@ export default function DashboardOverviewFixed() {
                               Tags
                             </h5>
                             <div className="flex flex-wrap gap-1.5">
-                              {previewVideo.tags.map((tag: string, idx: number) => (
-                                <span key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-100">
-                                  #{tag}
-                                </span>
-                              ))}
+                              {previewVideo.tags.map(
+                                (tag: string, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-100"
+                                  >
+                                    #{tag}
+                                  </span>
+                                )
+                              )}
                             </div>
                           </div>
                         )}
-                        
+
                         {/* Learning Objectives */}
-                        {previewVideo.learning_objectives && previewVideo.learning_objectives.length > 0 && (
-                          <div className="space-y-3">
-                            <h5 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                              <Target className="w-4 h-4 text-green-600" />
-                              Objectifs d'apprentissage ({previewVideo.learning_objectives.length})
-                            </h5>
-                            <div className="space-y-2">
-                              {previewVideo.learning_objectives.map((objective: string, idx: number) => (
-                                <div key={idx} className="text-sm text-gray-600 flex items-start gap-3 p-2 bg-green-50 rounded-lg">
-                                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                                  <span>{objective}</span>
-                                </div>
-                              ))}
+                        {previewVideo.learning_objectives &&
+                          previewVideo.learning_objectives.length > 0 && (
+                            <div className="space-y-3">
+                              <h5 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                <Target className="w-4 h-4 text-green-600" />
+                                Objectifs d'apprentissage (
+                                {previewVideo.learning_objectives.length})
+                              </h5>
+                              <div className="space-y-2">
+                                {previewVideo.learning_objectives.map(
+                                  (objective: string, idx: number) => (
+                                    <div
+                                      key={idx}
+                                      className="text-sm text-gray-600 flex items-start gap-3 p-2 bg-green-50 rounded-lg"
+                                    >
+                                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                      <span>{objective}</span>
+                                    </div>
+                                  )
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                        
+                          )}
+
                         {/* Resources */}
-                        {previewVideo.resources && previewVideo.resources.length > 0 && (
-                          <div className="space-y-3">
-                            <h5 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                              <BookOpen className="w-4 h-4 text-purple-600" />
-                              Ressources ({previewVideo.resources.length})
-                            </h5>
-                            <div className="space-y-2">
-                              {previewVideo.resources.map((resource: Resource, idx: number) => (
-                                <div key={idx} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
-                                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                                    {resource.type === 'pdf' && <FileText className="w-4 h-4 text-red-500 flex-shrink-0" />}
-                                    {resource.type === 'link' && <Link className="w-4 h-4 text-blue-500 flex-shrink-0" />}
-                                    {resource.type === 'document' && <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />}
-                                    {resource.type === 'image' && <Image className="w-4 h-4 text-green-500 flex-shrink-0" />}
-                                    {resource.type === 'video' && <Film className="w-4 h-4 text-purple-500 flex-shrink-0" />}
-                                    {resource.type === 'audio' && <Music className="w-4 h-4 text-orange-500 flex-shrink-0" />}
-                                    <div className="min-w-0">
-                                      <p className="text-sm font-medium text-gray-900 truncate">
-                                        {resource.title}
-                                      </p>
-                                      {resource.description && (
-                                        <p className="text-xs text-gray-500 truncate">
-                                          {resource.description}
-                                        </p>
+                        {previewVideo.resources &&
+                          previewVideo.resources.length > 0 && (
+                            <div className="space-y-3">
+                              <h5 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                <BookOpen className="w-4 h-4 text-purple-600" />
+                                Ressources ({previewVideo.resources.length})
+                              </h5>
+                              <div className="space-y-2">
+                                {previewVideo.resources.map(
+                                  (resource: Resource, idx: number) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100"
+                                    >
+                                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                                        {resource.type === "pdf" && (
+                                          <FileText className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                        )}
+                                        {resource.type === "link" && (
+                                          <Link className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                        )}
+                                        {resource.type === "document" && (
+                                          <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                        )}
+                                        {resource.type === "image" && (
+                                          <Image className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                        )}
+                                        {resource.type === "video" && (
+                                          <Film className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                                        )}
+                                        {resource.type === "audio" && (
+                                          <Music className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                                        )}
+                                        <div className="min-w-0">
+                                          <p className="text-sm font-medium text-gray-900 truncate">
+                                            {resource.title}
+                                          </p>
+                                          {resource.description && (
+                                            <p className="text-xs text-gray-500 truncate">
+                                              {resource.description}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                      {resource.file_size && (
+                                        <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                                          {(
+                                            resource.file_size /
+                                            1024 /
+                                            1024
+                                          ).toFixed(1)}
+                                          MB
+                                        </span>
                                       )}
                                     </div>
-                                  </div>
-                                  {resource.file_size && (
-                                    <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
-                                      {(resource.file_size / 1024 / 1024).toFixed(1)}MB
-                                    </span>
-                                  )}
-                                </div>
-                              ))}
+                                  )
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
                       </div>
                     </div>
                   ) : (
@@ -923,7 +1066,8 @@ export default function DashboardOverviewFixed() {
                         Aucune vidéo sélectionnée
                       </h3>
                       <p className="text-gray-600 text-sm max-w-xs mx-auto">
-                        Cliquez sur une vidéo dans la liste pour voir son aperçu détaillé
+                        Cliquez sur une vidéo dans la liste pour voir son aperçu
+                        détaillé
                       </p>
                     </div>
                   )}
@@ -973,7 +1117,10 @@ export default function DashboardOverviewFixed() {
                   </div>
                 </div>
 
-                <form onSubmit={handleCreateVideo} className="flex flex-col h-full">
+                <form
+                  onSubmit={handleCreateVideo}
+                  className="flex flex-col h-full"
+                >
                   {/* Progress Bar */}
                   {uploadProgress > 0 && (
                     <div className="bg-blue-50 border-b border-blue-200 p-4">
@@ -982,10 +1129,12 @@ export default function DashboardOverviewFixed() {
                           <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
                           Upload en cours...
                         </span>
-                        <span className="text-sm font-bold text-blue-600">{uploadProgress}%</span>
+                        <span className="text-sm font-bold text-blue-600">
+                          {uploadProgress}%
+                        </span>
                       </div>
                       <div className="w-full bg-blue-200 rounded-full h-3 overflow-hidden">
-                        <motion.div 
+                        <motion.div
                           className="bg-gradient-to-r from-blue-600 to-purple-600 h-3 rounded-full transition-all duration-300"
                           initial={{ width: 0 }}
                           animate={{ width: `${uploadProgress}%` }}
@@ -1001,21 +1150,27 @@ export default function DashboardOverviewFixed() {
                       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                         <button
                           type="button"
-                          onClick={() => toggleSection('basic')}
+                          onClick={() => toggleSection("basic")}
                           className="w-full px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                               <VideoIcon className="w-4 h-4 text-blue-600" />
                             </div>
-                            <h3 className="font-semibold text-gray-900">Informations de base</h3>
+                            <h3 className="font-semibold text-gray-900">
+                              Informations de base
+                            </h3>
                             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                               Obligatoire
                             </span>
                           </div>
-                          {expandedSections.basic ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                          {expandedSections.basic ? (
+                            <ChevronUp className="w-5 h-5 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                          )}
                         </button>
-                        
+
                         {expandedSections.basic && (
                           <div className="px-4 sm:px-6 pb-6 space-y-4">
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1026,7 +1181,12 @@ export default function DashboardOverviewFixed() {
                                 <input
                                   type="text"
                                   value={formData.title}
-                                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                                  onChange={(e) =>
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      title: e.target.value,
+                                    }))
+                                  }
                                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                   placeholder="Entrez le titre de votre vidéo"
                                   required
@@ -1039,16 +1199,31 @@ export default function DashboardOverviewFixed() {
                                 </label>
                                 <select
                                   value={formData.category}
-                                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                                  onChange={(e) =>
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      category: e.target.value,
+                                    }))
+                                  }
                                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
-                                  <option value="">Sélectionnez une catégorie</option>
-                                  <option value="marketing">📈 Marketing</option>
-                                  <option value="development">💻 Développement</option>
+                                  <option value="">
+                                    Sélectionnez une catégorie
+                                  </option>
+                                  <option value="marketing">
+                                    📈 Marketing
+                                  </option>
+                                  <option value="development">
+                                    💻 Développement
+                                  </option>
                                   <option value="design">🎨 Design</option>
                                   <option value="business">💼 Business</option>
-                                  <option value="education">📚 Éducation</option>
-                                  <option value="technology">🔧 Technologie</option>
+                                  <option value="education">
+                                    📚 Éducation
+                                  </option>
+                                  <option value="technology">
+                                    🔧 Technologie
+                                  </option>
                                   <option value="other">📦 Autre</option>
                                 </select>
                               </div>
@@ -1060,7 +1235,12 @@ export default function DashboardOverviewFixed() {
                               </label>
                               <textarea
                                 value={formData.description}
-                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                onChange={(e) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    description: e.target.value,
+                                  }))
+                                }
                                 rows={4}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                                 placeholder="Décrivez votre vidéo en détail..."
@@ -1081,7 +1261,7 @@ export default function DashboardOverviewFixed() {
                                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     placeholder="Ajouter un tag"
                                     onKeyPress={(e) => {
-                                      if (e.key === 'Enter') {
+                                      if (e.key === "Enter") {
                                         e.preventDefault();
                                         addTag();
                                       }
@@ -1099,7 +1279,10 @@ export default function DashboardOverviewFixed() {
                                 {formData.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-2">
                                     {formData.tags.map((tag, index) => (
-                                      <span key={index} className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full flex items-center gap-2 border border-blue-100">
+                                      <span
+                                        key={index}
+                                        className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full flex items-center gap-2 border border-blue-100"
+                                      >
                                         #{tag}
                                         <button
                                           type="button"
@@ -1122,46 +1305,64 @@ export default function DashboardOverviewFixed() {
                       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                         <button
                           type="button"
-                          onClick={() => toggleSection('objectives')}
+                          onClick={() => toggleSection("objectives")}
                           className="w-full px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                               <Target className="w-4 h-4 text-green-600" />
                             </div>
-                            <h3 className="font-semibold text-gray-900">Objectifs d'apprentissage</h3>
+                            <h3 className="font-semibold text-gray-900">
+                              Objectifs d'apprentissage
+                            </h3>
                             <span className="text-xs text-gray-500">
-                              {formData.learning_objectives.length} ajouté{formData.learning_objectives.length > 1 ? 's' : ''}
+                              {formData.learning_objectives.length} ajouté
+                              {formData.learning_objectives.length > 1
+                                ? "s"
+                                : ""}
                             </span>
                           </div>
-                          {expandedSections.objectives ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                          {expandedSections.objectives ? (
+                            <ChevronUp className="w-5 h-5 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                          )}
                         </button>
-                        
+
                         {expandedSections.objectives && (
                           <div className="px-4 sm:px-6 pb-6 space-y-4">
                             <div className="space-y-3">
-                              {formData.learning_objectives.map((objective, index) => (
-                                <div key={index} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
-                                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                                  <span className="text-gray-900 flex-1">{objective}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeObjective(index)}
-                                    className="text-red-500 hover:text-red-700"
+                              {formData.learning_objectives.map(
+                                (objective, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100"
                                   >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ))}
+                                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                    <span className="text-gray-900 flex-1">
+                                      {objective}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeObjective(index)}
+                                      className="text-red-500 hover:text-red-700"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                )
+                              )}
                               <div className="flex gap-2">
                                 <input
                                   type="text"
                                   value={newObjective}
-                                  onChange={(e) => setNewObjective(e.target.value)}
+                                  onChange={(e) =>
+                                    setNewObjective(e.target.value)
+                                  }
                                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                   placeholder="Ajouter un objectif d'apprentissage"
                                   onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
+                                    if (e.key === "Enter") {
                                       e.preventDefault();
                                       addObjective();
                                     }
@@ -1184,26 +1385,36 @@ export default function DashboardOverviewFixed() {
                       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                         <button
                           type="button"
-                          onClick={() => toggleSection('resources')}
+                          onClick={() => toggleSection("resources")}
                           className="w-full px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                               <BookOpen className="w-4 h-4 text-purple-600" />
                             </div>
-                            <h3 className="font-semibold text-gray-900">Ressources associées</h3>
+                            <h3 className="font-semibold text-gray-900">
+                              Ressources associées
+                            </h3>
                             <span className="text-xs text-gray-500">
-                              {formData.resources.length} ajoutée{formData.resources.length > 1 ? 's' : ''}
+                              {formData.resources.length} ajoutée
+                              {formData.resources.length > 1 ? "s" : ""}
                             </span>
                           </div>
-                          {expandedSections.resources ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                          {expandedSections.resources ? (
+                            <ChevronUp className="w-5 h-5 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                          )}
                         </button>
-                        
+
                         {expandedSections.resources && (
                           <div className="px-4 sm:px-6 pb-6 space-y-4">
                             <div className="space-y-4">
                               {formData.resources.map((resource, index) => (
-                                <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                <div
+                                  key={index}
+                                  className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                                >
                                   <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-3">
                                     <div>
                                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1211,12 +1422,20 @@ export default function DashboardOverviewFixed() {
                                       </label>
                                       <select
                                         value={resource.type}
-                                        onChange={(e) => updateResource(index, 'type', e.target.value)}
+                                        onChange={(e) =>
+                                          updateResource(
+                                            index,
+                                            "type",
+                                            e.target.value
+                                          )
+                                        }
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                       >
                                         <option value="link">🔗 Lien</option>
                                         <option value="pdf">📄 PDF</option>
-                                        <option value="document">📝 Document</option>
+                                        <option value="document">
+                                          📝 Document
+                                        </option>
                                         <option value="image">🖼️ Image</option>
                                         <option value="video">🎥 Vidéo</option>
                                         <option value="audio">🎵 Audio</option>
@@ -1230,7 +1449,13 @@ export default function DashboardOverviewFixed() {
                                       <input
                                         type="text"
                                         value={resource.title}
-                                        onChange={(e) => updateResource(index, 'title', e.target.value)}
+                                        onChange={(e) =>
+                                          updateResource(
+                                            index,
+                                            "title",
+                                            e.target.value
+                                          )
+                                        }
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         placeholder="Titre de la ressource"
                                       />
@@ -1242,8 +1467,14 @@ export default function DashboardOverviewFixed() {
                                       </label>
                                       <input
                                         type="text"
-                                        value={resource.description || ''}
-                                        onChange={(e) => updateResource(index, 'description', e.target.value)}
+                                        value={resource.description || ""}
+                                        onChange={(e) =>
+                                          updateResource(
+                                            index,
+                                            "description",
+                                            e.target.value
+                                          )
+                                        }
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         placeholder="Description (optionnel)"
                                       />
@@ -1264,15 +1495,21 @@ export default function DashboardOverviewFixed() {
                                   </div>
 
                                   <div className="flex items-center gap-2">
-                                    {resource.type === 'link' ? (
+                                    {resource.type === "link" ? (
                                       <div className="flex-1">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                           URL
                                         </label>
                                         <input
                                           type="url"
-                                          value={resource.url || ''}
-                                          onChange={(e) => updateResource(index, 'url', e.target.value)}
+                                          value={resource.url || ""}
+                                          onChange={(e) =>
+                                            updateResource(
+                                              index,
+                                              "url",
+                                              e.target.value
+                                            )
+                                          }
                                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                           placeholder="https://exemple.com"
                                         />
@@ -1284,18 +1521,30 @@ export default function DashboardOverviewFixed() {
                                         </label>
                                         <input
                                           type="file"
-                                          accept={resource.type === 'pdf' ? 'application/pdf' : 
-                                                 resource.type === 'image' ? 'image/*' : 
-                                                 resource.type === 'video' ? 'video/*' :
-                                                 resource.type === 'audio' ? 'audio/*' :
-                                                 'application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'}
-                                          onChange={(e) => handleResourceUpload(index, e.target.files?.[0] || null)}
+                                          accept={
+                                            resource.type === "pdf"
+                                              ? "application/pdf"
+                                              : resource.type === "image"
+                                                ? "image/*"
+                                                : resource.type === "video"
+                                                  ? "video/*"
+                                                  : resource.type === "audio"
+                                                    ? "audio/*"
+                                                    : "application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                          }
+                                          onChange={(e) =>
+                                            handleResourceUpload(
+                                              index,
+                                              e.target.files?.[0] || null
+                                            )
+                                          }
                                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         />
                                         {(resource as any).file_data && (
                                           <div className="mt-2 text-sm text-green-600 flex items-center gap-2">
                                             <CheckCircle className="w-4 h-4" />
-                                            Fichier sélectionné: {(resource as any).file_data.name}
+                                            Fichier sélectionné:{" "}
+                                            {(resource as any).file_data.name}
                                           </div>
                                         )}
                                       </div>
@@ -1320,21 +1569,27 @@ export default function DashboardOverviewFixed() {
                       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                         <button
                           type="button"
-                          onClick={() => toggleSection('files')}
+                          onClick={() => toggleSection("files")}
                           className="w-full px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
                               <Upload className="w-4 h-4 text-orange-600" />
                             </div>
-                            <h3 className="font-semibold text-gray-900">Fichiers média</h3>
+                            <h3 className="font-semibold text-gray-900">
+                              Fichiers média
+                            </h3>
                             <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded-full">
                               Obligatoire
                             </span>
                           </div>
-                          {expandedSections.files ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                          {expandedSections.files ? (
+                            <ChevronUp className="w-5 h-5 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                          )}
                         </button>
-                        
+
                         {expandedSections.files && (
                           <div className="px-4 sm:px-6 pb-6 space-y-6">
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1422,31 +1677,37 @@ export default function DashboardOverviewFixed() {
 
                             {generatedThumbnails.length > 0 && (
                               <div className="space-y-3">
-                                <h4 className="text-sm font-medium text-gray-700">Sélectionnez une miniature:</h4>
+                                <h4 className="text-sm font-medium text-gray-700">
+                                  Sélectionnez une miniature:
+                                </h4>
                                 <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                                  {generatedThumbnails.map((thumbnail, index) => (
-                                    <button
-                                      key={index}
-                                      type="button"
-                                      onClick={() => selectThumbnail(thumbnail)}
-                                      className={`relative rounded-xl overflow-hidden border-2 transition-all ${
-                                        selectedThumbnail === thumbnail 
-                                          ? 'border-blue-500 ring-2 ring-blue-200 shadow-lg' 
-                                          : 'border-gray-200 hover:border-gray-300'
-                                      }`}
-                                    >
-                                      <img
-                                        src={thumbnail}
-                                        className="w-full h-20 object-cover"
-                                        alt={`Miniature ${index + 1}`}
-                                      />
-                                      {selectedThumbnail === thumbnail && (
-                                        <div className="absolute top-1 right-1 bg-blue-500 text-white rounded-full p-1">
-                                          <CheckCircle className="w-3 h-3" />
-                                        </div>
-                                      )}
-                                    </button>
-                                  ))}
+                                  {generatedThumbnails.map(
+                                    (thumbnail, index) => (
+                                      <button
+                                        key={index}
+                                        type="button"
+                                        onClick={() =>
+                                          selectThumbnail(thumbnail)
+                                        }
+                                        className={`relative rounded-xl overflow-hidden border-2 transition-all ${
+                                          selectedThumbnail === thumbnail
+                                            ? "border-blue-500 ring-2 ring-blue-200 shadow-lg"
+                                            : "border-gray-200 hover:border-gray-300"
+                                        }`}
+                                      >
+                                        <img
+                                          src={thumbnail}
+                                          className="w-full h-20 object-cover"
+                                          alt={`Miniature ${index + 1}`}
+                                        />
+                                        {selectedThumbnail === thumbnail && (
+                                          <div className="absolute top-1 right-1 bg-blue-500 text-white rounded-full p-1">
+                                            <CheckCircle className="w-3 h-3" />
+                                          </div>
+                                        )}
+                                      </button>
+                                    )
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -1458,18 +1719,24 @@ export default function DashboardOverviewFixed() {
                       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                         <button
                           type="button"
-                          onClick={() => toggleSection('settings')}
+                          onClick={() => toggleSection("settings")}
                           className="w-full px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                               <Settings className="w-4 h-4 text-gray-600" />
                             </div>
-                            <h3 className="font-semibold text-gray-900">Paramètres de publication</h3>
+                            <h3 className="font-semibold text-gray-900">
+                              Paramètres de publication
+                            </h3>
                           </div>
-                          {expandedSections.settings ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                          {expandedSections.settings ? (
+                            <ChevronUp className="w-5 h-5 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                          )}
                         </button>
-                        
+
                         {expandedSections.settings && (
                           <div className="px-4 sm:px-6 pb-6 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1479,7 +1746,12 @@ export default function DashboardOverviewFixed() {
                                 </label>
                                 <select
                                   value={formData.visibility}
-                                  onChange={(e) => setFormData(prev => ({ ...prev, visibility: e.target.value as any }))}
+                                  onChange={(e) =>
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      visibility: e.target.value as any,
+                                    }))
+                                  }
                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
                                   <option value="private">🔒 Privé</option>
@@ -1493,7 +1765,12 @@ export default function DashboardOverviewFixed() {
                                   <input
                                     type="checkbox"
                                     checked={formData.allow_comments}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, allow_comments: e.target.checked }))}
+                                    onChange={(e) =>
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        allow_comments: e.target.checked,
+                                      }))
+                                    }
                                     className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                   />
                                   <span className="text-sm font-medium text-gray-700">
@@ -1507,7 +1784,12 @@ export default function DashboardOverviewFixed() {
                                   <input
                                     type="checkbox"
                                     checked={formData.publish_immediately}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, publish_immediately: e.target.checked }))}
+                                    onChange={(e) =>
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        publish_immediately: e.target.checked,
+                                      }))
+                                    }
                                     className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                   />
                                   <span className="text-sm font-medium text-gray-700">
@@ -1517,7 +1799,7 @@ export default function DashboardOverviewFixed() {
                               </div>
                             </div>
 
-                            {formData.visibility === 'public' && (
+                            {formData.visibility === "public" && (
                               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                 <div className="flex items-start gap-3">
                                   <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -1526,7 +1808,10 @@ export default function DashboardOverviewFixed() {
                                       🌍 Vidéo publique
                                     </p>
                                     <p className="text-sm text-blue-700">
-                                      Cette vidéo sera visible par tous les utilisateurs sur les dashboards étudiants et dans la section "pépites de nos experts".
+                                      Cette vidéo sera visible par tous les
+                                      utilisateurs sur les dashboards étudiants
+                                      et dans la section "pépites de nos
+                                      experts".
                                     </p>
                                   </div>
                                 </div>
@@ -1550,7 +1835,12 @@ export default function DashboardOverviewFixed() {
                       </button>
                       <button
                         type="submit"
-                        disabled={isSubmitting || !formData.title || !formData.description || !formData.video_file}
+                        disabled={
+                          isSubmitting ||
+                          !formData.title ||
+                          !formData.description ||
+                          !formData.video_file
+                        }
                         className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg font-medium"
                       >
                         {isSubmitting ? (
@@ -1573,11 +1863,11 @@ export default function DashboardOverviewFixed() {
           )}
         </AnimatePresence>
       </div>
-      
+
       {/* Notification Container */}
-      <NotificationContainer 
-        notifications={notifications} 
-        onRemove={removeNotification} 
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
       />
     </>
   );

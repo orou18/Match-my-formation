@@ -1,67 +1,84 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Test Inscription API</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Test Inscription API</h1>
     <form id="testForm">
-        <input type="text" id="name" placeholder="Nom" required><br><br>
-        <input type="email" id="email" placeholder="Email" required><br><br>
-        <input type="password" id="password" placeholder="Mot de passe" required><br><br>
-        <input type="password" id="password_confirmation" placeholder="Confirmation mot de passe" required><br><br>
-        <button type="submit">S'inscrire</button>
+      <input type="text" id="name" placeholder="Nom" required /><br /><br />
+      <input type="email" id="email" placeholder="Email" required /><br /><br />
+      <input
+        type="password"
+        id="password"
+        placeholder="Mot de passe"
+        required
+      /><br /><br />
+      <input
+        type="password"
+        id="password_confirmation"
+        placeholder="Confirmation mot de passe"
+        required
+      /><br /><br />
+      <button type="submit">S'inscrire</button>
     </form>
     <div id="result"></div>
 
     <script>
-        document.getElementById('testForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = {
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
-                password: document.getElementById('password').value,
-                password_confirmation: document.getElementById('password_confirmation').value
-            };
-            
-            console.log('🚀 Envoi:', formData);
-            
-            try {
-                const response = await fetch('http://localhost:3000/api/auth/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                console.log('📨 Status:', response.status);
-                console.log('📨 OK:', response.ok);
-                
-                const data = await response.json();
-                console.log('📋 Data:', data);
-                
-                document.getElementById('result').innerHTML = `
+      document
+        .getElementById("testForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const formData = {
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            password_confirmation: document.getElementById(
+              "password_confirmation"
+            ).value,
+          };
+
+          console.log("🚀 Envoi:", formData);
+
+          try {
+            const response = await fetch(
+              "http://localhost:3000/api/auth/register",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                },
+                body: JSON.stringify(formData),
+              }
+            );
+
+            console.log("📨 Status:", response.status);
+            console.log("📨 OK:", response.ok);
+
+            const data = await response.json();
+            console.log("📋 Data:", data);
+
+            document.getElementById("result").innerHTML = `
                     <h3>Résultat:</h3>
                     <p>Status: ${response.status}</p>
                     <p>OK: ${response.ok}</p>
                     <pre>${JSON.stringify(data, null, 2)}</pre>
                 `;
-                
-                if (response.ok) {
-                    // Sauvegarder dans localStorage
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    console.log('✅ Sauvegardé dans localStorage');
-                }
-                
-            } catch (error) {
-                console.error('❌ Erreur:', error);
-                document.getElementById('result').innerHTML = `<p style="color: red;">Erreur: ${error.message}</p>`;
+
+            if (response.ok) {
+              // Sauvegarder dans localStorage
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("user", JSON.stringify(data.user));
+              console.log("✅ Sauvegardé dans localStorage");
             }
+          } catch (error) {
+            console.error("❌ Erreur:", error);
+            document.getElementById("result").innerHTML =
+              `<p style="color: red;">Erreur: ${error.message}</p>`;
+          }
         });
     </script>
-</body>
+  </body>
 </html>

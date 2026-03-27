@@ -22,19 +22,20 @@ export default function FeaturedCourses() {
     const fetchPublicVideos = async () => {
       try {
         // On force l'URL si process.env est vide pour éviter de taper dans le vide
-        const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const rawUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
         const baseUrl = rawUrl.replace(/\/$/, "");
         const targetUrl = `${baseUrl}/api/public/videos`;
-        
+
         console.log("Fetching public videos from:", targetUrl);
 
         const response = await fetch(targetUrl, {
-          method: 'GET',
+          method: "GET",
           signal: controller.signal,
           headers: {
-            'Accept': 'application/json',
+            Accept: "application/json",
           },
-          credentials: 'omit', 
+          credentials: "omit",
         });
 
         if (response.ok) {
@@ -45,10 +46,12 @@ export default function FeaturedCourses() {
           setPublicVideos([]); // Évite de rester bloqué
         }
       } catch (error: any) {
-        if (error.name === 'AbortError') return;
-        
+        if (error.name === "AbortError") return;
+
         // Message d'erreur plus technique pour t'aider à debugger
-        console.error("Erreur de connexion au backend. Vérifie que Laravel tourne sur 127.0.0.1:8000");
+        console.error(
+          "Erreur de connexion au backend. Vérifie que Laravel tourne sur 127.0.0.1:8000"
+        );
         console.log("Détails de l'erreur:", error.message);
       } finally {
         setLoading(false);
@@ -76,14 +79,17 @@ export default function FeaturedCourses() {
           </h2>
           <p className="text-bodyText max-w-2xl mx-auto text-lg md:text-xl leading-relaxed opacity-80">
             Une immersion totale dans l&apos;expertise du guidage pour
-            transformer votre passion en carrière à travers nos contenus exclusifs.
+            transformer votre passion en carrière à travers nos contenus
+            exclusifs.
           </p>
         </motion.div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="animate-spin text-primary mb-4" size={40} />
-            <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Préparation des cours...</p>
+            <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">
+              Préparation des cours...
+            </p>
           </div>
         ) : publicVideos.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
@@ -102,8 +108,12 @@ export default function FeaturedCourses() {
         ) : (
           <div className="text-center py-20 bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-100">
             <Film className="mx-auto text-gray-200 mb-4" size={48} />
-            <p className="text-gray-400 font-medium">Nos prochaines formations arrivent bientôt.</p>
-            <p className="text-[10px] text-gray-300 mt-2">Vérifiez la connexion API ou la base de données</p>
+            <p className="text-gray-400 font-medium">
+              Nos prochaines formations arrivent bientôt.
+            </p>
+            <p className="text-[10px] text-gray-300 mt-2">
+              Vérifiez la connexion API ou la base de données
+            </p>
           </div>
         )}
 

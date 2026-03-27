@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward } from 'lucide-react';
+import { useState, useRef, useEffect } from "react";
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  SkipBack,
+  SkipForward,
+} from "lucide-react";
 
 interface VideoPlayerProps {
   src: string;
@@ -19,12 +27,12 @@ export default function VideoPlayer({
   src,
   thumbnail,
   title,
-  className = '',
+  className = "",
   autoplay = false,
   controls = true,
   onPlay,
   onPause,
-  onEnded
+  onEnded,
 }: VideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -34,7 +42,7 @@ export default function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -72,20 +80,20 @@ export default function VideoPlayer({
       setCurrentTime(video.currentTime);
     };
 
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('pause', handlePause);
-    video.addEventListener('ended', handleEnded);
-    video.addEventListener('volumechange', handleVolumeChange);
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("play", handlePlay);
+    video.addEventListener("pause", handlePause);
+    video.addEventListener("ended", handleEnded);
+    video.addEventListener("volumechange", handleVolumeChange);
 
     return () => {
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('pause', handlePause);
-      video.removeEventListener('ended', handleEnded);
-      video.removeEventListener('volumechange', handleVolumeChange);
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("play", handlePlay);
+      video.removeEventListener("pause", handlePause);
+      video.removeEventListener("ended", handleEnded);
+      video.removeEventListener("volumechange", handleVolumeChange);
     };
   }, [onPlay, onPause, onEnded]);
 
@@ -159,7 +167,7 @@ export default function VideoPlayer({
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const showControlsTemporarily = () => {
@@ -190,7 +198,7 @@ export default function VideoPlayer({
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
       />
-      
+
       {/* Loading overlay */}
       {isLoading && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -200,7 +208,10 @@ export default function VideoPlayer({
 
       {/* Play/Pause overlay */}
       {!isPlaying && !isLoading && (
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center cursor-pointer" onClick={togglePlay}>
+        <div
+          className="absolute inset-0 bg-black/30 flex items-center justify-center cursor-pointer"
+          onClick={togglePlay}
+        >
           <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors">
             <Play className="w-8 h-8 text-black ml-1" />
           </div>
@@ -211,7 +222,7 @@ export default function VideoPlayer({
       {controls && (
         <div
           className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity duration-300 ${
-            showControls ? 'opacity-100' : 'opacity-0'
+            showControls ? "opacity-100" : "opacity-0"
           }`}
         >
           {/* Progress bar */}
@@ -224,7 +235,7 @@ export default function VideoPlayer({
               onChange={handleSeek}
               className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
               style={{
-                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(currentTime / duration) * 100}%, #4b5563 ${(currentTime / duration) * 100}%, #4b5563 100%)`
+                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(currentTime / duration) * 100}%, #4b5563 ${(currentTime / duration) * 100}%, #4b5563 100%)`,
               }}
             />
             <div className="flex justify-between text-xs text-white mt-1">
@@ -249,7 +260,7 @@ export default function VideoPlayer({
               <button
                 onClick={togglePlay}
                 className="text-white hover:text-blue-400 transition-colors"
-                title={isPlaying ? 'Pause' : 'Lecture'}
+                title={isPlaying ? "Pause" : "Lecture"}
               >
                 {isPlaying ? (
                   <Pause className="w-6 h-6" />
@@ -272,7 +283,7 @@ export default function VideoPlayer({
                 <button
                   onClick={toggleMute}
                   className="text-white hover:text-blue-400 transition-colors"
-                  title={isMuted ? 'Activer le son' : 'Couper le son'}
+                  title={isMuted ? "Activer le son" : "Couper le son"}
                 >
                   {isMuted ? (
                     <VolumeX className="w-5 h-5" />
@@ -289,7 +300,7 @@ export default function VideoPlayer({
                   onChange={handleVolumeChange}
                   className="w-20 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
                   style={{
-                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${volume * 100}%, #4b5563 ${volume * 100}%, #4b5563 100%)`
+                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${volume * 100}%, #4b5563 ${volume * 100}%, #4b5563 100%)`,
                   }}
                 />
               </div>
@@ -310,7 +321,9 @@ export default function VideoPlayer({
       {/* Title overlay */}
       {title && (
         <div className="absolute top-4 left-4 right-4">
-          <h3 className="text-white text-lg font-semibold drop-shadow-lg">{title}</h3>
+          <h3 className="text-white text-lg font-semibold drop-shadow-lg">
+            {title}
+          </h3>
         </div>
       )}
 

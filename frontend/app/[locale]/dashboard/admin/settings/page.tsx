@@ -17,7 +17,7 @@ import {
   Check,
   X,
   AlertCircle,
-  Info
+  Info,
 } from "lucide-react";
 
 interface SystemSettings {
@@ -28,7 +28,7 @@ interface SystemSettings {
   allowRegistration: boolean;
   emailNotifications: boolean;
   defaultLanguage: string;
-  theme: 'light' | 'dark' | 'auto';
+  theme: "light" | "dark" | "auto";
   maxUploadSize: number;
   sessionTimeout: number;
 }
@@ -44,7 +44,7 @@ export default function AdminSettings() {
     defaultLanguage: "fr",
     theme: "light",
     maxUploadSize: 10,
-    sessionTimeout: 30
+    sessionTimeout: 30,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -60,10 +60,10 @@ export default function AdminSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const response = await fetch('/api/admin/settings', {
-        method: 'POST',
+      const response = await fetch("/api/admin/settings", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(settings),
       });
@@ -73,11 +73,11 @@ export default function AdminSettings() {
         setTimeout(() => setSaved(false), 3000);
       } else {
         const error = await response.json();
-        alert(error.error || 'Erreur lors de la sauvegarde');
+        alert(error.error || "Erreur lors de la sauvegarde");
       }
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
-      alert('Erreur lors de la sauvegarde');
+      console.error("Erreur lors de la sauvegarde:", error);
+      alert("Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);
     }
@@ -94,7 +94,7 @@ export default function AdminSettings() {
       defaultLanguage: "fr",
       theme: "light",
       maxUploadSize: 10,
-      sessionTimeout: 30
+      sessionTimeout: 30,
     });
   };
 
@@ -111,18 +111,22 @@ export default function AdminSettings() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Paramètres Système</h1>
-          <p className="text-gray-600 mt-1">Configurez les paramètres globaux de la plateforme</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Paramètres Système
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Configurez les paramètres globaux de la plateforme
+          </p>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={handleReset}
             className="bg-white border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
           >
             <RefreshCw size={18} />
             Réinitialiser
           </button>
-          <button 
+          <button
             onClick={handleSave}
             disabled={saving}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
@@ -132,7 +136,7 @@ export default function AdminSettings() {
             ) : (
               <Save size={18} />
             )}
-            {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+            {saving ? "Sauvegarde..." : "Sauvegarder"}
           </button>
         </div>
       </div>
@@ -146,7 +150,9 @@ export default function AdminSettings() {
           className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-center gap-3"
         >
           <Check size={20} className="text-green-600" />
-          <span className="text-green-800 font-medium">Paramètres sauvegardés avec succès</span>
+          <span className="text-green-800 font-medium">
+            Paramètres sauvegardés avec succès
+          </span>
         </motion.div>
       )}
 
@@ -172,7 +178,9 @@ export default function AdminSettings() {
               <input
                 type="text"
                 value={settings.siteName}
-                onChange={(e) => setSettings({...settings, siteName: e.target.value})}
+                onChange={(e) =>
+                  setSettings({ ...settings, siteName: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -184,7 +192,9 @@ export default function AdminSettings() {
               <input
                 type="url"
                 value={settings.siteUrl}
-                onChange={(e) => setSettings({...settings, siteUrl: e.target.value})}
+                onChange={(e) =>
+                  setSettings({ ...settings, siteUrl: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -196,7 +206,9 @@ export default function AdminSettings() {
               <input
                 type="email"
                 value={settings.adminEmail}
-                onChange={(e) => setSettings({...settings, adminEmail: e.target.value})}
+                onChange={(e) =>
+                  setSettings({ ...settings, adminEmail: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -207,7 +219,9 @@ export default function AdminSettings() {
               </label>
               <select
                 value={settings.defaultLanguage}
-                onChange={(e) => setSettings({...settings, defaultLanguage: e.target.value})}
+                onChange={(e) =>
+                  setSettings({ ...settings, defaultLanguage: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="fr">Français</option>
@@ -239,7 +253,12 @@ export default function AdminSettings() {
               <input
                 type="number"
                 value={settings.maxUploadSize}
-                onChange={(e) => setSettings({...settings, maxUploadSize: parseInt(e.target.value)})}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    maxUploadSize: parseInt(e.target.value),
+                  })
+                }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -251,7 +270,12 @@ export default function AdminSettings() {
               <input
                 type="number"
                 value={settings.sessionTimeout}
-                onChange={(e) => setSettings({...settings, sessionTimeout: parseInt(e.target.value)})}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    sessionTimeout: parseInt(e.target.value),
+                  })
+                }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -262,7 +286,12 @@ export default function AdminSettings() {
               </label>
               <select
                 value={settings.theme}
-                onChange={(e) => setSettings({...settings, theme: e.target.value as 'light' | 'dark' | 'auto'})}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    theme: e.target.value as "light" | "dark" | "auto",
+                  })
+                }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="light">Clair</option>
@@ -290,17 +319,24 @@ export default function AdminSettings() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-gray-900">Mode maintenance</p>
-                <p className="text-sm text-gray-500">Désactive temporairement le site</p>
+                <p className="text-sm text-gray-500">
+                  Désactive temporairement le site
+                </p>
               </div>
               <button
-                onClick={() => setSettings({...settings, maintenanceMode: !settings.maintenanceMode})}
+                onClick={() =>
+                  setSettings({
+                    ...settings,
+                    maintenanceMode: !settings.maintenanceMode,
+                  })
+                }
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.maintenanceMode ? 'bg-blue-600' : 'bg-gray-200'
+                  settings.maintenanceMode ? "bg-blue-600" : "bg-gray-200"
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.maintenanceMode ? 'translate-x-6' : 'translate-x-1'
+                    settings.maintenanceMode ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
               </button>
@@ -308,18 +344,29 @@ export default function AdminSettings() {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Autoriser inscription</p>
-                <p className="text-sm text-gray-500">Permet aux nouveaux utilisateurs de s'inscrire</p>
+                <p className="font-medium text-gray-900">
+                  Autoriser inscription
+                </p>
+                <p className="text-sm text-gray-500">
+                  Permet aux nouveaux utilisateurs de s'inscrire
+                </p>
               </div>
               <button
-                onClick={() => setSettings({...settings, allowRegistration: !settings.allowRegistration})}
+                onClick={() =>
+                  setSettings({
+                    ...settings,
+                    allowRegistration: !settings.allowRegistration,
+                  })
+                }
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.allowRegistration ? 'bg-blue-600' : 'bg-gray-200'
+                  settings.allowRegistration ? "bg-blue-600" : "bg-gray-200"
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.allowRegistration ? 'translate-x-6' : 'translate-x-1'
+                    settings.allowRegistration
+                      ? "translate-x-6"
+                      : "translate-x-1"
                   }`}
                 />
               </button>
@@ -328,17 +375,26 @@ export default function AdminSettings() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-gray-900">Notifications email</p>
-                <p className="text-sm text-gray-500">Envoie les notifications par email</p>
+                <p className="text-sm text-gray-500">
+                  Envoie les notifications par email
+                </p>
               </div>
               <button
-                onClick={() => setSettings({...settings, emailNotifications: !settings.emailNotifications})}
+                onClick={() =>
+                  setSettings({
+                    ...settings,
+                    emailNotifications: !settings.emailNotifications,
+                  })
+                }
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.emailNotifications ? 'bg-blue-600' : 'bg-gray-200'
+                  settings.emailNotifications ? "bg-blue-600" : "bg-gray-200"
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.emailNotifications ? 'translate-x-6' : 'translate-x-1'
+                    settings.emailNotifications
+                      ? "translate-x-6"
+                      : "translate-x-1"
                   }`}
                 />
               </button>
@@ -370,15 +426,21 @@ export default function AdminSettings() {
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Base de données</span>
-              <span className="text-sm font-medium text-gray-900">MySQL 8.0</span>
+              <span className="text-sm font-medium text-gray-900">
+                MySQL 8.0
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Espace disque</span>
-              <span className="text-sm font-medium text-gray-900">45.2 GB / 100 GB</span>
+              <span className="text-sm font-medium text-gray-900">
+                45.2 GB / 100 GB
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Mémoire</span>
-              <span className="text-sm font-medium text-gray-900">2.1 GB / 4 GB</span>
+              <span className="text-sm font-medium text-gray-900">
+                2.1 GB / 4 GB
+              </span>
             </div>
           </div>
         </motion.div>
@@ -401,8 +463,12 @@ export default function AdminSettings() {
               <div className="flex items-start gap-3">
                 <Info size={20} className="text-blue-600 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-blue-900">Dernière sauvegarde</p>
-                  <p className="text-xs text-blue-700 mt-1">15 mars 2024 à 14:30</p>
+                  <p className="text-sm font-medium text-blue-900">
+                    Dernière sauvegarde
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    15 mars 2024 à 14:30
+                  </p>
                 </div>
               </div>
             </div>

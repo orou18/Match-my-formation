@@ -113,12 +113,20 @@ export default function CreatorHomePage() {
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-1">0</div>
-                    <div className="text-sm text-gray-600">Formations créées</div>
+                    <div className="text-3xl font-bold text-primary mb-1">
+                      0
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Formations créées
+                    </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-green-600 mb-1">0</div>
-                    <div className="text-sm text-gray-600">Apprenants inscrits</div>
+                    <div className="text-3xl font-bold text-green-600 mb-1">
+                      0
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Apprenants inscrits
+                    </div>
                   </div>
                 </div>
               </div>
@@ -133,7 +141,9 @@ export default function CreatorHomePage() {
                     className="flex items-center gap-3 p-3 bg-white rounded-xl hover:bg-gray-50 transition-colors"
                   >
                     <Plus className="w-5 h-5 text-green-600" />
-                    <span className="font-medium">Créer une nouvelle formation</span>
+                    <span className="font-medium">
+                      Créer une nouvelle formation
+                    </span>
                   </Link>
                   <Link
                     href="/dashboard/creator/profile"
@@ -159,9 +169,10 @@ export default function CreatorHomePage() {
                 Commencez votre parcours
               </h3>
               <p className="text-white/90 mb-8">
-                Rejoignez des milliers de créateurs et commencez à monétiser votre expertise
+                Rejoignez des milliers de créateurs et commencez à monétiser
+                votre expertise
               </p>
-              
+
               <div className="space-y-4">
                 <Link
                   href="/dashboard/creator/become"
@@ -170,7 +181,7 @@ export default function CreatorHomePage() {
                   <span>Devenir créateur</span>
                   <ArrowRight className="w-5 h-5" />
                 </Link>
-                
+
                 <Link
                   href="/dashboard/creator/setup"
                   className="w-full bg-white/20 backdrop-blur-sm text-white py-4 rounded-xl font-semibold hover:bg-white/30 transition-colors flex items-center justify-center gap-2 border border border-white/30"

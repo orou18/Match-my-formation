@@ -21,8 +21,9 @@ import {
   RefreshCw,
   Bell,
   Search,
-  MoreVertical
+  MoreVertical,
 } from "lucide-react";
+import { dashboardService } from "@/lib/services/dashboard-service";
 
 interface KPICard {
   title: string;
@@ -30,90 +31,94 @@ interface KPICard {
   change: number;
   icon: React.ElementType;
   color: string;
-  trend: 'up' | 'down';
-}
-
-interface ChartData {
-  name: string;
-  users: number;
-  creators: number;
-  revenue: number;
+  trend: "up" | "down";
 }
 
 export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
-  const [dateRange, setDateRange] = useState('30d');
+  const [dateRange, setDateRange] = useState("30d");
   const [refreshing, setRefreshing] = useState(false);
+  const [analytics, setAnalytics] = useState<any>(null);
+
+  const overview = analytics?.overview || {};
+  const growth = overview.monthlyGrowth || {};
 
   const kpiData: KPICard[] = [
     {
       title: "Utilisateurs Actifs",
-      value: "28,743",
-      change: 12.5,
+      value: new Intl.NumberFormat("fr-FR").format(overview.totalUsers || 0),
+      change: growth.users || 0,
       icon: Users,
       color: "blue",
-      trend: "up"
+      trend: (growth.users || 0) >= 0 ? "up" : "down",
     },
     {
-      title: "Créateurs",
-      value: "1,234",
-      change: 8.3,
+      title: "Créateurs / Vidéos",
+      value: new Intl.NumberFormat("fr-FR").format(overview.totalCreators || 0),
+      change: growth.creators || 0,
       icon: UserCheck,
       color: "purple",
-      trend: "up"
+      trend: (growth.creators || 0) >= 0 ? "up" : "down",
     },
     {
       title: "Revenus Mensuels",
-      value: "€147,832",
-      change: 23.7,
+      value: new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: "EUR",
+      }).format(overview.totalRevenue || 0),
+      change: growth.revenue || 0,
       icon: DollarSign,
       color: "green",
-      trend: "up"
+      trend: (growth.revenue || 0) >= 0 ? "up" : "down",
     },
     {
       title: "Cours Actifs",
-      value: "892",
-      change: -2.1,
+      value: new Intl.NumberFormat("fr-FR").format(overview.totalCourses || 0),
+      change: growth.courses || 0,
       icon: Video,
       color: "orange",
-      trend: "down"
+      trend: (growth.courses || 0) >= 0 ? "up" : "down",
     },
     {
       title: "Taux d'Engagement",
-      value: "78.4%",
-      change: 5.2,
+      value: `${overview.engagementRate || 0}%`,
+      change: growth.engagement || 0,
       icon: Target,
       color: "indigo",
-      trend: "up"
+      trend: (growth.engagement || 0) >= 0 ? "up" : "down",
     },
     {
       title: "Sessions Video",
-      value: "156K",
-      change: 18.9,
+      value: new Intl.NumberFormat("fr-FR").format(overview.totalCreators || 0),
+      change: growth.creators || 0,
       icon: Eye,
       color: "pink",
-      trend: "up"
-    }
-  ];
-
-  const chartData: ChartData[] = [
-    { name: "Jan", users: 4000, creators: 240, revenue: 2400 },
-    { name: "Fév", users: 3000, creators: 139, revenue: 2210 },
-    { name: "Mar", users: 2000, creators: 980, revenue: 2290 },
-    { name: "Avr", users: 2780, creators: 390, revenue: 2000 },
-    { name: "Mai", users: 1890, creators: 480, revenue: 2181 },
-    { name: "Jun", users: 2390, creators: 380, revenue: 2500 },
-    { name: "Jul", users: 3490, creators: 430, revenue: 2100 },
+      trend: (growth.creators || 0) >= 0 ? "up" : "down",
+    },
   ];
 
   useEffect(() => {
-    // Simuler le chargement des données
-    setTimeout(() => setIsLoading(false), 1500);
-  }, []);
+    const loadDashboard = async () => {
+      try {
+        const data = await dashboardService.getAdminAnalytics(
+          dateRange,
+          "overview"
+        );
+        setAnalytics(data);
+      } catch (error) {
+        console.error("Erreur chargement dashboard admin:", error);
+      } finally {
+        setIsLoading(false);
+        setRefreshing(false);
+      }
+    };
+
+    loadDashboard();
+  }, [dateRange, refreshing]);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    setIsLoading(true);
   };
 
   if (isLoading) {
@@ -135,8 +140,8 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-4 py-2">
             <Calendar size={18} className="text-gray-500" />
-            <select 
-              value={dateRange} 
+            <select
+              value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
               className="outline-none bg-transparent text-sm"
             >
@@ -146,11 +151,14 @@ export default function AdminDashboard() {
               <option value="1y">Dernière année</option>
             </select>
           </div>
-          <button 
+          <button
             onClick={handleRefresh}
             className="bg-white rounded-lg border border-gray-200 p-2 hover:bg-gray-50 transition-colors"
           >
-            <RefreshCw size={18} className={`text-gray-600 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              size={18}
+              className={`text-gray-600 ${refreshing ? "animate-spin" : ""}`}
+            />
           </button>
           <button className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors flex items-center gap-2">
             <Download size={18} />
@@ -173,10 +181,18 @@ export default function AdminDashboard() {
               <div className={`p-3 rounded-lg bg-${kpi.color}-50`}>
                 <kpi.icon size={20} className={`text-${kpi.color}-600`} />
               </div>
-              <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
-                kpi.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-              }`}>
-                {kpi.trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+              <div
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
+                  kpi.trend === "up"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {kpi.trend === "up" ? (
+                  <TrendingUp size={12} />
+                ) : (
+                  <TrendingDown size={12} />
+                )}
                 {Math.abs(kpi.change)}%
               </div>
             </div>
@@ -196,7 +212,9 @@ export default function AdminDashboard() {
           className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Croissance de la Plateforme</h2>
+            <h2 className="text-lg font-bold text-gray-900">
+              Croissance de la Plateforme
+            </h2>
             <button className="text-gray-400 hover:text-gray-600">
               <MoreVertical size={18} />
             </button>
@@ -204,8 +222,12 @@ export default function AdminDashboard() {
           <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
             <div className="text-center">
               <BarChart3 size={48} className="mx-auto text-gray-400 mb-3" />
-              <p className="text-gray-500">Graphique de croissance interactif</p>
-              <p className="text-sm text-gray-400 mt-1">Utilisateurs +28% ce mois</p>
+              <p className="text-gray-500">
+                Graphique de croissance interactif
+              </p>
+              <p className="text-sm text-gray-400 mt-1">
+                Utilisateurs +28% ce mois
+              </p>
             </div>
           </div>
         </motion.div>
@@ -218,7 +240,9 @@ export default function AdminDashboard() {
           className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Répartition Créateurs</h2>
+            <h2 className="text-lg font-bold text-gray-900">
+              Répartition Créateurs
+            </h2>
             <button className="text-gray-400 hover:text-gray-600">
               <MoreVertical size={18} />
             </button>
@@ -251,7 +275,9 @@ export default function AdminDashboard() {
       >
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900">Activité Récente</h2>
+            <h2 className="text-lg font-bold text-gray-900">
+              Activité Récente
+            </h2>
             <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
               Voir tout
             </button>
@@ -259,26 +285,58 @@ export default function AdminDashboard() {
         </div>
         <div className="divide-y divide-gray-100">
           {[
-            { user: "Alice Martin", action: "a créé un nouveau cours", time: "il y a 2 min", type: "course" },
-            { user: "Bob Dubois", action: "s'est inscrit à Premium", time: "il y a 15 min", type: "subscription" },
-            { user: "Claire Durand", action: "a complété 5 cours", time: "il y a 1h", type: "achievement" },
-            { user: "System", action: "Nouveau créateur vérifié", time: "il y a 2h", type: "system" },
+            {
+              user: "Alice Martin",
+              action: "a créé un nouveau cours",
+              time: "il y a 2 min",
+              type: "course",
+            },
+            {
+              user: "Bob Dubois",
+              action: "s'est inscrit à Premium",
+              time: "il y a 15 min",
+              type: "subscription",
+            },
+            {
+              user: "Claire Durand",
+              action: "a complété 5 cours",
+              time: "il y a 1h",
+              type: "achievement",
+            },
+            {
+              user: "System",
+              action: "Nouveau créateur vérifié",
+              time: "il y a 2h",
+              type: "system",
+            },
           ].map((activity, index) => (
             <div key={index} className="p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  activity.type === 'course' ? 'bg-blue-100' :
-                  activity.type === 'subscription' ? 'bg-green-100' :
-                  activity.type === 'achievement' ? 'bg-purple-100' : 'bg-gray-100'
-                }`}>
-                  {activity.type === 'course' ? <Video size={16} className="text-blue-600" /> :
-                   activity.type === 'subscription' ? <DollarSign size={16} className="text-green-600" /> :
-                   activity.type === 'achievement' ? <Award size={16} className="text-purple-600" /> :
-                   <Activity size={16} className="text-gray-600" />}
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    activity.type === "course"
+                      ? "bg-blue-100"
+                      : activity.type === "subscription"
+                        ? "bg-green-100"
+                        : activity.type === "achievement"
+                          ? "bg-purple-100"
+                          : "bg-gray-100"
+                  }`}
+                >
+                  {activity.type === "course" ? (
+                    <Video size={16} className="text-blue-600" />
+                  ) : activity.type === "subscription" ? (
+                    <DollarSign size={16} className="text-green-600" />
+                  ) : activity.type === "achievement" ? (
+                    <Award size={16} className="text-purple-600" />
+                  ) : (
+                    <Activity size={16} className="text-gray-600" />
+                  )}
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">
-                    <span className="font-bold">{activity.user}</span> {activity.action}
+                    <span className="font-bold">{activity.user}</span>{" "}
+                    {activity.action}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
                 </div>

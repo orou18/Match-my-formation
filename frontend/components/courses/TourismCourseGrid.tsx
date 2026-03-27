@@ -21,10 +21,10 @@ interface TourismCourseGridProps {
   showFilters?: boolean;
 }
 
-export default function TourismCourseGrid({ 
-  variant = "default", 
+export default function TourismCourseGrid({
+  variant = "default",
   maxCourses,
-  showFilters = true 
+  showFilters = true,
 }: TourismCourseGridProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -33,12 +33,17 @@ export default function TourismCourseGrid({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const filteredCourses = tourismCourses
-    .filter(course => {
-      const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           course.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesCategory = selectedCategory === "all" || course.category === selectedCategory;
-      const matchesLevel = selectedLevel === "all" || course.level === selectedLevel;
+    .filter((course) => {
+      const matchesSearch =
+        course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.tags.some((tag) =>
+          tag.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      const matchesCategory =
+        selectedCategory === "all" || course.category === selectedCategory;
+      const matchesLevel =
+        selectedLevel === "all" || course.level === selectedLevel;
       return matchesSearch && matchesCategory && matchesLevel;
     })
     .sort((a, b) => {
@@ -123,7 +128,7 @@ export default function TourismCourseGrid({
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002B24]/20 focus:border-[#002B24]"
               >
-                {categories.map(category => (
+                {categories.map((category) => (
                   <option key={category.value} value={category.value}>
                     {category.label}
                   </option>
@@ -135,7 +140,7 @@ export default function TourismCourseGrid({
                 onChange={(e) => setSelectedLevel(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002B24]/20 focus:border-[#002B24]"
               >
-                {levels.map(level => (
+                {levels.map((level) => (
                   <option key={level.value} value={level.value}>
                     {level.label}
                   </option>
@@ -147,7 +152,7 @@ export default function TourismCourseGrid({
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002B24]/20 focus:border-[#002B24]"
               >
-                {sortOptions.map(option => (
+                {sortOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -181,26 +186,36 @@ export default function TourismCourseGrid({
       {/* Results Summary */}
       <div className="flex items-center justify-between">
         <p className="text-gray-600">
-          {filteredCourses.length} cours trouvé{filteredCourses.length > 1 ? "s" : ""}
+          {filteredCourses.length} cours trouvé
+          {filteredCourses.length > 1 ? "s" : ""}
         </p>
         <div className="flex items-center gap-4 text-sm text-gray-600">
           <div className="flex items-center gap-1">
             <Users className="w-4 h-4" />
-            {filteredCourses.reduce((sum, course) => sum + course.students, 0).toLocaleString()} étudiants
+            {filteredCourses
+              .reduce((sum, course) => sum + course.students, 0)
+              .toLocaleString()}{" "}
+            étudiants
           </div>
           <div className="flex items-center gap-1">
             <Star className="w-4 h-4" />
-            {(filteredCourses.reduce((sum, course) => sum + course.rating, 0) / filteredCourses.length).toFixed(1)} moyenne
+            {(
+              filteredCourses.reduce((sum, course) => sum + course.rating, 0) /
+              filteredCourses.length
+            ).toFixed(1)}{" "}
+            moyenne
           </div>
         </div>
       </div>
 
       {/* Course Grid */}
-      <div className={`grid gap-6 ${
-        viewMode === "grid" 
-          ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
-          : "grid-cols-1"
-      }`}>
+      <div
+        className={`grid gap-6 ${
+          viewMode === "grid"
+            ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            : "grid-cols-1"
+        }`}
+      >
         {filteredCourses.map((course, index) => (
           <motion.div
             key={course.id}
@@ -208,10 +223,7 @@ export default function TourismCourseGrid({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <CourseCard
-              course={course}
-              index={index}
-            />
+            <CourseCard course={course} index={index} />
           </motion.div>
         ))}
       </div>

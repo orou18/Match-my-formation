@@ -11,9 +11,7 @@ interface AppProvidersProps {
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ThemeProvider>
-      <TranslationProvider>
-        {children}
-      </TranslationProvider>
+      <TranslationProvider>{children}</TranslationProvider>
     </ThemeProvider>
   );
 }

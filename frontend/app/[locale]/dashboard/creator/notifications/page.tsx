@@ -45,19 +45,21 @@ export default function NotificationsPage() {
         id: "1",
         type: "success",
         title: "Nouvelle inscription",
-        message: "Un nouvel utilisateur s'est inscrit à votre formation 'Tourisme Durable'",
+        message:
+          "Un nouvel utilisateur s'est inscrit à votre formation 'Tourisme Durable'",
         timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
         read: false,
         action: {
           label: "Voir l'inscription",
-          url: "/dashboard/creator/history"
-        }
+          url: "/dashboard/creator/history",
+        },
       },
       {
         id: "2",
         type: "info",
         title: "Mise à jour de la plateforme",
-        message: "De nouvelles fonctionnalités sont disponibles dans votre dashboard creator",
+        message:
+          "De nouvelles fonctionnalités sont disponibles dans votre dashboard creator",
         timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
         read: false,
       },
@@ -65,34 +67,37 @@ export default function NotificationsPage() {
         id: "3",
         type: "warning",
         title: "Paiement en attente",
-        message: "Le paiement pour la formation 'Guide Touristique' est en cours de validation",
+        message:
+          "Le paiement pour la formation 'Guide Touristique' est en cours de validation",
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
         read: true,
         action: {
           label: "Voir les détails",
-          url: "/dashboard/creator/history"
-        }
+          url: "/dashboard/creator/history",
+        },
       },
       {
         id: "4",
         type: "success",
         title: "Formation approuvée",
-        message: "Votre formation 'Hôtellerie de Luxe' a été approuvée et est maintenant en ligne",
+        message:
+          "Votre formation 'Hôtellerie de Luxe' a été approuvée et est maintenant en ligne",
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
         read: true,
         action: {
           label: "Voir la formation",
-          url: "/dashboard/creator/videos"
-        }
+          url: "/dashboard/creator/videos",
+        },
       },
       {
         id: "5",
         type: "info",
         title: "Nouveau commentaire",
-        message: "Un utilisateur a commenté votre vidéo 'Introduction au Tourisme'",
+        message:
+          "Un utilisateur a commenté votre vidéo 'Introduction au Tourisme'",
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
         read: true,
-      }
+      },
     ];
 
     setTimeout(() => {
@@ -128,41 +133,37 @@ export default function NotificationsPage() {
   };
 
   const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, read: true } : notif
-      )
+    setNotifications((prev) =>
+      prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif))
     );
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notif => ({ ...notif, read: true }))
-    );
+    setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
   };
 
   const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
+    setNotifications((prev) => prev.filter((notif) => notif.id !== id));
   };
 
   const clearAll = () => {
     setNotifications([]);
   };
 
-  const filteredNotifications = notifications.filter(notif => {
-    const matchesFilter = 
+  const filteredNotifications = notifications.filter((notif) => {
+    const matchesFilter =
       filter === "all" ||
       (filter === "unread" && !notif.read) ||
       (filter === "read" && notif.read);
-    
-    const matchesSearch = 
+
+    const matchesSearch =
       notif.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       notif.message.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     return matchesFilter && matchesSearch;
   });
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -173,11 +174,11 @@ export default function NotificationsPage() {
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffMins < 60) {
-      return `Il y a ${diffMins} minute${diffMins > 1 ? 's' : ''}`;
+      return `Il y a ${diffMins} minute${diffMins > 1 ? "s" : ""}`;
     } else if (diffHours < 24) {
-      return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
+      return `Il y a ${diffHours} heure${diffHours > 1 ? "s" : ""}`;
     } else {
-      return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+      return `Il y a ${diffDays} jour${diffDays > 1 ? "s" : ""}`;
     }
   };
 
@@ -187,7 +188,10 @@ export default function NotificationsPage() {
         <div className="bg-white rounded-2xl p-8 animate-pulse">
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-start gap-4 p-4 border border-gray-100 rounded-xl">
+              <div
+                key={i}
+                className="flex items-start gap-4 p-4 border border-gray-100 rounded-xl"
+              >
                 <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
                 <div className="flex-1 space-y-2">
                   <div className="h-4 bg-gray-200 rounded w-1/3"></div>
@@ -220,7 +224,7 @@ export default function NotificationsPage() {
             Restez informé des activités importantes de votre dashboard
           </p>
         </div>
-        
+
         <div className="flex gap-2">
           {unreadCount > 0 && (
             <button
@@ -256,7 +260,7 @@ export default function NotificationsPage() {
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
-          
+
           <div className="flex gap-2">
             {(["all", "unread", "read"] as const).map((filterType) => (
               <button
@@ -283,13 +287,14 @@ export default function NotificationsPage() {
           <div className="bg-white rounded-2xl p-12 text-center">
             <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {searchTerm ? "Aucune notification trouvée" : "Aucune notification"}
+              {searchTerm
+                ? "Aucune notification trouvée"
+                : "Aucune notification"}
             </h3>
             <p className="text-gray-600">
-              {searchTerm 
+              {searchTerm
                 ? "Essayez de modifier votre recherche"
-                : "Vous n'avez pas encore de notifications"
-              }
+                : "Vous n'avez pas encore de notifications"}
             </p>
           </div>
         ) : (
@@ -299,16 +304,18 @@ export default function NotificationsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className={`bg-white rounded-2xl p-6 shadow-sm border transition-all ${
-                !notification.read 
-                  ? "border-primary/20 bg-primary/5" 
+                !notification.read
+                  ? "border-primary/20 bg-primary/5"
                   : "border-gray-100 hover:border-gray-200"
               }`}
             >
               <div className="flex items-start gap-4">
-                <div className={`p-2 rounded-lg ${getTypeColor(notification.type)}`}>
+                <div
+                  className={`p-2 rounded-lg ${getTypeColor(notification.type)}`}
+                >
                   {getIcon(notification.type)}
                 </div>
-                
+
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
@@ -319,7 +326,7 @@ export default function NotificationsPage() {
                         {notification.message}
                       </p>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 ml-4">
                       {!notification.read && (
                         <button
@@ -339,13 +346,13 @@ export default function NotificationsPage() {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Calendar className="w-3 h-3" />
                       {formatDate(notification.timestamp)}
                     </div>
-                    
+
                     {notification.action && (
                       <a
                         href={notification.action.url}

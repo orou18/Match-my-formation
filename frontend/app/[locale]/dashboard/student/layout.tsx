@@ -46,30 +46,33 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
 
         // Récupérer les données stockées de manière cohérente
         const storedUserData = UserIdManager.getStoredUserData();
-        
-        if (storedUserData && storedUserData.role === 'student') {
+
+        if (storedUserData && storedUserData.role === "student") {
           // Créer un objet Student à partir des données stockées
           const studentData: Student = {
             id: storedUserData.id,
-            name: storedUserData.name || 'Student',
-            email: storedUserData.email || '',
-            role: 'student',
-            avatar: storedUserData.avatar || '',
+            name: storedUserData.name || "Student",
+            email: storedUserData.email || "",
+            role: "student",
+            avatar: storedUserData.avatar || "",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             enrolled_courses: 0,
             completed_courses: 0,
             certificates: [],
-            progress: []
+            progress: [],
           };
-          
+
           setUser(studentData);
         } else {
           router.push(`/${locale}/login`);
           return;
         }
       } catch (error) {
-        console.error('Erreur lors du chargement des données utilisateur:', error);
+        console.error(
+          "Erreur lors du chargement des données utilisateur:",
+          error
+        );
         router.push(`/${locale}/login`);
       } finally {
         setLoading(false);
@@ -87,7 +90,9 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-500">{t('error.profile', 'Impossible de charger votre profil')}</p>
+          <p className="text-red-500">
+            {t("error.profile", "Impossible de charger votre profil")}
+          </p>
           <button
             onClick={() => router.push(`/${locale}/login`)}
             className="mt-4 px-4 py-2 bg-primary text-white rounded-lg"
@@ -101,25 +106,25 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
 
   const navigationItems = [
     {
-      name: t('nav.dashboard', 'Tableau de bord'),
+      name: t("nav.dashboard", "Tableau de bord"),
       href: `/${locale}/dashboard/student`,
       icon: LayoutDashboard,
       current: false,
     },
     {
-      name: t('nav.parcours', 'Mes parcours'),
+      name: t("nav.parcours", "Mes parcours"),
       href: `/${locale}/dashboard/student/parcours`,
       icon: Map,
       current: false,
     },
     {
-      name: t('nav.courses', 'Cours'),
+      name: t("nav.courses", "Cours"),
       href: `/${locale}/dashboard/student/courses`,
       icon: BookOpen,
       current: false,
     },
     {
-      name: t('nav.certificates', 'Certificats'),
+      name: t("nav.certificates", "Certificats"),
       href: `/${locale}/dashboard/student/certificates`,
       icon: CreditCard,
       current: false,
@@ -128,13 +133,13 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
 
   const profileItems = [
     {
-      name: t('nav.profile', 'Mon profil'),
+      name: t("nav.profile", "Mon profil"),
       href: `/${locale}/dashboard/student/profile`,
       icon: User,
       current: false,
     },
     {
-      name: t('nav.preferences', 'Préférences'),
+      name: t("nav.preferences", "Préférences"),
       href: `/${locale}/dashboard/student/profile/preferences`,
       icon: Bell,
       current: false,
@@ -142,7 +147,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-layout overflow-x-hidden">
       {/* DashboardNavbar intégrée */}
       <DashboardNavbar />
 
@@ -156,7 +161,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
-          
+
           <motion.aside
             initial={{ x: -320 }}
             animate={{ x: 0 }}
@@ -168,10 +173,12 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-white/20 rounded-xl shadow-lg flex items-center justify-center font-bold text-lg">
-                    {user?.name?.charAt(0) || 'S'}
+                    {user?.name?.charAt(0) || "S"}
                   </div>
                   <div>
-                    <p className="font-semibold text-white">{user?.name || 'Student'}</p>
+                    <p className="font-semibold text-white">
+                      {user?.name || "Student"}
+                    </p>
                     <p className="text-xs text-white/60">Student</p>
                   </div>
                 </div>
@@ -185,7 +192,9 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
 
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-white/20 rounded-lg shadow-lg" />
-                <span className="font-black text-xl tracking-tighter">MATCHMY</span>
+                <span className="font-black text-xl tracking-tighter">
+                  MATCHMY
+                </span>
               </div>
             </div>
 
@@ -232,7 +241,9 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all w-full"
               >
                 <LogOut className="w-5 h-5" />
-                <span className="font-medium">{t('nav.logout', 'Déconnexion')}</span>
+                <span className="font-medium">
+                  {t("nav.logout", "Déconnexion")}
+                </span>
               </button>
             </div>
           </motion.aside>
@@ -240,12 +251,12 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Contenu principal */}
-      <main className="min-h-screen pt-20">
+      <main className="min-h-screen pt-20 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full"
+          className="w-full min-w-0"
         >
           {children}
         </motion.div>

@@ -9,7 +9,7 @@ import {
   Database,
   CheckCircle,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
 } from "lucide-react";
 
 export default function TestEmployeesPage() {
@@ -25,24 +25,30 @@ export default function TestEmployeesPage() {
     setTestResults([]);
 
     // Test 1: Vérifier l'API GET
-    setTestResults(prev => [...prev, `🔍 Test 1: Vérification API GET`]);
+    setTestResults((prev) => [...prev, `🔍 Test 1: Vérification API GET`]);
     try {
       const response = await fetch("/api/creator/employees");
       const data = await response.json();
-      
+
       if (data.success) {
-        setTestResults(prev => [...prev, `   ✅ API GET fonctionnelle`]);
-        setTestResults(prev => [...prev, `   📊 ${data.data.length} employés trouvés`]);
+        setTestResults((prev) => [...prev, `   ✅ API GET fonctionnelle`]);
+        setTestResults((prev) => [
+          ...prev,
+          `   📊 ${data.data.length} employés trouvés`,
+        ]);
         setEmployees(data.data);
       } else {
-        setTestResults(prev => [...prev, `   ❌ API GET erreur: ${data.message}`]);
+        setTestResults((prev) => [
+          ...prev,
+          `   ❌ API GET erreur: ${data.message}`,
+        ]);
       }
     } catch (error) {
-      setTestResults(prev => [...prev, `   ❌ Erreur API GET: ${error}`]);
+      setTestResults((prev) => [...prev, `   ❌ Erreur API GET: ${error}`]);
     }
 
     // Test 2: Vérifier l'API POST
-    setTestResults(prev => [...prev, `\n📝 Test 2: Vérification API POST`]);
+    setTestResults((prev) => [...prev, `\n📝 Test 2: Vérification API POST`]);
     try {
       const testEmployee = {
         name: "Test Employee " + Date.now(),
@@ -53,65 +59,89 @@ export default function TestEmployeesPage() {
         role: "employee",
         password: "Azerty123!",
         hire_date: "2024-01-01",
-        status: "active"
+        status: "active",
       };
 
       const response = await fetch("/api/creator/employees", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer test-token`,
+          Authorization: `Bearer test-token`,
         },
         body: JSON.stringify(testEmployee),
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
-        setTestResults(prev => [...prev, `   ✅ API POST fonctionnelle`]);
-        setTestResults(prev => [...prev, `   👤 Employé créé: ${data.data.name}`]);
-        setTestResults(prev => [...prev, `   📧 Email: ${data.data.email}`]);
-        setTestResults(prev => [...prev, `   🆔 ID: ${data.data.id}`]);
+        setTestResults((prev) => [...prev, `   ✅ API POST fonctionnelle`]);
+        setTestResults((prev) => [
+          ...prev,
+          `   👤 Employé créé: ${data.data.name}`,
+        ]);
+        setTestResults((prev) => [...prev, `   📧 Email: ${data.data.email}`]);
+        setTestResults((prev) => [...prev, `   🆔 ID: ${data.data.id}`]);
       } else {
-        setTestResults(prev => [...prev, `   ❌ API POST erreur: ${data.message}`]);
+        setTestResults((prev) => [
+          ...prev,
+          `   ❌ API POST erreur: ${data.message}`,
+        ]);
       }
     } catch (error) {
-      setTestResults(prev => [...prev, `   ❌ Erreur API POST: ${error}`]);
+      setTestResults((prev) => [...prev, `   ❌ Erreur API POST: ${error}`]);
     }
 
     // Test 3: Vérifier le stockage local
-    setTestResults(prev => [...prev, `\n💾 Test 3: Vérification stockage local`]);
+    setTestResults((prev) => [
+      ...prev,
+      `\n💾 Test 3: Vérification stockage local`,
+    ]);
     try {
-      const stored = localStorage.getItem('creator_employees');
+      const stored = localStorage.getItem("creator_employees");
       if (stored) {
         const storedEmployees = JSON.parse(stored);
-        setTestResults(prev => [...prev, `   ✅ Stockage local fonctionnel`]);
-        setTestResults(prev => [...prev, `   📊 ${storedEmployees.length} employés stockés localement`]);
+        setTestResults((prev) => [...prev, `   ✅ Stockage local fonctionnel`]);
+        setTestResults((prev) => [
+          ...prev,
+          `   📊 ${storedEmployees.length} employés stockés localement`,
+        ]);
       } else {
-        setTestResults(prev => [...prev, `   ⚠️ Aucune donnée locale trouvée`]);
+        setTestResults((prev) => [
+          ...prev,
+          `   ⚠️ Aucune donnée locale trouvée`,
+        ]);
       }
     } catch (error) {
-      setTestResults(prev => [...prev, `   ❌ Erreur stockage local: ${error}`]);
+      setTestResults((prev) => [
+        ...prev,
+        `   ❌ Erreur stockage local: ${error}`,
+      ]);
     }
 
     // Test 4: Vérifier les pages
-    setTestResults(prev => [...prev, `\n📄 Test 4: Vérification des pages`]);
+    setTestResults((prev) => [...prev, `\n📄 Test 4: Vérification des pages`]);
     const pages = [
       { path: "/dashboard/creator/employees", name: "Liste employés" },
       { path: "/dashboard/creator/employees/add", name: "Ajout employé" },
-      { path: "/dashboard/creator/branding", name: "Branding" }
+      { path: "/dashboard/creator/branding", name: "Branding" },
     ];
 
     for (const page of pages) {
       try {
         const response = await fetch(`/${locale}${page.path}`);
         if (response.ok) {
-          setTestResults(prev => [...prev, `   ✅ ${page.name} accessible`]);
+          setTestResults((prev) => [...prev, `   ✅ ${page.name} accessible`]);
         } else {
-          setTestResults(prev => [...prev, `   ❌ ${page.name} erreur ${response.status}`]);
+          setTestResults((prev) => [
+            ...prev,
+            `   ❌ ${page.name} erreur ${response.status}`,
+          ]);
         }
       } catch (error) {
-        setTestResults(prev => [...prev, `   ❌ ${page.name} erreur: ${error}`]);
+        setTestResults((prev) => [
+          ...prev,
+          `   ❌ ${page.name} erreur: ${error}`,
+        ]);
       }
     }
 
@@ -119,8 +149,8 @@ export default function TestEmployeesPage() {
   };
 
   const clearLocalStorage = () => {
-    localStorage.removeItem('creator_employees');
-    setTestResults(prev => [...prev, `🗑️ Stockage local vidé`]);
+    localStorage.removeItem("creator_employees");
+    setTestResults((prev) => [...prev, `🗑️ Stockage local vidé`]);
     setEmployees([]);
   };
 
@@ -135,7 +165,7 @@ export default function TestEmployeesPage() {
           <Users className="w-8 h-8 text-blue-600" />
           Test du Système Employés
         </h1>
-        
+
         <div className="bg-gray-100 rounded-lg p-6 mb-6 max-h-96 overflow-y-auto">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Database className="w-5 h-5 text-blue-600" />
@@ -143,10 +173,17 @@ export default function TestEmployeesPage() {
           </h2>
           <div className="space-y-1">
             {testResults.length === 0 ? (
-              <p className="text-gray-500">Cliquez sur "Exécuter les tests" pour commencer</p>
+              <p className="text-gray-500">
+                Cliquez sur "Exécuter les tests" pour commencer
+              </p>
             ) : (
               testResults.map((result, index) => (
-                <p key={index} className="text-sm font-mono whitespace-pre-wrap">{result}</p>
+                <p
+                  key={index}
+                  className="text-sm font-mono whitespace-pre-wrap"
+                >
+                  {result}
+                </p>
               ))
             )}
           </div>
@@ -166,9 +203,9 @@ export default function TestEmployeesPage() {
                 ) : (
                   <RefreshCw className="w-4 h-4" />
                 )}
-                {isRunning ? 'Tests en cours...' : 'Exécuter les tests'}
+                {isRunning ? "Tests en cours..." : "Exécuter les tests"}
               </button>
-              
+
               <button
                 onClick={clearLocalStorage}
                 className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
@@ -190,7 +227,9 @@ export default function TestEmployeesPage() {
                 Liste Employés
               </button>
               <button
-                onClick={() => navigateToPage("/dashboard/creator/employees/add")}
+                onClick={() =>
+                  navigateToPage("/dashboard/creator/employees/add")
+                }
                 className="px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
@@ -215,10 +254,15 @@ export default function TestEmployeesPage() {
               <div className="bg-gray-50 rounded-lg p-4 max-h-48 overflow-y-auto">
                 <div className="space-y-2">
                   {employees.map((emp) => (
-                    <div key={emp.id} className="flex items-center justify-between p-2 bg-white rounded border">
+                    <div
+                      key={emp.id}
+                      className="flex items-center justify-between p-2 bg-white rounded border"
+                    >
                       <div>
                         <span className="font-medium">{emp.name}</span>
-                        <span className="text-sm text-gray-500 ml-2">{emp.email}</span>
+                        <span className="text-sm text-gray-500 ml-2">
+                          {emp.email}
+                        </span>
                       </div>
                       <div className="text-sm text-gray-500">
                         {emp.department} - {emp.position}

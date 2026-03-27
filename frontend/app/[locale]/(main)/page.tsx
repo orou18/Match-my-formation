@@ -16,13 +16,14 @@ import { useParams } from "next/navigation";
 export default function HomePage() {
   const params = useParams();
   const locale = params.locale || "fr";
-  
+
   // Mock data pour les 6 cours mieux notés
   const topRatedVideos = [
     {
       id: 1,
       title: "Introduction au Tourisme Durable",
-      description: "Découvrez les fondamentaux du tourisme écologique et les pratiques durables dans l'industrie.",
+      description:
+        "Découvrez les fondamentaux du tourisme écologique et les pratiques durables dans l'industrie.",
       thumbnail: "/videos/video1-thumb.jpg",
       video_url: "/videos/video1.mp4",
       duration: "12:34",
@@ -42,16 +43,17 @@ export default function HomePage() {
         name: "Dr. Marie Laurent",
         email: "marie.laurent@example.com",
         avatar: "/avatars/creator1.jpg",
-        specialty: "Tourisme Durable & Environnement"
+        specialty: "Tourisme Durable & Environnement",
       },
       learning_objectives: [
         {
           id: 1,
           video_id: 1,
           title: "Comprendre les principes du tourisme durable",
-          description: "Maîtriser les concepts fondamentaux du tourisme durable",
-          order: 1
-        }
+          description:
+            "Maîtriser les concepts fondamentaux du tourisme durable",
+          order: 1,
+        },
       ],
       resources: [
         {
@@ -62,16 +64,17 @@ export default function HomePage() {
           file_size: 2048000,
           file_type: "application/pdf",
           description: "Un guide complet avec les meilleures pratiques",
-          created_at: "2024-01-15"
-        }
+          created_at: "2024-01-15",
+        },
       ],
       is_free: true,
-      rating: 4.9
+      rating: 4.9,
     },
     {
       id: 2,
       title: "Gestion Hôtelière Avancée",
-      description: "Techniques de management et stratégies pour l'hôtellerie de luxe.",
+      description:
+        "Techniques de management et stratégies pour l'hôtellerie de luxe.",
       thumbnail: "/videos/video2-thumb.jpg",
       video_url: "/videos/video2.mp4",
       duration: "18:22",
@@ -91,7 +94,7 @@ export default function HomePage() {
         name: "Sophie Martin",
         email: "sophie.martin@example.com",
         avatar: "/avatars/creator2.jpg",
-        specialty: "Management Hôtelier"
+        specialty: "Management Hôtelier",
       },
       learning_objectives: [
         {
@@ -99,8 +102,8 @@ export default function HomePage() {
           video_id: 2,
           title: "Maîtriser les opérations hôtelières",
           description: "Comprendre et gérer tous les aspects opérationnels",
-          order: 1
-        }
+          order: 1,
+        },
       ],
       resources: [
         {
@@ -109,19 +112,21 @@ export default function HomePage() {
           name: "Check-list gestion hôtelière",
           file_path: "/resources/checklist-hotel.xlsx",
           file_size: 512000,
-          file_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          file_type:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           description: "Template complet pour la gestion quotidienne",
-          created_at: "2024-01-10"
-        }
+          created_at: "2024-01-10",
+        },
       ],
       is_free: false,
       price: 49,
-      rating: 4.8
+      rating: 4.8,
     },
     {
       id: 3,
       title: "Marketing Digital Touristique",
-      description: "Stratégies digitales et marketing pour les professionnels du secteur touristique.",
+      description:
+        "Stratégies digitales et marketing pour les professionnels du secteur touristique.",
       thumbnail: "/videos/video3-thumb.jpg",
       video_url: "/videos/video3.mp4",
       duration: "15:45",
@@ -141,16 +146,17 @@ export default function HomePage() {
         name: "Julie Bernard",
         email: "julie.bernard@example.com",
         avatar: "/avatars/creator3.jpg",
-        specialty: "Marketing Digital"
+        specialty: "Marketing Digital",
       },
       learning_objectives: [
         {
           id: 3,
           video_id: 3,
           title: "Développer une stratégie digitale",
-          description: "Créer et mettre en œuvre une stratégie digitale efficace",
-          order: 1
-        }
+          description:
+            "Créer et mettre en œuvre une stratégie digitale efficace",
+          order: 1,
+        },
       ],
       resources: [
         {
@@ -161,16 +167,17 @@ export default function HomePage() {
           file_size: 1024000,
           file_type: "application/pdf",
           description: "Guide stratégique complet avec exemples",
-          created_at: "2024-01-05"
-        }
+          created_at: "2024-01-05",
+        },
       ],
       is_free: true,
-      rating: 4.7
+      rating: 4.7,
     },
     {
       id: 4,
       title: "Revenue Management Avancé",
-      description: "Techniques avancées d'optimisation des revenus dans l'hôtellerie.",
+      description:
+        "Techniques avancées d'optimisation des revenus dans l'hôtellerie.",
       thumbnail: "/videos/video4-thumb.jpg",
       video_url: "/videos/video4.mp4",
       duration: "22:15",
@@ -190,7 +197,7 @@ export default function HomePage() {
         name: "Thomas Dubois",
         email: "thomas.dubois@example.com",
         avatar: "/avatars/creator4.jpg",
-        specialty: "Revenue Management"
+        specialty: "Revenue Management",
       },
       learning_objectives: [
         {
@@ -198,8 +205,8 @@ export default function HomePage() {
           video_id: 4,
           title: "Optimiser les revenus",
           description: "Maîtriser les techniques de pricing et d'optimisation",
-          order: 1
-        }
+          order: 1,
+        },
       ],
       resources: [
         {
@@ -208,19 +215,21 @@ export default function HomePage() {
           name: "Calculateur ROI",
           file_path: "/resources/calculateur-roi.xlsx",
           file_size: 256000,
-          file_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          file_type:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           description: "Outil de calcul du retour sur investissement",
-          created_at: "2023-12-28"
-        }
+          created_at: "2023-12-28",
+        },
       ],
       is_free: false,
       price: 79,
-      rating: 4.8
+      rating: 4.8,
     },
     {
       id: 5,
       title: "Service Client Excellence",
-      description: "Maîtrisez les techniques du service client de luxe dans l'hôtellerie.",
+      description:
+        "Maîtrisez les techniques du service client de luxe dans l'hôtellerie.",
       thumbnail: "/videos/video5-thumb.jpg",
       video_url: "/videos/video5.mp4",
       duration: "16:30",
@@ -240,7 +249,7 @@ export default function HomePage() {
         name: "Claire Rousseau",
         email: "claire.rousseau@example.com",
         avatar: "/avatars/creator5.jpg",
-        specialty: "Service Client"
+        specialty: "Service Client",
       },
       learning_objectives: [
         {
@@ -248,8 +257,8 @@ export default function HomePage() {
           video_id: 5,
           title: "Excellence du service client",
           description: "Développer un service client exceptionnel",
-          order: 1
-        }
+          order: 1,
+        },
       ],
       resources: [
         {
@@ -260,16 +269,17 @@ export default function HomePage() {
           file_size: 1536000,
           file_type: "application/pdf",
           description: "Protocoles détaillés pour le service client",
-          created_at: "2024-01-08"
-        }
+          created_at: "2024-01-08",
+        },
       ],
       is_free: true,
-      rating: 4.9
+      rating: 4.9,
     },
     {
       id: 6,
       title: "Digitalisation Hôtelière",
-      description: "Transformez votre établissement hôtelier avec les dernières technologies digitales.",
+      description:
+        "Transformez votre établissement hôtelier avec les dernières technologies digitales.",
       thumbnail: "/videos/video6-thumb.jpg",
       video_url: "/videos/video6.mp4",
       duration: "19:45",
@@ -289,7 +299,7 @@ export default function HomePage() {
         name: "Pierre Lefebvre",
         email: "pierre.lefebvre@example.com",
         avatar: "/avatars/creator6.jpg",
-        specialty: "Digitalisation"
+        specialty: "Digitalisation",
       },
       learning_objectives: [
         {
@@ -297,8 +307,8 @@ export default function HomePage() {
           video_id: 6,
           title: "Transformation digitale",
           description: "Mettre en œuvre les technologies digitales",
-          order: 1
-        }
+          order: 1,
+        },
       ],
       resources: [
         {
@@ -309,20 +319,20 @@ export default function HomePage() {
           file_size: 2560000,
           file_type: "application/pdf",
           description: "Guide complet de la transformation digitale",
-          created_at: "2024-01-06"
-        }
+          created_at: "2024-01-06",
+        },
       ],
       is_free: false,
       price: 69,
-      rating: 4.6
-    }
+      rating: 4.6,
+    },
   ];
 
   return (
     <>
       <HeroSection />
       <FeaturedCourses />
-      
+
       {/* Top Rated Courses Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6">
@@ -331,24 +341,28 @@ export default function HomePage() {
               Les 6 Cours Mieux Notés
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Découvrez les formations les plus appréciées par nos étudiants, créées par des experts de l'industrie
+              Découvrez les formations les plus appréciées par nos étudiants,
+              créées par des experts de l'industrie
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {topRatedVideos.map((video) => (
               <VideoCard key={video.id} video={video} />
             ))}
           </div>
-          
+
           <div className="text-center mt-12">
-            <Link href={`/${locale}/courses`} className="inline-flex items-center gap-2 px-8 py-3 bg-[#002B24] text-white rounded-xl font-semibold hover:bg-[#003d34] transition-colors">
+            <Link
+              href={`/${locale}/courses`}
+              className="inline-flex items-center gap-2 px-8 py-3 bg-[#002B24] text-white rounded-xl font-semibold hover:bg-[#003d34] transition-colors"
+            >
               Voir toutes les formations
             </Link>
           </div>
         </div>
       </section>
-      
+
       <PartnersSection />
       <WhyUs />
       <HowItWorks />

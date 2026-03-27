@@ -37,7 +37,8 @@ export default function BecomeCreatorPage() {
             Devenez créateur MatchMyFormation
           </h1>
           <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            Rejoignez notre communauté de créateurs et partagez votre expertise avec des milliers d'apprenants
+            Rejoignez notre communauté de créateurs et partagez votre expertise
+            avec des milliers d'apprenants
           </p>
         </motion.div>
 
@@ -52,7 +53,7 @@ export default function BecomeCreatorPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Créez votre profil créateur
             </h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -61,7 +62,9 @@ export default function BecomeCreatorPage() {
                 <input
                   type="text"
                   value={formData.companyName}
-                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, companyName: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="Nom de votre entreprise"
                 />
@@ -73,7 +76,9 @@ export default function BecomeCreatorPage() {
                 </label>
                 <select
                   value={formData.specialization}
-                  onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, specialization: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
                   <option value="">Sélectionnez votre spécialisation</option>
@@ -92,7 +97,9 @@ export default function BecomeCreatorPage() {
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="Décrivez votre expertise et votre expérience..."
@@ -106,7 +113,9 @@ export default function BecomeCreatorPage() {
                 <input
                   type="url"
                   value={formData.website}
-                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, website: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="https://votre-site.com"
                 />
@@ -149,7 +158,9 @@ export default function BecomeCreatorPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-1" />
-                  <span>Interface simple et intuitive pour créer vos formations</span>
+                  <span>
+                    Interface simple et intuitive pour créer vos formations
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-1" />

@@ -45,7 +45,7 @@ export interface VideoFormData {
   description: string;
   category: string;
   learning_objectives: string[];
-  resources: Omit<Resource, 'id' | 'created_at'>[];
+  resources: Omit<Resource, "id" | "created_at">[];
   video_file?: File;
   thumbnail?: File;
   visibility: "public" | "private" | "unlisted";

@@ -18,7 +18,7 @@ import {
   Eye,
   EyeOff,
   Check,
-  X
+  X,
 } from "lucide-react";
 
 interface Permission {
@@ -32,49 +32,111 @@ interface Admin {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'super_admin';
+  role: "admin" | "super_admin";
   permissions: string[];
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   lastLogin: string;
   avatar?: string;
 }
 
 const allPermissions: Permission[] = [
-  { id: 'users_view', name: 'Voir utilisateurs', description: 'Accéder à la liste des utilisateurs', category: 'Utilisateurs' },
-  { id: 'users_create', name: 'Créer utilisateurs', description: 'Créer de nouveaux comptes', category: 'Utilisateurs' },
-  { id: 'users_edit', name: 'Modifier utilisateurs', description: 'Modifier les comptes existants', category: 'Utilisateurs' },
-  { id: 'users_delete', name: 'Supprimer utilisateurs', description: 'Supprimer des comptes', category: 'Utilisateurs' },
-  { id: 'creators_view', name: 'Voir créateurs', description: 'Accéder à la liste des créateurs', category: 'Créateurs' },
-  { id: 'creators_manage', name: 'Gérer créateurs', description: 'Approuver/suspendre les créateurs', category: 'Créateurs' },
-  { id: 'content_view', name: 'Voir contenus', description: 'Accéder à tous les contenus', category: 'Contenus' },
-  { id: 'content_manage', name: 'Gérer contenus', description: 'Modérer et gérer les contenus', category: 'Contenus' },
-  { id: 'ads_manage', name: 'Gérer publicités', description: 'Créer et gérer les campagnes', category: 'Publicités' },
-  { id: 'webinars_manage', name: 'Gérer webinaires', description: 'Organiser et modérer les webinaires', category: 'Webinaires' },
-  { id: 'analytics_view', name: 'Voir analytics', description: 'Accéder aux statistiques', category: 'Analytics' },
-  { id: 'settings_system', name: 'Paramètres système', description: 'Configurer la plateforme', category: 'Système' },
+  {
+    id: "users_view",
+    name: "Voir utilisateurs",
+    description: "Accéder à la liste des utilisateurs",
+    category: "Utilisateurs",
+  },
+  {
+    id: "users_create",
+    name: "Créer utilisateurs",
+    description: "Créer de nouveaux comptes",
+    category: "Utilisateurs",
+  },
+  {
+    id: "users_edit",
+    name: "Modifier utilisateurs",
+    description: "Modifier les comptes existants",
+    category: "Utilisateurs",
+  },
+  {
+    id: "users_delete",
+    name: "Supprimer utilisateurs",
+    description: "Supprimer des comptes",
+    category: "Utilisateurs",
+  },
+  {
+    id: "creators_view",
+    name: "Voir créateurs",
+    description: "Accéder à la liste des créateurs",
+    category: "Créateurs",
+  },
+  {
+    id: "creators_manage",
+    name: "Gérer créateurs",
+    description: "Approuver/suspendre les créateurs",
+    category: "Créateurs",
+  },
+  {
+    id: "content_view",
+    name: "Voir contenus",
+    description: "Accéder à tous les contenus",
+    category: "Contenus",
+  },
+  {
+    id: "content_manage",
+    name: "Gérer contenus",
+    description: "Modérer et gérer les contenus",
+    category: "Contenus",
+  },
+  {
+    id: "ads_manage",
+    name: "Gérer publicités",
+    description: "Créer et gérer les campagnes",
+    category: "Publicités",
+  },
+  {
+    id: "webinars_manage",
+    name: "Gérer webinaires",
+    description: "Organiser et modérer les webinaires",
+    category: "Webinaires",
+  },
+  {
+    id: "analytics_view",
+    name: "Voir analytics",
+    description: "Accéder aux statistiques",
+    category: "Analytics",
+  },
+  {
+    id: "settings_system",
+    name: "Paramètres système",
+    description: "Configurer la plateforme",
+    category: "Système",
+  },
 ];
 
 export default function AdminAdmins() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
-  const [newAdminRole, setNewAdminRole] = useState<'admin' | 'super_admin'>('admin');
-  const [newAdmin, setNewAdmin] = useState({ name: '', email: '' });
+  const [newAdminRole, setNewAdminRole] = useState<"admin" | "super_admin">(
+    "admin"
+  );
+  const [newAdmin, setNewAdmin] = useState({ name: "", email: "" });
 
   useEffect(() => {
     const loadAdmins = async () => {
       try {
-        const response = await fetch('/api/admin/admins');
+        const response = await fetch("/api/admin/admins");
         if (response.ok) {
           const data = await response.json();
           setAdmins(data.admins);
         } else {
-          console.error('Erreur lors du chargement des administrateurs');
+          console.error("Erreur lors du chargement des administrateurs");
         }
       } catch (error) {
-        console.error('Erreur:', error);
+        console.error("Erreur:", error);
       } finally {
         setIsLoading(false);
       }
@@ -85,64 +147,80 @@ export default function AdminAdmins() {
 
   const mockAdmins: Admin[] = [
     {
-      id: '1',
+      id: "1",
       name: "Jean Dupont",
       email: "jean.dupont@platform.com",
       role: "super_admin",
-      permissions: allPermissions.map(p => p.id),
+      permissions: allPermissions.map((p) => p.id),
       status: "active",
       lastLogin: "2024-03-18T14:30:00Z",
-      avatar: "/temoignage.png"
+      avatar: "/temoignage.png",
     },
     {
-      id: '2',
+      id: "2",
       name: "Marie Laurent",
       email: "marie.laurent@platform.com",
       role: "admin",
-      permissions: ['users_view', 'users_edit', 'creators_view', 'content_view', 'analytics_view'],
+      permissions: [
+        "users_view",
+        "users_edit",
+        "creators_view",
+        "content_view",
+        "analytics_view",
+      ],
       status: "active",
       lastLogin: "2024-03-18T10:15:00Z",
-      avatar: "/temoignage.png"
+      avatar: "/temoignage.png",
     },
     {
-      id: '3',
+      id: "3",
       name: "Pierre Martin",
       email: "pierre.martin@platform.com",
       role: "admin",
-      permissions: ['users_view', 'creators_view', 'creators_manage', 'content_manage'],
+      permissions: [
+        "users_view",
+        "creators_view",
+        "creators_manage",
+        "content_manage",
+      ],
       status: "active",
       lastLogin: "2024-03-17T16:45:00Z",
-      avatar: "/temoignage.png"
+      avatar: "/temoignage.png",
     },
     {
-      id: '4',
+      id: "4",
       name: "Sophie Bernard",
       email: "sophie.bernard@platform.com",
       role: "admin",
-      permissions: ['content_view', 'content_manage', 'ads_manage', 'webinars_manage'],
+      permissions: [
+        "content_view",
+        "content_manage",
+        "ads_manage",
+        "webinars_manage",
+      ],
       status: "inactive",
       lastLogin: "2024-03-15T09:20:00Z",
-      avatar: "/temoignage.png"
-    }
+      avatar: "/temoignage.png",
+    },
   ];
 
   const handleCreateAdmin = async () => {
     if (!newAdmin.name || !newAdmin.email || !newAdminRole) {
-      alert('Veuillez remplir tous les champs obligatoires');
+      alert("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
     try {
-      const response = await fetch('/api/admin/admins', {
-        method: 'POST',
+      const response = await fetch("/api/admin/admins", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: newAdmin.name,
           email: newAdmin.email,
           role: newAdminRole,
-          permissions: selectedPermissions
+          permissions: selectedPermissions,
         }),
       });
 
@@ -150,107 +228,113 @@ export default function AdminAdmins() {
         const createdAdmin = await response.json();
         setAdmins([...admins, createdAdmin]);
         setShowCreateModal(false);
-        setNewAdmin({ name: '', email: '' });
+        setNewAdmin({ name: "", email: "" });
         setSelectedPermissions([]);
-        setNewAdminRole('admin');
-        alert('Administrateur créé avec succès!');
+        setNewAdminRole("admin");
+        alert("Administrateur créé avec succès!");
       } else {
         const error = await response.json();
-        alert(error.error || 'Erreur lors de la création');
+        alert(error.error || "Erreur lors de la création");
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la création');
+      console.error("Erreur:", error);
+      alert("Erreur lors de la création");
     }
   };
 
   const handleUpdateAdmin = async (adminId: string, updates: any) => {
     try {
-      const response = await fetch('/api/admin/admins', {
-        method: 'PUT',
+      const response = await fetch("/api/admin/admins", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ id: adminId, ...updates }),
       });
 
       if (response.ok) {
         const updatedAdmin = await response.json();
-        setAdmins(admins.map(admin => admin.id === adminId ? updatedAdmin : admin));
-        alert('Administrateur mis à jour avec succès!');
+        setAdmins(
+          admins.map((admin) => (admin.id === adminId ? updatedAdmin : admin))
+        );
+        alert("Administrateur mis à jour avec succès!");
       } else {
         const error = await response.json();
-        alert(error.error || 'Erreur lors de la mise à jour');
+        alert(error.error || "Erreur lors de la mise à jour");
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la mise à jour');
+      console.error("Erreur:", error);
+      alert("Erreur lors de la mise à jour");
     }
   };
 
   const handleDeleteAdmin = async (adminId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet administrateur?')) {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet administrateur?")) {
       return;
     }
 
     try {
       const response = await fetch(`/api/admin/admins?id=${adminId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (response.ok) {
-        setAdmins(admins.filter(admin => admin.id !== adminId));
-        alert('Administrateur supprimé avec succès!');
+        setAdmins(admins.filter((admin) => admin.id !== adminId));
+        alert("Administrateur supprimé avec succès!");
       } else {
         const error = await response.json();
-        alert(error.error || 'Erreur lors de la suppression');
+        alert(error.error || "Erreur lors de la suppression");
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la suppression');
+      console.error("Erreur:", error);
+      alert("Erreur lors de la suppression");
     }
   };
 
-  const filteredAdmins = admins.filter(admin => 
-    admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    admin.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAdmins = admins.filter(
+    (admin) =>
+      admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      admin.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getRoleBadge = (role: string) => {
-    return role === 'super_admin' 
-      ? 'bg-purple-100 text-purple-700' 
-      : 'bg-blue-100 text-blue-700';
+    return role === "super_admin"
+      ? "bg-purple-100 text-purple-700"
+      : "bg-blue-100 text-blue-700";
   };
 
   const getStatusBadge = (status: string) => {
-    return status === 'active' 
-      ? 'bg-green-100 text-green-700' 
-      : 'bg-gray-100 text-gray-700';
+    return status === "active"
+      ? "bg-green-100 text-green-700"
+      : "bg-gray-100 text-gray-700";
   };
 
   const getPermissionsByCategory = () => {
-    const categories = allPermissions.reduce((acc, permission) => {
-      if (!acc[permission.category]) {
-        acc[permission.category] = [];
-      }
-      acc[permission.category].push(permission);
-      return acc;
-    }, {} as Record<string, Permission[]>);
+    const categories = allPermissions.reduce(
+      (acc, permission) => {
+        if (!acc[permission.category]) {
+          acc[permission.category] = [];
+        }
+        acc[permission.category].push(permission);
+        return acc;
+      },
+      {} as Record<string, Permission[]>
+    );
     return categories;
   };
 
   const handlePermissionToggle = (permissionId: string) => {
-    setSelectedPermissions(prev => 
-      prev.includes(permissionId) 
-        ? prev.filter(id => id !== permissionId)
+    setSelectedPermissions((prev) =>
+      prev.includes(permissionId)
+        ? prev.filter((id) => id !== permissionId)
         : [...prev, permissionId]
     );
   };
 
-  const handleRoleChange = (role: 'admin' | 'super_admin') => {
+  const handleRoleChange = (role: "admin" | "super_admin") => {
     setNewAdminRole(role);
-    if (role === 'super_admin') {
-      setSelectedPermissions(allPermissions.map(p => p.id));
+    if (role === "super_admin") {
+      setSelectedPermissions(allPermissions.map((p) => p.id));
     } else {
       setSelectedPermissions([]);
     }
@@ -269,10 +353,14 @@ export default function AdminAdmins() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion Administrateurs</h1>
-          <p className="text-gray-600 mt-1">{filteredAdmins.length} administrateurs</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Gestion Administrateurs
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {filteredAdmins.length} administrateurs
+          </p>
         </div>
-        <button 
+        <button
           onClick={() => setShowCreateModal(true)}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
@@ -289,7 +377,9 @@ export default function AdminAdmins() {
               <Shield size={20} className="text-purple-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{admins.length}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {admins.length}
+              </p>
               <p className="text-sm text-gray-600">Total Admins</p>
             </div>
           </div>
@@ -301,7 +391,7 @@ export default function AdminAdmins() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">
-                {admins.filter(a => a.status === 'active').length}
+                {admins.filter((a) => a.status === "active").length}
               </p>
               <p className="text-sm text-gray-600">Actifs</p>
             </div>
@@ -325,7 +415,10 @@ export default function AdminAdmins() {
       {/* Search */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
         <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Search
+            size={18}
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+          />
           <input
             type="text"
             placeholder="Rechercher un administrateur..."
@@ -358,22 +451,33 @@ export default function AdminAdmins() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${getRoleBadge(admin.role)}`}>
-                    {admin.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${getRoleBadge(admin.role)}`}
+                  >
+                    {admin.role === "super_admin" ? "Super Admin" : "Admin"}
                   </span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusBadge(admin.status)}`}>
-                    {admin.status === 'active' ? 'Actif' : 'Inactif'}
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusBadge(admin.status)}`}
+                  >
+                    {admin.status === "active" ? "Actif" : "Inactif"}
                   </span>
                 </div>
               </div>
 
               <div className="mb-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Permissions ({admin.permissions.length})</h4>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                  Permissions ({admin.permissions.length})
+                </h4>
                 <div className="flex flex-wrap gap-2">
-                  {admin.permissions.slice(0, 6).map(permissionId => {
-                    const permission = allPermissions.find(p => p.id === permissionId);
+                  {admin.permissions.slice(0, 6).map((permissionId) => {
+                    const permission = allPermissions.find(
+                      (p) => p.id === permissionId
+                    );
                     return permission ? (
-                      <span key={permissionId} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                      <span
+                        key={permissionId}
+                        className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
+                      >
                         {permission.name}
                       </span>
                     ) : null;
@@ -387,7 +491,10 @@ export default function AdminAdmins() {
               </div>
 
               <div className="flex items-center justify-between text-sm text-gray-600">
-                <span>Dernière connexion: {new Date(admin.lastLogin).toLocaleDateString('fr-FR')}</span>
+                <span>
+                  Dernière connexion:{" "}
+                  {new Date(admin.lastLogin).toLocaleDateString("fr-FR")}
+                </span>
                 <div className="flex gap-2">
                   <button className="text-blue-600 hover:text-blue-700">
                     <Edit size={16} />
@@ -410,8 +517,10 @@ export default function AdminAdmins() {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Créer un Administrateur</h2>
-            
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Créer un Administrateur
+            </h2>
+
             <div className="space-y-6">
               {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -429,14 +538,16 @@ export default function AdminAdmins() {
 
               {/* Role Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rôle</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rôle
+                </label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2">
                     <input
                       type="radio"
                       value="admin"
-                      checked={newAdminRole === 'admin'}
-                      onChange={() => handleRoleChange('admin')}
+                      checked={newAdminRole === "admin"}
+                      onChange={() => handleRoleChange("admin")}
                       className="rounded border-gray-300"
                     />
                     <span>Admin</span>
@@ -445,8 +556,8 @@ export default function AdminAdmins() {
                     <input
                       type="radio"
                       value="super_admin"
-                      checked={newAdminRole === 'super_admin'}
-                      onChange={() => handleRoleChange('super_admin')}
+                      checked={newAdminRole === "super_admin"}
+                      onChange={() => handleRoleChange("super_admin")}
                       className="rounded border-gray-300"
                     />
                     <span>Super Admin</span>
@@ -455,52 +566,70 @@ export default function AdminAdmins() {
               </div>
 
               {/* Permissions */}
-              {newAdminRole === 'admin' && (
+              {newAdminRole === "admin" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-4">
                     Permissions ({selectedPermissions.length} sélectionnées)
                   </label>
                   <div className="space-y-4">
-                    {Object.entries(getPermissionsByCategory()).map(([category, permissions]) => (
-                      <div key={category}>
-                        <h4 className="font-semibold text-gray-900 mb-2">{category}</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {permissions.map(permission => (
-                            <label key={permission.id} className="flex items-start gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedPermissions.includes(permission.id)}
-                                onChange={() => handlePermissionToggle(permission.id)}
-                                className="mt-1 rounded border-gray-300"
-                              />
-                              <div>
-                                <p className="font-medium text-gray-900">{permission.name}</p>
-                                <p className="text-xs text-gray-500">{permission.description}</p>
-                              </div>
-                            </label>
-                          ))}
+                    {Object.entries(getPermissionsByCategory()).map(
+                      ([category, permissions]) => (
+                        <div key={category}>
+                          <h4 className="font-semibold text-gray-900 mb-2">
+                            {category}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {permissions.map((permission) => (
+                              <label
+                                key={permission.id}
+                                className="flex items-start gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedPermissions.includes(
+                                    permission.id
+                                  )}
+                                  onChange={() =>
+                                    handlePermissionToggle(permission.id)
+                                  }
+                                  className="mt-1 rounded border-gray-300"
+                                />
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {permission.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {permission.description}
+                                  </p>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                 </div>
               )}
 
-              {newAdminRole === 'super_admin' && (
+              {newAdminRole === "super_admin" && (
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Shield size={20} className="text-purple-600" />
-                    <span className="font-semibold text-purple-900">Super Admin</span>
+                    <span className="font-semibold text-purple-900">
+                      Super Admin
+                    </span>
                   </div>
                   <p className="text-sm text-purple-700">
-                    Le Super Admin a accès à toutes les fonctionnalités de la plateforme sans restrictions.
+                    Le Super Admin a accès à toutes les fonctionnalités de la
+                    plateforme sans restrictions.
                   </p>
                 </div>
               )}
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button 
+              <button
                 onClick={() => setShowCreateModal(false)}
                 className="flex-1 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >

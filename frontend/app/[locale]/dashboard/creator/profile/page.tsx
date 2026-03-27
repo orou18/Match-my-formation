@@ -49,9 +49,9 @@ export default function ProfilePage() {
   // Générer les initiales du nom
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -60,11 +60,11 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       const token = localStorage.getItem("token");
       const userRole = localStorage.getItem("userRole");
-      
+
       // Récupérer les données depuis localStorage en fallback
       const storedName = localStorage.getItem("userName") || "";
       const storedEmail = localStorage.getItem("userEmail") || "";
-      
+
       try {
         const res = await fetch("http://127.0.0.1:8000/api/creator/profile", {
           headers: {
@@ -94,8 +94,8 @@ export default function ProfilePage() {
               email_notifications: true,
               push_notifications: true,
               public_profile: true,
-              language: "fr"
-            }
+              language: "fr",
+            },
           };
           setProfile(fallbackProfile);
           setFormData(fallbackProfile);
@@ -118,8 +118,8 @@ export default function ProfilePage() {
             email_notifications: true,
             push_notifications: true,
             public_profile: true,
-            language: "fr"
-          }
+            language: "fr",
+          },
         };
         setProfile(fallbackProfile);
         setFormData(fallbackProfile);
@@ -139,18 +139,18 @@ export default function ProfilePage() {
 
     setUploadingAvatar(true);
     const reader = new FileReader();
-    
+
     reader.onload = async (event) => {
       const preview = event.target?.result as string;
       setAvatarPreview(preview);
-      
+
       // Simulation d'upload
       setTimeout(() => {
-        setFormData(prev => ({ ...prev, avatar: preview }));
+        setFormData((prev) => ({ ...prev, avatar: preview }));
         setUploadingAvatar(false);
       }, 1000);
     };
-    
+
     reader.readAsDataURL(file);
   };
 
@@ -172,59 +172,60 @@ export default function ProfilePage() {
         setProfile(updatedProfile);
         setFormData(updatedProfile);
         setAvatarPreview(updatedProfile.avatar || "");
-        
+
         // Mettre à jour localStorage
         localStorage.setItem("userName", updatedProfile.name);
         localStorage.setItem("userEmail", updatedProfile.email);
-        
+
         setEditing(false);
       } else {
         // Fallback local
-        const updatedProfile: UserProfile = { 
-          ...profile!, 
-          ...formData, 
+        const updatedProfile: UserProfile = {
+          ...profile!,
+          ...formData,
           avatar: avatarPreview,
           id: profile?.id || 1,
           created_at: profile?.created_at || new Date().toISOString(),
           settings: {
-          email_notifications: formData.settings?.email_notifications ?? true,
-          push_notifications: formData.settings?.push_notifications ?? true,
-          public_profile: formData.settings?.public_profile ?? true,
-          language: formData.settings?.language ?? "fr"
-        }
+            email_notifications: formData.settings?.email_notifications ?? true,
+            push_notifications: formData.settings?.push_notifications ?? true,
+            public_profile: formData.settings?.public_profile ?? true,
+            language: formData.settings?.language ?? "fr",
+          },
         };
         setProfile(updatedProfile);
         setFormData(updatedProfile);
-        
+
         // Mettre à jour localStorage
         localStorage.setItem("userName", updatedProfile.name);
         localStorage.setItem("userEmail", updatedProfile.email);
-        
+
         setEditing(false);
       }
     } catch (error) {
       console.error("Error updating profile:", error);
       // Fallback garanti
-      const updatedProfile: UserProfile = { 
-        ...profile!, 
-        ...formData, 
+      const updatedProfile: UserProfile = {
+        ...profile!,
+        ...formData,
         avatar: avatarPreview,
         id: profile?.id || 1,
         created_at: profile?.created_at || new Date().toISOString(),
-        settings: formData.settings || profile?.settings || {
-          email_notifications: true,
-          push_notifications: true,
-          public_profile: true,
-          language: "fr"
-        }
+        settings: formData.settings ||
+          profile?.settings || {
+            email_notifications: true,
+            push_notifications: true,
+            public_profile: true,
+            language: "fr",
+          },
       };
       setProfile(updatedProfile);
       setFormData(updatedProfile);
-      
+
       // Mettre à jour localStorage
       localStorage.setItem("userName", updatedProfile.name);
       localStorage.setItem("userEmail", updatedProfile.email);
-      
+
       setEditing(false);
     }
   };
@@ -302,7 +303,7 @@ export default function ProfilePage() {
                     onChange={handleAvatarUpload}
                     className="hidden"
                   />
-                  <label 
+                  <label
                     htmlFor="avatar-upload"
                     className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:bg-gray-50 transition-colors"
                   >
@@ -378,7 +379,9 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     value={formData.name || ""}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
                 ) : (
@@ -393,7 +396,9 @@ export default function ProfilePage() {
                   <input
                     type="email"
                     value={formData.email || ""}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
                 ) : (
@@ -408,11 +413,15 @@ export default function ProfilePage() {
                   <input
                     type="tel"
                     value={formData.phone || ""}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
                 ) : (
-                  <p className="text-gray-900">{profile?.phone || "Non renseigné"}</p>
+                  <p className="text-gray-900">
+                    {profile?.phone || "Non renseigné"}
+                  </p>
                 )}
               </div>
               <div>
@@ -423,11 +432,15 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     value={formData.location || ""}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, location: e.target.value })
+                    }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
                 ) : (
-                  <p className="text-gray-900">{profile?.location || "Non renseigné"}</p>
+                  <p className="text-gray-900">
+                    {profile?.location || "Non renseigné"}
+                  </p>
                 )}
               </div>
             </div>
@@ -441,7 +454,9 @@ export default function ProfilePage() {
             {editing ? (
               <textarea
                 value={formData.bio || ""}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, bio: e.target.value })
+                }
                 rows={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="Parlez-nous de vous..."
@@ -462,7 +477,9 @@ export default function ProfilePage() {
               <input
                 type="url"
                 value={formData.website || ""}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, website: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="https://votresite.com"
               />
@@ -493,12 +510,18 @@ export default function ProfilePage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">Notifications email</p>
-                  <p className="text-sm text-gray-500">Recevoir des notifications par email</p>
+                  <p className="font-medium text-gray-900">
+                    Notifications email
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Recevoir des notifications par email
+                  </p>
                 </div>
                 <button
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    formData.settings?.email_notifications ? "bg-primary" : "bg-gray-200"
+                    formData.settings?.email_notifications
+                      ? "bg-primary"
+                      : "bg-gray-200"
                   }`}
                   onClick={() => {
                     if (editing) {
@@ -506,10 +529,13 @@ export default function ProfilePage() {
                         ...formData,
                         settings: {
                           ...formData.settings,
-                          push_notifications: formData.settings?.push_notifications ?? true,
-                          public_profile: formData.settings?.public_profile ?? true,
+                          push_notifications:
+                            formData.settings?.push_notifications ?? true,
+                          public_profile:
+                            formData.settings?.public_profile ?? true,
                           language: formData.settings?.language ?? "fr",
-                          email_notifications: !formData.settings?.email_notifications,
+                          email_notifications:
+                            !formData.settings?.email_notifications,
                         },
                       });
                     }
@@ -517,7 +543,9 @@ export default function ProfilePage() {
                 >
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      formData.settings?.email_notifications ? "translate-x-6" : "translate-x-1"
+                      formData.settings?.email_notifications
+                        ? "translate-x-6"
+                        : "translate-x-1"
                     }`}
                   />
                 </button>
@@ -525,11 +553,15 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-gray-900">Profil public</p>
-                  <p className="text-sm text-gray-500">Rendre votre profil visible publiquement</p>
+                  <p className="text-sm text-gray-500">
+                    Rendre votre profil visible publiquement
+                  </p>
                 </div>
                 <button
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    formData.settings?.public_profile ? "bg-primary" : "bg-gray-200"
+                    formData.settings?.public_profile
+                      ? "bg-primary"
+                      : "bg-gray-200"
                   }`}
                   onClick={() => {
                     if (editing) {
@@ -537,10 +569,12 @@ export default function ProfilePage() {
                         ...formData,
                         settings: {
                           ...formData.settings,
-                          push_notifications: formData.settings?.push_notifications ?? true,
+                          push_notifications:
+                            formData.settings?.push_notifications ?? true,
                           public_profile: !formData.settings?.public_profile,
                           language: formData.settings?.language ?? "fr",
-                          email_notifications: formData.settings?.email_notifications ?? true,
+                          email_notifications:
+                            formData.settings?.email_notifications ?? true,
                         },
                       });
                     }
@@ -548,7 +582,9 @@ export default function ProfilePage() {
                 >
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      formData.settings?.public_profile ? "translate-x-6" : "translate-x-1"
+                      formData.settings?.public_profile
+                        ? "translate-x-6"
+                        : "translate-x-1"
                     }`}
                   />
                 </button>

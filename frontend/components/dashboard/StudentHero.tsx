@@ -25,7 +25,7 @@ export default function StudentHero({ user }: StudentHeroProps) {
     <section className="relative w-full py-20 px-6 overflow-hidden bg-gradient-to-br from-[#007A7A] via-[#004D40] to-[#FFB800]/20">
       {/* Effet décoratif en arrière-plan */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] -z-0 pointer-events-none" />
-      
+
       <div className="container mx-auto text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -33,29 +33,32 @@ export default function StudentHero({ user }: StudentHeroProps) {
           className="mb-4 inline-block"
         >
           <span className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-full">
-            Espace Apprenant {user?.name ? `• Ravie de vous revoir, ${user.name}` : ''}
+            Espace Apprenant{" "}
+            {user?.name ? `• Ravie de vous revoir, ${user.name}` : ""}
           </span>
         </motion.div>
 
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight"
         >
-          Découvrez les formations <br /> qui feront évoluer votre carrière touristique
+          Découvrez les formations <br /> qui feront évoluer votre carrière
+          touristique
         </motion.h1>
-        
+
         <p className="text-white/80 text-lg mb-10 max-w-2xl mx-auto">
-          Vidéos professionnelles, guides certifiés, contenus exclusifs. Apprenez auprès des meilleurs experts panafricains.
+          Vidéos professionnelles, guides certifiés, contenus exclusifs.
+          Apprenez auprès des meilleurs experts panafricains.
         </p>
 
         {/* Barre de Recherche Style Figma */}
         <div className="relative max-w-3xl mx-auto">
           <div className="flex items-center bg-white rounded-2xl p-2 shadow-2xl backdrop-blur-md border border-white/50">
             <Search className="ml-4 text-gray-400" size={24} />
-            <input 
-              type="text" 
-              placeholder="Rechercher une formation (ex : histoire, géographie...)" 
+            <input
+              type="text"
+              placeholder="Rechercher une formation (ex : histoire, géographie...)"
               className="w-full px-4 py-3 text-gray-800 focus:outline-none bg-transparent font-medium"
             />
             <button className="bg-[#009688] hover:bg-[#00796B] text-white px-8 py-3 rounded-xl font-black uppercase text-[11px] tracking-wider transition-all shadow-lg active:scale-95">

@@ -48,7 +48,8 @@ export default function ApplyCreatorPage() {
             Devenir créateur MatchMyFormation
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Rejoignez notre plateforme et partagez votre expertise avec des milliers d'apprenants
+            Rejoignez notre plateforme et partagez votre expertise avec des
+            milliers d'apprenants
           </p>
         </motion.div>
 
@@ -64,7 +65,7 @@ export default function ApplyCreatorPage() {
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 Informations sur l'entreprise
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -73,7 +74,9 @@ export default function ApplyCreatorPage() {
                   <input
                     type="text"
                     value={formData.companyName}
-                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, companyName: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="Nom de votre entreprise"
                     required
@@ -87,7 +90,9 @@ export default function ApplyCreatorPage() {
                   <input
                     type="text"
                     value={formData.siret}
-                    onChange={(e) => setFormData({ ...formData, siret: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, siret: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="12345678901234"
                     required
@@ -102,7 +107,9 @@ export default function ApplyCreatorPage() {
                 <input
                   type="text"
                   value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="123 rue de la République"
                   required
@@ -117,7 +124,9 @@ export default function ApplyCreatorPage() {
                   <input
                     type="text"
                     value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, city: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="Paris"
                     required
@@ -131,7 +140,9 @@ export default function ApplyCreatorPage() {
                   <input
                     type="text"
                     value={formData.postalCode}
-                    onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, postalCode: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="75001"
                     required
@@ -145,7 +156,9 @@ export default function ApplyCreatorPage() {
                   <input
                     type="text"
                     value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, country: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="France"
                     required
@@ -161,7 +174,9 @@ export default function ApplyCreatorPage() {
                   <input
                     type="text"
                     value={formData.vatNumber}
-                    onChange={(e) => setFormData({ ...formData, vatNumber: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, vatNumber: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="FR12345678901"
                   />
@@ -174,7 +189,9 @@ export default function ApplyCreatorPage() {
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="contact@entreprise.com"
                     required
@@ -188,7 +205,7 @@ export default function ApplyCreatorPage() {
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 Informations sur la formation
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -196,7 +213,9 @@ export default function ApplyCreatorPage() {
                   </label>
                   <select
                     value={formData.trainingType}
-                    onChange={(e) => setFormData({ ...formData, trainingType: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, trainingType: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     required
                   >
@@ -215,7 +234,12 @@ export default function ApplyCreatorPage() {
                   </label>
                   <select
                     value={formData.trainingDomain}
-                    onChange={(e) => setFormData({ ...formData, trainingDomain: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        trainingDomain: e.target.value,
+                      })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     required
                   >
@@ -237,7 +261,9 @@ export default function ApplyCreatorPage() {
                 </label>
                 <textarea
                   value={formData.experience}
-                  onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, experience: e.target.value })
+                  }
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="Décrivez votre expérience et vos qualifications..."
@@ -252,7 +278,9 @@ export default function ApplyCreatorPage() {
                 <input
                   type="checkbox"
                   checked={formData.acceptTerms}
-                  onChange={(e) => setFormData({ ...formData, acceptTerms: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, acceptTerms: e.target.checked })
+                  }
                   className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                   required
                 />
@@ -269,7 +297,12 @@ export default function ApplyCreatorPage() {
                 <input
                   type="checkbox"
                   checked={formData.acceptPrivacy}
-                  onChange={(e) => setFormData({ ...formData, acceptPrivacy: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      acceptPrivacy: e.target.checked,
+                    })
+                  }
                   className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                   required
                 />

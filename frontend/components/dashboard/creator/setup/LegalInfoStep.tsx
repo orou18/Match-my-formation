@@ -16,7 +16,10 @@ interface LegalInfoStepProps {
   onPrevious: () => void;
 }
 
-export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps) {
+export default function LegalInfoStep({
+  onNext,
+  onPrevious,
+}: LegalInfoStepProps) {
   const [formData, setFormData] = useState({
     status: "",
     siret: "",
@@ -56,7 +59,7 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
             Choisissez votre statut
           </h3>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             { value: "company", label: "Entreprise", icon: "🏢" },
@@ -72,7 +75,9 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
                 name="status"
                 value={status.value}
                 checked={formData.status === status.value}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
                 className="sr-only"
               />
               <span className="text-2xl">{status.icon}</span>
@@ -98,7 +103,9 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
               <input
                 type="text"
                 value={formData.siret}
-                onChange={(e) => setFormData({ ...formData, siret: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, siret: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="12345678901234"
                 required
@@ -112,7 +119,9 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
               <input
                 type="text"
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="123 rue de la République"
                 required
@@ -126,7 +135,9 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
               <input
                 type="text"
                 value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, city: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="Paris"
                 required
@@ -140,7 +151,9 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
               <input
                 type="text"
                 value={formData.postalCode}
-                onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, postalCode: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="75001"
                 required
@@ -154,7 +167,9 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
               <input
                 type="text"
                 value={formData.country}
-                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, country: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="France"
                 required
@@ -168,7 +183,9 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
               <input
                 type="text"
                 value={formData.vatNumber}
-                onChange={(e) => setFormData({ ...formData, vatNumber: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, vatNumber: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="FR12345678901"
               />
@@ -189,7 +206,9 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
               <input
                 type="text"
                 value={formData.accountHolder}
-                onChange={(e) => setFormData({ ...formData, accountHolder: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, accountHolder: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="Nom sur le compte bancaire"
                 required
@@ -203,7 +222,9 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
               <input
                 type="text"
                 value={formData.iban}
-                onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, iban: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="FR7630006000012345678900189"
                 required
@@ -217,7 +238,9 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
               <input
                 type="text"
                 value={formData.bic}
-                onChange={(e) => setFormData({ ...formData, bic: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, bic: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="BNPAFRPP"
                 required
@@ -230,7 +253,9 @@ export default function LegalInfoStep({ onNext, onPrevious }: LegalInfoStepProps
               </label>
               <select
                 value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, currency: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
               >
                 <option value="EUR">Euro (EUR)</option>

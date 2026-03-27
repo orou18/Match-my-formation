@@ -1,6 +1,6 @@
-import { Viewport } from 'next';
+import { Viewport } from "next";
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
 };

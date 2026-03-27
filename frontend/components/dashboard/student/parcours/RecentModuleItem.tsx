@@ -8,7 +8,11 @@ interface RecentModuleProps {
   date: string;
 }
 
-export default function RecentModuleItem({ title, course, date }: RecentModuleProps) {
+export default function RecentModuleItem({
+  title,
+  course,
+  date,
+}: RecentModuleProps) {
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}

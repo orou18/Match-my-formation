@@ -18,9 +18,12 @@ import {
   TrendingUp,
   MoreVertical,
   Download,
-  Upload
+  Upload,
 } from "lucide-react";
-import { useSimpleNotification, NotificationContainer } from "@/components/ui/SimpleNotification";
+import {
+  useSimpleNotification,
+  NotificationContainer,
+} from "@/components/ui/SimpleNotification";
 
 interface Employee {
   id: number;
@@ -40,14 +43,15 @@ export default function EmployeesPage() {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
-  
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const { notifications, success, error, removeNotification } = useSimpleNotification();
+  const { notifications, success, error, removeNotification } =
+    useSimpleNotification();
 
   useEffect(() => {
     loadEmployees();
@@ -57,11 +61,11 @@ export default function EmployeesPage() {
     try {
       const response = await fetch("/api/creator/employees", {
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       const data = await response.json();
-      
+
       if (data.success) {
         setEmployees(data.data || []);
       } else {
@@ -74,15 +78,18 @@ export default function EmployeesPage() {
     }
   };
 
-  const departments = [...new Set(employees.map(e => e.department))];
-  const filteredEmployees = employees.filter(employee => {
-    const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employee.department.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesDepartment = filterDepartment === "all" || employee.department === filterDepartment;
-    const matchesStatus = filterStatus === "all" || employee.status === filterStatus;
-    
+  const departments = [...new Set(employees.map((e) => e.department))];
+  const filteredEmployees = employees.filter((employee) => {
+    const matchesSearch =
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.department.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesDepartment =
+      filterDepartment === "all" || employee.department === filterDepartment;
+    const matchesStatus =
+      filterStatus === "all" || employee.status === filterStatus;
+
     return matchesSearch && matchesDepartment && matchesStatus;
   });
 
@@ -95,10 +102,10 @@ export default function EmployeesPage() {
       const response = await fetch(`/api/creator/employees/${employeeId}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      
+
       if (response.ok) {
         success("Employé supprimé", "L'employé a été supprimé avec succès");
         loadEmployees();
@@ -133,35 +140,35 @@ export default function EmployeesPage() {
                 Gérez votre équipe et suivez leur progression
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
-            {/* Lien principal */}
-            <a 
-              href={`/${locale}/dashboard/creator/employees/add`}
-              className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
-              onClick={(e) => {
-                // Fallback JavaScript si le lien ne fonctionne pas
-                e.preventDefault();
-                const targetUrl = `/${locale}/dashboard/creator/employees/add`;
-                console.log('Navigation fallback vers:', targetUrl);
-                window.location.href = targetUrl;
-              }}
-            >
-              <Users className="w-5 h-5" />
-              Ajouter un employé
-            </a>
-            
-            {/* Bouton de test direct */}
-            <button 
-              onClick={() => {
-                const targetUrl = `/${locale}/dashboard/creator/employees/add`;
-                console.log('Test direct navigation vers:', targetUrl);
-                window.location.href = targetUrl;
-              }}
-              className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-            >
-              Test
-            </button>
+              {/* Lien principal */}
+              <a
+                href={`/${locale}/dashboard/creator/employees/add`}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                onClick={(e) => {
+                  // Fallback JavaScript si le lien ne fonctionne pas
+                  e.preventDefault();
+                  const targetUrl = `/${locale}/dashboard/creator/employees/add`;
+                  console.log("Navigation fallback vers:", targetUrl);
+                  window.location.href = targetUrl;
+                }}
+              >
+                <Users className="w-5 h-5" />
+                Ajouter un employé
+              </a>
+
+              {/* Bouton de test direct */}
+              <button
+                onClick={() => {
+                  const targetUrl = `/${locale}/dashboard/creator/employees/add`;
+                  console.log("Test direct navigation vers:", targetUrl);
+                  window.location.href = targetUrl;
+                }}
+                className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+              >
+                Test
+              </button>
             </div>
           </div>
         </div>
@@ -182,7 +189,9 @@ export default function EmployeesPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Total employés</p>
-                <p className="text-2xl font-bold text-gray-900">{employees.length}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {employees.length}
+                </p>
               </div>
             </div>
           </motion.div>
@@ -200,7 +209,7 @@ export default function EmployeesPage() {
               <div>
                 <p className="text-sm text-gray-600">Actifs</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {employees.filter(e => e.status === "active").length}
+                  {employees.filter((e) => e.status === "active").length}
                 </p>
               </div>
             </div>
@@ -219,7 +228,15 @@ export default function EmployeesPage() {
               <div>
                 <p className="text-sm text-gray-600">Taux moyen</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {employees.length > 0 ? Math.round(employees.reduce((sum, e) => sum + e.completion_rate, 0) / employees.length) : 0}%
+                  {employees.length > 0
+                    ? Math.round(
+                        employees.reduce(
+                          (sum, e) => sum + e.completion_rate,
+                          0
+                        ) / employees.length
+                      )
+                    : 0}
+                  %
                 </p>
               </div>
             </div>
@@ -258,18 +275,20 @@ export default function EmployeesPage() {
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
-            
+
             <select
               value={filterDepartment}
               onChange={(e) => setFilterDepartment(e.target.value)}
               className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             >
               <option value="all">🏢 Tous les départements</option>
-              {departments.map(dept => (
-                <option key={dept} value={dept}>{dept}</option>
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
               ))}
             </select>
-            
+
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -288,19 +307,24 @@ export default function EmployeesPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
-              {filteredEmployees.length} employé{filteredEmployees.length > 1 ? 's' : ''} trouvé{filteredEmployees.length > 1 ? 's' : ''}
+              {filteredEmployees.length} employé
+              {filteredEmployees.length > 1 ? "s" : ""} trouvé
+              {filteredEmployees.length > 1 ? "s" : ""}
             </h2>
           </div>
 
           {filteredEmployees.length === 0 ? (
             <div className="p-12 text-center">
               <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun employé trouvé</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Aucun employé trouvé
+              </h3>
               <p className="text-gray-600">
-                {searchTerm || filterDepartment !== "all" || filterStatus !== "all"
+                {searchTerm ||
+                filterDepartment !== "all" ||
+                filterStatus !== "all"
                   ? "Essayez de modifier vos filtres"
-                  : "Commencez par ajouter votre premier employé"
-                }
+                  : "Commencez par ajouter votre premier employé"}
               </p>
             </div>
           ) : (
@@ -317,12 +341,19 @@ export default function EmployeesPage() {
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
                         <span className="text-white font-bold text-lg">
-                          {employee.name.split(' ').map(n => n[0]).join('')}
+                          {employee.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">{employee.name}</h3>
-                        <p className="text-sm text-gray-600">{employee.position} • {employee.department}</p>
+                        <h3 className="font-semibold text-gray-900">
+                          {employee.name}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {employee.position} • {employee.department}
+                        </p>
                         <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
                           <span className="flex items-center gap-1">
                             <Mail className="w-3 h-3" />
@@ -337,11 +368,13 @@ export default function EmployeesPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-gray-900">{employee.completion_rate}%</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {employee.completion_rate}%
+                          </span>
                           <div className="w-24 bg-gray-200 rounded-full h-2">
                             <div
                               className="bg-green-600 h-2 rounded-full transition-all duration-500"
@@ -349,9 +382,11 @@ export default function EmployeesPage() {
                             />
                           </div>
                         </div>
-                        <p className="text-xs text-gray-600">{employee.progress}% progression</p>
+                        <p className="text-xs text-gray-600">
+                          {employee.progress}% progression
+                        </p>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         <button className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
                           <Eye className="w-4 h-4" />
@@ -375,9 +410,9 @@ export default function EmployeesPage() {
         </div>
       </div>
 
-      <NotificationContainer 
-        notifications={notifications} 
-        onRemove={removeNotification} 
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
       />
     </div>
   );

@@ -44,7 +44,9 @@ export default function EmployeeManagement() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null
+  );
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -102,7 +104,7 @@ export default function EmployeeManagement() {
       estimatedHours: 30,
       difficulty: "advanced",
     },
-    ];
+  ];
 
   useEffect(() => {
     // Données mockées
@@ -178,7 +180,7 @@ export default function EmployeeManagement() {
       role: formData.role,
       progress: 0,
       status: "active",
-      joinDate: new Date().toISOString().split('T')[0],
+      joinDate: new Date().toISOString().split("T")[0],
     };
 
     setEmployees([...employees, newEmployee]);
@@ -189,7 +191,7 @@ export default function EmployeeManagement() {
   const handleAssignContent = () => {
     if (!selectedEmployee) return;
 
-    const updatedEmployees = employees.map(emp => {
+    const updatedEmployees = employees.map((emp) => {
       if (emp.id === selectedEmployee.id) {
         if (assignmentData.assignmentType === "pathway") {
           return {
@@ -269,7 +271,9 @@ export default function EmployeeManagement() {
       admin: "Admin",
     };
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${colors[role as keyof typeof colors]}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${colors[role as keyof typeof colors]}`}
+      >
         {labels[role as keyof typeof labels]}
       </span>
     );
@@ -287,11 +291,16 @@ export default function EmployeeManagement() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Gestion des Employés</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Gestion des Employés
+          </h1>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+            <div
+              key={i}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse"
+            >
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
               <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
               <div className="h-3 bg-gray-200 rounded w-2/3"></div>
@@ -360,7 +369,7 @@ export default function EmployeeManagement() {
             </div>
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-1">
-            {employees.filter(emp => emp.assignedPathway).length}
+            {employees.filter((emp) => emp.assignedPathway).length}
           </h3>
           <p className="text-sm text-gray-600">Parcours Assignés</p>
         </motion.div>
@@ -377,7 +386,11 @@ export default function EmployeeManagement() {
             </div>
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-1">
-            {Math.round(employees.reduce((acc, emp) => acc + emp.progress, 0) / employees.length) || 0}%
+            {Math.round(
+              employees.reduce((acc, emp) => acc + emp.progress, 0) /
+                employees.length
+            ) || 0}
+            %
           </h3>
           <p className="text-sm text-gray-600">Progression Moyenne</p>
         </motion.div>
@@ -394,7 +407,7 @@ export default function EmployeeManagement() {
             </div>
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-1">
-            {employees.filter(emp => emp.status === "active").length}
+            {employees.filter((emp) => emp.status === "active").length}
           </h3>
           <p className="text-sm text-gray-600">Actifs</p>
         </motion.div>
@@ -463,14 +476,18 @@ export default function EmployeeManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{employee.email}</div>
+                    <div className="text-sm text-gray-900">
+                      {employee.email}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getRoleBadge(employee.role)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {employee.assignedPathway || employee.assignedCourse || "-"}
+                      {employee.assignedPathway ||
+                        employee.assignedCourse ||
+                        "-"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -479,7 +496,10 @@ export default function EmployeeManagement() {
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${employee.progress}%` }}
-                          transition={{ delay: index * 0.05 + 0.5, duration: 0.8 }}
+                          transition={{
+                            delay: index * 0.05 + 0.5,
+                            duration: 0.8,
+                          }}
                           className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full"
                         />
                       </div>
@@ -555,7 +575,9 @@ export default function EmployeeManagement() {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="Entrez le nom..."
                   />
@@ -567,7 +589,9 @@ export default function EmployeeManagement() {
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="employe@company.com"
                   />
@@ -580,7 +604,9 @@ export default function EmployeeManagement() {
                 </label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, role: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="employee">Employé</option>
@@ -644,7 +670,12 @@ export default function EmployeeManagement() {
                 </label>
                 <div className="flex gap-4">
                   <button
-                    onClick={() => setAssignmentData({ ...assignmentData, assignmentType: "pathway" })}
+                    onClick={() =>
+                      setAssignmentData({
+                        ...assignmentData,
+                        assignmentType: "pathway",
+                      })
+                    }
                     className={`flex-1 px-4 py-3 rounded-xl font-medium transition-colors ${
                       assignmentData.assignmentType === "pathway"
                         ? "bg-primary text-white"
@@ -654,7 +685,12 @@ export default function EmployeeManagement() {
                     Parcours d'apprentissage
                   </button>
                   <button
-                    onClick={() => setAssignmentData({ ...assignmentData, assignmentType: "course" })}
+                    onClick={() =>
+                      setAssignmentData({
+                        ...assignmentData,
+                        assignmentType: "course",
+                      })
+                    }
                     className={`flex-1 px-4 py-3 rounded-xl font-medium transition-colors ${
                       assignmentData.assignmentType === "course"
                         ? "bg-primary text-white"
@@ -672,7 +708,10 @@ export default function EmployeeManagement() {
                   Sélectionnez le contenu à assigner
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(assignmentData.assignmentType === "pathway" ? availablePathways : availableCourses).map((assignment) => (
+                  {(assignmentData.assignmentType === "pathway"
+                    ? availablePathways
+                    : availableCourses
+                  ).map((assignment) => (
                     <label
                       key={assignment.title}
                       className="border border-gray-200 rounded-xl p-4 hover:border-primary cursor-pointer transition-colors"
@@ -681,13 +720,24 @@ export default function EmployeeManagement() {
                         type="radio"
                         name="assignment"
                         value={assignment.title}
-                        checked={assignmentData.selectedAssignment === assignment.title}
-                        onChange={(e) => setAssignmentData({ ...assignmentData, selectedAssignment: e.target.value })}
+                        checked={
+                          assignmentData.selectedAssignment === assignment.title
+                        }
+                        onChange={(e) =>
+                          setAssignmentData({
+                            ...assignmentData,
+                            selectedAssignment: e.target.value,
+                          })
+                        }
                         className="mr-3"
                       />
                       <div>
-                        <div className="font-medium text-gray-900 mb-1">{assignment.title}</div>
-                        <div className="text-sm text-gray-600 mb-2">{assignment.description}</div>
+                        <div className="font-medium text-gray-900 mb-1">
+                          {assignment.title}
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          {assignment.description}
+                        </div>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           <span>Durée: {assignment.estimatedHours}h</span>
                           <span>Difficulté: {assignment.difficulty}</span>

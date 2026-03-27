@@ -1,36 +1,63 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
 
 export async function GET(request: NextRequest) {
   try {
-    // Simuler les données d'un nouvel étudiant
-    const studentData = {
-      user: {
-        id: 0, // Sera remplacé par l'ID réel
-        name: "Nouvel Étudiant",
-        email: "student@example.com",
-        role: "student",
-        created_at: new Date().toISOString()
-      },
+    const [userResponse, coursesResponse] = await Promise.all([
+      laravelFetch("/api/me", { request }),
+      laravelFetch("/api/student/courses", { request }),
+    ]);
+
+    const [userPayload, coursesPayload] = await Promise.all([
+      parseLaravelJson(userResponse),
+      parseLaravelJson(coursesResponse),
+    ]);
+
+    if (!userResponse.ok || !coursesResponse.ok) {
+      return NextResponse.json(
+        {
+          error:
+            userPayload?.message ||
+            userPayload?.error ||
+            coursesPayload?.message ||
+            coursesPayload?.error ||
+            "Impossible de charger le dashboard étudiant",
+        },
+        {
+          status: userResponse.ok
+            ? coursesResponse.status
+            : userResponse.status,
+        }
+      );
+    }
+
+    const courses = Array.isArray(coursesPayload) ? coursesPayload : [];
+
+    return NextResponse.json({
+      user: userPayload,
+      courses,
       stats: {
         courses_completed: 0,
-        courses_in_progress: 0,
+        courses_in_progress: courses.length,
         total_learning_time: 0,
         certificates_earned: 0,
         average_score: 0,
-        streak_days: 0
+        streak_days: 0,
       },
-      recent_activity: [],
+      recent_activity: courses.slice(0, 3).map((course: any) => ({
+        id: course.id,
+        title: course.title,
+        type: "course_available",
+      })),
       achievements: [],
-      recommended_courses: [],
+      recommended_courses: courses.slice(0, 4),
       progress: {
         overall: 0,
-        by_category: {}
-      }
-    };
-
-    return NextResponse.json(studentData);
+        by_category: {},
+      },
+    });
   } catch (error) {
-    console.error('Student dashboard error:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    console.error("Student dashboard proxy error:", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

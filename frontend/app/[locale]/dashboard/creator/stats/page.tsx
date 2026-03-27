@@ -44,14 +44,16 @@ interface Stats {
 export default function StatsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "1y">("30d");
+  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "1y">(
+    "30d"
+  );
 
   useEffect(() => {
     // Simuler le chargement des statistiques
     const mockStats: Stats = {
       totalViews: 15420,
       totalStudents: 892,
-      totalRevenue: 8945.50,
+      totalRevenue: 8945.5,
       totalVideos: 12,
       monthlyViews: [1200, 1900, 1500, 2200, 2800, 2400, 3200],
       monthlyRevenue: [450, 680, 520, 890, 1200, 950, 1450],
@@ -60,72 +62,72 @@ export default function StatsPage() {
           id: "1",
           title: "Introduction au Tourisme Durable",
           views: 3420,
-          revenue: 1250.00,
-          students: 156
+          revenue: 1250.0,
+          students: 156,
         },
         {
           id: "2",
           title: "Gestion Hôtelière Avancée",
           views: 2890,
-          revenue: 980.50,
-          students: 134
+          revenue: 980.5,
+          students: 134,
         },
         {
           id: "3",
           title: "Marketing Touristique Digital",
           views: 2156,
-          revenue: 890.00,
-          students: 98
+          revenue: 890.0,
+          students: 98,
         },
         {
           id: "4",
           title: "Service Client Excellence",
           views: 1876,
-          revenue: 745.00,
-          students: 87
+          revenue: 745.0,
+          students: 87,
         },
         {
           id: "5",
           title: "Réservation et Revenue Management",
           views: 1654,
-          revenue: 680.00,
-          students: 76
-        }
+          revenue: 680.0,
+          students: 76,
+        },
       ],
       recentActivity: [
         {
           id: "1",
           type: "enrollment",
           title: "Nouvel inscrit - Tourisme Durable",
-          timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString()
+          timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
         },
         {
           id: "2",
           type: "revenue",
           title: "Paiement reçu - Marketing Digital",
           timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-          amount: 45.00
+          amount: 45.0,
         },
         {
           id: "3",
           type: "view",
           title: "Pic de vues - Gestion Hôtelière",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString()
+          timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
         },
         {
           id: "4",
           type: "enrollment",
           title: "Nouvel inscrit - Service Client",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString()
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
         },
         {
           id: "5",
           type: "revenue",
           title: "Paiement reçu - Tourisme Durable",
           timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-          amount: 67.50
-        }
-      ]
+          amount: 67.5,
+        },
+      ],
     };
 
     setTimeout(() => {
@@ -135,14 +137,14 @@ export default function StatsPage() {
   }, [timeRange]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
     }).format(amount);
   };
 
   const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('fr-FR').format(num);
+    return new Intl.NumberFormat("fr-FR").format(num);
   };
 
   const getActivityIcon = (type: string) => {
@@ -196,7 +198,7 @@ export default function StatsPage() {
             </div>
           ))}
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[...Array(2)].map((_, i) => (
             <div key={i} className="bg-white rounded-2xl p-6 animate-pulse">
@@ -224,13 +226,13 @@ export default function StatsPage() {
             Suivez les performances de vos formations
           </p>
         </div>
-        
+
         <div className="flex gap-2">
           {[
             { value: "7d", label: "7 jours" },
             { value: "30d", label: "30 jours" },
             { value: "90d", label: "90 jours" },
-            { value: "1y", label: "1 an" }
+            { value: "1y", label: "1 an" },
           ].map((range) => (
             <button
               key={range.value}
@@ -349,18 +351,19 @@ export default function StatsPage() {
           </h3>
           <div className="h-64 flex items-end justify-between gap-2">
             {stats.monthlyViews.map((views, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center gap-2">
+              <div
+                key={index}
+                className="flex-1 flex flex-col items-center gap-2"
+              >
                 <div
                   className="w-full bg-gradient-to-t from-primary to-primary/60 rounded-t-lg transition-all hover:from-primary hover:to-primary"
-                  style={{ 
+                  style={{
                     height: `${(views / Math.max(...stats.monthlyViews)) * 100}%`,
-                    minHeight: '20px'
+                    minHeight: "20px",
                   }}
                   title={`${views} vues`}
                 />
-                <span className="text-xs text-gray-500">
-                  {index + 1}
-                </span>
+                <span className="text-xs text-gray-500">{index + 1}</span>
               </div>
             ))}
           </div>
@@ -379,18 +382,19 @@ export default function StatsPage() {
           </h3>
           <div className="h-64 flex items-end justify-between gap-2">
             {stats.monthlyRevenue.map((revenue, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center gap-2">
+              <div
+                key={index}
+                className="flex-1 flex flex-col items-center gap-2"
+              >
                 <div
                   className="w-full bg-gradient-to-t from-green-500 to-green-400 rounded-t-lg transition-all hover:from-green-500 hover:to-green-500"
-                  style={{ 
+                  style={{
                     height: `${(revenue / Math.max(...stats.monthlyRevenue)) * 100}%`,
-                    minHeight: '20px'
+                    minHeight: "20px",
                   }}
                   title={formatCurrency(revenue)}
                 />
-                <span className="text-xs text-gray-500">
-                  {index + 1}
-                </span>
+                <span className="text-xs text-gray-500">{index + 1}</span>
               </div>
             ))}
           </div>
@@ -412,33 +416,50 @@ export default function StatsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Titre</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Vues</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Étudiants</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">Revenus</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                  Titre
+                </th>
+                <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">
+                  Vues
+                </th>
+                <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">
+                  Étudiants
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">
+                  Revenus
+                </th>
               </tr>
             </thead>
             <tbody>
               {stats.topVideos.map((video, index) => (
-                <tr key={video.id} className="border-b border-gray-100 hover:bg-gray-50">
+                <tr
+                  key={video.id}
+                  className="border-b border-gray-100 hover:bg-gray-50"
+                >
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
                       <span className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-sm font-medium text-primary">
                         {index + 1}
                       </span>
-                      <span className="font-medium text-gray-900">{video.title}</span>
+                      <span className="font-medium text-gray-900">
+                        {video.title}
+                      </span>
                     </div>
                   </td>
                   <td className="py-3 px-4 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <Eye className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium">{formatNumber(video.views)}</span>
+                      <span className="font-medium">
+                        {formatNumber(video.views)}
+                      </span>
                     </div>
                   </td>
                   <td className="py-3 px-4 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <Users className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium">{formatNumber(video.students)}</span>
+                      <span className="font-medium">
+                        {formatNumber(video.students)}
+                      </span>
                     </div>
                   </td>
                   <td className="py-3 px-4 text-right">
@@ -466,8 +487,13 @@ export default function StatsPage() {
         </h3>
         <div className="space-y-4">
           {stats.recentActivity.map((activity) => (
-            <div key={activity.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-              <div className={`p-2 rounded-lg ${getActivityColor(activity.type)}`}>
+            <div
+              key={activity.id}
+              className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl"
+            >
+              <div
+                className={`p-2 rounded-lg ${getActivityColor(activity.type)}`}
+              >
                 {getActivityIcon(activity.type)}
               </div>
               <div className="flex-1">

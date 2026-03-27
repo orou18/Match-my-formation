@@ -3,13 +3,13 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
-import { 
-  Play, 
-  Pause, 
-  Volume2, 
-  Maximize, 
-  Settings, 
-  Download, 
+import {
+  Play,
+  Pause,
+  Volume2,
+  Maximize,
+  Settings,
+  Download,
   FileText,
   ArrowLeft,
   Share2,
@@ -26,11 +26,12 @@ import {
   SkipBack,
   SkipForward,
   Repeat,
-  PictureInPicture
+  PictureInPicture,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Video, VideoResource, LearningObjective } from "@/types";
+import { isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/video-utils";
 
 export default function VideoWatchPage() {
   const router = useRouter();
@@ -45,7 +46,9 @@ export default function VideoWatchPage() {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [showControls, setShowControls] = useState(true);
-  const [completedObjectives, setCompletedObjectives] = useState<Set<number>>(new Set());
+  const [completedObjectives, setCompletedObjectives] = useState<Set<number>>(
+    new Set()
+  );
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -54,9 +57,10 @@ export default function VideoWatchPage() {
   const mockVideo: Video = {
     id: parseInt(videoId),
     title: "Introduction au Tourisme Durable",
-    description: "Découvrez les fondamentaux du tourisme écologique et les pratiques durables qui transforment l'industrie. Cette formation complète vous donnera les clés pour comprendre et mettre en œuvre des stratégies de tourisme responsable.",
+    description:
+      "Découvrez les fondamentaux du tourisme écologique et les pratiques durables qui transforment l'industrie. Cette formation complète vous donnera les clés pour comprendre et mettre en œuvre des stratégies de tourisme responsable.",
     thumbnail: "/videos/video1-thumb.jpg",
-    video_url: "/videos/video1.mp4",
+    video_url: "https://www.youtube.com/watch?v=ysz5S6PUM-U",
     duration: "12:34",
     order: 1,
     creator_id: 1,
@@ -73,30 +77,33 @@ export default function VideoWatchPage() {
       name: "Dr. Marie Laurent",
       email: "marie.laurent@example.com",
       avatar: "/avatars/creator1.jpg",
-      specialty: "Tourisme Durable & Environnement"
+      specialty: "Tourisme Durable & Environnement",
     },
     learning_objectives: [
       {
         id: 1,
         video_id: parseInt(videoId),
         title: "Comprendre les principes du tourisme durable",
-        description: "Maîtriser les concepts fondamentaux et les 3 piliers du développement durable appliqués au tourisme",
-        order: 1
+        description:
+          "Maîtriser les concepts fondamentaux et les 3 piliers du développement durable appliqués au tourisme",
+        order: 1,
       },
       {
         id: 2,
         video_id: parseInt(videoId),
         title: "Analyser l'impact environnemental",
-        description: "Évaluer et mesurer l'empreinte écologique des activités touristiques",
-        order: 2
+        description:
+          "Évaluer et mesurer l'empreinte écologique des activités touristiques",
+        order: 2,
       },
       {
         id: 3,
         video_id: parseInt(videoId),
         title: "Mettre en œuvre des pratiques éco-responsables",
-        description: "Appliquer concrètement des solutions durables dans le secteur touristique",
-        order: 3
-      }
+        description:
+          "Appliquer concrètement des solutions durables dans le secteur touristique",
+        order: 3,
+      },
     ],
     resources: [
       {
@@ -106,8 +113,9 @@ export default function VideoWatchPage() {
         file_path: "/resources/guide-tourisme-durable.pdf",
         file_size: 2048000,
         file_type: "application/pdf",
-        description: "Un guide complet avec les meilleures pratiques et check-lists",
-        created_at: "2024-01-15"
+        description:
+          "Un guide complet avec les meilleures pratiques et check-lists",
+        created_at: "2024-01-15",
       },
       {
         id: 2,
@@ -115,9 +123,10 @@ export default function VideoWatchPage() {
         name: "Template d'audit environnemental",
         file_path: "/resources/audit-environnemental.xlsx",
         file_size: 512000,
-        file_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        file_type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         description: "Feuille de calcul pour évaluer l'impact de vos activités",
-        created_at: "2024-01-15"
+        created_at: "2024-01-15",
       },
       {
         id: 3,
@@ -126,11 +135,12 @@ export default function VideoWatchPage() {
         file_path: "/resources/etudes-cas-hotellerie.pdf",
         file_size: 3072000,
         file_type: "application/pdf",
-        description: "5 exemples concrets d'hôtels ayant réussi leur transition écologique",
-        created_at: "2024-01-15"
-      }
+        description:
+          "5 exemples concrets d'hôtels ayant réussi leur transition écologique",
+        created_at: "2024-01-15",
+      },
     ],
-    is_free: true
+    is_free: true,
   };
 
   useEffect(() => {
@@ -142,12 +152,22 @@ export default function VideoWatchPage() {
     }
 
     // Simuler le chargement de la vidéo
-    const timer = setTimeout(() => {
-      setVideo(mockVideo);
-      setLoading(false);
-    }, 800);
+    const loadVideo = async () => {
+      try {
+        const response = await fetch("/api/final-videos");
+        const data = await response.json();
+        const storedVideo = (data.videos || []).find(
+          (entry: any) => String(entry.id) === videoId
+        );
+        setVideo((storedVideo as Video) || mockVideo);
+      } catch {
+        setVideo(mockVideo);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    loadVideo();
   }, [videoId, locale, router]);
 
   useEffect(() => {
@@ -170,16 +190,16 @@ export default function VideoWatchPage() {
       setIsPlaying(false);
     };
 
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('pause', handlePause);
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    video.addEventListener("play", handlePlay);
+    video.addEventListener("pause", handlePause);
 
     return () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('pause', handlePause);
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      video.removeEventListener("play", handlePlay);
+      video.removeEventListener("pause", handlePause);
     };
   }, []);
 
@@ -196,9 +216,9 @@ export default function VideoWatchPage() {
 
     const video = videoRef.current;
     if (video) {
-      video.addEventListener('mousemove', handleMouseMove);
+      video.addEventListener("mousemove", handleMouseMove);
       return () => {
-        video.removeEventListener('mousemove', handleMouseMove);
+        video.removeEventListener("mousemove", handleMouseMove);
         if (controlsTimeoutRef.current) {
           clearTimeout(controlsTimeoutRef.current);
         }
@@ -238,7 +258,7 @@ export default function VideoWatchPage() {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const toggleObjective = (objectiveId: number) => {
@@ -252,17 +272,20 @@ export default function VideoWatchPage() {
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.includes('pdf')) return <FileText className="w-5 h-5 text-red-500" />;
-    if (fileType.includes('sheet')) return <FileText className="w-5 h-5 text-green-500" />;
-    if (fileType.includes('word')) return <FileText className="w-5 h-5 text-blue-500" />;
+    if (fileType.includes("pdf"))
+      return <FileText className="w-5 h-5 text-red-500" />;
+    if (fileType.includes("sheet"))
+      return <FileText className="w-5 h-5 text-green-500" />;
+    if (fileType.includes("word"))
+      return <FileText className="w-5 h-5 text-blue-500" />;
     return <FileText className="w-5 h-5 text-gray-500" />;
   };
 
@@ -279,7 +302,10 @@ export default function VideoWatchPage() {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center text-white">
           <h2 className="text-2xl font-bold mb-4">Vidéo non trouvée</h2>
-          <Link href={`/${locale}/dashboard/student`} className="text-white hover:underline">
+          <Link
+            href={`/${locale}/dashboard/student`}
+            className="text-white hover:underline"
+          >
             Retour au dashboard
           </Link>
         </div>
@@ -294,7 +320,10 @@ export default function VideoWatchPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Link href={`/${locale}/video/${videoId}`} className="flex items-center space-x-2 text-white hover:text-gray-300">
+              <Link
+                href={`/${locale}/video/${videoId}`}
+                className="flex items-center space-x-2 text-white hover:text-gray-300"
+              >
                 <ArrowLeft className="w-5 h-5" />
                 <span>Retour à l'aperçu</span>
               </Link>
@@ -304,7 +333,10 @@ export default function VideoWatchPage() {
               <button className="p-2 rounded-lg hover:bg-white/10 text-white">
                 <Share2 className="w-5 h-5" />
               </button>
-              <Link href={`/${locale}/dashboard/student`} className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-200">
+              <Link
+                href={`/${locale}/dashboard/student`}
+                className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-200"
+              >
                 Dashboard
               </Link>
             </div>
@@ -314,19 +346,29 @@ export default function VideoWatchPage() {
 
       {/* Lecteur vidéo optimisé */}
       <div className="relative aspect-video bg-black rounded-2xl overflow-hidden video-container gpu-accelerated">
-        <video
-          ref={videoRef}
-          className="w-full h-full video-player"
-          poster={video.thumbnail}
-          onClick={togglePlay}
-          preload="metadata"
-          playsInline
-          x-webkit-airplay="allow"
-        >
-          <source src={video.video_url} type="video/mp4" />
-          <source src={video.video_url} type="video/webm" />
-          Votre navigateur ne supporte pas la lecture vidéo.
-        </video>
+        {isYouTubeUrl(video.video_url) ? (
+          <iframe
+            src={toYouTubeEmbedUrl(video.video_url) || undefined}
+            title={video.title}
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            className="w-full h-full video-player"
+            poster={video.thumbnail}
+            onClick={togglePlay}
+            preload="metadata"
+            playsInline
+            x-webkit-airplay="allow"
+          >
+            <source src={video.video_url} type="video/mp4" />
+            <source src={video.video_url} type="video/webm" />
+            Votre navigateur ne supporte pas la lecture vidéo.
+          </video>
+        )}
 
         {/* Contrôles vidéo optimisés */}
         <motion.div
@@ -345,7 +387,7 @@ export default function VideoWatchPage() {
                   onChange={handleSeek}
                   className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider will-change-transform"
                   style={{
-                    background: `linear-gradient(to right, #007A7A 0%, #007A7A ${(currentTime / duration) * 100}%, #4b5563 ${(currentTime / duration) * 100}%, #4b5563 100%)`
+                    background: `linear-gradient(to right, #007A7A 0%, #007A7A ${(currentTime / duration) * 100}%, #4b5563 ${(currentTime / duration) * 100}%, #4b5563 100%)`,
                   }}
                 />
                 <div className="flex justify-between text-xs text-white mt-1">
@@ -360,7 +402,7 @@ export default function VideoWatchPage() {
               <div className="flex items-center space-x-4">
                 {/* Boutons de lecture */}
                 <div className="flex items-center space-x-2">
-                  <button 
+                  <button
                     className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
                     onClick={() => {
                       const video = videoRef.current;
@@ -377,14 +419,21 @@ export default function VideoWatchPage() {
                     onClick={togglePlay}
                     className="p-3 bg-white text-black rounded-full hover:bg-gray-200 transition-all duration-200 shadow-lg"
                   >
-                    {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+                    {isPlaying ? (
+                      <Pause className="w-5 h-5" />
+                    ) : (
+                      <Play className="w-5 h-5 ml-0.5" />
+                    )}
                   </motion.button>
-                  <button 
+                  <button
                     className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
                     onClick={() => {
                       const video = videoRef.current;
                       if (video) {
-                        video.currentTime = Math.min(duration, video.currentTime + 10);
+                        video.currentTime = Math.min(
+                          duration,
+                          video.currentTime + 10
+                        );
                       }
                     }}
                   >
@@ -394,7 +443,7 @@ export default function VideoWatchPage() {
 
                 {/* Volume amélioré */}
                 <div className="flex items-center space-x-2">
-                  <button 
+                  <button
                     className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
                     onClick={() => {
                       const video = videoRef.current;
@@ -418,7 +467,9 @@ export default function VideoWatchPage() {
 
                 {/* Durée et qualité */}
                 <div className="flex items-center space-x-3 text-sm text-white">
-                  <span className="font-mono bg-black/50 px-2 py-1 rounded">{video.duration}</span>
+                  <span className="font-mono bg-black/50 px-2 py-1 rounded">
+                    {video.duration}
+                  </span>
                   <select className="bg-black/50 text-white text-xs px-2 py-1 rounded border border-gray-600">
                     <option>Auto</option>
                     <option>1080p</option>
@@ -432,7 +483,7 @@ export default function VideoWatchPage() {
                 <button className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200">
                   <Settings className="w-4 h-4" />
                 </button>
-                <button 
+                <button
                   className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
                   onClick={() => {
                     const video = videoRef.current;
@@ -445,7 +496,7 @@ export default function VideoWatchPage() {
                 >
                   <PictureInPicture className="w-4 h-4" />
                 </button>
-                <button 
+                <button
                   className="p-2 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
                   onClick={() => {
                     const video = videoRef.current;
@@ -478,13 +529,20 @@ export default function VideoWatchPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-gray-800 rounded-2xl p-6"
               >
-                <h1 className="text-3xl font-bold text-white mb-4">{video.title}</h1>
-                <p className="text-gray-300 leading-relaxed mb-6">{video.description}</p>
+                <h1 className="text-3xl font-bold text-white mb-4">
+                  {video.title}
+                </h1>
+                <p className="text-gray-300 leading-relaxed mb-6">
+                  {video.description}
+                </p>
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2 mb-6">
                   {video.tags?.map((tag, index) => (
-                    <span key={index} className="px-3 py-1 bg-gray-700 text-gray-300 text-sm rounded-full">
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-gray-700 text-gray-300 text-sm rounded-full"
+                    >
                       #{tag}
                     </span>
                   ))}
@@ -502,7 +560,10 @@ export default function VideoWatchPage() {
                   </div>
                   <div className="flex items-center space-x-1">
                     <Clock className="w-4 h-4" />
-                    <span>Publié le {new Date(video.created_at).toLocaleDateString('fr-FR')}</span>
+                    <span>
+                      Publié le{" "}
+                      {new Date(video.created_at).toLocaleDateString("fr-FR")}
+                    </span>
                   </div>
                 </div>
               </motion.div>
@@ -517,52 +578,66 @@ export default function VideoWatchPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <Target className="w-5 h-5 text-white" />
-                    <h2 className="text-xl font-bold text-white">Objectifs d'apprentissage</h2>
+                    <h2 className="text-xl font-bold text-white">
+                      Objectifs d'apprentissage
+                    </h2>
                   </div>
                   <span className="text-sm text-gray-400">
-                    {completedObjectives.size}/{video.learning_objectives?.length} complétés
+                    {completedObjectives.size}/
+                    {video.learning_objectives?.length} complétés
                   </span>
                 </div>
-                
+
                 <div className="space-y-3">
                   {video.learning_objectives?.map((objective, index) => (
-                    <div 
-                      key={objective.id} 
+                    <div
+                      key={objective.id}
                       className="flex items-start space-x-3 p-3 bg-gray-700/50 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors"
                       onClick={() => toggleObjective(objective.id)}
                     >
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                        completedObjectives.has(objective.id) 
-                          ? 'bg-green-500' 
-                          : 'bg-gray-600'
-                      }`}>
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                          completedObjectives.has(objective.id)
+                            ? "bg-green-500"
+                            : "bg-gray-600"
+                        }`}
+                      >
                         {completedObjectives.has(objective.id) ? (
                           <CheckCircle className="w-4 h-4 text-white" />
                         ) : (
-                          <span className="text-white text-xs font-bold">{index + 1}</span>
+                          <span className="text-white text-xs font-bold">
+                            {index + 1}
+                          </span>
                         )}
                       </div>
                       <div className="flex-1">
-                        <h3 className={`font-medium mb-1 ${
-                          completedObjectives.has(objective.id) 
-                            ? 'text-green-400 line-through' 
-                            : 'text-white'
-                        }`}>
+                        <h3
+                          className={`font-medium mb-1 ${
+                            completedObjectives.has(objective.id)
+                              ? "text-green-400 line-through"
+                              : "text-white"
+                          }`}
+                        >
                           {objective.title}
                         </h3>
-                        <p className="text-sm text-gray-400">{objective.description}</p>
+                        <p className="text-sm text-gray-400">
+                          {objective.description}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {completedObjectives.size === video.learning_objectives?.length && (
+                {completedObjectives.size ===
+                  video.learning_objectives?.length && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="mt-4 p-4 bg-green-500/20 border border-green-500 rounded-lg text-center"
                   >
-                    <p className="text-green-400 font-medium">🎉 Félicitations ! Vous avez complété tous les objectifs</p>
+                    <p className="text-green-400 font-medium">
+                      🎉 Félicitations ! Vous avez complété tous les objectifs
+                    </p>
                   </motion.div>
                 )}
               </motion.div>
@@ -576,18 +651,29 @@ export default function VideoWatchPage() {
               >
                 <div className="flex items-center space-x-2 mb-4">
                   <BookOpen className="w-5 h-5 text-white" />
-                  <h2 className="text-xl font-bold text-white">Ressources téléchargeables</h2>
+                  <h2 className="text-xl font-bold text-white">
+                    Ressources téléchargeables
+                  </h2>
                 </div>
-                
+
                 <div className="space-y-3">
                   {video.resources?.map((resource) => (
-                    <div key={resource.id} className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors">
+                    <div
+                      key={resource.id}
+                      className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
+                    >
                       <div className="flex items-center space-x-3">
                         {getFileIcon(resource.file_type)}
                         <div>
-                          <h3 className="font-medium text-white">{resource.name}</h3>
-                          <p className="text-sm text-gray-400">{resource.description}</p>
-                          <p className="text-xs text-gray-500">{formatFileSize(resource.file_size)}</p>
+                          <h3 className="font-medium text-white">
+                            {resource.name}
+                          </h3>
+                          <p className="text-sm text-gray-400">
+                            {resource.description}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatFileSize(resource.file_size)}
+                          </p>
                         </div>
                       </div>
                       <button className="p-2 bg-white text-black rounded-lg hover:bg-gray-200 transition-colors">
@@ -607,12 +693,19 @@ export default function VideoWatchPage() {
                 animate={{ opacity: 1, x: 0 }}
                 className="bg-gray-800 rounded-2xl p-6"
               >
-                <h3 className="text-lg font-bold text-white mb-4">Votre formateur</h3>
-                
+                <h3 className="text-lg font-bold text-white mb-4">
+                  Votre formateur
+                </h3>
+
                 <div className="flex items-center space-x-4 mb-4">
                   <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center">
                     {video.creator?.avatar ? (
-                      <Image src={video.creator.avatar} alt={video.creator.name} fill className="rounded-full object-cover" />
+                      <Image
+                        src={video.creator.avatar}
+                        alt={video.creator.name}
+                        fill
+                        className="rounded-full object-cover"
+                      />
                     ) : (
                       <span className="text-2xl font-bold text-gray-400">
                         {video.creator?.name?.charAt(0)}
@@ -620,8 +713,12 @@ export default function VideoWatchPage() {
                     )}
                   </div>
                   <div>
-                    <h4 className="font-bold text-white">{video.creator?.name}</h4>
-                    <p className="text-sm text-gray-400">{video.creator?.specialty}</p>
+                    <h4 className="font-bold text-white">
+                      {video.creator?.name}
+                    </h4>
+                    <p className="text-sm text-gray-400">
+                      {video.creator?.specialty}
+                    </p>
                   </div>
                 </div>
 
@@ -655,20 +752,29 @@ export default function VideoWatchPage() {
                 transition={{ delay: 0.1 }}
                 className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl p-6 border border-blue-500/30"
               >
-                <h3 className="text-lg font-bold text-white mb-4">Votre progression</h3>
-                
+                <h3 className="text-lg font-bold text-white mb-4">
+                  Votre progression
+                </h3>
+
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-gray-300">Objectifs complétés</span>
                       <span className="text-white font-medium">
-                        {Math.round((completedObjectives.size / (video.learning_objectives?.length || 1)) * 100)}%
+                        {Math.round(
+                          (completedObjectives.size /
+                            (video.learning_objectives?.length || 1)) *
+                            100
+                        )}
+                        %
                       </span>
                     </div>
                     <div className="w-full bg-gray-700 rounded-full h-2">
-                      <div 
+                      <div
                         className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all"
-                        style={{ width: `${(completedObjectives.size / (video.learning_objectives?.length || 1)) * 100}%` }}
+                        style={{
+                          width: `${(completedObjectives.size / (video.learning_objectives?.length || 1)) * 100}%`,
+                        }}
                       />
                     </div>
                   </div>
@@ -681,7 +787,7 @@ export default function VideoWatchPage() {
                       </span>
                     </div>
                     <div className="w-full bg-gray-700 rounded-full h-2">
-                      <div 
+                      <div
                         className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all"
                         style={{ width: `${(currentTime / duration) * 100}%` }}
                       />
@@ -689,13 +795,16 @@ export default function VideoWatchPage() {
                   </div>
                 </div>
 
-                {completedObjectives.size === video.learning_objectives?.length && (
+                {completedObjectives.size ===
+                  video.learning_objectives?.length && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="mt-4 p-3 bg-green-500/20 border border-green-500 rounded-lg text-center"
                   >
-                    <p className="text-green-400 text-sm font-medium">🏆 Formation complétée !</p>
+                    <p className="text-green-400 text-sm font-medium">
+                      🏆 Formation complétée !
+                    </p>
                   </motion.div>
                 )}
               </motion.div>
@@ -707,8 +816,10 @@ export default function VideoWatchPage() {
                 transition={{ delay: 0.2 }}
                 className="bg-gray-800 rounded-2xl p-6"
               >
-                <h3 className="text-lg font-bold text-white mb-4">Actions rapides</h3>
-                
+                <h3 className="text-lg font-bold text-white mb-4">
+                  Actions rapides
+                </h3>
+
                 <div className="space-y-3">
                   <button className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2">
                     <Heart className="w-4 h-4" />
@@ -734,11 +845,11 @@ export default function VideoWatchPage() {
           appearance: none;
           width: 14px;
           height: 14px;
-          background: #007A7A;
+          background: #007a7a;
           border-radius: 50%;
           cursor: pointer;
           border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
           transition: all 150ms ease;
         }
         .slider::-webkit-slider-thumb:hover {
@@ -748,43 +859,44 @@ export default function VideoWatchPage() {
         .slider::-moz-range-thumb {
           width: 14px;
           height: 14px;
-          background: #007A7A;
+          background: #007a7a;
           border-radius: 50%;
           cursor: pointer;
           border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
           transition: all 150ms ease;
         }
         .slider::-moz-range-thumb:hover {
           transform: scale(1.2);
           background: #006666;
         }
-        
+
         /* Optimisation des transitions vidéo */
         video {
           transition: filter 300ms ease;
         }
-        
+
         video:fullscreen {
           object-fit: contain;
         }
-        
+
         /* Amélioration du contraste des contrôles */
         .video-controls {
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
         }
-        
+
         /* Animation de pulse pour le bouton play */
         @keyframes pulse-play {
-          0%, 100% {
+          0%,
+          100% {
             box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
           }
           50% {
             box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
           }
         }
-        
+
         .play-button:not(.playing) {
           animation: pulse-play 2s infinite;
         }

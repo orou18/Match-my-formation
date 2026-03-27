@@ -136,18 +136,23 @@ export default function CreatorAnalytics() {
   }, []);
 
   const calculateGrowth = (current: number, previous: number) => {
-    return ((current - previous) / previous * 100).toFixed(1);
+    return (((current - previous) / previous) * 100).toFixed(1);
   };
 
   if (loading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Analytics Créateur</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Analytics Créateur
+          </h1>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+            <div
+              key={i}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse"
+            >
               <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
               <div className="h-32 bg-gray-200 rounded mb-4"></div>
               <div className="h-3 bg-gray-200 rounded w-2/3"></div>
@@ -189,7 +194,7 @@ export default function CreatorAnalytics() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -339,7 +344,10 @@ export default function CreatorAnalytics() {
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${employee.progress}%` }}
-                          transition={{ delay: index * 0.05 + 0.5, duration: 0.8 }}
+                          transition={{
+                            delay: index * 0.05 + 0.5,
+                            duration: 0.8,
+                          }}
                           className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full"
                         />
                       </div>
@@ -371,7 +379,7 @@ export default function CreatorAnalytics() {
       </motion.div>
 
       {/* Pathway Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -388,9 +396,14 @@ export default function CreatorAnalytics() {
           </div>
           <div className="space-y-4">
             {analytics?.pathwayPerformance.map((pathway, index) => (
-              <div key={index} className="border border-gray-200 rounded-xl p-4">
+              <div
+                key={index}
+                className="border border-gray-200 rounded-xl p-4"
+              >
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-medium text-gray-900">{pathway.pathwayName}</h3>
+                  <h3 className="font-medium text-gray-900">
+                    {pathway.pathwayName}
+                  </h3>
                   <div className="text-sm font-medium text-primary">
                     {pathway.completionRate}%
                   </div>
@@ -398,15 +411,21 @@ export default function CreatorAnalytics() {
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="text-center">
                     <div className="text-gray-600">Employés</div>
-                    <div className="font-medium text-gray-900">{pathway.enrolledEmployees}</div>
+                    <div className="font-medium text-gray-900">
+                      {pathway.enrolledEmployees}
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="text-gray-600">Progression</div>
-                    <div className="font-medium text-gray-900">{pathway.averageProgress}%</div>
+                    <div className="font-medium text-gray-900">
+                      {pathway.averageProgress}%
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="text-gray-600">Complétion</div>
-                    <div className="font-medium text-gray-900">{pathway.completionRate}%</div>
+                    <div className="font-medium text-gray-900">
+                      {pathway.completionRate}%
+                    </div>
                   </div>
                 </div>
               </div>
@@ -432,11 +451,15 @@ export default function CreatorAnalytics() {
           </div>
           <div className="space-y-4">
             {analytics?.revenueData.map((data, index) => {
-              const maxRevenue = Math.max(...analytics.revenueData.map(d => d.revenue));
+              const maxRevenue = Math.max(
+                ...analytics.revenueData.map((d) => d.revenue)
+              );
               const height = (data.revenue / maxRevenue) * 100;
               return (
                 <div key={index} className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600 w-12">{data.month}</span>
+                  <span className="text-sm text-gray-600 w-12">
+                    {data.month}
+                  </span>
                   <div className="flex-1 bg-gray-200 rounded-full h-8 relative overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}

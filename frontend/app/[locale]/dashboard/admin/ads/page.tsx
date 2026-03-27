@@ -18,14 +18,14 @@ import {
   Clock,
   Check,
   X,
-  MoreVertical
+  MoreVertical,
 } from "lucide-react";
 
 interface Ad {
   id: string;
   title: string;
-  type: 'banner' | 'card' | 'popup';
-  status: 'active' | 'paused' | 'scheduled';
+  type: "banner" | "card" | "popup";
+  status: "active" | "paused" | "scheduled";
   startDate: string;
   endDate: string;
   budget: number;
@@ -40,14 +40,14 @@ interface Ad {
 export default function AdminAds() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const mockAds: Ad[] = [
     {
-      id: '1',
+      id: "1",
       title: "Formation Premium - 50% de réduction",
       type: "banner",
       status: "active",
@@ -59,10 +59,10 @@ export default function AdminAds() {
       clicks: 3420,
       ctr: 2.74,
       targetAudience: "Étudiants actifs",
-      image: "/temoignage.png"
+      image: "/temoignage.png",
     },
     {
-      id: '2',
+      id: "2",
       title: "Devenez Créateur",
       type: "card",
       status: "active",
@@ -74,10 +74,10 @@ export default function AdminAds() {
       clicks: 1234,
       ctr: 1.39,
       targetAudience: "Utilisateurs gratuits",
-      image: "/temoignage.png"
+      image: "/temoignage.png",
     },
     {
-      id: '3',
+      id: "3",
       title: "Webinaire Marketing Digital",
       type: "popup",
       status: "scheduled",
@@ -89,10 +89,10 @@ export default function AdminAds() {
       clicks: 0,
       ctr: 0,
       targetAudience: "Tous utilisateurs",
-      image: "/temoignage.png"
+      image: "/temoignage.png",
     },
     {
-      id: '4',
+      id: "4",
       title: "Nouveaux Cours Design",
       type: "banner",
       status: "paused",
@@ -104,8 +104,8 @@ export default function AdminAds() {
       clicks: 890,
       ctr: 1.33,
       targetAudience: "Créateurs",
-      image: "/temoignage.png"
-    }
+      image: "/temoignage.png",
+    },
   ];
 
   useEffect(() => {
@@ -115,46 +115,48 @@ export default function AdminAds() {
     }, 1000);
   }, []);
 
-  const filteredAds = ads.filter(ad => {
-    const matchesSearch = ad.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || ad.type === filterType;
-    const matchesStatus = filterStatus === 'all' || ad.status === filterStatus;
+  const filteredAds = ads.filter((ad) => {
+    const matchesSearch = ad.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesType = filterType === "all" || ad.type === filterType;
+    const matchesStatus = filterStatus === "all" || ad.status === filterStatus;
     return matchesSearch && matchesType && matchesStatus;
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-700';
-      case 'paused':
-        return 'bg-yellow-100 text-yellow-700';
-      case 'scheduled':
-        return 'bg-blue-100 text-blue-700';
+      case "active":
+        return "bg-green-100 text-green-700";
+      case "paused":
+        return "bg-yellow-100 text-yellow-700";
+      case "scheduled":
+        return "bg-blue-100 text-blue-700";
       default:
-        return 'bg-gray-100 text-gray-700';
+        return "bg-gray-100 text-gray-700";
     }
   };
 
   const getTypeBadge = (type: string) => {
     switch (type) {
-      case 'banner':
-        return 'bg-purple-100 text-purple-700';
-      case 'card':
-        return 'bg-orange-100 text-orange-700';
-      case 'popup':
-        return 'bg-pink-100 text-pink-700';
+      case "banner":
+        return "bg-purple-100 text-purple-700";
+      case "card":
+        return "bg-orange-100 text-orange-700";
+      case "popup":
+        return "bg-pink-100 text-pink-700";
       default:
-        return 'bg-gray-100 text-gray-700';
+        return "bg-gray-100 text-gray-700";
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'banner':
+      case "banner":
         return ImageIcon;
-      case 'card':
+      case "card":
         return Target;
-      case 'popup':
+      case "popup":
         return Play;
       default:
         return ImageIcon;
@@ -162,9 +164,9 @@ export default function AdminAds() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
     }).format(amount);
   };
 
@@ -181,15 +183,19 @@ export default function AdminAds() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion Publicités</h1>
-          <p className="text-gray-600 mt-1">{filteredAds.length} campagnes publicitaires</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Gestion Publicités
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {filteredAds.length} campagnes publicitaires
+          </p>
         </div>
         <div className="flex gap-3">
           <button className="bg-white border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
             <BarChart3 size={18} />
             Rapports
           </button>
-          <button 
+          <button
             onClick={() => setShowCreateModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
@@ -202,29 +208,31 @@ export default function AdminAds() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {[
-          { 
-            label: "Budget Total", 
-            value: formatCurrency(ads.reduce((sum, ad) => sum + ad.budget, 0)), 
-            icon: DollarSign, 
-            color: "green" 
+          {
+            label: "Budget Total",
+            value: formatCurrency(ads.reduce((sum, ad) => sum + ad.budget, 0)),
+            icon: DollarSign,
+            color: "green",
           },
-          { 
-            label: "Dépensé", 
-            value: formatCurrency(ads.reduce((sum, ad) => sum + ad.spent, 0)), 
-            icon: TrendingUp, 
-            color: "blue" 
+          {
+            label: "Dépensé",
+            value: formatCurrency(ads.reduce((sum, ad) => sum + ad.spent, 0)),
+            icon: TrendingUp,
+            color: "blue",
           },
-          { 
-            label: "Impressions", 
-            value: ads.reduce((sum, ad) => sum + ad.impressions, 0).toLocaleString(), 
-            icon: Eye, 
-            color: "purple" 
+          {
+            label: "Impressions",
+            value: ads
+              .reduce((sum, ad) => sum + ad.impressions, 0)
+              .toLocaleString(),
+            icon: Eye,
+            color: "purple",
           },
-          { 
-            label: "Clics", 
-            value: ads.reduce((sum, ad) => sum + ad.clicks, 0).toLocaleString(), 
-            icon: Target, 
-            color: "orange" 
+          {
+            label: "Clics",
+            value: ads.reduce((sum, ad) => sum + ad.clicks, 0).toLocaleString(),
+            icon: Target,
+            color: "orange",
           },
         ].map((stat, index) => (
           <motion.div
@@ -252,7 +260,10 @@ export default function AdminAds() {
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              />
               <input
                 type="text"
                 placeholder="Rechercher une campagne..."
@@ -303,10 +314,14 @@ export default function AdminAds() {
               <div className="relative h-32 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
                 <TypeIcon size={32} className="text-white" />
                 <div className="absolute top-2 right-2 flex gap-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${getTypeBadge(ad.type)}`}>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-bold ${getTypeBadge(ad.type)}`}
+                  >
                     {ad.type}
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusBadge(ad.status)}`}>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusBadge(ad.status)}`}
+                  >
                     {ad.status}
                   </span>
                 </div>
@@ -314,18 +329,24 @@ export default function AdminAds() {
 
               <div className="p-6">
                 <h3 className="font-bold text-gray-900 mb-2">{ad.title}</h3>
-                <p className="text-sm text-gray-600 mb-4">Cible: {ad.targetAudience}</p>
+                <p className="text-sm text-gray-600 mb-4">
+                  Cible: {ad.targetAudience}
+                </p>
 
                 {/* Performance Metrics */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="text-center p-3 bg-gray-50 rounded-lg">
                     <Eye size={14} className="mx-auto text-gray-600 mb-1" />
-                    <p className="text-lg font-bold text-gray-900">{ad.impressions.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {ad.impressions.toLocaleString()}
+                    </p>
                     <p className="text-xs text-gray-500">Impressions</p>
                   </div>
                   <div className="text-center p-3 bg-gray-50 rounded-lg">
                     <Target size={14} className="mx-auto text-gray-600 mb-1" />
-                    <p className="text-lg font-bold text-gray-900">{ad.clicks.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {ad.clicks.toLocaleString()}
+                    </p>
                     <p className="text-xs text-gray-500">Clics</p>
                   </div>
                 </div>
@@ -334,11 +355,13 @@ export default function AdminAds() {
                 <div className="mb-4">
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-600">Budget utilisé</span>
-                    <span className="font-bold">{formatCurrency(ad.spent)}/{formatCurrency(ad.budget)}</span>
+                    <span className="font-bold">
+                      {formatCurrency(ad.spent)}/{formatCurrency(ad.budget)}
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full" 
+                    <div
+                      className="bg-blue-600 h-2 rounded-full"
                       style={{ width: `${(ad.spent / ad.budget) * 100}%` }}
                     ></div>
                   </div>
@@ -348,18 +371,24 @@ export default function AdminAds() {
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
                   <div className="flex items-center gap-1">
                     <Calendar size={14} />
-                    <span>{new Date(ad.startDate).toLocaleDateString('fr-FR')}</span>
+                    <span>
+                      {new Date(ad.startDate).toLocaleDateString("fr-FR")}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock size={14} />
-                    <span>{new Date(ad.endDate).toLocaleDateString('fr-FR')}</span>
+                    <span>
+                      {new Date(ad.endDate).toLocaleDateString("fr-FR")}
+                    </span>
                   </div>
                 </div>
 
                 {/* CTR */}
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-sm text-gray-600">CTR</span>
-                  <span className="text-lg font-bold text-gray-900">{ad.ctr}%</span>
+                  <span className="text-lg font-bold text-gray-900">
+                    {ad.ctr}%
+                  </span>
                 </div>
 
                 {/* Actions */}
@@ -385,8 +414,10 @@ export default function AdminAds() {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-xl p-6 w-full max-w-2xl"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Nouvelle Campagne Publicitaire</h2>
-            
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Nouvelle Campagne Publicitaire
+            </h2>
+
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
@@ -400,7 +431,7 @@ export default function AdminAds() {
                   <option value="popup">Popup</option>
                 </select>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="date"
@@ -433,7 +464,7 @@ export default function AdminAds() {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button 
+              <button
                 onClick={() => setShowCreateModal(false)}
                 className="flex-1 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >

@@ -2,14 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
-import {
-  Upload,
-  Image,
-  X,
-  Plus,
-  Minus,
-  CheckCircle,
-} from "lucide-react";
+import { Upload, Image, X, Plus, Minus, CheckCircle } from "lucide-react";
 
 interface ProfileSetupStepProps {
   step: number;
@@ -18,7 +11,12 @@ interface ProfileSetupStepProps {
   onSave: () => void;
 }
 
-export default function ProfileSetupStep({ step, onNext, onPrevious, onSave }: ProfileSetupStepProps) {
+export default function ProfileSetupStep({
+  step,
+  onNext,
+  onPrevious,
+  onSave,
+}: ProfileSetupStepProps) {
   const [profileData, setProfileData] = useState({
     companyName: "",
     specialization: "",
@@ -51,9 +49,9 @@ export default function ProfileSetupStep({ step, onNext, onPrevious, onSave }: P
         <div className="flex items-center gap-6">
           <div className="w-32 h-32 bg-gray-100 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-300 relative overflow-hidden group cursor-pointer">
             {profileData.profilePhoto ? (
-              <img 
-                src={profileData.profilePhoto} 
-                alt="Profile" 
+              <img
+                src={profileData.profilePhoto}
+                alt="Profile"
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -67,7 +65,7 @@ export default function ProfileSetupStep({ step, onNext, onPrevious, onSave }: P
             <p className="text-sm text-gray-600 mb-2">
               Téléchargez une photo professionnelle (format carré recommandé)
             </p>
-            <button 
+            <button
               onClick={() => handleImageUpload("profile")}
               className="text-sm text-primary hover:underline"
             >
@@ -84,9 +82,9 @@ export default function ProfileSetupStep({ step, onNext, onPrevious, onSave }: P
         </label>
         <div className="w-full h-48 bg-gray-100 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-300 relative overflow-hidden group cursor-pointer">
           {profileData.coverPhoto ? (
-            <img 
-              src={profileData.coverPhoto} 
-              alt="Cover" 
+            <img
+              src={profileData.coverPhoto}
+              alt="Cover"
               className="w-full h-full object-cover"
             />
           ) : (
@@ -107,7 +105,9 @@ export default function ProfileSetupStep({ step, onNext, onPrevious, onSave }: P
           <input
             type="text"
             value={profileData.companyName}
-            onChange={(e) => setProfileData({ ...profileData, companyName: e.target.value })}
+            onChange={(e) =>
+              setProfileData({ ...profileData, companyName: e.target.value })
+            }
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
             placeholder="Nom de votre entreprise"
           />
@@ -119,7 +119,9 @@ export default function ProfileSetupStep({ step, onNext, onPrevious, onSave }: P
           </label>
           <select
             value={profileData.specialization}
-            onChange={(e) => setProfileData({ ...profileData, specialization: e.target.value })}
+            onChange={(e) =>
+              setProfileData({ ...profileData, specialization: e.target.value })
+            }
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
           >
             <option value="">Sélectionnez votre spécialisation</option>
@@ -138,7 +140,9 @@ export default function ProfileSetupStep({ step, onNext, onPrevious, onSave }: P
           </label>
           <textarea
             value={profileData.description}
-            onChange={(e) => setProfileData({ ...profileData, description: e.target.value })}
+            onChange={(e) =>
+              setProfileData({ ...profileData, description: e.target.value })
+            }
             rows={4}
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
             placeholder="Décrivez votre expertise et votre expérience..."
@@ -152,7 +156,9 @@ export default function ProfileSetupStep({ step, onNext, onPrevious, onSave }: P
           <input
             type="url"
             value={profileData.website}
-            onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
+            onChange={(e) =>
+              setProfileData({ ...profileData, website: e.target.value })
+            }
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
             placeholder="https://votre-site.com"
           />
@@ -165,21 +171,23 @@ export default function ProfileSetupStep({ step, onNext, onPrevious, onSave }: P
           Compétences clés
         </label>
         <div className="flex flex-wrap gap-2">
-          {["React", "TypeScript", "Laravel", "UX Design", "Marketing"].map((skill) => (
-            <span
-              key={skill}
-              className="px-3 py-1 bg-primary/10 text-primary rounded-lg text-sm font-medium"
-            >
-              {skill}
-              <button
-                type="button"
-                className="ml-2 text-primary/60 hover:text-primary"
-                onClick={() => console.log(`Remove skill: ${skill}`)}
+          {["React", "TypeScript", "Laravel", "UX Design", "Marketing"].map(
+            (skill) => (
+              <span
+                key={skill}
+                className="px-3 py-1 bg-primary/10 text-primary rounded-lg text-sm font-medium"
               >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          ))}
+                {skill}
+                <button
+                  type="button"
+                  className="ml-2 text-primary/60 hover:text-primary"
+                  onClick={() => console.log(`Remove skill: ${skill}`)}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )
+          )}
           <button
             type="button"
             className="px-3 py-1 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:border-primary hover:text-primary transition-colors"

@@ -5,7 +5,20 @@ import { usePathname, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Shield, Bell, Settings, CreditCard, Star, GraduationCap, Camera, Edit2, X, Check, AlertCircle } from "lucide-react";
+import {
+  User,
+  Shield,
+  Bell,
+  Settings,
+  CreditCard,
+  Star,
+  GraduationCap,
+  Camera,
+  Edit2,
+  X,
+  Check,
+  AlertCircle,
+} from "lucide-react";
 
 interface UserProfile {
   id: string;
@@ -28,22 +41,43 @@ export default function ProfileSidebar() {
 
   // Données utilisateur garanties - TOUJOURS DISPONIBLES
   const currentUser: UserProfile = {
-    id: '1',
+    id: "1",
     name: session?.user?.name || "Étudiant",
     email: session?.user?.email || "etudiant@example.com",
     avatar: session?.user?.image || "/temoignage.png",
     role: (session?.user as any)?.role || "student",
     subscription: "FREE",
     level: 1,
-    notifications: 0
+    notifications: 0,
   };
 
   const navLinks = [
-    { name: "Profil", href: `/${locale}/dashboard/student/profile`, icon: User },
-    { name: "Sécurité", href: `/${locale}/dashboard/student/profile/security`, icon: Shield },
-    { name: "Notifications", href: `/${locale}/dashboard/student/profile/notifications`, icon: Bell, badge: notificationCount },
-    { name: "Préférences", href: `/${locale}/dashboard/student/profile/preferences`, icon: Settings },
-    { name: "Facturation", href: `/${locale}/dashboard/student/profile/billing`, icon: CreditCard },
+    {
+      name: "Profil",
+      href: `/${locale}/dashboard/student/profile`,
+      icon: User,
+    },
+    {
+      name: "Sécurité",
+      href: `/${locale}/dashboard/student/profile/security`,
+      icon: Shield,
+    },
+    {
+      name: "Notifications",
+      href: `/${locale}/dashboard/student/profile/notifications`,
+      icon: Bell,
+      badge: notificationCount,
+    },
+    {
+      name: "Préférences",
+      href: `/${locale}/dashboard/student/profile/preferences`,
+      icon: Settings,
+    },
+    {
+      name: "Facturation",
+      href: `/${locale}/dashboard/student/profile/billing`,
+      icon: CreditCard,
+    },
   ];
 
   // Charger les données depuis l'API en arrière-plan
@@ -55,11 +89,11 @@ export default function ProfileSidebar() {
 
   const loadUserData = async () => {
     try {
-      const response = await fetch('/api/user/profile', {
+      const response = await fetch("/api/user/profile", {
         headers: {
-          'Authorization': `Bearer ${(session?.user as any)?.accessToken}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
@@ -67,7 +101,7 @@ export default function ProfileSidebar() {
         setUser(userData);
       }
     } catch (error) {
-      console.error('Erreur lors du chargement du profil:', error);
+      console.error("Erreur lors du chargement du profil:", error);
     }
   };
 
@@ -75,11 +109,11 @@ export default function ProfileSidebar() {
   useEffect(() => {
     const loadNotifications = async () => {
       try {
-        const response = await fetch('/api/user/notifications/unread-count', {
+        const response = await fetch("/api/user/notifications/unread-count", {
           headers: {
-            'Authorization': `Bearer ${(session?.user as any)?.accessToken}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
+            "Content-Type": "application/json",
+          },
         });
 
         if (response.ok) {
@@ -87,7 +121,7 @@ export default function ProfileSidebar() {
           setNotificationCount(data.count || 0);
         }
       } catch (error) {
-        console.error('Erreur lors du chargement des notifications:', error);
+        console.error("Erreur lors du chargement des notifications:", error);
         setNotificationCount(0);
       }
     };
@@ -99,28 +133,28 @@ export default function ProfileSidebar() {
 
   const handleAvatarUpload = async (file: File) => {
     const formData = new FormData();
-    formData.append('avatar', file);
+    formData.append("avatar", file);
 
     try {
-      const response = await fetch('/api/user/upload-avatar', {
-        method: 'POST',
+      const response = await fetch("/api/user/upload-avatar", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${(session?.user as any)?.accessToken}`,
+          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
         },
-        body: formData
+        body: formData,
       });
 
       if (response.ok) {
         const data = await response.json();
-        setUser(prev => prev ? { ...prev, avatar: data.avatarUrl } : null);
+        setUser((prev) => (prev ? { ...prev, avatar: data.avatarUrl } : null));
         setIsEditingAvatar(false);
-        console.log('Avatar uploadé avec succès:', data.avatarUrl);
+        console.log("Avatar uploadé avec succès:", data.avatarUrl);
       } else {
-        throw new Error('Erreur lors du téléchargement');
+        throw new Error("Erreur lors du téléchargement");
       }
     } catch (error) {
-      console.error('Erreur upload avatar:', error);
-      alert('Erreur lors du téléchargement de la photo');
+      console.error("Erreur upload avatar:", error);
+      alert("Erreur lors du téléchargement de la photo");
     }
   };
 
@@ -138,17 +172,17 @@ export default function ProfileSidebar() {
     <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col items-center w-full min-h-[600px]">
       {/* Avatar avec possibilité de modification */}
       <div className="relative w-24 h-24 mb-6 group">
-        <Image 
-          src={displayUser.avatar || "/temoignage.png"} 
-          alt="Profile" 
-          fill 
+        <Image
+          src={displayUser.avatar || "/temoignage.png"}
+          alt="Profile"
+          fill
           sizes="96px"
-          className="rounded-full object-cover border-4 border-gray-50" 
+          className="rounded-full object-cover border-4 border-gray-50"
           onError={(e) => {
             (e.target as HTMLImageElement).src = "/temoignage.png";
           }}
         />
-        
+
         {/* Bouton pour modifier l'avatar */}
         <button
           onClick={() => setIsEditingAvatar(true)}
@@ -182,12 +216,14 @@ export default function ProfileSidebar() {
           </div>
         )}
       </div>
-      
+
       {/* Informations utilisateur */}
       <div className="text-center mb-6">
-        <h3 className="text-xl font-bold text-[#002B24] mb-1">{displayUser.name}</h3>
+        <h3 className="text-xl font-bold text-[#002B24] mb-1">
+          {displayUser.name}
+        </h3>
         <p className="text-sm text-gray-500 mb-3">{displayUser.email}</p>
-        
+
         <div className="flex flex-col gap-2">
           <div className="bg-[#EEF2FF] text-[#4F46E5] px-4 py-1.5 rounded-full flex items-center justify-center gap-2 text-xs font-bold">
             <GraduationCap size={14} />
@@ -212,18 +248,25 @@ export default function ProfileSidebar() {
               key={link.name}
               href={link.href}
               className={`flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group relative ${
-                isActive 
-                  ? "bg-[#004D40] text-white shadow-lg shadow-primary/20" 
+                isActive
+                  ? "bg-[#004D40] text-white shadow-lg shadow-primary/20"
                   : "text-gray-400 hover:bg-gray-50 hover:text-[#004D40]"
               }`}
             >
-              <link.icon size={20} className={isActive ? "text-white" : "group-hover:scale-110 transition-transform"} />
+              <link.icon
+                size={20}
+                className={
+                  isActive
+                    ? "text-white"
+                    : "group-hover:scale-110 transition-transform"
+                }
+              />
               <span className="text-sm font-bold">{link.name}</span>
-              
+
               {/* Badge pour les notifications non lues */}
               {link.badge && link.badge > 0 && (
                 <span className="absolute right-4 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                  {link.badge > 9 ? '9+' : link.badge}
+                  {link.badge > 9 ? "9+" : link.badge}
                 </span>
               )}
             </Link>

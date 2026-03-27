@@ -33,7 +33,7 @@ import {
   Camera,
   Film,
   Globe,
-  Lock
+  Lock,
 } from "lucide-react";
 
 interface ScheduledContent {
@@ -81,12 +81,13 @@ export default function SchedulePage() {
       status: "scheduled",
       visibility: "public",
       expectedViews: 500,
-      description: "Webinaire interactif sur les stratégies marketing dans le tourisme",
+      description:
+        "Webinaire interactif sur les stratégies marketing dans le tourisme",
       tags: ["webinaire", "marketing", "tourisme"],
       reminders: [
         { type: "email", time: "1h avant", enabled: true },
-        { type: "push", time: "15min avant", enabled: true }
-      ]
+        { type: "push", time: "15min avant", enabled: true },
+      ],
     },
     {
       id: "2",
@@ -100,14 +101,15 @@ export default function SchedulePage() {
       status: "scheduled",
       visibility: "public",
       expectedViews: 2500,
-      description: "Nouvelle vidéo sur les meilleures pratiques du service client",
+      description:
+        "Nouvelle vidéo sur les meilleures pratiques du service client",
       tags: ["service client", "hôtellerie", "formation"],
       isRecurring: true,
       recurrencePattern: "Chaque semaine",
       reminders: [
         { type: "email", time: "1h avant", enabled: true },
-        { type: "push", time: "15min avant", enabled: true }
-      ]
+        { type: "push", time: "15min avant", enabled: true },
+      ],
     },
     {
       id: "3",
@@ -125,8 +127,8 @@ export default function SchedulePage() {
       tags: ["premiere", "formation", "avancé"],
       reminders: [
         { type: "email", time: "2h avant", enabled: true },
-        { type: "push", time: "30min avant", enabled: true }
-      ]
+        { type: "push", time: "30min avant", enabled: true },
+      ],
     },
     {
       id: "4",
@@ -145,8 +147,8 @@ export default function SchedulePage() {
       tags: ["live", "qa", "tourisme"],
       reminders: [
         { type: "email", time: "2h avant", enabled: true },
-        { type: "push", time: "30min avant", enabled: true }
-      ]
+        { type: "push", time: "30min avant", enabled: true },
+      ],
     },
     {
       id: "5",
@@ -165,17 +167,21 @@ export default function SchedulePage() {
       tags: ["tutoriel", "réservation", "hôtellerie"],
       reminders: [
         { type: "email", time: "1h avant", enabled: true },
-        { type: "push", time: "15min avant", enabled: true }
-      ]
-    }
+        { type: "push", time: "15min avant", enabled: true },
+      ],
+    },
   ];
 
-  const filteredContent = scheduledContent.filter(content => {
-    const matchesSearch = content.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         content.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesStatus = filterStatus === "all" || content.status === filterStatus;
-    
+  const filteredContent = scheduledContent.filter((content) => {
+    const matchesSearch =
+      content.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      content.tags.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+    const matchesStatus =
+      filterStatus === "all" || content.status === filterStatus;
+
     return matchesSearch && matchesStatus;
   });
 
@@ -254,17 +260,19 @@ export default function SchedulePage() {
   };
 
   const getContentForDate = (day: number) => {
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return filteredContent.filter(content => content.scheduledDate === dateStr);
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return filteredContent.filter(
+      (content) => content.scheduledDate === dateStr
+    );
   };
 
   const stats = {
     total: scheduledContent.length,
-    scheduled: scheduledContent.filter(c => c.status === "scheduled").length,
-    live: scheduledContent.filter(c => c.status === "live").length,
-    completed: scheduledContent.filter(c => c.status === "completed").length,
-    cancelled: scheduledContent.filter(c => c.status === "cancelled").length,
-    recurring: scheduledContent.filter(c => c.isRecurring).length
+    scheduled: scheduledContent.filter((c) => c.status === "scheduled").length,
+    live: scheduledContent.filter((c) => c.status === "live").length,
+    completed: scheduledContent.filter((c) => c.status === "completed").length,
+    cancelled: scheduledContent.filter((c) => c.status === "cancelled").length,
+    recurring: scheduledContent.filter((c) => c.isRecurring).length,
   };
 
   return (
@@ -278,9 +286,11 @@ export default function SchedulePage() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Planning</h1>
-            <p className="text-gray-600">Planifiez et organisez votre contenu</p>
+            <p className="text-gray-600">
+              Planifiez et organisez votre contenu
+            </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -292,7 +302,7 @@ export default function SchedulePage() {
                 className="pl-9 pr-4 py-2 w-64 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
-            
+
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2"
@@ -323,7 +333,9 @@ export default function SchedulePage() {
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mx-auto mb-2">
             <Clock className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.scheduled}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.scheduled}
+          </span>
           <p className="text-xs text-gray-600">Planifié</p>
         </div>
 
@@ -339,7 +351,9 @@ export default function SchedulePage() {
           <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mx-auto mb-2">
             <CheckCircle className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.completed}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.completed}
+          </span>
           <p className="text-xs text-gray-600">Terminé</p>
         </div>
 
@@ -347,7 +361,9 @@ export default function SchedulePage() {
           <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-2">
             <Repeat className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.recurring}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.recurring}
+          </span>
           <p className="text-xs text-gray-600">Récurrent</p>
         </div>
 
@@ -355,7 +371,9 @@ export default function SchedulePage() {
           <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center mx-auto mb-2">
             <XCircle className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-gray-900">{stats.cancelled}</span>
+          <span className="text-lg font-bold text-gray-900">
+            {stats.cancelled}
+          </span>
           <p className="text-xs text-gray-600">Annulé</p>
         </div>
       </motion.div>
@@ -370,18 +388,35 @@ export default function SchedulePage() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
+              onClick={() =>
+                setCurrentDate(
+                  new Date(
+                    currentDate.getFullYear(),
+                    currentDate.getMonth() - 1
+                  )
+                )
+              }
               className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            
+
             <h2 className="text-xl font-bold text-gray-900">
-              {currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+              {currentDate.toLocaleDateString("fr-FR", {
+                month: "long",
+                year: "numeric",
+              })}
             </h2>
-            
+
             <button
-              onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
+              onClick={() =>
+                setCurrentDate(
+                  new Date(
+                    currentDate.getFullYear(),
+                    currentDate.getMonth() + 1
+                  )
+                )
+              }
               className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
@@ -392,7 +427,9 @@ export default function SchedulePage() {
             <button
               onClick={() => setViewMode("month")}
               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                viewMode === "month" ? "bg-primary text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                viewMode === "month"
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               Mois
@@ -400,7 +437,9 @@ export default function SchedulePage() {
             <button
               onClick={() => setViewMode("week")}
               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                viewMode === "week" ? "bg-primary text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                viewMode === "week"
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               Semaine
@@ -408,7 +447,9 @@ export default function SchedulePage() {
             <button
               onClick={() => setViewMode("day")}
               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                viewMode === "day" ? "bg-primary text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                viewMode === "day"
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               Jour
@@ -419,20 +460,24 @@ export default function SchedulePage() {
         {viewMode === "month" && (
           <div>
             <div className="grid grid-cols-7 gap-2 mb-2">
-              {["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"].map(day => (
-                <div key={day} className="text-center text-sm font-medium text-gray-700 py-2">
+              {["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"].map((day) => (
+                <div
+                  key={day}
+                  className="text-center text-sm font-medium text-gray-700 py-2"
+                >
                   {day}
                 </div>
               ))}
             </div>
-            
+
             <div className="grid grid-cols-7 gap-2">
               {getDaysInMonth(currentDate).map((day, index) => {
                 const content = day ? getContentForDate(day) : [];
-                const isToday = day === new Date().getDate() && 
-                                currentDate.getMonth() === new Date().getMonth() && 
-                                currentDate.getFullYear() === new Date().getFullYear();
-                
+                const isToday =
+                  day === new Date().getDate() &&
+                  currentDate.getMonth() === new Date().getMonth() &&
+                  currentDate.getFullYear() === new Date().getFullYear();
+
                 return (
                   <motion.div
                     key={index}
@@ -440,18 +485,31 @@ export default function SchedulePage() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.02 }}
                     className={`aspect-square border rounded-xl p-2 ${
-                      day ? 'border-gray-200 hover:border-primary cursor-pointer' : 'border-transparent'
-                    } ${isToday ? 'bg-primary/10 border-primary' : ''}`}
-                    onClick={() => day && setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
+                      day
+                        ? "border-gray-200 hover:border-primary cursor-pointer"
+                        : "border-transparent"
+                    } ${isToday ? "bg-primary/10 border-primary" : ""}`}
+                    onClick={() =>
+                      day &&
+                      setSelectedDate(
+                        new Date(
+                          currentDate.getFullYear(),
+                          currentDate.getMonth(),
+                          day
+                        )
+                      )
+                    }
                   >
                     {day && (
                       <div className="h-full flex flex-col">
-                        <div className={`text-sm font-medium mb-1 ${
-                          isToday ? 'text-primary' : 'text-gray-900'
-                        }`}>
+                        <div
+                          className={`text-sm font-medium mb-1 ${
+                            isToday ? "text-primary" : "text-gray-900"
+                          }`}
+                        >
                           {day}
                         </div>
-                        
+
                         <div className="flex-1 space-y-1">
                           {content.slice(0, 3).map((item, itemIndex) => {
                             const TypeIcon = getTypeIcon(item.type);
@@ -464,7 +522,9 @@ export default function SchedulePage() {
                             );
                           })}
                           {content.length > 3 && (
-                            <div className="text-xs text-gray-500">+{content.length - 3}</div>
+                            <div className="text-xs text-gray-500">
+                              +{content.length - 3}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -489,7 +549,7 @@ export default function SchedulePage() {
             <Calendar className="w-5 h-5 text-primary" />
             Contenu à venir
           </h2>
-          
+
           <div className="flex items-center gap-2">
             <select
               value={filterStatus}
@@ -509,7 +569,7 @@ export default function SchedulePage() {
           {filteredContent.map((content, index) => {
             const StatusIcon = getStatusIcon(content.status);
             const TypeIcon = getTypeIcon(content.type);
-            
+
             return (
               <motion.div
                 key={content.id}
@@ -520,13 +580,15 @@ export default function SchedulePage() {
               >
                 <div className="flex-shrink-0">
                   {content.thumbnail ? (
-                    <img 
-                      src={content.thumbnail} 
+                    <img
+                      src={content.thumbnail}
                       alt={content.title}
                       className="w-20 h-14 object-cover rounded-lg"
                     />
                   ) : (
-                    <div className={`w-20 h-14 bg-gradient-to-br ${getTypeColor(content.type)} rounded-lg flex items-center justify-center`}>
+                    <div
+                      className={`w-20 h-14 bg-gradient-to-br ${getTypeColor(content.type)} rounded-lg flex items-center justify-center`}
+                    >
                       <TypeIcon className="w-6 h-6 text-white" />
                     </div>
                   )}
@@ -536,12 +598,14 @@ export default function SchedulePage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{content.title}</h3>
+                        <h3 className="font-semibold text-gray-900">
+                          {content.title}
+                        </h3>
                         {content.isRecurring && (
                           <Repeat className="w-4 h-4 text-purple-500" />
                         )}
                       </div>
-                      
+
                       <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
@@ -560,24 +624,34 @@ export default function SchedulePage() {
                       </div>
 
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(content.status)}`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(content.status)}`}
+                        >
                           <StatusIcon className="w-3 h-3" />
                           {content.status === "scheduled" && "Planifié"}
                           {content.status === "live" && "En direct"}
                           {content.status === "completed" && "Terminé"}
                           {content.status === "cancelled" && "Annulé"}
                         </span>
-                        
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          content.visibility === "public" 
-                            ? "bg-green-100 text-green-700"
-                            : content.visibility === "private"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}>
-                          {content.visibility === "public" && <Globe className="w-3 h-3 inline" />}
-                          {content.visibility === "private" && <Lock className="w-3 h-3 inline" />}
-                          {content.visibility === "unlisted" && <Lock className="w-3 h-3 inline" />}
+
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            content.visibility === "public"
+                              ? "bg-green-100 text-green-700"
+                              : content.visibility === "private"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {content.visibility === "public" && (
+                            <Globe className="w-3 h-3 inline" />
+                          )}
+                          {content.visibility === "private" && (
+                            <Lock className="w-3 h-3 inline" />
+                          )}
+                          {content.visibility === "unlisted" && (
+                            <Lock className="w-3 h-3 inline" />
+                          )}
                           {content.visibility === "public" && "Public"}
                           {content.visibility === "private" && "Privé"}
                           {content.visibility === "unlisted" && "Non listé"}
@@ -588,7 +662,10 @@ export default function SchedulePage() {
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <span>Plateformes:</span>
                           {content.platform.map((platform, platformIndex) => (
-                            <span key={platformIndex} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                            <span
+                              key={platformIndex}
+                              className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
+                            >
                               {platform}
                             </span>
                           ))}
@@ -605,7 +682,7 @@ export default function SchedulePage() {
                           <div className="text-xs text-gray-500">vues</div>
                         </div>
                       )}
-                      
+
                       <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                         <Edit className="w-4 h-4" />
                       </button>
@@ -629,7 +706,9 @@ export default function SchedulePage() {
         {filteredContent.length === 0 && (
           <div className="text-center py-12">
             <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun contenu trouvé</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Aucun contenu trouvé
+            </h3>
             <p className="text-gray-600 mb-6">
               {searchQuery || filterStatus !== "all"
                 ? "Essayez de modifier vos filtres de recherche"

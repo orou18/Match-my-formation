@@ -10,9 +10,7 @@ export default function StudentProvidersLayout({
 }) {
   return (
     <ThemeProvider>
-      <TranslationProvider>
-        {children}
-      </TranslationProvider>
+      <TranslationProvider>{children}</TranslationProvider>
     </ThemeProvider>
   );
 }
