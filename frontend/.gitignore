@@ -40,6 +40,7 @@ deploy.zip
 # Cache
 .cache/
 .parcel-cache/
+.data/
 
 # IDE
 .vscode/
