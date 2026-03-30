@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
@@ -23,6 +24,7 @@ class User extends Authenticatable
         'password',
         'role',
         'company_id', // AJOUT : Pour lier un partenaire à son entreprise
+        'avatar',
     ];
 
     /**
@@ -68,12 +70,27 @@ class User extends Authenticatable
         return $this->hasMany(Video::class, 'uploader_id');
     }
 
+    public function createdPathways(): HasMany
+    {
+        return $this->hasMany(Pathway::class, 'creator_id');
+    }
+
     /**
      * Les inscriptions aux cours (si c'est un étudiant).
      */
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);
+    }
+
+    public function likedVideos(): BelongsToMany
+    {
+        return $this->belongsToMany(Video::class, 'video_likes')->withTimestamps();
+    }
+
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class);
     }
 
     // =========================================================================

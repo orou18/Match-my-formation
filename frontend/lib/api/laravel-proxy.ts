@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import type { NextRequest } from "next/server";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/auth-options";
 
 type LaravelFetchOptions = Omit<RequestInit, "headers"> & {
   request?: NextRequest;

@@ -206,11 +206,11 @@ export default function VideoUploadForm({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50 p-4 overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-4xl mx-auto"
+        className="max-w-4xl mx-auto pb-8"
       >
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">

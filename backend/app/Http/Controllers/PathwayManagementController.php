@@ -34,12 +34,20 @@ class PathwayManagementController extends Controller
             'description' => $request->description,
             'domain' => $request->domain,
             'duration_hours' => $request->duration_hours,
+            'duration' => $request->duration_hours,
+            'level' => $request->difficulty_level,
             'difficulty_level' => $request->difficulty_level,
+            'active' => true,
             'is_active' => true,
         ]);
 
         // Associer les vidéos au parcours
-        $pathway->videos()->attach($request->video_ids);
+        $pathway->videos()->sync(
+            collect($request->video_ids)
+                ->values()
+                ->mapWithKeys(fn ($videoId, $index) => [$videoId => ['sort_order' => $index + 1]])
+                ->all()
+        );
 
         return response()->json([
             'success' => true,
@@ -167,7 +175,7 @@ class PathwayManagementController extends Controller
                         }),
                     ],
                     'assigned_at' => $assignment->assigned_at->format('Y-m-d H:i:s'),
-                    'completed_at' => $assignment->completed_at? $assignment->completed_at->format('Y-m-d H:i:s') : null,
+                    'completed_at' => $assignment->completed_at ? $assignment->completed_at->format('Y-m-d H:i:s') : null,
                     'progress_percentage' => $assignment->progress_percentage,
                     'is_completed' => $assignment->isCompleted(),
                 ];
@@ -226,6 +234,24 @@ class PathwayManagementController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Assignation supprimée avec succès'
+        ]);
+    }
+
+    /**
+     * Supprimer un parcours du créateur
+     */
+    public function destroy(string $id): JsonResponse
+    {
+        $pathway = Pathway::where('creator_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $pathway->videos()->detach();
+        $pathway->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Parcours supprimé avec succès',
         ]);
     }
 }

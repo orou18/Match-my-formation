@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  getCreatorPathways,
-  saveCreatorPathways,
-} from "@/lib/server/learning-store";
+import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
 
 export async function GET(request: NextRequest) {
   try {
-    return NextResponse.json({
-      success: true,
-      data: getCreatorPathways(),
-    });
+    const response = await laravelFetch("/api/creator/pathways", { request });
+    const data = await parseLaravelJson(response);
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Pathways API Error:", error);
     return NextResponse.json(
@@ -25,23 +21,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-
-    const pathways = getCreatorPathways();
-    const newPathway = {
-      id: Math.max(0, ...pathways.map((pathway) => pathway.id)) + 1,
-      ...body,
-      created_at: new Date().toISOString(),
-      videos_count: Array.isArray(body.video_ids) ? body.video_ids.length : 0,
-      assigned_employees: 0,
-      is_active: true,
-    };
-    saveCreatorPathways([...pathways, newPathway]);
-
-    return NextResponse.json({
-      success: true,
-      data: newPathway,
-      message: "Parcours créé avec succès",
+    const response = await laravelFetch("/api/creator/pathways", {
+      request,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
+    const data = await parseLaravelJson(response);
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Create Pathway Error:", error);
     return NextResponse.json(

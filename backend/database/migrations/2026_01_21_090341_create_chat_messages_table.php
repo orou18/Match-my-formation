@@ -13,7 +13,17 @@ return new class extends Migration
     {
         Schema::create('chat_messages', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('video_id')->constrained('videos')->cascadeOnDelete();
+            $table->text('message');
+            $table->boolean('is_question')->default(false);
+            $table->enum('status', ['pending', 'answered', 'resolved'])->default('pending');
+            $table->foreignId('reply_to')->nullable()->constrained('chat_messages')->cascadeOnDelete();
+            $table->unsignedInteger('likes_count')->default(0);
             $table->timestamps();
+
+            $table->index(['video_id', 'created_at']);
+            $table->index(['user_id', 'created_at']);
         });
     }
 

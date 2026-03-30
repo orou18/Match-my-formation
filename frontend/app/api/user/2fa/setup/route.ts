@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/auth-options";
 import { getUserIdFromToken } from "@/lib/auth";
 import { updateUserSecurity } from "@/lib/server/account-store";
 
@@ -28,18 +29,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Méthode invalide" }, { status: 400 });
     }
 
-    const verificationCode = "123456"; // Code de test fixe
+    const verificationCode = crypto.randomInt(100000, 999999).toString();
+    const verificationHash = crypto
+      .createHash("sha256")
+      .update(verificationCode)
+      .digest("hex");
     updateUserSecurity(String(finalUserId), {
       twoFactorMethod: method,
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: `Code de vérification envoyé par ${method}`,
       success: true,
       method: method,
-      // En dev, retourner le code pour faciliter les tests
-      ...(process.env.NODE_ENV === "development" && { code: verificationCode }),
     });
+
+    response.cookies.set("twoFactorCodeHash", verificationHash, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 10,
+    });
+    response.cookies.set("twoFactorMethod", method, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 10,
+    });
+
+    if (process.env.NODE_ENV === "development") {
+      response.headers.set("x-dev-2fa-code", verificationCode);
+    }
+
+    return response;
   } catch (error) {
     console.error("Erreur lors de la configuration 2FA:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

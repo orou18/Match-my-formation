@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   Play,
   Pause,
@@ -32,10 +33,12 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Video, VideoResource, LearningObjective } from "@/types";
 import { isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/video-utils";
+import { ChatContainer } from "@/components/video/ChatContainer";
 
 export default function VideoWatchPage() {
   const router = useRouter();
   const params = useParams();
+  const { data: session } = useSession();
   const locale = params.locale || "fr";
   const videoId = params.id as string;
 
@@ -49,6 +52,7 @@ export default function VideoWatchPage() {
   const [completedObjectives, setCompletedObjectives] = useState<Set<number>>(
     new Set()
   );
+  const [showChat, setShowChat] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -145,7 +149,8 @@ export default function VideoWatchPage() {
 
   useEffect(() => {
     // Vérifier si l'utilisateur est connecté
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("auth_token");
     if (!token) {
       router.push(`/${locale}/login?redirect=video/${videoId}/watch`);
       return;
@@ -154,12 +159,23 @@ export default function VideoWatchPage() {
     // Simuler le chargement de la vidéo
     const loadVideo = async () => {
       try {
-        const response = await fetch("/api/final-videos");
+        const apiBase =
+          process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
+          "http://127.0.0.1:8000";
+        const response = await fetch(`${apiBase}/api/videos/${videoId}`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erreur ${response.status}`);
+        }
+
         const data = await response.json();
-        const storedVideo = (data.videos || []).find(
-          (entry: any) => String(entry.id) === videoId
-        );
-        setVideo((storedVideo as Video) || mockVideo);
+        setVideo((data as Video) || mockVideo);
       } catch {
         setVideo(mockVideo);
       } finally {
@@ -809,31 +825,58 @@ export default function VideoWatchPage() {
                 )}
               </motion.div>
 
-              {/* Actions rapides */}
+              {/* Actions rapides et Chat */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-gray-800 rounded-2xl p-6"
+                className="bg-gray-800 rounded-2xl overflow-hidden"
               >
-                <h3 className="text-lg font-bold text-white mb-4">
-                  Actions rapides
-                </h3>
-
-                <div className="space-y-3">
-                  <button className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2">
-                    <Heart className="w-4 h-4" />
-                    <span>Aimer cette vidéo</span>
+                {/* Onglets */}
+                <div className="flex border-b border-gray-700">
+                  <button
+                    onClick={() => setShowChat(false)}
+                    className={`flex-1 px-4 py-3 font-medium transition-colors ${
+                      !showChat
+                        ? "bg-gray-700 text-white border-b-2 border-blue-500"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    Actions
                   </button>
-                  <button className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2">
+                  <button
+                    onClick={() => setShowChat(true)}
+                    className={`flex-1 px-4 py-3 font-medium transition-colors flex items-center justify-center gap-2 ${
+                      showChat
+                        ? "bg-gray-700 text-white border-b-2 border-blue-500"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
                     <MessageSquare className="w-4 h-4" />
-                    <span>Laisser un commentaire</span>
-                  </button>
-                  <button className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2">
-                    <Share2 className="w-4 h-4" />
-                    <span>Partager</span>
+                    Chat
                   </button>
                 </div>
+
+                {/* Contenu des onglets */}
+                {!showChat ? (
+                  <div className="p-6 space-y-3">
+                    <button className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2">
+                      <Heart className="w-4 h-4" />
+                      <span>Aimer cette vidéo</span>
+                    </button>
+                    <button className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2">
+                      <Share2 className="w-4 h-4" />
+                      <span>Partager</span>
+                    </button>
+                  </div>
+                ) : (
+                  <ChatContainer
+                    videoId={parseInt(videoId)}
+                    creatorId={video?.creator_id}
+                    onClose={() => setShowChat(false)}
+                    isOpen={showChat}
+                  />
+                )}
               </motion.div>
             </div>
           </div>

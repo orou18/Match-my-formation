@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  getCreatorPathways,
-  getPathwayAssignments,
-  saveCreatorPathways,
-  savePathwayAssignments,
-} from "@/lib/server/learning-store";
+import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
 
 export async function DELETE(
   request: NextRequest,
@@ -12,28 +7,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const pathwayId = Number(id);
-    const pathways = getCreatorPathways();
-    const nextPathways = pathways.filter((pathway) => pathway.id !== pathwayId);
-
-    if (nextPathways.length === pathways.length) {
-      return NextResponse.json(
-        { success: false, message: "Parcours introuvable" },
-        { status: 404 }
-      );
-    }
-
-    saveCreatorPathways(nextPathways);
-    savePathwayAssignments(
-      getPathwayAssignments().filter(
-        (assignment) => assignment.pathway_id !== pathwayId
-      )
-    );
-
-    return NextResponse.json({
-      success: true,
-      message: "Parcours supprime avec succes",
+    const response = await laravelFetch(`/api/creator/pathways/${id}`, {
+      request,
+      method: "DELETE",
     });
+    const data = await parseLaravelJson(response);
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Delete Pathway Error:", error);
     return NextResponse.json(

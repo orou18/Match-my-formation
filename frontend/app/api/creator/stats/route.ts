@@ -1,34 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { getUserIdFromToken } from "@/lib/auth";
-import { getCreatorStats } from "@/lib/server/creator-store";
-
-type SessionUser = {
-  id?: string | number;
-  role?: string;
-};
-
-async function resolveCreatorId(request: NextRequest) {
-  const userId = getUserIdFromToken(request);
-  if (userId) return String(userId);
-
-  const session = await getServerSession(authOptions);
-  const sessionUser = (session?.user as SessionUser | undefined) || {};
-  if (sessionUser.id && sessionUser.role === "creator") {
-    return String(sessionUser.id);
-  }
-
-  return "2";
-}
+import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
 
 export async function GET(request: NextRequest) {
   try {
-    const creatorId = await resolveCreatorId(request);
-    return NextResponse.json({
-      success: true,
-      data: getCreatorStats(creatorId),
-    });
+    const response = await laravelFetch("/api/creator/stats", { request });
+    const data = await parseLaravelJson(response);
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Stats API Error:", error);
     return NextResponse.json(

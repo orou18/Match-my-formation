@@ -1,69 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  ensureUserRecords,
-  findAccountByEmail,
-  updateLastLogin,
-} from "@/lib/server/account-store";
+import { buildUrl } from "@/lib/config/api";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
-
-    // Validation des données
-    if (!email || !password) {
-      return NextResponse.json(
-        { message: "Email et mot de passe sont obligatoires" },
-        { status: 400 }
-      );
-    }
-
-    // Validation de l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { message: "Veuillez entrer une adresse email valide" },
-        { status: 400 }
-      );
-    }
-
-    const user = findAccountByEmail(email);
-
-    if (!user) {
-      return NextResponse.json(
-        { message: "Email ou mot de passe incorrect" },
-        { status: 401 }
-      );
-    }
-
-    // Vérifier le mot de passe
-    if (user.password !== password) {
-      return NextResponse.json(
-        { message: "Email ou mot de passe incorrect" },
-        { status: 401 }
-      );
-    }
-
-    updateLastLogin(user.id);
-    ensureUserRecords(user.id, user.role);
-    const token = `mock-${user.role}-token-${user.id}-${Date.now()}`;
-
-    return NextResponse.json({
-      message: "Connexion réussie",
-      user: {
-        id: Number(user.id),
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        avatar: user.avatar || `/avatars/${user.role}.jpg`,
+    const response = await fetch(buildUrl("/api/auth/login"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
-      token,
+      body: JSON.stringify(body),
+      cache: "no-store",
     });
-  } catch {
+
+    const payload = await response.json().catch(() => null);
+    const nextResponse = NextResponse.json(payload, { status: response.status });
+
+    if (response.ok && payload?.user?.id) {
+      nextResponse.cookies.set("userId", String(payload.user.id), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    if (response.ok && payload?.user?.role) {
+      nextResponse.cookies.set("userRole", String(payload.user.role), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    return nextResponse;
+  } catch (error) {
+    console.error("Erreur proxy login:", error);
     return NextResponse.json(
-      { message: "Erreur serveur lors de la connexion" },
-      { status: 500 }
+      {
+        message:
+          "Impossible de joindre le backend d'authentification. Vérifie NEXT_PUBLIC_API_URL et le serveur Laravel.",
+      },
+      { status: 502 }
     );
   }
 }

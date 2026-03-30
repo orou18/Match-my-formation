@@ -3,17 +3,24 @@
 type JsonObject = Record<string, unknown>;
 
 async function readJson<T>(response: Response): Promise<T> {
-  const payload = await response.json().catch(() => ({}));
+  try {
+    const payload = await response.json().catch(() => ({}));
 
-  if (!response.ok) {
-    const message =
-      (payload as { message?: string; error?: string })?.message ||
-      (payload as { message?: string; error?: string })?.error ||
-      `HTTP ${response.status}`;
-    throw new Error(message);
+    if (!response.ok) {
+      const message =
+        (payload as { message?: string; error?: string })?.message ||
+        (payload as { message?: string; error?: string })?.error ||
+        `HTTP ${response.status}: ${response.statusText}`;
+      throw new Error(message);
+    }
+
+    return payload as T;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`Réponse invalide du serveur: ${response.status}`);
+    }
+    throw error;
   }
-
-  return payload as T;
 }
 
 function buildAuthHeaders() {
@@ -23,21 +30,35 @@ function buildAuthHeaders() {
     return headers;
   }
 
-  const token =
+  // Utiliser les mêmes tokens que le service d'authentification
+  const token = 
+    window.localStorage.getItem("auth_token") ||
+    window.localStorage.getItem("nextauth.session-token") ||
     window.localStorage.getItem("token") ||
     window.localStorage.getItem("employee_token");
 
   if (token) {
-    headers.Authorization = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
+
+  headers["Content-Type"] = "application/json";
+  headers["Accept"] = "application/json";
 
   return headers;
 }
 
+function getApiBaseUrl(): string {
+  const rawUrl = process.env.NEXT_PUBLIC_API_URL;
+  return rawUrl && rawUrl !== "undefined" 
+    ? rawUrl.replace(/\/$/, "") 
+    : "http://127.0.0.1:8000";
+}
+
 export const dashboardService = {
   async getCreatorDashboard<T = JsonObject>() {
+    const baseUrl = getApiBaseUrl();
     return readJson<T>(
-      await fetch("/api/creator/dashboard", {
+      await fetch(`${baseUrl}/api/creator/dashboard`, {
         cache: "no-store",
         headers: buildAuthHeaders(),
       })
@@ -45,8 +66,9 @@ export const dashboardService = {
   },
 
   async getStudentDashboard<T = JsonObject>() {
+    const baseUrl = getApiBaseUrl();
     return readJson<T>(
-      await fetch("/api/student/dashboard", {
+      await fetch(`/api/student/dashboard`, {
         cache: "no-store",
         headers: buildAuthHeaders(),
       })
@@ -54,9 +76,10 @@ export const dashboardService = {
   },
 
   async getAdminAnalytics<T = JsonObject>(period = "30d", metric = "revenue") {
+    const baseUrl = getApiBaseUrl();
     const params = new URLSearchParams({ period, metric });
     return readJson<T>(
-      await fetch(`/api/admin/analytics?${params.toString()}`, {
+      await fetch(`${baseUrl}/api/admin/stats?${params.toString()}`, {
         cache: "no-store",
         headers: buildAuthHeaders(),
       })
@@ -64,8 +87,9 @@ export const dashboardService = {
   },
 
   async getBrandingSettings<T = JsonObject>() {
+    const baseUrl = getApiBaseUrl();
     return readJson<T>(
-      await fetch("/api/branding", {
+      await fetch(`${baseUrl}/api/admin/branding`, {
         cache: "no-store",
         headers: buildAuthHeaders(),
       })
@@ -73,8 +97,9 @@ export const dashboardService = {
   },
 
   async updateBrandingSettings<T = JsonObject>(data: FormData) {
+    const baseUrl = getApiBaseUrl();
     return readJson<T>(
-      await fetch("/api/branding", {
+      await fetch(`${baseUrl}/api/admin/branding`, {
         method: "PUT",
         body: data,
         headers: buildAuthHeaders(),

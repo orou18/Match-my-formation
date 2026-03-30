@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SharedDB } from "@/app/api/shared-db/route";
+import { SharedDB } from "@/lib/server/shared-db";
 
 export async function GET(request: NextRequest) {
   try {

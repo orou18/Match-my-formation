@@ -92,7 +92,11 @@ export default function CustomizeDashboard() {
       typeof window !== "undefined"
         ? window.localStorage.getItem("token")
         : null;
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    return headers;
   };
 
   const colorPresets = [

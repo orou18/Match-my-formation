@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
@@ -13,7 +14,12 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $password = Hash::make('Azerty123!');
+        if (app()->environment('production')) {
+            return;
+        }
+
+        $defaultPassword = env('SEED_DEFAULT_PASSWORD', Str::random(24));
+        $password = Hash::make($defaultPassword);
 
         $users = [
             [
@@ -43,6 +49,6 @@ class UserSeeder extends Seeder
             );
         }
 
-        $this->command->info('Seed terminé : Utilisateurs créés avec le mot de passe Azerty123!');
+        $this->command->info("Seed terminé : utilisateurs créés avec le mot de passe {$defaultPassword}");
     }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/auth-options";
 import { getUserIdFromToken } from "@/lib/auth";
 import { updateUserSecurity } from "@/lib/server/account-store";
 
@@ -32,17 +33,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Code invalide" }, { status: 400 });
     }
 
-    if (code === "123456") {
+    const expectedMethod = request.cookies.get("twoFactorMethod")?.value;
+    const expectedHash = request.cookies.get("twoFactorCodeHash")?.value;
+    const providedHash = crypto.createHash("sha256").update(code).digest("hex");
+
+    if (expectedMethod === method && expectedHash && providedHash === expectedHash) {
       updateUserSecurity(String(finalUserId), {
         twoFactorEnabled: true,
         twoFactorMethod: method,
       });
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         message: "2FA activé avec succès",
         twoFactorEnabled: true,
         twoFactorMethod: method,
       });
+
+      response.cookies.delete("twoFactorMethod");
+      response.cookies.delete("twoFactorCodeHash");
+
+      return response;
     }
 
     return NextResponse.json(

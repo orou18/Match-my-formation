@@ -28,9 +28,11 @@ class VideoController extends Controller
                         'id' => $video->id,
                         'title' => $video->title,
                         'description' => $video->description,
-                        'thumbnail' => $video->thumbnail,
-                        'url' => $video->url,
-                        'duration' => $video->duration ?: '00:00',
+                        'thumbnail' => $video->thumbnail_url,
+                        'url' => $video->video_url,
+                        'source_type' => $video->source_type,
+                        'external_url' => $video->external_url,
+                        'duration' => $video->duration,
                         'views' => $video->views ?: 0,
                         'likes' => $video->likes ?: 0,
                         'comments' => $video->comments ?: 0,
@@ -60,22 +62,36 @@ class VideoController extends Controller
             $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'video' => 'required|file|max:512000',
-                'visibility' => 'required|in:public,private',
+                'video' => 'nullable|file|max:512000',
+                'external_url' => 'nullable|url',
+                'visibility' => 'required|in:public,private,unlisted',
             ]);
 
-            $path = $request->file('video')->store('videos', 'public');
+            $hasUpload = $request->hasFile('video');
+            $hasExternalUrl = filled($request->external_url);
+
+            if ($hasUpload === $hasExternalUrl) {
+                return response()->json(['message' => 'Fournissez soit un fichier, soit une URL externe.'], 422);
+            }
+
+            $path = $hasUpload ? $request->file('video')->store('videos', 'public') : null;
+            $externalUrl = $hasExternalUrl ? $request->string('external_url')->toString() : null;
 
             $video = Video::create([
                 'title' => $request->title,
                 'slug' => Str::slug($request->title) . '-' . uniqid(),
                 'description' => $request->description ?? '',
                 'url' => $path,
+                'external_url' => $externalUrl,
+                'source_type' => $hasUpload ? 'upload' : 'external',
+                'provider' => $externalUrl ? $this->detectProvider($externalUrl) : 'direct',
                 'category' => $request->category ?? 'General',
                 'visibility' => $request->visibility,
                 'uploader_id' => $user->id,
-                'company_id' => $user->company_id,
-                'duration' => $request->duration ?? '00:00',
+                'thumbnail' => $request->thumbnail,
+                'duration' => $request->integer('duration') ?: null,
+                'allow_comments' => filter_var($request->input('allow_comments', true), FILTER_VALIDATE_BOOLEAN),
+                'published_at' => in_array($request->visibility, ['public', 'unlisted'], true) ? now() : null,
             ]);
 
             return response()->json(['message' => 'Succès', 'video' => $video], 201);
@@ -97,7 +113,11 @@ class VideoController extends Controller
                 ->where('uploader_id', $user->id)
                 ->firstOrFail();
 
-            return response()->json($video);
+            return response()->json([
+                ...$video->toArray(),
+                'video_url' => $video->video_url,
+                'thumbnail_url' => $video->thumbnail_url,
+            ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -119,10 +139,20 @@ class VideoController extends Controller
             $request->validate([
                 'title' => 'sometimes|string|max:255',
                 'description' => 'sometimes|nullable|string',
-                'visibility' => 'sometimes|in:public,private',
+                'visibility' => 'sometimes|in:public,private,unlisted',
+                'external_url' => 'sometimes|nullable|url',
             ]);
 
-            $video->update($request->only(['title', 'description', 'visibility']));
+            $payload = $request->only(['title', 'description', 'visibility', 'external_url', 'thumbnail']);
+            if (array_key_exists('external_url', $payload)) {
+                $payload['source_type'] = filled($payload['external_url']) ? 'external' : 'upload';
+                $payload['provider'] = filled($payload['external_url']) ? $this->detectProvider($payload['external_url']) : 'direct';
+            }
+            if (array_key_exists('visibility', $payload) && in_array($payload['visibility'], ['public', 'unlisted'], true) && !$video->published_at) {
+                $payload['published_at'] = now();
+            }
+
+            $video->update($payload);
 
             return response()->json(['message' => 'Vidéo mise à jour', 'video' => $video]);
         } catch (\Exception $e) {
@@ -144,8 +174,8 @@ class VideoController extends Controller
                 ->firstOrFail();
 
             // Supprimer le fichier vidéo
-            if ($video->url) {
-                Storage::disk('public')->delete($video->url);
+            if ($video->source_type === 'upload' && $video->url) {
+                Storage::disk($video->storage_disk ?: 'public')->delete($video->url);
             }
 
             $video->delete();
@@ -154,5 +184,14 @@ class VideoController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    private function detectProvider(string $url): string
+    {
+        return match (true) {
+            str_contains($url, 'youtube.com'), str_contains($url, 'youtu.be') => 'youtube',
+            str_contains($url, 'vimeo.com') => 'vimeo',
+            default => 'external',
+        };
     }
 }

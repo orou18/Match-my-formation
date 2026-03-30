@@ -8,18 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('chat_messages', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('sender_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('receiver_id')->constrained('users')->onDelete('cascade');
-            $table->text('message');
-            $table->boolean('is_read')->default(false);
-            $table->timestamps();
+        Schema::table('chat_messages', function (Blueprint $table) {
+            if (!Schema::hasColumn('chat_messages', 'likes_count')) {
+                $table->unsignedInteger('likes_count')->default(0)->after('status');
+            }
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('chat_messages');
+        Schema::table('chat_messages', function (Blueprint $table) {
+            if (Schema::hasColumn('chat_messages', 'likes_count')) {
+                $table->dropColumn('likes_count');
+            }
+        });
     }
 };

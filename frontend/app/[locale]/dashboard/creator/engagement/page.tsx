@@ -427,7 +427,7 @@ export default function EngagementPage() {
             >
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold text-sm">
-                  {comment.user.charAt(0)}
+                  {comment.user.name.charAt(0)}
                 </span>
               </div>
 
@@ -435,7 +435,7 @@ export default function EngagementPage() {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <span className="font-semibold text-gray-900">
-                      {comment.user}
+                      {comment.user.name}
                     </span>
                     <span className="text-sm text-gray-500 ml-2">
                       {comment.timestamp}
@@ -456,12 +456,12 @@ export default function EngagementPage() {
                   </div>
                 </div>
 
-                <p className="text-gray-700 text-sm mb-2">{comment.comment}</p>
+                <p className="text-gray-700 text-sm mb-2">{comment.content}</p>
 
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 text-xs text-gray-500">
                     <Eye className="w-3 h-3" />
-                    <span>{comment.video}</span>
+                    <span>{comment.video.title}</span>
                   </div>
                   <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-primary">
                     <ThumbsUp className="w-3 h-3" />
