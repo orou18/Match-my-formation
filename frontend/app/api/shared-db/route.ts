@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SharedDB } from "@/lib/server/shared-db";
+import { fetchPublicVideosPayload } from "@/lib/api/public-videos-proxy";
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("SHARED DB - Récupération des vidéos");
-
-    return NextResponse.json({
-      videos: SharedDB.getVideos(),
-      total: SharedDB.getVideos().length,
-    });
+    const { response, body } = await fetchPublicVideosPayload();
+    return NextResponse.json(body, { status: response.status });
   } catch (error) {
     console.error("SHARED DB - Erreur:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

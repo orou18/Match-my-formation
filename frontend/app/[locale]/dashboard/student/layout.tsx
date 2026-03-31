@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   BookOpen,
@@ -18,7 +19,6 @@ import Link from "next/link";
 import PageLoader from "@/components/ui/PageLoader";
 import DashboardNavbar from "@/components/dashboard/DashboardNavbar";
 import Footer from "@/components/layout/Footer";
-import { api, isAuthenticated } from "@/lib/api/config";
 import UserIdManager from "@/lib/user-id-manager";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -34,28 +34,63 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Utiliser UserIdManager pour vérifier l'authentification
-        if (!UserIdManager.isAuthenticated()) {
+        if (status === "loading") {
+          return;
+        }
+
+        const response = await fetch("/api/me", {
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const profile = await response.json();
+
+          if (profile?.role !== "student") {
+            router.push(`/${locale}/dashboard/${profile?.role || "student"}`);
+            return;
+          }
+
+          setUser({
+            id: profile.id,
+            name: profile.name || "Student",
+            email: profile.email || "",
+            role: "student",
+            avatar: profile.avatar || "",
+            created_at: profile.created_at || new Date().toISOString(),
+            updated_at: profile.updated_at || new Date().toISOString(),
+            enrolled_courses: profile.enrolled_courses || 0,
+            completed_courses: profile.completed_courses || 0,
+            certificates: profile.certificates || [],
+            progress: profile.progress || [],
+          });
+
+          return;
+        }
+
+        const storedUserData = UserIdManager.getStoredUserData();
+        if (!storedUserData) {
           router.push(`/${locale}/login`);
           return;
         }
 
-        // Récupérer les données stockées de manière cohérente
-        const storedUserData = UserIdManager.getStoredUserData();
-
-        if (storedUserData && storedUserData.role === "student") {
-          // Créer un objet Student à partir des données stockées
+        if (storedUserData.role === "student") {
           const studentData: Student = {
             id: storedUserData.id,
             name: storedUserData.name || "Student",
             email: storedUserData.email || "",
             role: "student",
             avatar: storedUserData.avatar || "",
-            created_at: new Date().toISOString(),
+            created_at: session?.user?.id
+              ? new Date().toISOString()
+              : new Date().toISOString(),
             updated_at: new Date().toISOString(),
             enrolled_courses: 0,
             completed_courses: 0,
@@ -65,7 +100,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
 
           setUser(studentData);
         } else {
-          router.push(`/${locale}/login`);
+          router.push(`/${locale}/dashboard/${storedUserData.role}`);
           return;
         }
       } catch (error) {
@@ -80,7 +115,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
     };
 
     fetchUserData();
-  }, [router, locale]);
+  }, [router, locale, session?.user?.id, status]);
 
   if (loading) {
     return <PageLoader />;
@@ -236,6 +271,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
               <button
                 onClick={() => {
                   UserIdManager.logout();
+                  fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
                   router.push(`/${locale}/login`);
                 }}
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all w-full"

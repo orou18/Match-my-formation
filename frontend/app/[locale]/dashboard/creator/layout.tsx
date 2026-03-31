@@ -221,8 +221,9 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
 
   const handleLogout = () => {
     console.log("Déconnexion depuis le dashboard creator...");
+    fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    signOut({ redirect: false }).catch(() => {});
     UserIdManager.logout();
-    // Rediriger vers la landing page (page d'accueil)
     window.location.href = `/${locale}`;
   };
 

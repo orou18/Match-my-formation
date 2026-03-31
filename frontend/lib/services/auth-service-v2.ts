@@ -65,7 +65,7 @@ export class AuthService {
 
       if (error.name === "TypeError" && error.message.includes("fetch")) {
         throw new Error(
-          "La route d'authentification est inaccessible. Vérifie NEXT_PUBLIC_API_URL et le serveur Laravel."
+          "La route d'authentification est inaccessible. Vérifie que le frontend Next et le backend Laravel tournent bien."
         );
       }
 
@@ -129,7 +129,7 @@ export class AuthService {
 
       if (error.name === "TypeError" && error.message.includes("fetch")) {
         throw new Error(
-          "La route d'inscription est inaccessible. Vérifie NEXT_PUBLIC_API_URL et le serveur Laravel."
+          "La route d'inscription est inaccessible. Vérifie que le frontend Next et le backend Laravel tournent bien."
         );
       }
 
@@ -157,16 +157,11 @@ export class AuthService {
   getAuthToken(): string | null {
     if (typeof window === 'undefined') return null;
   
-    // Priorité: NextAuth session > localStorage > UserIdManager
-    const sessionToken = localStorage.getItem('nextauth.session-token');
-    if (sessionToken) return sessionToken;
-  
-    const userIdToken = localStorage.getItem('auth_token');
+    const userIdToken = localStorage.getItem("auth_token");
     if (userIdToken) return userIdToken;
-  
-    // Import UserIdManager seulement si nécessaire
+
     try {
-      const UserIdManager = require('../user-id-manager').default;
+      const UserIdManager = require("../user-id-manager").default;
       return UserIdManager.getToken();
     } catch {
       return null;
@@ -176,15 +171,13 @@ export class AuthService {
   setAuthToken(token: string): void {
     if (typeof window === 'undefined') return;
   
-    localStorage.setItem('auth_token', token);
+    localStorage.setItem("auth_token", token);
   }
 
   clearAuthToken(): void {
     if (typeof window === 'undefined') return;
   
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('nextauth.session-token');
-    localStorage.removeItem('nextauth.csrf-token');
+    localStorage.removeItem("auth_token");
   }
 
   isAuthenticated(): boolean {

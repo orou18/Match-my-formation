@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
+import { parseLaravelJson } from "@/lib/api/laravel-proxy";
+import {
+  fetchBackendWithRequestAuth,
+  getRequestAccessToken,
+} from "@/lib/api/request-backend";
 
 export async function GET(request: NextRequest) {
   try {
+    if (!getRequestAccessToken(request)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Non authentifié",
+        },
+        { status: 401 }
+      );
+    }
+
     const [dashboardResponse, employeeStatsResponse, employeesResponse] =
       await Promise.all([
-        laravelFetch("/api/creator/dashboard", { request }),
-        laravelFetch("/api/creator/employees/stats", { request }),
-        laravelFetch("/api/creator/employees", { request }),
+        fetchBackendWithRequestAuth(request, "/api/creator/dashboard"),
+        fetchBackendWithRequestAuth(request, "/api/creator/employees/stats"),
+        fetchBackendWithRequestAuth(request, "/api/creator/employees"),
       ]);
 
     const [dashboardPayload, employeeStatsPayload, employeesPayload] =

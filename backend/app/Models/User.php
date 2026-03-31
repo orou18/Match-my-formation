@@ -25,6 +25,19 @@ class User extends Authenticatable
         'role',
         'company_id', // AJOUT : Pour lier un partenaire à son entreprise
         'avatar',
+        'phone',
+        'bio',
+        'location',
+        'website',
+        'preferences',
+        'notification_settings',
+        'two_factor_enabled',
+        'two_factor_method',
+        'two_factor_secret',
+        'two_factor_temp_secret',
+        'two_factor_code_hash',
+        'two_factor_code_expires_at',
+        'last_password_change_at',
     ];
 
     /**
@@ -48,6 +61,11 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'preferences' => 'array',
+        'notification_settings' => 'array',
+        'two_factor_enabled' => 'boolean',
+        'two_factor_code_expires_at' => 'datetime',
+        'last_password_change_at' => 'datetime',
     ];
 
     // =========================================================================
@@ -91,6 +109,11 @@ class User extends Authenticatable
     public function chatMessages(): HasMany
     {
         return $this->hasMany(ChatMessage::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
     }
 
     // =========================================================================

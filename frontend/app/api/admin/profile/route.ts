@@ -34,7 +34,7 @@ export async function GET() {
         emailNotifications: true,
       },
       session: {
-        user: session.user,
+        user: sessionUser,
         role,
         permissions: profile.permissions || [],
       },

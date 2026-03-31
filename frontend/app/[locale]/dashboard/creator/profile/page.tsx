@@ -35,7 +35,15 @@ export default function ProfilePage() {
       typeof window !== "undefined"
         ? window.localStorage.getItem("token")
         : null;
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    return headers;
   };
 
   // Générer les initiales du nom
@@ -52,10 +60,7 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const res = await fetch("/api/creator/profile", {
-          headers: {
-            ...getAuthHeaders(),
-            Accept: "application/json",
-          },
+          headers: getAuthHeaders(),
         });
 
         if (res.ok) {
@@ -111,7 +116,6 @@ export default function ProfilePage() {
         headers: {
           ...getAuthHeaders(),
           "Content-Type": "application/json",
-          Accept: "application/json",
         },
         body: JSON.stringify(formData),
       });

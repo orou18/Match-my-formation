@@ -33,7 +33,9 @@ return [
     |
     */
 
-    'guard' => ['web', 'api'],
+    // Sanctum ne doit pas reboucler sur un guard "api" lui-meme pilote par Sanctum.
+    // On garde uniquement le guard de session "web", puis Sanctum bascule sur le bearer token si besoin.
+    'guard' => ['web'],
 
     /*
     |--------------------------------------------------------------------------

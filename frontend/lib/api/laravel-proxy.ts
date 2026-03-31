@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import type { NextRequest } from "next/server";
 import { authOptions } from "@/lib/auth/auth-options";
+import { fetchBackend, getBackendBaseUrls } from "@/lib/api/backend-fetch";
 
 type LaravelFetchOptions = Omit<RequestInit, "headers"> & {
   request?: NextRequest;
@@ -9,10 +10,7 @@ type LaravelFetchOptions = Omit<RequestInit, "headers"> & {
 };
 
 function getLaravelBaseUrl() {
-  return (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(
-    /\/$/,
-    ""
-  );
+  return getBackendBaseUrls()[0] || "http://127.0.0.1:8000";
 }
 
 async function resolveAccessToken(request?: NextRequest) {
@@ -21,10 +19,25 @@ async function resolveAccessToken(request?: NextRequest) {
     return header.slice(7);
   }
 
-  const session = await getServerSession(authOptions);
-  return (
-    (session?.user as { accessToken?: string } | undefined)?.accessToken || null
-  );
+  const cookieToken = request?.cookies.get("authToken")?.value;
+  if (cookieToken) {
+    return cookieToken;
+  }
+
+  if (request) {
+    return null;
+  }
+
+  try {
+    const session = await getServerSession(authOptions);
+    return (
+      (session?.user as { accessToken?: string } | undefined)?.accessToken ||
+      null
+    );
+  } catch (error) {
+    console.error("Erreur de resolution de session NextAuth:", error);
+    return null;
+  }
 }
 
 export async function laravelFetch(
@@ -50,10 +63,9 @@ export async function laravelFetch(
     finalHeaders.set("Authorization", `Bearer ${token}`);
   }
 
-  return fetch(url.toString(), {
+  return fetchBackend(url.toString().replace(getLaravelBaseUrl(), ""), {
     ...init,
     headers: finalHeaders,
-    cache: "no-store",
   });
 }
 

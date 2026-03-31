@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
+import { parseLaravelJson } from "@/lib/api/laravel-proxy";
+import {
+  fetchBackendWithRequestAuth,
+  getRequestAccessToken,
+} from "@/lib/api/request-backend";
 
 export async function GET(request: NextRequest) {
   try {
+    if (!getRequestAccessToken(request)) {
+      return NextResponse.json(
+        { error: "Non authentifié" },
+        { status: 401 }
+      );
+    }
+
     const [userResponse, coursesResponse] = await Promise.all([
-      laravelFetch("/api/me", { request }),
-      laravelFetch("/api/student/courses", { request }),
+      fetchBackendWithRequestAuth(request, "/api/me"),
+      fetchBackendWithRequestAuth(request, "/api/student/courses"),
     ]);
 
     const [userPayload, coursesPayload] = await Promise.all([

@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { buildUrl } from "@/lib/config/api";
+import { fetchBackend } from "@/lib/api/backend-fetch";
 
 export async function GET() {
   try {
-    const response = await fetch(buildUrl("/api/videos/public"), {
+    const response = await fetchBackend("/api/videos/public", {
       method: "GET",
       headers: {
         Accept: "application/json",
       },
-      cache: "no-store",
     });
 
     const payload = await response.json().catch(() => null);

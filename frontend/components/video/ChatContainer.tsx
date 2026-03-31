@@ -63,6 +63,12 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const currentUserId =
+    typeof sessionUser.id === "number"
+      ? sessionUser.id
+      : typeof sessionUser.id === "string"
+        ? Number(sessionUser.id)
+        : undefined;
   const accessToken =
     sessionUser.accessToken ||
     (typeof window !== "undefined"
@@ -249,7 +255,9 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         messages={messages}
         isLoading={isLoading}
         creatorId={creatorId}
-        currentUserId={sessionUser.id}
+        currentUserId={
+          Number.isFinite(currentUserId) ? currentUserId : undefined
+        }
         onDeleteMessage={handleDeleteMessage}
         onLikeMessage={handleLikeMessage}
         onReplyClick={setReplyingTo}

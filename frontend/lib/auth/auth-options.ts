@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
 import LinkedInProvider from "next-auth/providers/linkedin";
+import { fetchBackend } from "@/lib/api/backend-fetch";
 
 type SessionUser = {
   id?: string | number;
@@ -25,23 +26,17 @@ export const authOptions: AuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const apiUrl =
-            process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-          const res = await fetch(
-            `${apiUrl.replace(/\/$/, "")}/api/auth/login`,
-            {
-              method: "POST",
-              body: JSON.stringify({
-                email: credentials.email,
-                password: credentials.password,
-              }),
-              headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-              },
-            }
-          );
+          const res = await fetchBackend("/api/auth/login", {
+            method: "POST",
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          });
 
           const data = await res.json().catch(() => null);
 
@@ -92,13 +87,7 @@ export const authOptions: AuthOptions = {
       : []),
   ],
   callbacks: {
-    async jwt({
-      token,
-      user,
-    }: {
-      token: Record<string, unknown>;
-      user?: Record<string, unknown>;
-    }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -106,13 +95,7 @@ export const authOptions: AuthOptions = {
       }
       return token;
     },
-    async session({
-      session,
-      token,
-    }: {
-      session: { user?: SessionUser };
-      token: Record<string, unknown>;
-    }) {
+    async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string | number | undefined;
         session.user.role = token.role as string | undefined;

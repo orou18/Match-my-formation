@@ -7,9 +7,6 @@ import CategoryFilters from "@/components/dashboard/CategoryFilters";
 import FeaturedGrid from "@/components/dashboard/FeaturedGrid";
 import VideoCard from "@/components/video/VideoCard";
 import PremiumBanner from "@/components/dashboard/PremiumBanner";
-import ProfileSidebar from "@/components/dashboard/student/profile/ProfileSidebar";
-import { coursesService, Course } from "@/lib/services/courses-service";
-import { userService } from "@/lib/services/user-service";
 import {
   Star,
   Users,
@@ -19,7 +16,42 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
-import UserIdManager from "@/lib/user-id-manager";
+
+interface DashboardCourse {
+  id: number;
+  title: string;
+  description?: string;
+  thumbnail?: string;
+  image?: string;
+  duration?: string;
+  students_count?: number;
+  creator?: {
+    name?: string;
+    avatar?: string;
+  };
+  category?: string;
+  tags?: string[];
+  video_url?: string;
+  is_published?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface DashboardUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  created_at?: string;
+}
+
+interface StudentDashboardPayload {
+  user: DashboardUser;
+  courses: DashboardCourse[];
+  stats?: {
+    courses_in_progress?: number;
+  };
+}
 
 export default function StudentDashboard() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -27,58 +59,57 @@ export default function StudentDashboard() {
   const params = useParams();
   const locale = params.locale || "fr";
 
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<DashboardCourse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<DashboardUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Récupérer les données depuis l'API Laravel
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
+        const response = await fetch("/api/student/dashboard", {
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        });
 
-        // Récupérer les informations utilisateur
-        try {
-          const userData = await userService.getCurrentUser();
-          setUser(userData);
-          
-          // Vérifier si c'est un nouvel utilisateur (créé il y a moins de 24h)
-          const createdAt = new Date(userData.created_at);
-          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-          setIsNewUser(createdAt > oneDayAgo);
-        } catch (userError) {
-          console.warn("Impossible de charger le profil utilisateur:", userError);
-          // Utiliser les données par défaut de UserIdManager en fallback
-          const storedUser = UserIdManager.getStoredUserData();
-          if (storedUser) {
-            setUser({
-              id: storedUser.id,
-              name: storedUser.name,
-              email: storedUser.email,
-              role: storedUser.role,
-            });
-          }
+        const payload = (await response.json().catch(() => null)) as
+          | StudentDashboardPayload
+          | { error?: string }
+          | null;
+
+        if (!response.ok || !payload || !("user" in payload)) {
+          throw new Error(
+            (payload && "error" in payload && payload.error) ||
+              "Connexion au dashboard étudiant impossible."
+          );
         }
 
-        // Récupérer les cours disponibles
-        try {
-          const coursesResponse = await coursesService.getCourses(currentPage);
-          setCourses(coursesResponse.data);
-          setTotalPages(coursesResponse.meta.last_page);
-        } catch (coursesError) {
-          console.warn("Impossible de charger les cours:", coursesError);
-          // Continuer avec une liste vide si les cours ne chargent pas
-          setCourses([]);
+        setUser(payload.user);
+        setCourses(Array.isArray(payload.courses) ? payload.courses : []);
+        setTotalPages(1);
+
+        if (payload.user.created_at) {
+          const createdAt = new Date(payload.user.created_at);
+          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          setIsNewUser(createdAt > oneDayAgo);
+        } else {
+          setIsNewUser(false);
         }
 
       } catch (err) {
         console.error("Dashboard Error:", err);
-        setError("Connexion au serveur perdue. Vérifiez que votre backend est lancé.");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Connexion au serveur perdue. Vérifiez que votre backend est lancé."
+        );
       } finally {
         setLoading(false);
       }
@@ -115,7 +146,7 @@ export default function StudentDashboard() {
   // Fonction pour charger plus de cours
   const loadMoreCourses = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage((prev) => prev + 1);
     }
   };
 
@@ -153,9 +184,6 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-[#F8FAFB] overflow-hidden font-sans">
       <div className="flex">
-        {/* Sidebar du profil étudiant */}
-        <ProfileSidebar />
-        
         {/* Contenu principal */}
         <div className="flex-1">
           <StudentHero user={user} />
@@ -231,20 +259,29 @@ export default function StudentDashboard() {
                       <VideoCard video={{
                         id: course.id,
                         title: course.title,
-                        description: course.description,
-                        thumbnail: course.thumbnail || course.image,
+                        description: course.description || "",
+                        thumbnail: course.thumbnail || course.image || "/placeholder-course.jpg",
+                        video_url: course.video_url || "",
                         duration: course.duration || '00:00',
-                        views: course.students_count,
-                        likes: Math.floor(course.students_count * 0.8),
-                        creator: course.creator.name,
-                        creatorAvatar: course.creator.avatar,
-                        publishedAt: course.created_at,
-                        category: course.category,
-                        tags: course.tags,
-                        video_url: course.video_url,
-                        is_published: course.is_published,
-                        created_at: course.created_at,
-                        updated_at: course.updated_at,
+                        order: 0,
+                        creator_id: 0,
+                        views: course.students_count || 0,
+                        likes: Math.floor((course.students_count || 0) * 0.8),
+                        comments: [],
+                        tags: course.tags || [],
+                        is_published: course.is_published ?? true,
+                        visibility: "public",
+                        created_at: course.created_at || new Date().toISOString(),
+                        updated_at: course.updated_at || new Date().toISOString(),
+                        creator: {
+                          id: 0,
+                          name: course.creator?.name || "Créateur",
+                          email: "",
+                          avatar: course.creator?.avatar || "/default-avatar.png",
+                        },
+                        is_free: true,
+                        price: 0,
+                        rating: 0,
                       }} />
                     </motion.div>
                   ))}
@@ -331,16 +368,18 @@ export default function StudentDashboard() {
                       </div>
                       <div>
                         <h3 className="font-bold text-white">{course.title}</h3>
-                        <p className="text-gray-400 text-sm">{course.creator.name}</p>
+                        <p className="text-gray-400 text-sm">
+                          {course.creator?.name || "Créateur"}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1">
                         <Star size={14} className="text-yellow-400 fill-current" />
-                        <span className="text-white text-sm">{course.rating}</span>
+                        <span className="text-white text-sm">4.8</span>
                       </div>
                       <div className="text-gray-400 text-sm">
-                        {course.students_count.toLocaleString()} étudiants
+                        {(course.students_count || 0).toLocaleString()} étudiants
                       </div>
                     </div>
                   </motion.div>

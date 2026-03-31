@@ -1,13 +1,9 @@
+import { getBackendBaseUrls } from "@/lib/api/backend-fetch";
+
 // Configuration centralisée de l'API
 export const API_CONFIG = {
   // URL de base de l'API Laravel
-  BASE_URL: (() => {
-    const rawUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (rawUrl && rawUrl !== "undefined") {
-      return rawUrl.replace(/\/$/, "");
-    }
-    return "http://127.0.0.1:8000";
-  })(),
+  BASE_URL: getBackendBaseUrls()[0] || "http://127.0.0.1:8000",
   
   // Endpoints principaux
   ENDPOINTS: {
@@ -68,7 +64,7 @@ export function buildUrl(endpoint: string): string {
 
 // Helper pour construire les headers avec authentification
 export function buildHeaders(token?: string): Record<string, string> {
-  const headers = { ...API_CONFIG.DEFAULT_HEADERS };
+  const headers: Record<string, string> = { ...API_CONFIG.DEFAULT_HEADERS };
   
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;

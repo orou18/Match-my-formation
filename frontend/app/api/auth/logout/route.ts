@@ -1,19 +1,12 @@
-import { NextResponse } from "next/server";
-import { buildUrl } from "@/lib/config/api";
+import { NextRequest, NextResponse } from "next/server";
+import { fetchBackendWithRequestAuth } from "@/lib/api/request-backend";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   let status = 200;
 
   try {
-    const authorization = request.headers.get("authorization");
-
-    const response = await fetch(buildUrl("/api/auth/logout"), {
+    const response = await fetchBackendWithRequestAuth(request, "/api/auth/logout", {
       method: "POST",
-      headers: {
-        Accept: "application/json",
-        ...(authorization ? { Authorization: authorization } : {}),
-      },
-      cache: "no-store",
     });
 
     status = response.status;
@@ -29,6 +22,7 @@ export async function POST(request: Request) {
 
   nextResponse.cookies.set("userId", "", { maxAge: 0, path: "/" });
   nextResponse.cookies.set("userRole", "", { maxAge: 0, path: "/" });
+  nextResponse.cookies.set("authToken", "", { maxAge: 0, path: "/" });
 
   return nextResponse;
 }

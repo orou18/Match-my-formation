@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LogOut, Menu, X, Bell, User, Map, Compass } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import UserIdManager from "@/lib/user-id-manager";
 import ThemeLanguageSwitcher from "./ThemeLanguageSwitcher";
 
@@ -54,9 +55,10 @@ export default function DashboardNavbar() {
     },
   ];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    await signOut({ redirect: false }).catch(() => {});
     UserIdManager.logout();
-    // Rediriger vers la landing page (page d'accueil)
     window.location.href = `/${locale}`;
   };
 

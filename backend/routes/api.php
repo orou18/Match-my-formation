@@ -22,6 +22,7 @@ use App\Http\Controllers\Creator\NotificationController;
 use App\Http\Controllers\Creator\ProfileController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\Chat\ChatMessageController;
+use App\Http\Controllers\User\AccountController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,8 +49,8 @@ Route::get('/videos/{id}', [CourseVideoController::class, 'show']);
 
 // --- 1. AUTHENTIFICATION ---
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:auth');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth');
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
@@ -110,6 +111,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- 5. DASHBOARD STUDENT ---
     Route::get('/student/courses', [CourseController::class, 'index']);
     Route::get('/student/pathways', [PathwayController::class, 'index']);
+
+    // --- 5.1 COMPTE UTILISATEUR ---
+    Route::get('/user/profile', [AccountController::class, 'profile']);
+    Route::put('/user/profile', [AccountController::class, 'updateProfile']);
+    Route::post('/user/change-password', [AccountController::class, 'changePassword']);
+    Route::post('/user/upload-avatar', [AccountController::class, 'uploadAvatar']);
+    Route::get('/user/preferences', [AccountController::class, 'preferences']);
+    Route::put('/user/preferences', [AccountController::class, 'updatePreferences']);
+    Route::get('/user/security', [AccountController::class, 'security']);
+    Route::get('/user/notification-settings', [AccountController::class, 'notificationSettings']);
+    Route::put('/user/notification-settings', [AccountController::class, 'updateNotificationSettings']);
+    Route::get('/user/notifications', [AccountController::class, 'notifications']);
+    Route::put('/user/notifications', [AccountController::class, 'updateNotifications']);
+    Route::delete('/user/notifications', [AccountController::class, 'deleteNotifications']);
+    Route::get('/user/notifications/unread-count', [AccountController::class, 'unreadNotificationsCount']);
+    Route::post('/user/2fa/setup', [AccountController::class, 'setupTwoFactor']);
+    Route::post('/user/2fa/verify', [AccountController::class, 'verifyTwoFactor']);
+    Route::post('/user/2fa/disable', [AccountController::class, 'disableTwoFactor']);
 });
 
 // --- 6. EMPLOYÉ DASHBOARD ---
