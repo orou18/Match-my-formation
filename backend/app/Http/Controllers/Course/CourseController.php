@@ -68,7 +68,6 @@ class CourseController extends Controller
         // Récupérer les vidéos créées par le créateur de cet employé
         $videos = Video::with('uploader')
             ->where('uploader_id', $employee->creator_id)
-            ->whereIn('visibility', ['public', 'unlisted'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(fn (Video $video) => array_merge(

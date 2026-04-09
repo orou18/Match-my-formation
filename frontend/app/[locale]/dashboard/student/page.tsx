@@ -7,15 +7,18 @@ import CategoryFilters from "@/components/dashboard/CategoryFilters";
 import FeaturedGrid from "@/components/dashboard/FeaturedGrid";
 import VideoCard from "@/components/video/VideoCard";
 import PremiumBanner from "@/components/dashboard/PremiumBanner";
+import ProfileSidebar from "@/components/dashboard/student/profile/ProfileSidebar";
+import UserIdManager from "@/lib/user-id-manager";
+import { useRouter, useParams } from "next/navigation";
 import {
   Star,
-  Users,
+  User,
   ArrowLeft,
   ArrowRight,
-  Loader2,
   AlertCircle,
+  Video,
+  Play,
 } from "lucide-react";
-import { useRouter, useParams } from "next/navigation";
 
 interface DashboardCourse {
   id: number;
@@ -60,6 +63,7 @@ export default function StudentDashboard() {
   const locale = params.locale || "fr";
 
   const [courses, setCourses] = useState<DashboardCourse[]>([]);
+  const [publicVideos, setPublicVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<DashboardUser | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,43 +76,73 @@ export default function StudentDashboard() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("/api/student/dashboard", {
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-          },
+        
+        // Récupérer directement les données depuis UserIdManager
+        const userData = UserIdManager.getStoredUserData();
+        
+        if (!userData) {
+          throw new Error("Aucune donnée d'authentification trouvée");
+        }
+
+        // Utiliser directement les données utilisateur
+        const user = {
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role as 'student' | 'creator' | 'admin',
+          created_at: new Date().toISOString(),
+          avatar: userData.avatar || null,
+        };
+
+        setUser(user);
+
+        // Charger les vidéos publiques pour la section pépites
+        const publicVideosResponse = await fetch("/api/videos/public", {
+          cache: "no-store",
         });
 
-        const payload = (await response.json().catch(() => null)) as
-          | StudentDashboardPayload
-          | { error?: string }
-          | null;
-
-        if (!response.ok || !payload || !("user" in payload)) {
-          throw new Error(
-            (payload && "error" in payload && payload.error) ||
-              "Connexion au dashboard étudiant impossible."
-          );
+        let publicVideosList: any[] = [];
+        if (publicVideosResponse.ok) {
+          const publicVideosPayload = await publicVideosResponse.json();
+          publicVideosList = Array.isArray(publicVideosPayload)
+            ? publicVideosPayload
+            : Array.isArray(publicVideosPayload?.videos)
+              ? publicVideosPayload.videos
+              : [];
         }
+        setPublicVideos(publicVideosList);
 
-        setUser(payload.user);
-        setCourses(Array.isArray(payload.courses) ? payload.courses : []);
-        setTotalPages(1);
+        const videosResponse = await fetch("/api/student-videos", {
+          cache: "no-store",
+        });
 
-        if (payload.user.created_at) {
-          const createdAt = new Date(payload.user.created_at);
-          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-          setIsNewUser(createdAt > oneDayAgo);
+        if (videosResponse.ok) {
+          const videosPayload = await videosResponse.json();
+          const nextCourses = Array.isArray(videosPayload)
+            ? videosPayload
+            : Array.isArray(videosPayload?.videos)
+              ? videosPayload.videos
+              : [];
+
+          setCourses(nextCourses);
+          setTotalPages(1);
         } else {
-          setIsNewUser(false);
+          setCourses([]);
+          setTotalPages(1);
         }
 
-      } catch (err) {
-        console.error("Dashboard Error:", err);
+        // Vérifier si c'est un nouvel utilisateur (créé il y a moins de 24h)
+        const createdAt = new Date(user.created_at);
+        const now = new Date();
+        const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+        setIsNewUser(hoursDiff < 24);
+
+      } catch (error: unknown) {
+        console.error("Erreur dashboard étudiant:", error);
         setError(
-          err instanceof Error
-            ? err.message
-            : "Connexion au serveur perdue. Vérifiez que votre backend est lancé."
+          error instanceof Error
+            ? error.message
+            : "Erreur lors du chargement du dashboard"
         );
       } finally {
         setLoading(false);
@@ -116,7 +150,37 @@ export default function StudentDashboard() {
     };
 
     fetchData();
-  }, [locale, currentPage]);
+
+    // Exposer une fonction de rechargement global
+    const refreshStudentVideos = async () => {
+      try {
+        const videosResponse = await fetch("/api/student-videos", {
+          cache: "no-store",
+        });
+
+        if (videosResponse.ok) {
+          const videosPayload = await videosResponse.json();
+          const nextCourses = Array.isArray(videosPayload)
+            ? videosPayload
+            : Array.isArray(videosPayload?.videos)
+              ? videosPayload.videos
+              : [];
+
+          setCourses(nextCourses);
+          setTotalPages(1);
+        }
+      } catch (error) {
+        console.error("Erreur lors du rechargement des vidéos étudiant:", error);
+      }
+    };
+
+    // Stocker la fonction de rechargement globalement
+    (window as any).refreshStudentVideos = refreshStudentVideos;
+    
+    return () => {
+      delete (window as any).refreshStudentVideos;
+    };
+  }, []);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -153,9 +217,9 @@ export default function StudentDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFB]">
-        <Loader2 className="animate-spin text-primary mb-4" size={40} />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-4"></div>
         <p className="text-gray-600 font-medium text-sm tracking-[0.1em]">
-          Accès à l'académie...
+          Accès à l&apos;académie...
         </p>
       </div>
     );
@@ -183,10 +247,9 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFB] overflow-hidden font-sans">
-      <div className="flex">
-        {/* Contenu principal */}
-        <div className="flex-1">
-          <StudentHero user={user} />
+      {/* Contenu principal - plein écran */}
+      <div className="flex-1 overflow-y-auto">
+        <StudentHero user={user} />
 
           {/* Message de bienvenue pour les nouveaux utilisateurs */}
           {isNewUser && (
@@ -202,7 +265,7 @@ export default function StudentDashboard() {
                     <span className="text-white text-2xl">🎉</span>
                   </div>
                   <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                    Bienvenue dans votre espace d'apprentissage !
+                    Bienvenue dans votre espace d&apos;apprentissage !
                   </h2>
                   <p className="text-gray-600 mb-6">
                     Nous sommes ravis de vous accueillir. Votre parcours commence
@@ -229,7 +292,9 @@ export default function StudentDashboard() {
               </div>
             </motion.div>
           )}
-
+<br />
+<br />
+          <div>
           <main className="container mx-auto px-4 md:px-8 py-10">
             <FeaturedGrid />
 
@@ -240,7 +305,7 @@ export default function StudentDashboard() {
                     Catalogue des formations
                   </h2>
                   <p className="text-gray-500 mt-2 text-sm font-medium uppercase tracking-[0.15em]">
-                    Explorez l'excellence académique
+                    Explorez l&apos;excellence académique
                   </p>
                 </div>
                 <CategoryFilters />
@@ -296,7 +361,7 @@ export default function StudentDashboard() {
                       Aucune formation disponible
                     </h3>
                     <p className="text-gray-500 text-sm">
-                      Les formations apparaîtront ici dès qu'elles seront publiées par les créateurs.
+                      Les formations apparaîtront ici dès qu&apos;elles seront publiées par les créateurs.
                     </p>
                   </div>
                 </div>
@@ -308,13 +373,12 @@ export default function StudentDashboard() {
                     onClick={loadMoreCourses}
                     className="px-6 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
                   >
-                    <Loader2 className="w-4 h-4" />
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     Charger plus de formations
                   </button>
                 </div>
               )}
             </section>
-          </main>
 
           {/* --- SECTION EXPERTS --- */}
           <section className="mt-4 mb-16 bg-[#002B24] py-12 relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
@@ -350,45 +414,99 @@ export default function StudentDashboard() {
                 </div>
               </div>
 
+              <div>
               <div
                 ref={scrollRef}
                 className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
               >
-                {courses.slice(0, 6).map((course, index) => (
+                {publicVideos.slice(0, 6).map((video, index) => (
                   <motion.div
-                    key={course.id}
+                    key={video.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex-none w-[280px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors"
+                    className="flex-none w-[280px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden hover:bg-white/10 transition-colors cursor-pointer group"
+                    onClick={() => {
+                      // Ouvrir la vidéo dans un nouvel onglet ou modal
+                      if (video.video_url) {
+                        window.open(video.video_url, '_blank');
+                      }
+                    }}
                   >
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/60 rounded-xl flex items-center justify-center">
-                        <Users size={20} className="text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-white">{course.title}</h3>
-                        <p className="text-gray-400 text-sm">
-                          {course.creator?.name || "Créateur"}
-                        </p>
+                    {/* Thumbnail */}
+                    <div className="relative aspect-video bg-gray-800">
+                      {video.thumbnail ? (
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+                            <Play size={20} className="text-primary" />
+                          </div>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+                          <Play size={20} className="text-gray-900 ml-1" />
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <Star size={14} className="text-yellow-400 fill-current" />
-                        <span className="text-white text-sm">4.8</span>
+                    
+                    {/* Content */}
+                    <div className="p-4">
+                      <h3 className="font-bold text-white text-sm mb-2 line-clamp-2">
+                        {video.title}
+                      </h3>
+                      <p className="text-gray-400 text-xs mb-3 line-clamp-2">
+                        {video.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          <Star size={12} className="text-yellow-400 fill-current" />
+                          <span className="text-white text-xs">4.8</span>
+                        </div>
+                        <div className="text-gray-400 text-xs">
+                          {(video.views || 0).toLocaleString()} vues
+                        </div>
                       </div>
-                      <div className="text-gray-400 text-sm">
-                        {(course.students_count || 0).toLocaleString()} étudiants
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="px-2 py-1 bg-primary/20 text-primary text-xs rounded-full">
+                          {video.category || 'Expertise'}
+                        </div>
+                        {video.duration && (
+                          <div className="text-gray-400 text-xs">
+                            {video.duration}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>
                 ))}
+                
+                {publicVideos.length === 0 && (
+                  <div className="flex-none w-[280px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center">
+                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Video size={20} className="text-primary" />
+                    </div>
+                    <h3 className="font-bold text-white text-sm mb-2">
+                      Aucune vidéo disponible
+                    </h3>
+                    <p className="text-gray-400 text-xs">
+                      Les vidéos publiques de nos experts apparaîtront ici
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
+            </div>
           </section>
-        </div>
+        </main>
       </div>
     </div>
+    <PremiumBanner />
+  </div>
   );
 }

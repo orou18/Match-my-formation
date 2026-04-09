@@ -7,7 +7,7 @@ import GlobalStatsChart from "@/components/dashboard/student/parcours/GlobalStat
 import RecentModuleItem from "@/components/dashboard/student/parcours/RecentModuleItem";
 import CertificationCard from "@/components/dashboard/student/parcours/CertificationCard";
 import UserIdManager from "@/lib/user-id-manager";
-import { Loader2, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 // 1. Définition des interfaces pour le typage TypeScript
 interface Course {
@@ -145,7 +145,7 @@ export default function ParcoursPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8FAFB] flex flex-col items-center justify-center">
-        <Loader2 className="animate-spin text-primary mb-4" size={40} />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-4"></div>
         <p className="text-gray-600 font-medium">
           Chargement de vos parcours...
         </p>

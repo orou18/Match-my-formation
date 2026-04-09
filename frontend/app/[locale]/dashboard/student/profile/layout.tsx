@@ -7,14 +7,18 @@ export default function ProfileLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
-      {/* Sidebar de navigation du profil - visible sur tous les appareils */}
-      <aside className="w-full lg:w-80 shrink-0">
-        <ProfileSidebar />
+    <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-[minmax(250px,1fr)_minmax(0,3fr)] lg:items-start lg:gap-8">
+      {/* Sidebar de navigation du profil */}
+      <aside className="w-full min-w-0">
+        <div className="lg:sticky lg:top-6">
+          <ProfileSidebar />
+        </div>
       </aside>
 
       {/* Contenu principal */}
-      <main className="flex-1">{children}</main>
+      <main className="w-full min-w-0">
+        <div className="w-full min-w-0">{children}</div>
+      </main>
     </div>
   );
 }

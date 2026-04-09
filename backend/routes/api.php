@@ -15,6 +15,8 @@ use App\Http\Controllers\Course\VideoController as CourseVideoController;
 use App\Http\Controllers\Pathway\PathwayController;
 use App\Http\Controllers\Company\CompanyController;
 use App\Http\Controllers\Creator\DashboardController;
+use App\Http\Controllers\Creator\WebinarController;
+use App\Http\Controllers\Creator\WebinarMessageController;
 use App\Http\Controllers\Creator\VideoController;
 use App\Http\Controllers\Creator\StatsController;
 use App\Http\Controllers\Creator\HistoryController;
@@ -43,8 +45,9 @@ Route::get('/health', function () {
 
 // --- 0. ROUTES PUBLIQUES (PAS D'AUTHENTIFICATION REQUISE) ---
 Route::get('/public/videos', [CourseController::class, 'publicVideos']);
-Route::get('/videos', [CourseVideoController::class, 'index']);
-Route::get('/videos/public', [CourseController::class, 'publicVideos']);
+Route::get('/videos/public', [VideoController::class, 'publicVideos']);
+Route::get('/videos/public/{id}', [VideoController::class, 'showPublic']);
+Route::get('/videos/public/search', [VideoController::class, 'searchPublic']);
 Route::get('/videos/{id}', [CourseVideoController::class, 'show']);
 
 // --- 1. AUTHENTIFICATION ---
@@ -69,6 +72,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/creator/videos/{id}', [VideoController::class, 'show']);
     Route::put('/creator/videos/{id}', [VideoController::class, 'update']);
     Route::delete('/creator/videos/{id}', [VideoController::class, 'destroy']);
+    Route::get('/creator/videos/public', [VideoController::class, 'publicVideos']);
     Route::get('/creator/stats', [StatsController::class, 'index']);
     Route::get('/creator/history', [HistoryController::class, 'index']);
     Route::get('/creator/notifications', [NotificationController::class, 'index']);
@@ -94,6 +98,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/creator/employees/{employeeId}/progress', [EmployeeProgressController::class, 'employeeProgress']);
     Route::get('/creator/employees/{employeeId}/progress/courses', [EmployeeProgressController::class, 'courseProgress']);
 
+    // --- 3.3 ANALYTICS DES EMPLOYÉS ---
+    Route::get('/creator/analytics/employees', [CreatorAnalyticsController::class, 'getEmployeeAnalytics']);
+
     // --- 3.3 GESTION DES PARCOURS DE FORMATION ---
     Route::get('/creator/pathways', [PathwayManagementController::class, 'index']);
     Route::post('/creator/pathways', [PathwayManagementController::class, 'store']);
@@ -103,6 +110,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/creator/pathways/assignment/{assignmentId}/progress', [PathwayManagementController::class, 'updateProgress']);
     Route::delete('/creator/pathways/assignment/{assignmentId}', [PathwayManagementController::class, 'removeAssignment']);
 
+    // --- 3.4 LIVE / WEBINARS (simple JSON-backed persistence)
+    Route::get('/creator/webinars', [WebinarController::class, 'index']);
+    Route::post('/creator/webinars', [WebinarController::class, 'store']);
+    Route::get('/creator/webinars/{id}', [WebinarController::class, 'show']);
+    Route::delete('/creator/webinars/{id}', [WebinarController::class, 'destroy']);
+    // Chat messages for webinars (JSON-backed)
+    Route::get('/creator/webinars/{id}/messages', [WebinarMessageController::class, 'index']);
+    Route::post('/creator/webinars/{id}/messages', [WebinarMessageController::class, 'store']);
+
     // --- 4. DASHBOARD ADMIN & ANALYTICS ---
     Route::get('/admin/stats', [AnalyticsController::class, 'getDashboardStats']);
     Route::get('/admin/branding', [BrandingController::class, 'show']);
@@ -111,6 +127,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- 5. DASHBOARD STUDENT ---
     Route::get('/student/courses', [CourseController::class, 'index']);
     Route::get('/student/pathways', [PathwayController::class, 'index']);
+    Route::get('/student/parcours', [PathwayController::class, 'studentProgressDetails']);
 
     // --- 5.1 COMPTE UTILISATEUR ---
     Route::get('/user/profile', [AccountController::class, 'profile']);

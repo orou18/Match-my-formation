@@ -8,6 +8,17 @@ const nextConfig = {
         hostname: "images.unsplash.com",
         pathname: "/**",
       },
+      // Allow local backend thumbnails served over HTTP during development
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        pathname: "/**",
+      },
     ],
     formats: ["image/webp", "image/avif"], // Formats modernes
     minimumCacheTTL: 60 * 60 * 24 * 7, // Cache 7 jours
@@ -39,6 +50,27 @@ const nextConfig = {
   // 🌐 Headers pour cache et performance
   async headers() {
     return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+        ],
+      },
       {
         source: "/_next/static/(.*)",
         headers: [

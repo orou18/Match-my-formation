@@ -1,152 +1,140 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserIdFromToken } from "@/lib/auth";
-import {
-  getStudentParcours,
-  saveStudentParcours,
-} from "@/lib/server/learning-store";
+import UserIdManager from "@/lib/user-id-manager";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export async function GET(request: NextRequest) {
   try {
-    // Vérifier l'authentification
-    const userId = getUserIdFromToken(request);
-
-    if (!userId) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    // Vérifier l'authentification avec UserIdManager
+    const userData = UserIdManager.getStoredUserData();
+    
+    if (!userData || !userData.id) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Non authentifié" 
+      }, { status: 401 });
     }
 
-    // Simuler un délai de chargement pour l'effet réaliste
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // Récupérer le token d'authentification
+    const token = localStorage.getItem("token") || UserIdManager.getToken();
+    
+    if (!token) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Token d'authentification manquant" 
+      }, { status: 401 });
+    }
 
-    const parcoursData = getStudentParcours();
+    // Appeler le backend Laravel pour récupérer les parcours détaillés de l'étudiant
+    const parcoursResponse = await fetch(`${BACKEND_URL}/api/student/parcours`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+    });
+
+    if (!parcoursResponse.ok) {
+      console.error("Backend parcours error:", parcoursResponse.status);
+      return NextResponse.json({ 
+        success: false, 
+        error: "Erreur lors de la récupération des parcours" 
+      }, { status: parcoursResponse.status });
+    }
+
+    const parcoursData = await parcoursResponse.json();
+    
+    if (!parcoursData.success) {
+      return NextResponse.json({ 
+        success: false, 
+        error: parcoursData.message || "Erreur backend" 
+      }, { status: 400 });
+    }
+
+    // Les données sont déjà au bon format grâce au backend
     return NextResponse.json({
       success: true,
-      data: parcoursData,
+      data: parcoursData.data,
       lastUpdated: new Date().toISOString(),
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des parcours:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: "Erreur de connexion au serveur" 
+    }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = getUserIdFromToken(request);
+    // Vérifier l'authentification avec UserIdManager
+    const userData = UserIdManager.getStoredUserData();
+    
+    if (!userData || !userData.id) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Non authentifié" 
+      }, { status: 401 });
+    }
 
-    if (!userId) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    // Récupérer le token d'authentification
+    const token = localStorage.getItem("token") || UserIdManager.getToken();
+    
+    if (!token) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Token d'authentification manquant" 
+      }, { status: 401 });
     }
 
     const body = await request.json();
-    const { action, courseId, moduleId } = body;
-    const parcours = getStudentParcours();
+    const { action, courseId, moduleId, progress } = body;
 
-    // Gérer différentes actions
-    switch (action) {
-      case "mark_module_complete": {
-        const index = parcours.coursesInProgress.findIndex(
-          (course: { id: number }) => course.id === Number(courseId)
-        );
-        if (index === -1) {
-          return NextResponse.json(
-            { error: "Cours introuvable" },
-            { status: 404 }
-          );
-        }
+    // Appeler le backend Laravel pour mettre à jour la progression
+    const progressResponse = await fetch(`${BACKEND_URL}/api/employee/progress/update`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify({
+        pathway_id: courseId,
+        video_id: moduleId,
+        progress_percentage: progress || 0,
+        action: action,
+      }),
+    });
 
-        const course = parcours.coursesInProgress[index];
-        const completedModules = Math.min(
-          course.totalModules,
-          course.completedModules + 1
-        );
-        const progress = Math.round(
-          (completedModules / course.totalModules) * 100
-        );
-
-        parcours.coursesInProgress[index] = {
-          ...course,
-          completedModules,
-          progress,
-          module: `Module ${completedModules} sur ${course.totalModules} termine`,
-        };
-        parcours.globalStats.completedCourses =
-          parcours.coursesInProgress.filter(
-            (item: { progress: number }) => item.progress >= 100
-          ).length;
-        parcours.globalStats.inProgressCourses =
-          parcours.coursesInProgress.filter(
-            (item: { progress: number }) => item.progress < 100
-          ).length;
-        parcours.globalStats.completedHours = Math.min(
-          parcours.globalStats.totalHours,
-          Number((parcours.globalStats.completedHours + 1.5).toFixed(1))
-        );
-        parcours.recentModules.unshift({
-          id: Date.now(),
-          title: `Module ${moduleId || completedModules} complete`,
-          course: course.title,
-          date: new Date().toLocaleDateString("fr-FR"),
-          duration: course.nextModule?.duration || "1h",
-          type: course.nextModule?.type || "video",
-          completed: true,
-          score: 100,
-          certificate: {
-            earned: progress >= 100,
-            downloadUrl: progress >= 100 ? "/certificates/generated.pdf" : null,
-          },
-        });
-        saveStudentParcours(parcours);
-        return NextResponse.json({
-          success: true,
-          message: "Module marqué comme complété",
-          newProgress: progress,
-        });
-      }
-
-      case "update_progress": {
-        const index = parcours.coursesInProgress.findIndex(
-          (course: { id: number }) => course.id === Number(courseId)
-        );
-        if (index === -1) {
-          return NextResponse.json(
-            { error: "Cours introuvable" },
-            { status: 404 }
-          );
-        }
-
-        const nextProgress = Math.max(
-          0,
-          Math.min(
-            100,
-            Number(body.progress ?? parcours.coursesInProgress[index].progress)
-          )
-        );
-        const totalModules = parcours.coursesInProgress[index].totalModules;
-        const completedModules = Math.round(
-          (nextProgress / 100) * totalModules
-        );
-        parcours.coursesInProgress[index] = {
-          ...parcours.coursesInProgress[index],
-          progress: nextProgress,
-          completedModules,
-          module: `Module ${completedModules} sur ${totalModules} termine`,
-        };
-        saveStudentParcours(parcours);
-        return NextResponse.json({
-          success: true,
-          message: "Progression mise à jour",
-          progress: nextProgress,
-        });
-      }
-
-      default:
-        return NextResponse.json(
-          { error: "Action non reconnue" },
-          { status: 400 }
-        );
+    if (!progressResponse.ok) {
+      console.error("Backend progress update error:", progressResponse.status);
+      return NextResponse.json({ 
+        success: false, 
+        error: "Erreur lors de la mise à jour de la progression" 
+      }, { status: progressResponse.status });
     }
+
+    const progressData = await progressResponse.json();
+    
+    if (!progressData.success) {
+      return NextResponse.json({ 
+        success: false, 
+        error: progressData.message || "Erreur backend" 
+      }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Progression mise à jour avec succès",
+      newProgress: progress,
+    });
   } catch (error) {
     console.error("Erreur lors de la mise à jour des parcours:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: "Erreur de connexion au serveur" 
+    }, { status: 500 });
   }
 }

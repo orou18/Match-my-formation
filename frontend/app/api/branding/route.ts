@@ -42,24 +42,10 @@ const FALLBACK_SETTINGS = {
 
 export async function GET(request: NextRequest) {
   try {
-    const backendResponse = await laravelFetch("/api/admin/branding", {
-      request,
-    });
-    const payload = await parseLaravelJson(backendResponse);
-
-    if (!backendResponse.ok) {
-      return NextResponse.json(
-        {
-          error:
-            payload?.message ||
-            payload?.error ||
-            "Impossible de charger les paramètres de marque blanche",
-        },
-        { status: backendResponse.status }
-      );
-    }
-
-    return NextResponse.json(payload);
+    // Utiliser directement les données par défaut pour éviter les erreurs 401
+    // Le backend sera utilisé uniquement pour les mises à jour (PUT)
+    const fallback = readJsonStore("branding-fallback.json", FALLBACK_SETTINGS);
+    return NextResponse.json(fallback);
   } catch (error) {
     console.error("BRANDING - Erreur:", error);
     return NextResponse.json(

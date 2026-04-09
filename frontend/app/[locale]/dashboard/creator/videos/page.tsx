@@ -22,35 +22,40 @@ import {
   Calendar,
 } from "lucide-react";
 import { isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/video-utils";
-import { useParams } from "next/navigation";
+import { creatorDashboardApi } from "@/lib/services/creator-dashboard-api";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface VideoData {
   id: string;
   title: string;
   description: string;
-  thumbnail: string;
-  video_url: string;
+  thumbnail?: string | null;
+  video_url?: string | null;
   duration: string;
   views: number;
   students: number;
   revenue: number;
-  status: "published" | "draft" | "processing" | "archived";
-  createdAt: string;
-  updatedAt: string;
+  status: "published" | "draft" | "unlisted";
+  visibility?: "public" | "private" | "unlisted";
+  createdAt?: string;
+  updatedAt?: string;
+  created_at?: string;
+  updated_at?: string;
   category: string;
   price: number;
   language: string;
 }
 
 export default function VideosPage() {
-  const params = useParams<{ locale?: string }>();
-  const locale = typeof params?.locale === "string" ? params.locale : "fr";
+  const params = useParams();
+  const router = useRouter();
+  const locale = (params as any)?.locale || "fr";
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<
-    "all" | "published" | "draft" | "processing" | "archived"
+    "all" | "published" | "draft" | "unlisted"
   >("all");
   const [sortBy, setSortBy] = useState<"date" | "views" | "revenue" | "title">(
     "date"
@@ -63,12 +68,18 @@ export default function VideosPage() {
     // Charger les vidéos depuis l'API
     const fetchVideos = async () => {
       try {
-        const response = await fetch("/api/creator/videos-simple");
+        // Utiliser fetch direct pour éviter le problème d'import
+        const response = await fetch("/api/creator/videos-simple", {
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        });
+        
         if (response.ok) {
           const data = await response.json();
-          setVideos(data.videos || []);
-        } else {
-          console.error("Erreur lors du chargement des vidéos");
+          const videosList = Array.isArray(data.videos) ? data.videos : [];
+          setVideos(videosList);
         }
       } catch (error) {
         console.error("Erreur fetch vidéos:", error);
@@ -80,15 +91,46 @@ export default function VideosPage() {
     fetchVideos();
   }, []);
 
+  // Fonction pour recharger les vidéos (utilisée depuis d'autres pages)
+  const refreshVideos = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/creator/videos-simple", {
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const videosList = Array.isArray(data.videos) ? data.videos : [];
+        setVideos(videosList);
+      }
+    } catch (error) {
+      console.error("Erreur lors du rechargement des vidéos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Exposer la fonction de rechargement globalement pour les autres pages
+  useEffect(() => {
+    // Stocker la fonction de rechargement pour y accéder depuis d'autres composants
+    (window as any).refreshCreatorVideos = refreshVideos;
+    
+    return () => {
+      delete (window as any).refreshCreatorVideos;
+    };
+  }, [refreshVideos]);
+
   const getStatusColor = (status: VideoData["status"]) => {
     switch (status) {
       case "published":
         return "bg-green-50 border-green-200 text-green-800";
       case "draft":
         return "bg-gray-50 border-gray-200 text-gray-800";
-      case "processing":
-        return "bg-yellow-50 border-yellow-200 text-yellow-800";
-      case "archived":
+      case "unlisted":
         return "bg-red-50 border-red-200 text-red-800";
       default:
         return "bg-gray-50 border-gray-200 text-gray-800";
@@ -101,9 +143,7 @@ export default function VideosPage() {
         return <Play className="w-4 h-4" />;
       case "draft":
         return <FileText className="w-4 h-4" />;
-      case "processing":
-        return <Clock className="w-4 h-4" />;
-      case "archived":
+      case "unlisted":
         return <Pause className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
@@ -116,10 +156,8 @@ export default function VideosPage() {
         return "Publié";
       case "draft":
         return "Brouillon";
-      case "processing":
-        return "En traitement";
-      case "archived":
-        return "Archivé";
+      case "unlisted":
+        return "Non listée";
       default:
         return status;
     }
@@ -147,27 +185,35 @@ export default function VideosPage() {
 
   const filteredVideos = videos
     .filter((video) => {
+      // Gestion du filtre par statut
       const matchesFilter = filter === "all" || video.status === filter;
-
+      
+      // Gestion du filtre par recherche avec valeurs par défaut
+      const title = video.title || "";
+      const description = video.description || "";
+      const category = video.category || "";
+      const searchLower = searchTerm.toLowerCase();
+      
       const matchesSearch =
-        video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        video.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        video.category.toLowerCase().includes(searchTerm.toLowerCase());
+        title.toLowerCase().includes(searchLower) ||
+        description.toLowerCase().includes(searchLower) ||
+        category.toLowerCase().includes(searchLower);
 
       return matchesFilter && matchesSearch;
     })
     .sort((a, b) => {
       switch (sortBy) {
         case "date":
-          return (
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-          );
+          // Gestion des différentes propriétés de date possibles
+          const dateA = new Date(a.updatedAt || a.updated_at || a.createdAt || a.created_at || 0);
+          const dateB = new Date(b.updatedAt || b.updated_at || b.createdAt || b.created_at || 0);
+          return dateB.getTime() - dateA.getTime();
         case "views":
-          return b.views - a.views;
+          return (b.views || 0) - (a.views || 0);
         case "revenue":
-          return b.revenue - a.revenue;
+          return (b.revenue || 0) - (a.revenue || 0);
         case "title":
-          return a.title.localeCompare(b.title);
+          return (a.title || "").localeCompare(b.title || "");
         default:
           return 0;
       }
@@ -205,7 +251,7 @@ export default function VideosPage() {
   };
 
   const handleBulkAction = async (
-    action: "publish" | "draft" | "archive" | "delete"
+    action: "publish" | "draft" | "unlisted" | "delete"
   ) => {
     if (action === "delete") {
       if (
@@ -217,9 +263,7 @@ export default function VideosPage() {
         try {
           await Promise.all(
             selectedVideos.map((videoId) =>
-              fetch(`/api/creator/videos-simple?id=${videoId}`, {
-                method: "DELETE",
-              })
+              creatorDashboardApi.deleteVideo(videoId)
             )
           );
 
@@ -238,10 +282,14 @@ export default function VideosPage() {
       try {
         await Promise.all(
           selectedVideos.map((videoId) =>
-            fetch("/api/creator/videos-simple", {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: videoId, status: action }),
+            creatorDashboardApi.updateVideo({
+                id: videoId,
+                visibility:
+                  action === "publish"
+                    ? "public"
+                    : action === "unlisted"
+                      ? "unlisted"
+                      : "private",
             })
           )
         );
@@ -250,7 +298,21 @@ export default function VideosPage() {
         setVideos((prev) =>
           prev.map((v) =>
             selectedVideos.includes(v.id)
-              ? { ...v, status: action as VideoData["status"] }
+              ? {
+                  ...v,
+                  visibility:
+                    action === "publish"
+                      ? "public"
+                      : action === "unlisted"
+                        ? "unlisted"
+                        : "private",
+                  status:
+                    action === "publish"
+                      ? "published"
+                      : action === "unlisted"
+                        ? "unlisted"
+                        : "draft",
+                }
               : v
           )
         );
@@ -263,30 +325,66 @@ export default function VideosPage() {
   };
 
   const handleEditVideo = (video: VideoData) => {
-    window.location.href = `/${locale}/dashboard/creator/videos/${video.id}/edit`;
+    router.push(`/${locale}/dashboard/creator/videos/${video.id}/edit`);
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedVideos.length === 0) return;
+
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${selectedVideos.length} vidéo(s) ?`)) {
+      return;
+    }
+
+    try {
+      // Utiliser fetch direct pour éviter le problème d'import
+      for (const videoId of selectedVideos) {
+        const response = await fetch(`/api/creator/videos-simple?id=${videoId}`, {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Erreur lors de la suppression de la vidéo ${videoId}`);
+        }
+      }
+
+      // Mettre à jour le state local
+      setVideos((prev) =>
+        prev.filter((v) => !selectedVideos.includes(v.id))
+      );
+      setSelectedVideos([]);
+    } catch (error) {
+      console.error("Erreur suppression vidéo:", error);
+      alert("Erreur lors de la suppression de la vidéo");
+    }
   };
 
   const handleDeleteVideo = async (video: VideoData) => {
-    if (
-      confirm(`Êtes-vous sûr de vouloir supprimer la vidéo "${video.title}" ?`)
-    ) {
-      try {
-        const response = await fetch(
-          `/api/creator/videos-simple?id=${video.id}`,
-          {
-            method: "DELETE",
-          }
-        );
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer "${video.title}" ?`)) {
+      return;
+    }
 
-        if (response.ok) {
-          setVideos((prev) => prev.filter((v) => v.id !== video.id));
-        } else {
-          alert("Erreur lors de la suppression de la vidéo");
-        }
-      } catch (error) {
-        console.error("Erreur suppression vidéo:", error);
-        alert("Erreur lors de la suppression de la vidéo");
+    try {
+      // Utiliser fetch direct pour éviter le problème d'import
+      const response = await fetch(`/api/creator/videos-simple?id=${video.id}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      });
+      
+      if (response.ok) {
+        setVideos((prev) => prev.filter((v) => v.id !== video.id));
+      } else {
+        throw new Error("Erreur lors de la suppression de la vidéo");
       }
+    } catch (error) {
+      console.error("Erreur suppression vidéo:", error);
+      alert("Erreur lors de la suppression de la vidéo");
     }
   };
 
@@ -439,8 +537,7 @@ export default function VideosPage() {
               { value: "all", label: "Toutes" },
               { value: "published", label: "Publiées" },
               { value: "draft", label: "Brouillons" },
-              { value: "processing", label: "En cours" },
-              { value: "archived", label: "Archivées" },
+              { value: "unlisted", label: "Non listées" },
             ].map((filterType) => (
               <button
                 key={filterType.value}
@@ -450,8 +547,7 @@ export default function VideosPage() {
                       | "all"
                       | "published"
                       | "draft"
-                      | "processing"
-                      | "archived"
+                      | "unlisted"
                   )
                 }
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -501,10 +597,10 @@ export default function VideosPage() {
                 Brouillon
               </button>
               <button
-                onClick={() => handleBulkAction("archive")}
+                onClick={() => handleBulkAction("unlisted")}
                 className="px-3 py-1 bg-yellow-600 text-white rounded-lg text-sm hover:bg-yellow-700"
               >
-                Archiver
+                Non listée
               </button>
               <button
                 onClick={() => handleBulkAction("delete")}
@@ -633,7 +729,15 @@ export default function VideosPage() {
 
                     <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
                       <span>{video.category}</span>
-                      <span>{formatDate(video.updatedAt)}</span>
+                      <span>
+                        {formatDate(
+                          video.updatedAt ||
+                            video.updated_at ||
+                            video.createdAt ||
+                            video.created_at ||
+                            new Date().toISOString()
+                        )}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -727,10 +831,45 @@ export default function VideosPage() {
                 ) : (
                   <video
                     controls
+                    autoPlay
+                    muted
+                    preload="metadata"
                     className="w-full h-full"
-                    poster={selectedVideo.thumbnail}
+                    poster={selectedVideo.thumbnail || undefined}
+                    onError={(e) => {
+                      console.error("Erreur de chargement vidéo:", e);
+                      const videoElement = e.target as HTMLVideoElement;
+                      const parent = videoElement.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
+                            <div style="text-align: center;">
+                              <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+                              <p style="color: #6b7280; margin-bottom: 0.5rem;">Erreur de chargement vidéo</p>
+                              <p style="color: #9ca3af; font-size: 0.875rem; margin-top: 0.5rem;">
+                                URL: ${selectedVideo.video_url || 'Non définie'}
+                              </p>
+                              <button 
+                                onclick="window.open('${selectedVideo.video_url || '#'}', '_blank')"
+                                style="margin-top: 1rem; padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 0.5rem; cursor: pointer;"
+                              >
+                                Ouvrir dans un nouvel onglet
+                              </button>
+                            </div>
+                          </div>
+                        `;
+                      }
+                    }}
+                    onLoadStart={() => {
+                      console.log("Début du chargement vidéo:", selectedVideo.video_url);
+                    }}
+                    onCanPlay={() => {
+                      console.log("Vidéo prête à jouer:", selectedVideo.video_url);
+                    }}
                   >
-                    <source src={selectedVideo.video_url} type="video/mp4" />
+                    <source src={selectedVideo.video_url || ""} type="video/mp4" />
+                    <source src={selectedVideo.video_url || ""} type="video/webm" />
+                    <source src={selectedVideo.video_url || ""} type="video/ogg" />
                     Votre navigateur ne supporte pas la lecture vidéo.
                   </video>
                 )
@@ -740,7 +879,7 @@ export default function VideosPage() {
                     <Video className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">Vidéo non disponible</p>
                     <p className="text-sm text-gray-400 mt-2">
-                      URL de la vidéo manquante
+                      Aucune URL de vidéo définie
                     </p>
                   </div>
                 </div>

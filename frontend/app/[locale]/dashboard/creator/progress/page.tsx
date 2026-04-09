@@ -24,6 +24,7 @@ import {
   useSimpleNotification,
   NotificationContainer,
 } from "@/components/ui/SimpleNotification";
+import { creatorDashboardApi } from "@/lib/services/creator-dashboard-api";
 
 interface EmployeeProgress {
   employee: {
@@ -58,11 +59,24 @@ interface GlobalStats {
   }>;
 }
 
+interface EmployeeProgressDetails {
+  employee: EmployeeProgress["employee"];
+  stats: EmployeeProgress["stats"];
+  detailed_progress: Array<{
+    video_id: number;
+    video_title: string;
+    watch_time_seconds: number;
+    total_duration_seconds: number;
+    progress_percentage: number;
+    completed: boolean;
+    last_watched_at: string;
+  }>;
+}
+
 export default function EmployeeProgressPage() {
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
-  const [selectedEmployee, setSelectedEmployee] =
-    useState<EmployeeProgress | null>(null);
-  const [employeeDetails, setEmployeeDetails] = useState<any>(null);
+  const [employeeDetails, setEmployeeDetails] =
+    useState<EmployeeProgressDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDomain, setFilterDomain] = useState("all");
@@ -80,13 +94,7 @@ export default function EmployeeProgressPage() {
 
   const loadGlobalProgress = async () => {
     try {
-      const response = await fetch("/api/creator/employees/progress/global", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      const data = await response.json();
-
+      const data = await creatorDashboardApi.getEmployeesGlobalProgress<GlobalStats>();
       if (data.success) {
         setGlobalStats(data.data);
       } else {
@@ -101,19 +109,12 @@ export default function EmployeeProgressPage() {
 
   const loadEmployeeProgress = async (employeeId: number) => {
     try {
-      const response = await fetch(
-        `/api/creator/employees/${employeeId}/progress`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      const data = await response.json();
-
+      const data =
+        await creatorDashboardApi.getEmployeeProgress<EmployeeProgressDetails>(
+          employeeId
+        );
       if (data.success) {
         setEmployeeDetails(data.data);
-        setSelectedEmployee(data.data.employee);
       } else {
         error("Erreur", "Impossible de charger les détails de progression");
       }
@@ -458,7 +459,7 @@ export default function EmployeeProgressPage() {
                         </h4>
                         <div className="space-y-3 max-h-64 overflow-y-auto">
                           {employeeDetails.detailed_progress?.map(
-                            (progress: any) => (
+                            (progress) => (
                               <div
                                 key={progress.video_id}
                                 className="bg-white rounded-lg p-3 border border-gray-200"

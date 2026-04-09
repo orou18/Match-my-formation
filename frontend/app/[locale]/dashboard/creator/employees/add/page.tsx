@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
 import {
@@ -20,6 +20,7 @@ import {
   useSimpleNotification,
   NotificationContainer,
 } from "@/components/ui/SimpleNotification";
+import { creatorDashboardApi } from "@/lib/services/creator-dashboard-api";
 
 interface EmployeeFormData {
   name: string;
@@ -33,6 +34,26 @@ interface EmployeeFormData {
   hire_date: string;
   status: "active" | "inactive";
 }
+
+type EmployeeCreationResponse = {
+  id: number;
+  name: string;
+  email: string;
+  domain: string;
+  created_at: string;
+  is_active: boolean;
+  login_id?: string;
+};
+
+type EmployeeCredentials = {
+  email?: string;
+  login_id: string;
+  password: string;
+};
+
+type CreateEmployeeApiResponse = {
+  login_credentials?: EmployeeCredentials;
+};
 
 export default function AddEmployeePage() {
   const router = useRouter();
@@ -92,32 +113,12 @@ export default function AddEmployeePage() {
       newErrors.email = "L'email n'est pas valide";
     }
 
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Le téléphone est obligatoire";
-    } else if (!/^[+]?[\d\s\-\(\)]+$/.test(formData.phone)) {
+    if (formData.phone.trim() && !/^[+]?[\d\s\-\(\)]+$/.test(formData.phone)) {
       newErrors.phone = "Le numéro de téléphone n'est pas valide";
     }
 
     if (!formData.department) {
       newErrors.department = "Le département est obligatoire";
-    }
-
-    if (!formData.position) {
-      newErrors.position = "Le poste est obligatoire";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Le mot de passe est obligatoire";
-    } else if (formData.password.length < 8) {
-      newErrors.password =
-        "Le mot de passe doit contenir au moins 8 caractères";
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword =
-        "La confirmation du mot de passe est obligatoire";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
     }
 
     setErrors(newErrors);
@@ -142,37 +143,24 @@ export default function AddEmployeePage() {
     try {
       console.log("📤 Envoi à l'API...");
 
-      const response = await fetch("/api/creator/employees", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(formData),
+      const data = await creatorDashboardApi.createEmployee<
+        EmployeeCreationResponse
+      >({
+        name: formData.name,
+        email: formData.email,
+        department: formData.department,
+        domain: formData.department,
       });
-
-      console.log("📨 Réponse API:", response.status);
-
-      const data = await response.json();
       console.log("📋 Données API:", data);
 
       if (data.success) {
-        success("Employé ajouté", "L'employé a été ajouté avec succès");
+        const credentials = (data as CreateEmployeeApiResponse)
+          .login_credentials;
+        const successMessage = credentials
+          ? `Email: ${credentials.email || formData.email} | Mot de passe: ${credentials.password}`
+          : "L'employé a été ajouté avec succès";
 
-        // Sauvegarder localement pour persistance
-        try {
-          const existingEmployees = JSON.parse(
-            localStorage.getItem("creator_employees") || "[]"
-          );
-          existingEmployees.push(data.data);
-          localStorage.setItem(
-            "creator_employees",
-            JSON.stringify(existingEmployees)
-          );
-          console.log("💾 Données sauvegardées localement");
-        } catch (localError) {
-          console.error("❌ Erreur sauvegarde locale:", localError);
-        }
+        success("Employé ajouté", successMessage);
 
         setTimeout(() => {
           router.push(`/${locale}/dashboard/creator/employees`);
@@ -323,7 +311,7 @@ export default function AddEmployeePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date d'embauche <span className="text-red-500">*</span>
+                    Date d&apos;embauche <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
@@ -410,7 +398,7 @@ export default function AddEmployeePage() {
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
                 <Shield className="w-5 h-5 text-green-600" />
-                Compte d'Accès
+                Compte d&apos;Accès
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>

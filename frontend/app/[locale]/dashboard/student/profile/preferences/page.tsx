@@ -4,11 +4,15 @@ import { useState, useEffect } from "react";
 import { Bell, Globe, Moon, Sun, Mail, Smartphone } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useTranslation } from "@/components/providers/TranslationProvider";
+import {
+  studentProfileApi,
+  type StudentPreferences,
+} from "@/lib/services/student-profile-api";
 
 export default function PreferencesPage() {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage } = useTranslation();
-  const [preferences, setPreferences] = useState({
+  const [preferences, setPreferences] = useState<StudentPreferences>({
     emailNotifications: true,
     pushNotifications: false,
     newsletter: true,
@@ -19,20 +23,10 @@ export default function PreferencesPage() {
   const [messageType, setMessageType] = useState<"success" | "error">(
     "success"
   );
-  const accessToken =
-    (typeof window !== "undefined" ? localStorage.getItem("token") : "") || "";
-
   useEffect(() => {
     const loadPreferences = async () => {
       try {
-        const response = await fetch("/api/user/preferences", {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        if (!response.ok) return;
-        const data = await response.json();
+        const data = await studentProfileApi.getPreferences();
         const loaded = data.preferences || data;
         setPreferences({
           emailNotifications: loaded.emailNotifications ?? true,
@@ -52,7 +46,7 @@ export default function PreferencesPage() {
     };
 
     loadPreferences();
-  }, [accessToken, language, setLanguage, setTheme, theme]);
+  }, [language, setLanguage, setTheme, theme]);
 
   const cardStyle =
     "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[2rem] p-8 shadow-sm hover:shadow-md transition-all";
@@ -111,24 +105,8 @@ export default function PreferencesPage() {
       );
 
       // Sauvegarder via l'API
-      const response = await fetch("/api/user/preferences", {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          preferences: userPreferences,
-        }),
-      });
-
-      if (response.ok) {
-        console.log("Préférences sauvegardées avec succès");
-        showMessage("Préférences sauvegardées avec succès", "success");
-      } else {
-        console.error("Erreur lors de la sauvegarde:", response.statusText);
-        showMessage("Erreur lors de la sauvegarde", "error");
-      }
+      await studentProfileApi.updatePreferences(userPreferences);
+      showMessage("Préférences sauvegardées avec succès", "success");
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
       showMessage("Préférences sauvegardées localement", "success");
@@ -224,8 +202,8 @@ export default function PreferencesPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="w-full min-w-0 space-y-8">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <h1 className="text-3xl font-black text-primary dark:text-primary">
           {localT("preferences.title", "Préférences")}
         </h1>
@@ -489,7 +467,7 @@ export default function PreferencesPage() {
       </div>
 
       {/* Bouton de sauvegarde */}
-      <div className="flex justify-end">
+      <div className="flex justify-start lg:justify-end">
         <button
           onClick={handleSavePreferences}
           disabled={loading}

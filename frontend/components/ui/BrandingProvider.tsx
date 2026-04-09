@@ -326,7 +326,7 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
   useEffect(() => {
     const loadBranding = async () => {
       try {
-        const response = await fetch("/api/branding");
+        const response = await fetch("/api/branding", { credentials: "include" });
         if (response.ok) {
           const payload = await response.json();
           const brandingSettings = payload.settings || payload;

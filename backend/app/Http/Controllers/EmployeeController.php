@@ -55,6 +55,7 @@ class EmployeeController extends Controller
             'success' => true,
             'data' => $employee,
             'login_credentials' => [
+                'email' => $employee->email,
                 'login_id' => $loginId,
                 'password' => $password,
             ],
@@ -147,6 +148,7 @@ class EmployeeController extends Controller
             'success' => true,
             'data' => $employee,
             'login_credentials' => [
+                'email' => $employee->email,
                 'login_id' => $newLoginId,
                 'password' => $newPassword,
             ],

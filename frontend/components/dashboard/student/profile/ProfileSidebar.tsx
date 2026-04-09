@@ -3,8 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
 import {
   User,
   Shield,
@@ -14,11 +13,9 @@ import {
   Star,
   GraduationCap,
   Camera,
-  Edit2,
   X,
-  Check,
-  AlertCircle,
 } from "lucide-react";
+import { studentProfileApi } from "@/lib/services/student-profile-api";
 
 interface UserProfile {
   id: string;
@@ -40,16 +37,20 @@ export default function ProfileSidebar() {
   const [notificationCount, setNotificationCount] = useState(0);
 
   // Données utilisateur garanties - TOUJOURS DISPONIBLES
-  const currentUser: UserProfile = {
-    id: "1",
-    name: session?.user?.name || "Étudiant",
-    email: session?.user?.email || "etudiant@example.com",
-    avatar: session?.user?.image || "/temoignage.png",
-    role: (session?.user as any)?.role || "student",
-    subscription: "FREE",
-    level: 1,
-    notifications: 0,
-  };
+  const currentUser = useMemo<UserProfile>(
+    () => ({
+      id: "1",
+      name: session?.user?.name || "Étudiant",
+      email: session?.user?.email || "etudiant@example.com",
+      avatar: session?.user?.image || "/temoignage.png",
+      role:
+        (session?.user as { role?: string } | undefined)?.role || "student",
+      subscription: "FREE",
+      level: 1,
+      notifications: 0,
+    }),
+    [session]
+  );
 
   const navLinks = [
     {
@@ -82,44 +83,31 @@ export default function ProfileSidebar() {
 
   // Charger les données depuis l'API en arrière-plan
   useEffect(() => {
-    if (session?.user) {
-      loadUserData();
-    }
-  }, [session]);
-
-  const loadUserData = async () => {
-    try {
-      const response = await fetch("/api/user/profile", {
-        headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
+    const loadUserData = async () => {
+      try {
+        const userData = await studentProfileApi.getProfile();
+        setUser({
+          ...currentUser,
+          ...userData,
+          id: String(userData.id || currentUser.id),
+          role: userData.role || currentUser.role,
+          subscription: userData.subscription || currentUser.subscription,
+          level: Number(userData.level || currentUser.level),
+        });
+      } catch (error) {
+        console.error("Erreur lors du chargement du profil:", error);
       }
-    } catch (error) {
-      console.error("Erreur lors du chargement du profil:", error);
-    }
-  };
+    };
+
+    loadUserData();
+  }, [session, currentUser]);
 
   // Charger les notifications
   useEffect(() => {
     const loadNotifications = async () => {
       try {
-        const response = await fetch("/api/user/notifications/unread-count", {
-          headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setNotificationCount(data.count || 0);
-        }
+        const data = await studentProfileApi.getUnreadCount();
+        setNotificationCount(data.count || 0);
       } catch (error) {
         console.error("Erreur lors du chargement des notifications:", error);
         setNotificationCount(0);
@@ -136,22 +124,9 @@ export default function ProfileSidebar() {
     formData.append("avatar", file);
 
     try {
-      const response = await fetch("/api/user/upload-avatar", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser((prev) => (prev ? { ...prev, avatar: data.avatarUrl } : null));
-        setIsEditingAvatar(false);
-        console.log("Avatar uploadé avec succès:", data.avatarUrl);
-      } else {
-        throw new Error("Erreur lors du téléchargement");
-      }
+      const data = await studentProfileApi.uploadAvatar(formData);
+      setUser((prev) => (prev ? { ...prev, avatar: data.avatarUrl } : null));
+      setIsEditingAvatar(false);
     } catch (error) {
       console.error("Erreur upload avatar:", error);
       alert("Erreur lors du téléchargement de la photo");
@@ -169,9 +144,9 @@ export default function ProfileSidebar() {
   const displayUser = user || currentUser;
 
   return (
-    <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col items-center w-full min-h-[600px]">
+    <div className="flex w-full min-h-[600px] flex-col items-stretch rounded-[2.5rem] border border-gray-50 bg-white p-8 shadow-sm">
       {/* Avatar avec possibilité de modification */}
-      <div className="relative w-24 h-24 mb-6 group">
+      <div className="relative mb-6 h-24 w-24 self-center group">
         <Image
           src={displayUser.avatar || "/temoignage.png"}
           alt="Profile"
@@ -218,7 +193,7 @@ export default function ProfileSidebar() {
       </div>
 
       {/* Informations utilisateur */}
-      <div className="text-center mb-6">
+      <div className="mb-6 text-center">
         <h3 className="text-xl font-bold text-[#002B24] mb-1">
           {displayUser.name}
         </h3>
@@ -275,7 +250,12 @@ export default function ProfileSidebar() {
       </nav>
 
       {/* Bouton Devenir créateur */}
-      <button className="w-full mt-8 bg-[#FFF9EB] text-[#D97706] p-4 rounded-2xl flex items-center justify-center gap-3 font-bold text-xs hover:bg-[#FEF3C7] transition-colors">
+      <button
+        onClick={() =>
+          window.location.assign(`/${String(locale || "fr")}/dashboard/creator/become`)
+        }
+        className="w-full mt-8 bg-[#FFF9EB] text-[#D97706] p-4 rounded-2xl flex items-center justify-center gap-3 font-bold text-xs hover:bg-[#FEF3C7] transition-colors"
+      >
         <Star size={18} fill="currentColor" />
         Devenir créateur
       </button>

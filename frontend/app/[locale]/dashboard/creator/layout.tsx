@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams, usePathname } from "next/navigation";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import UserIdManager from "@/lib/user-id-manager";
@@ -25,18 +25,13 @@ import {
   Search,
   Menu,
   X,
-  ChevronDown,
   Mail,
   Folder,
   Image,
-  Music,
-  Download,
   TrendingUp,
   Award,
-  Zap,
-  Shield,
-  Globe,
   Target,
+  Activity,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -44,14 +39,26 @@ interface CreatorLayoutProps {
   children: React.ReactNode;
 }
 
+type SessionUser = {
+  role?: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+};
+
 export default function CreatorLayout({ children }: CreatorLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const router = useRouter();
   const pathname = usePathname();
+  const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
   const { data: session, status } = useSession();
+  const mounted = useSyncExternalStore(
+    () => () => { },
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? "hidden" : "";
@@ -61,13 +68,17 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
   }, [sidebarOpen]);
 
   useEffect(() => {
-    setSidebarOpen(false);
-  }, [pathname]);
+    if (!mounted || status !== "unauthenticated") {
+      return;
+    }
+
+    router.replace(`/${locale}/login`);
+  }, [locale, mounted, router, status]);
 
   const user = {
     name: session?.user?.name || "Jean Formateur",
     email: session?.user?.email || "creator@match.com",
-    role: (session?.user as any)?.role || "creator",
+    role: (session?.user as SessionUser | undefined)?.role || "creator",
     subscription: "PRO",
     level: 12,
     followers: "3.4K",
@@ -111,6 +122,13 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
       href: `/${locale}/dashboard/creator/progress`,
       badge: null,
       color: "from-cyan-500 to-cyan-600",
+    },
+    {
+      name: "Analytics Employés",
+      icon: Activity,
+      href: `/${locale}/dashboard/creator/analytics`,
+      badge: null,
+      color: "from-emerald-500 to-emerald-600",
     },
     {
       name: "Parcours",
@@ -221,8 +239,8 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
 
   const handleLogout = () => {
     console.log("Déconnexion depuis le dashboard creator...");
-    fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-    signOut({ redirect: false }).catch(() => {});
+    fetch("/api/auth/logout", { method: "POST" }).catch(() => { });
+    signOut({ redirect: false }).catch(() => { });
     UserIdManager.logout();
     window.location.href = `/${locale}`;
   };
@@ -230,6 +248,24 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
   const isActiveRoute = (href: string) => {
     return pathname === href || pathname.startsWith(href + "/");
   };
+
+  if (!mounted || status === "loading" || status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-gray-200 bg-white/90 px-8 py-10 shadow-xl backdrop-blur">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600" />
+          <div className="text-center">
+            <p className="text-base font-semibold text-gray-900">
+              Chargement de votre espace createur
+            </p>
+            <p className="text-sm text-gray-600">
+              Nous verifions votre session avant d&apos;afficher le dashboard.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex overflow-x-hidden">
@@ -246,9 +282,8 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 w-[min(18rem,calc(100vw-1rem))] lg:w-72 bg-white/95 backdrop-blur-md border-r border-gray-200/50 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static shadow-2xl lg:shadow-none ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 z-50 w-[min(18rem,calc(100vw-1rem))] lg:w-72 bg-white/95 backdrop-blur-md border-r border-gray-200/50 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static shadow-2xl lg:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Header */}
         <div className="h-16 border-b border-gray-200/50 flex items-center justify-between px-4 bg-gradient-to-r from-blue-50 to-purple-50 flex-shrink-0">
@@ -311,25 +346,24 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
         {/* Navigation */}
         <div className="flex-1 panel-scroll p-3 pb-20">
           <div className="space-y-1">
-            {navigation.map((item, index) => (
+            {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`group relative flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
-                  isActiveRoute(item.href)
+                onClick={() => setSidebarOpen(false)}
+                className={`group relative flex items-center justify-between overflow-hidden rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ${isActiveRoute(item.href)
                     ? "bg-gradient-to-r " +
-                      item.color +
-                      " text-white shadow-lg shadow-blue-500/25"
-                    : "text-gray-700 hover:bg-gray-100/80 hover:shadow-md"
-                }`}
+                    item.color +
+                    " text-white shadow-lg shadow-blue-500/25"
+                    : "text-gray-700 hover:bg-gray-100/80 hover:shadow-md hover:-translate-y-0.5"
+                  }`}
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div
-                    className={`p-1.5 rounded-lg ${
-                      isActiveRoute(item.href)
+                    className={`flex-shrink-0 p-1.5 rounded-lg ${isActiveRoute(item.href)
                         ? "bg-white/20"
                         : "bg-gray-100/80 group-hover:bg-gray-200/80"
-                    }`}
+                      }`}
                   >
                     <item.icon
                       size={16}
@@ -341,22 +375,24 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
                     />
                   </div>
                   <span
-                    className={`font-medium text-safe ${isActiveRoute(item.href) ? "text-white" : "text-gray-700"}`}
+                    className={`font-medium truncate ${isActiveRoute(item.href)
+                        ? "text-white"
+                        : "text-gray-700 group-hover:text-gray-900"
+                      }`}
                   >
                     {item.name}
                   </span>
                 </div>
                 {item.badge && (
                   <span
-                    className={`px-2 py-0.5 text-xs font-medium rounded-full transition-all duration-200 ${
-                      item.badge === "PRO"
+                    className={`relative z-10 px-2 py-0.5 text-xs font-medium rounded-full transition-all duration-200 ${item.badge === "PRO"
                         ? isActiveRoute(item.href)
                           ? "bg-white/20 text-white"
                           : "bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-sm"
                         : isActiveRoute(item.href)
                           ? "bg-white/20 text-white"
                           : "bg-gray-100/80 text-gray-700 group-hover:bg-gray-200/80"
-                    }`}
+                      }`}
                   >
                     {item.badge}
                   </span>
@@ -364,7 +400,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
                 {isActiveRoute(item.href) && (
                   <motion.div
                     layoutId="activeTab"
-                    className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl"
+                    className="pointer-events-none absolute inset-0 z-0 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600"
                     initial={false}
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />

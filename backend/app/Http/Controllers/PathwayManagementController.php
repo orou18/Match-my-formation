@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Pathway;
 use App\Models\EmployeePathway;
 use App\Models\Employee;
+use App\Models\Video;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -27,6 +28,21 @@ class PathwayManagementController extends Controller
         ]);
 
         $creatorId = Auth::id();
+        $videoIds = collect($request->video_ids)
+            ->map(fn ($videoId) => (int) $videoId)
+            ->filter()
+            ->values();
+
+        $creatorVideos = Video::where('uploader_id', $creatorId)
+            ->whereIn('id', $videoIds)
+            ->pluck('id');
+
+        if ($creatorVideos->count() !== $videoIds->count()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Certaines vidéos sélectionnées ne vous appartiennent pas'
+            ], 422);
+        }
 
         $pathway = Pathway::create([
             'creator_id' => $creatorId,
@@ -43,7 +59,7 @@ class PathwayManagementController extends Controller
 
         // Associer les vidéos au parcours
         $pathway->videos()->sync(
-            collect($request->video_ids)
+            $videoIds
                 ->values()
                 ->mapWithKeys(fn ($videoId, $index) => [$videoId => ['sort_order' => $index + 1]])
                 ->all()
@@ -51,7 +67,7 @@ class PathwayManagementController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $pathway->load('videos'),
+            'data' => $this->serializePathway($pathway->load(['videos', 'employeePathways'])),
             'message' => 'Parcours de formation créé avec succès'
         ], 201);
     }
@@ -116,20 +132,7 @@ class PathwayManagementController extends Controller
             ->with(['videos', 'employeePathways'])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($pathway) {
-                return [
-                    'id' => $pathway->id,
-                    'title' => $pathway->title,
-                    'description' => $pathway->description,
-                    'domain' => $pathway->domain,
-                    'duration_hours' => $pathway->duration_hours,
-                    'difficulty_level' => $pathway->difficulty_level,
-                    'is_active' => $pathway->is_active,
-                    'videos_count' => $pathway->videos->count(),
-                    'assigned_employees' => $pathway->employeePathways->count(),
-                    'created_at' => $pathway->created_at->format('Y-m-d H:i:s'),
-                ];
-            });
+            ->map(fn ($pathway) => $this->serializePathway($pathway));
 
         return response()->json([
             'success' => true,
@@ -253,5 +256,33 @@ class PathwayManagementController extends Controller
             'success' => true,
             'message' => 'Parcours supprimé avec succès',
         ]);
+    }
+
+    private function serializePathway(Pathway $pathway): array
+    {
+        return [
+            'id' => $pathway->id,
+            'title' => $pathway->title,
+            'description' => $pathway->description,
+            'domain' => $pathway->domain,
+            'duration_hours' => $pathway->duration_hours,
+            'difficulty_level' => $pathway->difficulty_level,
+            'is_active' => (bool) $pathway->is_active,
+            'videos_count' => $pathway->videos->count(),
+            'assigned_employees' => $pathway->employeePathways->count(),
+            'created_at' => $pathway->created_at?->format('Y-m-d H:i:s'),
+            'videos' => $pathway->videos->values()->map(function ($video) {
+                return [
+                    'id' => $video->id,
+                    'title' => $video->title,
+                    'description' => $video->description,
+                    'duration' => $video->duration,
+                    'thumbnail' => $video->thumbnail_url,
+                    'video_url' => $video->video_url,
+                    'visibility' => $video->visibility,
+                    'sort_order' => $video->pivot?->sort_order,
+                ];
+            })->all(),
+        ];
     }
 }

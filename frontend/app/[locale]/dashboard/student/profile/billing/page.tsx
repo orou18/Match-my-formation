@@ -2,42 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { CreditCard, Download, Plus } from "lucide-react";
-
-type BillingTransaction = {
-  id: string;
-  label: string;
-  amount: number;
-  currency: string;
-  status: "paid" | "pending" | "failed";
-  paidAt: string;
-};
-
-type BillingPayload = {
-  subscription: string;
-  paymentMethod: {
-    brand: string;
-    maskedNumber: string;
-    expiresAt: string;
-  };
-  transactions: BillingTransaction[];
-};
+import {
+  studentProfileApi,
+  type StudentBillingPayload,
+} from "@/lib/services/student-profile-api";
 
 export default function BillingPage() {
-  const [billing, setBilling] = useState<BillingPayload | null>(null);
+  const [billing, setBilling] = useState<StudentBillingPayload | null>(null);
 
   useEffect(() => {
     const loadBilling = async () => {
       try {
-        const token =
-          (typeof window !== "undefined" ? localStorage.getItem("token") : "") ||
-          "";
-        const response = await fetch("/api/user/billing", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!response.ok) return;
-        setBilling(await response.json());
+        setBilling(await studentProfileApi.getBilling());
       } catch {
         // Keep empty state if billing is unavailable.
       }
@@ -54,10 +30,10 @@ export default function BillingPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="w-full min-w-0 space-y-8">
       <h1 className="text-3xl font-black text-[#002B24]">Facturation</h1>
 
-      <div className="bg-gradient-to-br from-[#004D40] to-[#002B24] rounded-[2.5rem] p-10 text-white shadow-xl flex justify-between items-center overflow-hidden relative">
+      <div className="bg-gradient-to-br from-[#004D40] to-[#002B24] rounded-[2.5rem] p-10 text-white shadow-xl flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between overflow-hidden relative">
         <div className="absolute -right-10 -bottom-10 opacity-10">
           <CreditCard size={250} />
         </div>
@@ -79,7 +55,7 @@ export default function BillingPage() {
             </div>
           </div>
         </div>
-        <button className="relative z-10 p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all">
+        <button className="relative z-10 self-start p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all lg:self-auto">
           <Plus size={24} />
         </button>
       </div>

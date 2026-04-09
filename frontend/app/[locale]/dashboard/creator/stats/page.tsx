@@ -3,46 +3,23 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import {
+  Activity,
+  Clock,
   TrendingUp,
-  Users,
-  Play,
   DollarSign,
   Eye,
-  Clock,
-  Star,
-  Calendar,
   BarChart3,
-  PieChart,
-  Activity,
-  Download,
-  Filter,
+  Play,
+  Star,
+  Users,
 } from "lucide-react";
-
-interface Stats {
-  totalViews: number;
-  totalStudents: number;
-  totalRevenue: number;
-  totalVideos: number;
-  monthlyViews: number[];
-  monthlyRevenue: number[];
-  topVideos: Array<{
-    id: string;
-    title: string;
-    views: number;
-    revenue: number;
-    students: number;
-  }>;
-  recentActivity: Array<{
-    id: string;
-    type: "view" | "enrollment" | "revenue";
-    title: string;
-    timestamp: string;
-    amount?: number;
-  }>;
-}
+import {
+  creatorDashboardApi,
+  type CreatorStatsPayload,
+} from "@/lib/services/creator-dashboard-api";
 
 export default function StatsPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<CreatorStatsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "1y">(
     "30d"
@@ -50,19 +27,9 @@ export default function StatsPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      const token =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("token")
-          : null;
-
       try {
-        const response = await fetch("/api/creator/stats", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        const payload = await response.json();
-        if (response.ok && payload?.data) {
-          setStats(payload.data);
-        }
+        const payload = await creatorDashboardApi.getStats(timeRange);
+        setStats(payload.data);
       } catch (error) {
         console.error("Erreur de chargement des statistiques créateur:", error);
       } finally {

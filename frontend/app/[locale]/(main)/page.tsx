@@ -127,7 +127,7 @@ export default function HomePage() {
       title: "Marketing Digital Touristique",
       description:
         "Stratégies digitales et marketing pour les professionnels du secteur touristique.",
-      thumbnail: "/videos/video3-thumb.jpg",
+      thumbnail: "/videos/video1-thumb.jpg",
       video_url: "/videos/video3.mp4",
       duration: "15:45",
       order: 1,
@@ -178,7 +178,7 @@ export default function HomePage() {
       title: "Revenue Management Avancé",
       description:
         "Techniques avancées d'optimisation des revenus dans l'hôtellerie.",
-      thumbnail: "/videos/video4-thumb.jpg",
+      thumbnail: "/videos/video1-thumb.jpg",
       video_url: "/videos/video4.mp4",
       duration: "22:15",
       order: 1,
@@ -230,7 +230,7 @@ export default function HomePage() {
       title: "Service Client Excellence",
       description:
         "Maîtrisez les techniques du service client de luxe dans l'hôtellerie.",
-      thumbnail: "/videos/video5-thumb.jpg",
+      thumbnail: "/videos/video2-thumb.jpg",
       video_url: "/videos/video5.mp4",
       duration: "16:30",
       order: 1,
@@ -280,7 +280,7 @@ export default function HomePage() {
       title: "Digitalisation Hôtelière",
       description:
         "Transformez votre établissement hôtelier avec les dernières technologies digitales.",
-      thumbnail: "/videos/video6-thumb.jpg",
+      thumbnail: "/videos/video1-thumb.jpg",
       video_url: "/videos/video6.mp4",
       duration: "19:45",
       order: 1,

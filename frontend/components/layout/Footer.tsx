@@ -29,8 +29,8 @@ export default function Footer() {
               <Image
                 src="/matchmyformation_footer.png"
                 alt="Logo"
-                width={200}
-                height={60}
+                width={100}
+                height={40}
                 className="brightness-110"
               />
             </div>

@@ -24,6 +24,7 @@ import {
   useSimpleNotification,
   NotificationContainer,
 } from "@/components/ui/SimpleNotification";
+import { creatorDashboardApi } from "@/lib/services/creator-dashboard-api";
 
 interface DashboardSettings {
   theme: {
@@ -87,18 +88,6 @@ export default function CustomizeDashboard() {
   const { notifications, success, error, removeNotification } =
     useSimpleNotification();
 
-  const getAuthHeaders = () => {
-    const token =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("token")
-        : null;
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-    return headers;
-  };
-
   const colorPresets = [
     { name: "Bleu Professionnel", primary: "#3B82F6", secondary: "#8B5CF6" },
     { name: "Vert Nature", primary: "#10B981", secondary: "#34D399" },
@@ -111,18 +100,7 @@ export default function CustomizeDashboard() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/creator/customize", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify(settings),
-      });
-
-      if (!response.ok) {
-        throw new Error("Erreur de sauvegarde");
-      }
+      await creatorDashboardApi.updateCustomizeSettings(settings);
 
       success(
         "Parametres importes",
@@ -168,14 +146,7 @@ export default function CustomizeDashboard() {
 
     setSettings(defaultSettings);
     try {
-      await fetch("/api/creator/customize", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify(defaultSettings),
-      });
+      await creatorDashboardApi.updateCustomizeSettings(defaultSettings);
     } catch (resetError) {
       console.error(
         "Erreur lors de la reinitialisation des parametres:",
@@ -226,11 +197,8 @@ export default function CustomizeDashboard() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch("/api/creator/customize", {
-          headers: getAuthHeaders(),
-        });
-        const data = await response.json();
-        if (response.ok && data.settings) {
+        const data = await creatorDashboardApi.getCustomizeSettings<DashboardSettings>();
+        if (data.settings) {
           setSettings(data.settings);
         }
       } catch (error) {

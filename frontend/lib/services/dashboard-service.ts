@@ -56,9 +56,8 @@ function getApiBaseUrl(): string {
 
 export const dashboardService = {
   async getCreatorDashboard<T = JsonObject>() {
-    const baseUrl = getApiBaseUrl();
     return readJson<T>(
-      await fetch(`${baseUrl}/api/creator/dashboard`, {
+      await fetch("/api/creator/dashboard", {
         cache: "no-store",
         headers: buildAuthHeaders(),
       })
@@ -66,7 +65,6 @@ export const dashboardService = {
   },
 
   async getStudentDashboard<T = JsonObject>() {
-    const baseUrl = getApiBaseUrl();
     return readJson<T>(
       await fetch(`/api/student/dashboard`, {
         cache: "no-store",

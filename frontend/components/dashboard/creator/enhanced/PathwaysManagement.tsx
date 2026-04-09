@@ -71,195 +71,84 @@ export default function PathwaysManagement() {
   });
 
   useEffect(() => {
-    // Données mockées
-    const mockPathways: Pathway[] = [
-      {
-        id: 1,
-        title: "Formation Management Hôtelier",
-        description:
-          "Devenez expert en gestion hôtelière avec ce parcours complet",
-        courses: [1, 2, 3],
-        estimatedHours: 120,
-        difficulty: "intermediate",
-        enrolledUsers: 234,
-        completionRate: 78.5,
-        created_at: "2024-01-15",
-        status: "published",
-      },
-      {
-        id: 2,
-        title: "Parcours Chef de Cuisine",
-        description: "Maîtrisez l'art de la cuisine française",
-        courses: [4, 5, 6, 7],
-        estimatedHours: 180,
-        difficulty: "advanced",
-        enrolledUsers: 189,
-        completionRate: 82.3,
-        created_at: "2024-02-01",
-        status: "published",
-      },
-      {
-        id: 3,
-        title: "Marketing Digital Touristique",
-        description: "Stratégies marketing pour le secteur touristique",
-        courses: [8, 9],
-        estimatedHours: 60,
-        difficulty: "beginner",
-        enrolledUsers: 156,
-        completionRate: 71.2,
-        created_at: "2024-02-15",
-        status: "published",
-      },
-    ];
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
-    const mockCourses: Course[] = [
-      {
-        id: 1,
-        title: "Introduction au Management",
-        description: "Bases du management",
-        category: "Management",
-        level: "Beginner",
-        duration: 20,
-        enrolledUsers: 45,
-        status: "published",
-      },
-      {
-        id: 2,
-        title: "Communication Hôtelière",
-        description: "Techniques de communication",
-        category: "Soft Skills",
-        level: "Intermediate",
-        duration: 25,
-        enrolledUsers: 38,
-        status: "published",
-      },
-      {
-        id: 3,
-        title: "Leadership Équipe",
-        description: "Gestion d'équipe",
-        category: "Management",
-        level: "Advanced",
-        duration: 30,
-        enrolledUsers: 32,
-        status: "published",
-      },
-      {
-        id: 4,
-        title: "Techniques de Base",
-        description: "Cuisine fondamentale",
-        category: "Cuisine",
-        level: "Beginner",
-        duration: 40,
-        enrolledUsers: 67,
-        status: "published",
-      },
-      {
-        id: 5,
-        title: "Cuisine Française",
-        description: "Plats traditionnels",
-        category: "Cuisine",
-        level: "Intermediate",
-        duration: 50,
-        enrolledUsers: 54,
-        status: "published",
-      },
-      {
-        id: 6,
-        title: "Cuisine Créative",
-        description: "Techniques avancées",
-        category: "Cuisine",
-        level: "Advanced",
-        duration: 60,
-        enrolledUsers: 41,
-        status: "published",
-      },
-      {
-        id: 7,
-        title: "Pâtisserie",
-        description: "Desserts français",
-        category: "Pâtisserie",
-        level: "Intermediate",
-        duration: 35,
-        enrolledUsers: 28,
-        status: "published",
-      },
-      {
-        id: 8,
-        title: "Marketing Digital",
-        description: "Stratégies en ligne",
-        category: "Marketing",
-        level: "Beginner",
-        duration: 25,
-        enrolledUsers: 89,
-        status: "published",
-      },
-      {
-        id: 9,
-        title: "Réseaux Sociaux",
-        description: "Social media marketing",
-        category: "Marketing",
-        level: "Intermediate",
-        duration: 30,
-        enrolledUsers: 67,
-        status: "published",
-      },
-    ];
+    const fetchData = async () => {
+      try {
+        // Fetch pathways for creator
+        const pRes = await fetch('http://127.0.0.1:8000/api/creator/pathways', {
+          headers: token ? { Authorization: `Bearer ${token}`, Accept: 'application/json' } : { Accept: 'application/json' }
+        });
+        if (pRes.ok) {
+          const pJson = await pRes.json();
+          setPathways((pJson.data ?? pJson) || []);
+        }
 
-    const mockPlaylists: Playlist[] = [
-      {
-        id: 1,
-        title: "Techniques de Coupe",
-        description: "Apprenez toutes les techniques de coupe professionnelle",
-        videos: [1, 2, 3, 4, 5],
-        totalDuration: 180,
-        created_at: "2024-01-10",
-        isPublic: true,
-      },
-      {
-        id: 2,
-        title: "Sauces Françaises",
-        description: "Maîtrisez les sauces classiques de la cuisine française",
-        videos: [6, 7, 8, 9],
-        totalDuration: 120,
-        created_at: "2024-01-15",
-        isPublic: true,
-      },
-      {
-        id: 3,
-        title: "Plats Principaux",
-        description: "Réalisation des plats principaux",
-        videos: [10, 11, 12, 13, 14, 15],
-        totalDuration: 240,
-        created_at: "2024-02-01",
-        isPublic: false,
-      },
-    ];
+        // Fetch videos to allow selection when creating pathway
+        const vRes = await fetch('http://127.0.0.1:8000/api/creator/videos', {
+          headers: token ? { Authorization: `Bearer ${token}`, Accept: 'application/json' } : { Accept: 'application/json' }
+        });
+        if (vRes.ok) {
+          const vJson = await vRes.json();
+          // map videos into Course-like shape for selection
+          const mapped = (vJson || []).map((v: any) => ({
+            id: v.id,
+            title: v.title,
+            description: v.description ?? '',
+            category: v.category ?? 'General',
+            level: 'N/A',
+            duration: v.duration ?? 0,
+            enrolledUsers: 0,
+            status: v.visibility ?? 'published',
+          }));
+          setCourses(mapped);
+        }
 
-    setTimeout(() => {
-      setPathways(mockPathways);
-      setCourses(mockCourses);
-      setPlaylists(mockPlaylists);
-      setLoading(false);
-    }, 1000);
-  }, []);
-
-  const handleCreatePathway = () => {
-    const newPathway: Pathway = {
-      id: pathways.length + 1,
-      title: formData.title,
-      description: formData.description,
-      courses: formData.selectedCourses,
-      estimatedHours: formData.selectedCourses.length * 20,
-      difficulty: formData.difficulty,
-      enrolledUsers: 0,
-      completionRate: 0,
-      created_at: new Date().toISOString().split("T")[0],
-      status: "draft",
+        // Playlists: not yet supported server-side, keep empty
+        setPlaylists([]);
+      } catch (err) {
+        console.error('Error fetching pathways data', err);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setPathways([...pathways, newPathway]);
-    setShowCreateModal(false);
-    resetForm();
+    fetchData();
+  }, []);
+
+  const handleCreatePathway = async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      // duration_hours: approximate from selected videos
+      const durationHours = Math.max(1, Math.round((formData.selectedCourses.length * 20) / 1));
+
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        domain: 'general',
+        duration_hours: durationHours,
+        difficulty_level: formData.difficulty,
+        video_ids: formData.selectedCourses,
+      };
+
+      const res = await fetch('http://127.0.0.1:8000/api/creator/pathways', {
+        method: 'POST',
+        headers: token ? { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, Accept: 'application/json' } : { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const created = json.data ?? json;
+        setPathways((prev) => [created, ...prev]);
+        setShowCreateModal(false);
+        resetForm();
+      } else {
+        console.error('Failed to create pathway', await res.text());
+      }
+    } catch (err) {
+      console.error('Error creating pathway', err);
+    }
   };
 
   const resetForm = () => {

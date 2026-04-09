@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
             return;
         }
 
-        $defaultPassword = env('SEED_DEFAULT_PASSWORD', Str::random(24));
+        $defaultPassword = env('SEED_DEFAULT_PASSWORD', 'Azerty123!');
         $password = Hash::make($defaultPassword);
 
         $users = [

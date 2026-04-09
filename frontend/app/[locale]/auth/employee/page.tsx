@@ -20,7 +20,7 @@ import {
 
 export default function EmployeeLoginPage() {
   const [formData, setFormData] = useState({
-    login_id: "",
+    email: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -40,7 +40,7 @@ export default function EmployeeLoginPage() {
     // Vérifier si déjà connecté
     const token = localStorage.getItem("employee_token");
     if (token) {
-      router.push(withLocale("/dashboard/employee"));
+      router.push(`/${locale}/dashboard/employee`);
     }
   }, [router, locale]);
 
@@ -94,7 +94,7 @@ export default function EmployeeLoginPage() {
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors px-4 py-2 rounded-lg hover:bg-white/50 backdrop-blur-sm"
         >
           <ArrowLeft className="w-5 h-5" />
-          Retour à l'accueil
+          Retour a l&apos;accueil
         </button>
       </div>
 
@@ -126,20 +126,20 @@ export default function EmployeeLoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ID de connexion
+                Email professionnel
               </label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                   <Users className="w-5 h-5 text-gray-400" />
                 </div>
                 <input
-                  type="text"
-                  value={formData.login_id}
+                  type="email"
+                  value={formData.email}
                   onChange={(e) =>
-                    setFormData({ ...formData, login_id: e.target.value })
+                    setFormData({ ...formData, email: e.target.value })
                   }
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  placeholder="EMP_ABC12345"
+                  placeholder="employe@entreprise.com"
                   required
                 />
               </div>
@@ -209,7 +209,7 @@ export default function EmployeeLoginPage() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Vous n'avez pas de compte ?{" "}
+              Vous n&apos;avez pas de compte ?{" "}
               <button className="text-blue-600 hover:text-blue-700 font-medium transition-colors">
                 Contactez votre formateur
               </button>
@@ -241,7 +241,7 @@ export default function EmployeeLoginPage() {
                 <div>
                   <h3 className="font-medium">Formations personnalisées</h3>
                   <p className="text-sm text-blue-100">
-                    Contenus adaptés à votre domaine d'activité
+                    Contenus adaptes a votre domaine d&apos;activite
                   </p>
                 </div>
               </div>
@@ -275,7 +275,7 @@ export default function EmployeeLoginPage() {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
             <div className="flex items-center gap-3 mb-4">
               <AlertCircle className="w-5 h-5 text-amber-500" />
-              <h3 className="font-medium text-gray-900">Besoin d'aide ?</h3>
+              <h3 className="font-medium text-gray-900">Besoin d&apos;aide ?</h3>
             </div>
             <p className="text-sm text-gray-600 mb-3">
               Si vous rencontrez des difficultés pour vous connecter :
@@ -283,7 +283,7 @@ export default function EmployeeLoginPage() {
             <ul className="space-y-2 text-sm text-gray-600">
               <li className="flex items-start gap-2">
                 <span className="text-blue-600 mt-1">•</span>
-                Vérifiez votre ID de connexion et mot de passe
+                Verifiez votre email professionnel et votre mot de passe
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-600 mt-1">•</span>

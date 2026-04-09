@@ -1,31 +1,24 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import UserIdManager from "@/lib/user-id-manager";
 import {
   User,
-  Mail,
-  Calendar,
-  Award,
   BookOpen,
-  Star,
-  ArrowRight,
   Sparkles,
-  Rocket,
   Crown,
   Edit2,
   Save,
   X,
   Camera,
-  Phone,
-  MapPin,
-  Globe,
   Check,
   AlertCircle,
 } from "lucide-react";
+import { studentProfileApi } from "@/lib/services/student-profile-api";
 
 interface UserProfile {
   id: string;
@@ -53,11 +46,11 @@ type SessionUser = {
   email?: string | null;
   image?: string | null;
   accessToken?: string;
+  role?: string;
 };
 
 export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,91 +64,78 @@ export default function ProfilePage() {
   const { data: session } = useSession();
   const sessionUser = session?.user as SessionUser | undefined;
 
-  // Données par défaut garanties avec UserIdManager
-  const getCurrentUserId = () => {
-    if (sessionUser?.id) return sessionUser.id;
+  const defaultUser = useMemo<UserProfile>(
+    () => {
+      const storedUserData = UserIdManager.getStoredUserData();
 
-    const storedUserData = UserIdManager.getStoredUserData();
-    if (storedUserData?.id) return storedUserData.id;
-
-    return UserIdManager.getCurrentUserId() || 3;
-  };
-
-  const getCurrentUserName = () => {
-    if (sessionUser?.name) return sessionUser.name;
-
-    const storedUserData = UserIdManager.getStoredUserData();
-    if (storedUserData?.name) return storedUserData.name;
-
-    return "Étudiant";
-  };
-
-  const getCurrentUserEmail = () => {
-    if (sessionUser?.email) return sessionUser.email;
-
-    const storedUserData = UserIdManager.getStoredUserData();
-    if (storedUserData?.email) return storedUserData.email;
-
-    return "etudiant@example.com";
-  };
-
-  const defaultUser: UserProfile = {
-    id: getCurrentUserId().toString(),
-    name: getCurrentUserName(),
-    email: getCurrentUserEmail(),
-    phone: "+229 00 00 00 00",
-    bio: "Passionné par l'apprentissage et le développement personnel",
-    location: "Cotonou, Bénin",
-    website: "https://monportfolio.com",
-    avatar: sessionUser?.image || "/temoignage.png",
-    role: "student",
-    subscription: "FREE",
-    level: 5,
-    joinDate: "15 janvier 2024",
-    coursesCompleted: 12,
-    certificates: 8,
-    averageRating: 4.7,
-    completionRate: 85,
-    learningTime: 156,
-  };
+      return {
+        id: String(
+          sessionUser?.id || storedUserData?.id || UserIdManager.getCurrentUserId() || 3
+        ),
+        name: sessionUser?.name || storedUserData?.name || "Étudiant",
+        email:
+          sessionUser?.email || storedUserData?.email || "etudiant@example.com",
+        phone: "+229 00 00 00 00",
+        bio: "Passionné par l'apprentissage et le développement personnel",
+        location: "Cotonou, Bénin",
+        website: "https://monportfolio.com",
+        avatar: sessionUser?.image || "/temoignage.png",
+        role: "student",
+        subscription: "FREE",
+        level: 5,
+        joinDate: "15 janvier 2024",
+        coursesCompleted: 12,
+        certificates: 8,
+        averageRating: 4.7,
+        completionRate: 85,
+        learningTime: 156,
+      };
+    },
+    [sessionUser?.email, sessionUser?.id, sessionUser?.image, sessionUser?.name]
+  );
 
   // Charger les données utilisateur
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        // Utiliser directement les données par défaut pour éviter les erreurs 401
         setUser(defaultUser);
-        setIsLoading(false);
-
-        // Optionnel: essayer de charger depuis l'API en arrière-plan
         try {
+          const profile = await studentProfileApi.getProfile();
+          setUser({
+            ...defaultUser,
+            ...profile,
+            id: String(profile.id || defaultUser.id),
+            role: profile.role || defaultUser.role,
+            subscription: profile.subscription || defaultUser.subscription,
+            level: Number(profile.level || defaultUser.level),
+            coursesCompleted: Number(
+              profile.coursesCompleted || defaultUser.coursesCompleted
+            ),
+            certificates: Number(
+              profile.certificates || defaultUser.certificates
+            ),
+            averageRating: Number(
+              profile.averageRating || defaultUser.averageRating
+            ),
+            completionRate: Number(
+              profile.completionRate || defaultUser.completionRate
+            ), 
+            learningTime: Number(
+              profile.learningTime || defaultUser.learningTime
+            ),
+          });
+        } catch {
           const storedUserData = UserIdManager.getStoredUserData();
 
           if (storedUserData && storedUserData.role === "student") {
-            const userProfile: UserProfile = {
+            setUser((prev) => ({
+              ...(prev || defaultUser),
               id: storedUserData.id.toString(),
               name: storedUserData.name,
               email: storedUserData.email,
-              phone: "+229 00 00 00 00",
-              bio: "Passionné par l'apprentissage et le développement personnel",
-              location: "Cotonou, Bénin",
-              website: "https://monportfolio.com",
               avatar: storedUserData.avatar || "/temoignage.png",
-              role: "student",
-              subscription: "FREE",
-              level: 5,
-              joinDate: "15 janvier 2024",
-              coursesCompleted: 12,
-              certificates: 8,
-              averageRating: 4.7,
-              completionRate: 85,
-              learningTime: 156,
-            };
-
-            setUser(userProfile);
+            }));
           }
-        } catch {
-          console.log("API non disponible, utilisation des données par défaut");
         }
       } catch (error) {
         console.error("Erreur lors du chargement du profil:", error);
@@ -194,7 +174,7 @@ export default function ProfilePage() {
         };
 
         UserIdManager.storeAuthData({
-          token: localStorage.getItem("token") || "mock-token",
+          token: localStorage.getItem("token") || "",
           user: updatedUserData,
         });
       }
@@ -211,21 +191,14 @@ export default function ProfilePage() {
         message: "Profil mis à jour avec succès !",
       });
 
-      // Optionnel: essayer de sauvegarder sur l'API en arrière-plan
       try {
-        const response = await fetch("/api/user/profile", {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${sessionUser?.accessToken || localStorage.getItem("token") || ""}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(editedUser),
-        });
-
-        if (response.ok) {
-          const apiUpdatedUser = await response.json();
-          setUser(apiUpdatedUser);
-        }
+        const apiUpdatedUser =
+          await studentProfileApi.updateProfile(editedUser);
+        setUser((prev) => ({
+          ...(prev || defaultUser),
+          ...apiUpdatedUser,
+          id: String(apiUpdatedUser.id || (prev || defaultUser).id),
+        }));
       } catch {
         console.log("Sauvegarde API échouée, données locales conservées");
       }
@@ -250,35 +223,14 @@ export default function ProfilePage() {
     setEditedUser((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAvatarUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      const token =
-        sessionUser?.accessToken || localStorage.getItem("token") || "";
       const formData = new FormData();
       formData.append("avatar", file);
-
-      const response = await fetch("/api/user/upload-avatar", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        setSaveMessage({
-          type: "error",
-          message: "Impossible de mettre à jour l'avatar",
-        });
-        return;
-      }
-
-      const payload = await response.json();
+      const payload = await studentProfileApi.uploadAvatar(formData);
       setUser((prev) =>
         prev ? { ...prev, avatar: payload.avatarUrl || prev.avatar } : prev
       );
@@ -296,7 +248,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-[320px] items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#004D40]"></div>
       </div>
     );
@@ -305,14 +257,14 @@ export default function ProfilePage() {
   const currentUser = user || defaultUser;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="w-full min-w-0 max-w-none space-y-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-4xl mx-auto"
+        className="block w-full min-w-0 max-w-none space-y-6"
       >
         {/* Header avec bouton d'édition */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 flex justify-between items-center">
+        <div className="bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <h1 className="text-xl font-bold text-[#002B24]">Mon Profil</h1>
           {!isEditing ? (
             <button
@@ -323,7 +275,7 @@ export default function ProfilePage() {
               Modifier
             </button>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleCancel}
                 className="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-gray-300 transition-colors"
@@ -362,9 +314,9 @@ export default function ProfilePage() {
           </motion.div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
           {/* Colonne principale - Informations du profil */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 min-w-0">
             {/* Informations personnelles */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h2 className="text-lg font-bold text-[#002B24] mb-6 flex items-center gap-3">
@@ -520,17 +472,19 @@ export default function ProfilePage() {
           </div>
 
           {/* Colonne latérale - Avatar et progression */}
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             {/* Avatar */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h2 className="text-lg font-bold text-[#002B24] mb-6">
                 Photo de profil
               </h2>
               <div className="relative w-32 h-32 mx-auto mb-4">
-                <img
-                  src={currentUser.avatar}
+                <Image
+                  src={currentUser.avatar || "/temoignage.png"}
                   alt="Profile"
-                  className="w-full h-full rounded-full object-cover border-4 border-gray-50"
+                  fill
+                  sizes="128px"
+                  className="rounded-full object-cover border-4 border-gray-50"
                 />
               </div>
               <input
@@ -605,7 +559,9 @@ export default function ProfilePage() {
                 </div>
               </div>
               <button
-                onClick={() => router.push(`/${locale}/dashboard/creator/become`)}
+                onClick={() =>
+                  window.location.assign(`/${locale}/dashboard/creator/become`)
+                }
                 className="w-full bg-white/20 backdrop-blur text-white px-6 py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white/30 transition-colors border border-white/30 font-medium"
               >
                 <Sparkles className="w-5 h-5" />

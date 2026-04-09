@@ -72,132 +72,89 @@ export default function LiveTrainingSystem() {
   });
 
   useEffect(() => {
-    // Données mockées
-    const mockWebinars: Webinar[] = [
-      {
-        id: 1,
-        title: "Introduction au Revenue Management",
-        description: "Apprenez les bases du revenue management hôtelier",
-        date: "2024-03-25",
-        time: "14:00",
-        duration: "2 heures",
-        type: "live",
-        maxParticipants: 100,
-        currentParticipants: 67,
-        creatorId: 1,
-        creatorName: "Marie Dubois",
-        location: "online",
-        meetingLink: "https://meet.jit.si/revenue-management-101",
-        status: "live",
-      },
-      {
-        id: 2,
-        title: "Techniques de Service Haut de Gamme",
-        description:
-          "Maîtrisez les techniques de service dans l'hôtellerie de luxe",
-        date: "2024-03-28",
-        time: "16:00",
-        duration: "1.5 heures",
-        type: "upcoming",
-        maxParticipants: 50,
-        currentParticipants: 23,
-        creatorId: 2,
-        creatorName: "Thomas Bernard",
-        location: "onsite",
-        address: "Hôtel Plaza Athénée, Paris",
-        status: "scheduled",
-      },
-      {
-        id: 3,
-        title: "Marketing Digital pour l'Hôtellerie",
-        description:
-          "Stratégies marketing digitales appliquées au secteur hôtelier",
-        date: "2024-03-22",
-        time: "10:00",
-        duration: "3 heures",
-        type: "completed",
-        maxParticipants: 200,
-        currentParticipants: 145,
-        creatorId: 3,
-        creatorName: "Sophie Laurent",
-        location: "online",
-        status: "ended",
-      },
-    ];
-
-    const mockChatMessages: ChatMessage[] = [
-      {
-        id: 1,
-        userId: 1,
-        userName: "Marie Dubois",
-        message:
-          "Bonjour à tous ! Bienvenue dans ce webinaire sur le revenue management.",
-        timestamp: "14:00",
-        isCreator: true,
-      },
-      {
-        id: 2,
-        userId: 2,
-        userName: "Alexandre Martin",
-        message: "Bonjour ! Très intéressant ce sujet.",
-        timestamp: "14:02",
-        isCreator: false,
-      },
-      {
-        id: 3,
-        userId: 3,
-        userName: "Sophie Laurent",
-        message: "Pouvez-vous expliquer les indicateurs clés du RevPAR ?",
-        timestamp: "14:05",
-        isCreator: false,
-      },
-      {
-        id: 4,
-        userId: 1,
-        userName: "Marie Dubois",
-        message:
-          "Excellente question ! Le RevPAR (Revenue Per Available Room) est calculé comme suit : (Total Room Revenue / Available Rooms) x Occupancy Rate. C'est l'un des KPI les plus importants en hôtellerie.",
-        timestamp: "14:08",
-        isCreator: true,
-      },
-      {
-        id: 5,
-        userId: 4,
-        userName: "Thomas Bernard",
-        message: "Merci pour l'explication détaillée !",
-        timestamp: "14:10",
-        isCreator: false,
-      },
-    ];
-
-    setTimeout(() => {
-      setWebinars(mockWebinars);
-      setChatMessages(mockChatMessages);
-      setLoading(false);
-    }, 1000);
-  }, []);
-
-  const handleCreateWebinar = () => {
-    const newWebinar: Webinar = {
-      id: webinars.length + 1,
-      title: formData.title,
-      description: formData.description,
-      date: formData.date,
-      time: formData.time,
-      duration: formData.duration,
-      type: "upcoming",
-      maxParticipants: formData.maxParticipants,
-      currentParticipants: 0,
-      creatorId: 1,
-      creatorName: "Current User",
-      location: formData.type,
-      address: formData.location,
-      status: "scheduled",
+    const load = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/creator/webinars", {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          setWebinars(payload || []);
+        } else {
+          console.warn(
+            "LiveTrainingSystem: failed to load webinars",
+            res.status
+          );
+        }
+      } catch (err) {
+        console.error("LiveTrainingSystem load error", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setWebinars([...webinars, newWebinar]);
-    setShowCreateModal(false);
-    resetForm();
+    load();
+  }, []);
+
+  // Load messages for the selected webinar when opened
+  useEffect(() => {
+    if (!selectedWebinar) return;
+    const loadMessages = async () => {
+      try {
+        const res = await fetch(
+          `/api/creator/webinars/${selectedWebinar.id}/messages`,
+          { credentials: "include" }
+        );
+        if (res.ok) {
+          const msgs = await res.json();
+          setChatMessages(msgs || []);
+        } else {
+          console.warn(
+            "LiveTrainingSystem: failed to load messages",
+            res.status
+          );
+        }
+      } catch (err) {
+        console.error("LiveTrainingSystem load messages error", err);
+      }
+    };
+
+    loadMessages();
+  }, [selectedWebinar]);
+
+  const handleCreateWebinar = () => {
+    (async () => {
+      try {
+        const res = await fetch("/api/creator/webinars", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: formData.title,
+            description: formData.description,
+            date: formData.date,
+            time: formData.time,
+            duration: formData.duration,
+            type: "online",
+            maxParticipants: formData.maxParticipants,
+            location: formData.location,
+          }),
+        });
+        if (res.ok) {
+          const created = await res.json();
+          setWebinars((prev) => [created, ...prev]);
+          setShowCreateModal(false);
+          resetForm();
+        } else {
+          console.error("Failed to create webinar", await res.text());
+          alert("Erreur lors de la création du webinaire");
+        }
+      } catch (err) {
+        console.error("Create webinar error", err);
+        alert("Erreur réseau lors de la création");
+      }
+    })();
   };
 
   const handleJoinWebinar = (webinar: Webinar) => {
@@ -207,23 +164,60 @@ export default function LiveTrainingSystem() {
     }
   };
 
+  const handleDeleteWebinar = async (id: number) => {
+    if (!confirm("Supprimer ce webinaire ?")) return;
+    try {
+      const res = await fetch(`/api/creator/webinars/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setWebinars((prev) => prev.filter((w) => w.id !== id));
+      } else {
+        console.error("Delete webinar failed", await res.text());
+        alert("Erreur lors de la suppression");
+      }
+    } catch (err) {
+      console.error("Delete webinar error", err);
+      alert("Erreur réseau lors de la suppression");
+    }
+  };
+
   const handleSendMessage = () => {
     if (!messageInput.trim()) return;
 
-    const newMessage: ChatMessage = {
-      id: chatMessages.length + 1,
-      userId: 999, // Current user ID
+    if (!selectedWebinar) return;
+
+    const payload = {
+      userId: 999,
       userName: "Vous",
-      message: messageInput,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      isCreator: false,
+      message: messageInput.trim(),
     };
 
-    setChatMessages([...chatMessages, newMessage]);
-    setMessageInput("");
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/creator/webinars/${selectedWebinar.id}/messages`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
+        if (res.ok || res.status === 201) {
+          const created = await res.json();
+          setChatMessages((prev) => [...prev, created]);
+          setMessageInput("");
+        } else {
+          console.error("Failed to send message", await res.text());
+          alert("Impossible d'envoyer le message");
+        }
+      } catch (err) {
+        console.error("Send message error", err);
+        alert("Erreur réseau lors de l'envoi");
+      }
+    })();
   };
 
   const resetForm = () => {
@@ -424,7 +418,10 @@ export default function LiveTrainingSystem() {
                 <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
                   <Edit className="w-4 h-4" />
                 </button>
-                <button className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                <button
+                  onClick={() => handleDeleteWebinar(webinar.id)}
+                  className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>

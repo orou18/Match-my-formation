@@ -13,7 +13,7 @@ export default function WelcomeHeader() {
         <div className="relative">
           <div className="w-24 h-24 rounded-full border-4 border-primary/20 p-1">
             <Image
-              src="/avatar-marie.jpg" // Assure-toi que le chemin est correct
+              src="/avatars/creator1.jpg" // Avatar existant
               alt="Marie Kouassi"
               width={96}
               height={96}
