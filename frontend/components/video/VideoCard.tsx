@@ -26,6 +26,21 @@ interface VideoCardProps {
 }
 
 export default function VideoCard({ video, locale }: VideoCardProps) {
+  // Vérification de sécurité pour éviter les erreurs si video est undefined
+  if (!video) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="aspect-video bg-gray-200 flex items-center justify-center">
+          <p className="text-gray-500">Vidéo non disponible</p>
+        </div>
+        <div className="p-4">
+          <h3 className="font-bold text-gray-900 mb-2">Titre non disponible</h3>
+          <p className="text-gray-600 text-sm">Description non disponible</p>
+        </div>
+      </div>
+    );
+  }
+
   const params = useParams();
   const currentLocale = locale || params.locale || "fr";
 
@@ -101,7 +116,7 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
                 className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full shadow-md"
               >
                 <span>💎</span>
-                {video.price}€
+                {video.price || 0}€
               </motion.span>
             )}
           </div>
@@ -115,7 +130,7 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
               className="inline-flex items-center gap-1 px-2 py-1 bg-black/80 backdrop-blur-sm text-white text-xs font-medium rounded-md border border-white/20"
             >
               <Clock className="w-3 h-3" />
-              {video.duration}
+              {video.duration || "00:00"}
             </motion.span>
           </div>
 
@@ -159,7 +174,7 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
 
         {/* Description */}
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-          {video.description}
+          {video.description || "Aucune description disponible"}
         </p>
 
         {/* Informations du créateur */}
@@ -183,16 +198,16 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
               <Eye className="w-3 h-3" />
-              <span>{video.views.toLocaleString()}</span>
+              <span>{(video.views || 0).toLocaleString()}</span>
             </div>
             <div className="flex items-center gap-1">
               <Heart className="w-3 h-3" />
-              <span>{video.likes.toLocaleString()}</span>
+              <span>{(video.likes || 0).toLocaleString()}</span>
             </div>
           </div>
           <div className="flex items-center gap-1">
             <Star className="w-3 h-3 text-yellow-500" />
-            <span>{video.rating}</span>
+            <span>{video.rating || 0}</span>
           </div>
         </div>
 

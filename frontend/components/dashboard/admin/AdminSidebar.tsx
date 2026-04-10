@@ -32,7 +32,7 @@ export default function AdminSidebar() {
   const { locale } = useParams();
   const { data: session, status } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<string[]>(["users"]);
+  const [expandedSections, setExpandedSections] = useState<string[]>(["users", "Contenu"]);
 
   const currentLocale = locale || "fr";
 
@@ -110,6 +110,20 @@ export default function AdminSidebar() {
     {
       title: "Contenu",
       items: [
+        {
+          name: "Créer une vidéo",
+          href: `/${currentLocale}/dashboard/admin/videos/create`,
+          icon: Plus,
+          badge: "NOUVEAU",
+          color: "from-green-500 to-green-600",
+        },
+        {
+          name: "Mes vidéos",
+          href: `/${currentLocale}/dashboard/admin/videos`,
+          icon: Video,
+          badge: null,
+          color: "from-blue-500 to-blue-600",
+        },
         {
           name: "Publicités",
           href: `/${currentLocale}/dashboard/admin/ads`,
@@ -235,6 +249,13 @@ export default function AdminSidebar() {
                   <Plus size={16} className="mx-auto mb-1" />
                   Créateur
                 </button>
+                <Link
+                  href={`/${currentLocale}/dashboard/admin/videos/create`}
+                  className="bg-white/20 backdrop-blur rounded-lg p-2 text-xs hover:bg-white/30 transition-colors col-span-2 text-center"
+                >
+                  <Video size={16} className="mx-auto mb-1" />
+                  Créer une vidéo
+                </Link>
               </div>
             </div>
           </div>

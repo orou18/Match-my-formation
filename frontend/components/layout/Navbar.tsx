@@ -25,9 +25,26 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
+    // Gérer le body overflow seulement si pas déjà géré par un autre composant
+    if (open) {
+      const currentOverflow = document.body.style.overflow;
+      if (currentOverflow !== 'hidden') {
+        document.body.style.overflow = 'hidden';
+        // Stocker l'état précédent pour le restaurer proprement
+        (document.body as any).previousOverflow = currentOverflow;
+      }
+    } else {
+      // Restaurer seulement si on a été celui qui a mis hidden
+      const previousOverflow = (document.body as any).previousOverflow;
+      document.body.style.overflow = previousOverflow || '';
+      delete (document.body as any).previousOverflow;
+    }
+    
     return () => {
-      document.body.style.overflow = "";
+      // Nettoyer en cas de démontage
+      const previousOverflow = (document.body as any).previousOverflow;
+      document.body.style.overflow = previousOverflow || '';
+      delete (document.body as any).previousOverflow;
     };
   }, [open]);
 
@@ -52,8 +69,8 @@ export default function Navbar() {
           <Image
             src="/matchmyformation_footer.png"
             alt="Logo"
-            width={192}
-            height={48}
+            width={96}
+            height={38}
             className={`object-contain transition-all ${scrolled || open ? "brightness-0" : ""}`}
           />
         </Link>

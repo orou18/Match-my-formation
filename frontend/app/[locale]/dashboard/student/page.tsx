@@ -7,8 +7,6 @@ import CategoryFilters from "@/components/dashboard/CategoryFilters";
 import FeaturedGrid from "@/components/dashboard/FeaturedGrid";
 import VideoCard from "@/components/video/VideoCard";
 import PremiumBanner from "@/components/dashboard/PremiumBanner";
-import ProfileSidebar from "@/components/dashboard/student/profile/ProfileSidebar";
-import UserIdManager from "@/lib/user-id-manager";
 import { useRouter, useParams } from "next/navigation";
 import {
   Star,
@@ -77,59 +75,38 @@ export default function StudentDashboard() {
         setLoading(true);
         setError(null);
         
-        // Récupérer directement les données depuis UserIdManager
-        const userData = UserIdManager.getStoredUserData();
-        
-        if (!userData) {
-          throw new Error("Aucune donnée d'authentification trouvée");
-        }
-
-        // Utiliser directement les données utilisateur
+        // Utiliser des données utilisateur par défaut pour le dashboard student
         const user = {
-          id: userData.id,
-          name: userData.name,
-          email: userData.email,
-          role: userData.role as 'student' | 'creator' | 'admin',
+          id: 1,
+          name: "Étudiant",
+          email: "student@example.com",
+          role: "student" as const,
           created_at: new Date().toISOString(),
-          avatar: userData.avatar || null,
+          avatar: null,
         };
 
         setUser(user);
 
-        // Charger les vidéos publiques pour la section pépites
+        // Charger les vidéos publiques (incluant les vidéos admin) pour le catalogue des formations
         const publicVideosResponse = await fetch("/api/videos/public", {
           cache: "no-store",
         });
 
-        let publicVideosList: any[] = [];
+        let allCourses: any[] = [];
         if (publicVideosResponse.ok) {
           const publicVideosPayload = await publicVideosResponse.json();
-          publicVideosList = Array.isArray(publicVideosPayload)
-            ? publicVideosPayload
-            : Array.isArray(publicVideosPayload?.videos)
-              ? publicVideosPayload.videos
+          // L'API videos/public retourne déjà les vidéos normalisées avec les vidéos admin incluses
+          allCourses = Array.isArray(publicVideosPayload?.data) 
+            ? publicVideosPayload.data 
+            : Array.isArray(publicVideosPayload)
+              ? publicVideosPayload
               : [];
         }
-        setPublicVideos(publicVideosList);
 
-        const videosResponse = await fetch("/api/student-videos", {
-          cache: "no-store",
-        });
-
-        if (videosResponse.ok) {
-          const videosPayload = await videosResponse.json();
-          const nextCourses = Array.isArray(videosPayload)
-            ? videosPayload
-            : Array.isArray(videosPayload?.videos)
-              ? videosPayload.videos
-              : [];
-
-          setCourses(nextCourses);
-          setTotalPages(1);
-        } else {
-          setCourses([]);
-          setTotalPages(1);
-        }
+        // Utiliser les vidéos publiques comme cours pour le catalogue
+        setCourses(allCourses);
+        setPublicVideos(allCourses.slice(0, 6)); // Limiter les vidéos pour la section pépites
+        setTotalPages(1);
 
         // Vérifier si c'est un nouvel utilisateur (créé il y a moins de 24h)
         const createdAt = new Date(user.created_at);
@@ -154,20 +131,21 @@ export default function StudentDashboard() {
     // Exposer une fonction de rechargement global
     const refreshStudentVideos = async () => {
       try {
-        const videosResponse = await fetch("/api/student-videos", {
+        // Recharger les vidéos publiques (incluant les vidéos admin)
+        const publicVideosResponse = await fetch("/api/videos/public", {
           cache: "no-store",
         });
 
-        if (videosResponse.ok) {
-          const videosPayload = await videosResponse.json();
-          const nextCourses = Array.isArray(videosPayload)
-            ? videosPayload
-            : Array.isArray(videosPayload?.videos)
-              ? videosPayload.videos
+        if (publicVideosResponse.ok) {
+          const publicVideosPayload = await publicVideosResponse.json();
+          const allCourses = Array.isArray(publicVideosPayload?.data) 
+            ? publicVideosPayload.data 
+            : Array.isArray(publicVideosPayload)
+              ? publicVideosPayload
               : [];
 
-          setCourses(nextCourses);
-          setTotalPages(1);
+          setCourses(allCourses);
+          setPublicVideos(allCourses.slice(0, 6));
         }
       } catch (error) {
         console.error("Erreur lors du rechargement des vidéos étudiant:", error);
@@ -294,8 +272,7 @@ export default function StudentDashboard() {
           )}
 <br />
 <br />
-          <div>
-          <main className="container mx-auto px-4 md:px-8 py-10">
+          <div className="container mx-auto px-4 md:px-8 py-10">
             <FeaturedGrid />
 
             <section className="mt-20">
@@ -414,11 +391,7 @@ export default function StudentDashboard() {
                 </div>
               </div>
 
-              <div>
-              <div
-                ref={scrollRef}
-                className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
-              >
+              <div className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4">
                 {publicVideos.slice(0, 6).map((video, index) => (
                   <motion.div
                     key={video.id}
@@ -466,47 +439,28 @@ export default function StudentDashboard() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
                           <Star size={12} className="text-yellow-400 fill-current" />
-                          <span className="text-white text-xs">4.8</span>
+                          <span className="text-white text-xs">{video.rating || 4.8}</span>
                         </div>
                         <div className="text-gray-400 text-xs">
-                          {(video.views || 0).toLocaleString()} vues
+                          {video.views || 0} vues
                         </div>
                       </div>
-                      <div className="mt-2 flex items-center gap-2">
-                        <div className="px-2 py-1 bg-primary/20 text-primary text-xs rounded-full">
-                          {video.category || 'Expertise'}
+                      <div className="flex items-center gap-2 mt-3">
+                        <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
+                          <User size={12} className="text-gray-300" />
                         </div>
-                        {video.duration && (
-                          <div className="text-gray-400 text-xs">
-                            {video.duration}
-                          </div>
-                        )}
+                        <span className="text-gray-300 text-xs truncate">
+                          {video.creator?.name || "Expert"}
+                        </span>
                       </div>
                     </div>
                   </motion.div>
                 ))}
-                
-                {publicVideos.length === 0 && (
-                  <div className="flex-none w-[280px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center">
-                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Video size={20} className="text-primary" />
-                    </div>
-                    <h3 className="font-bold text-white text-sm mb-2">
-                      Aucune vidéo disponible
-                    </h3>
-                    <p className="text-gray-400 text-xs">
-                      Les vidéos publiques de nos experts apparaîtront ici
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
-            </div>
-          </section>
-        </main>
+          </section>          
+        </div>
       </div>
     </div>
-    <PremiumBanner />
-  </div>
   );
 }

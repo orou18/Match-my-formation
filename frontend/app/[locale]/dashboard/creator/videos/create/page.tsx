@@ -739,6 +739,7 @@ export default function CreateVideoPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-2 sm:p-4"
+              style={{ touchAction: 'pan-y' }}
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -799,10 +800,12 @@ export default function CreateVideoPage() {
 
                   {/* Form Content */}
                   <div
-                    className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
+                    className="flex-1 overflow-y-auto overflow-x-hidden"
                     style={{
                       scrollbarWidth: "thin",
                       scrollbarColor: "#93c5fd #f3f4f6",
+                      touchAction: 'pan-y',
+                      overscrollBehavior: 'contain'
                     }}
                   >
                     <style jsx>{`

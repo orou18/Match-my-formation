@@ -137,13 +137,13 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
       badge: null,
       color: "from-purple-500 to-purple-600",
     },
-    {
-      name: "Analytiques",
-      icon: BarChart3,
-      href: `/${locale}/dashboard/creator/stats`,
-      badge: null,
-      color: "from-orange-500 to-orange-600",
-    },
+    // {
+    //   name: "Analytiques",
+    //   icon: BarChart3,
+    //   href: `/${locale}/dashboard/creator/stats`,
+    //   badge: null,
+    //   color: "from-orange-500 to-orange-600",
+    // },
     {
       name: "Audience",
       icon: Users,
@@ -355,14 +355,14 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
                     ? "bg-gradient-to-r " +
                     item.color +
                     " text-white shadow-lg shadow-blue-500/25"
-                    : "text-gray-700 hover:bg-gray-100/80 hover:shadow-md hover:-translate-y-0.5"
+                    : "text-gray-700 hover:bg-primary/10 hover:shadow-md hover:-translate-y-0.5 hover:text-primary"
                   }`}
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div
                     className={`flex-shrink-0 p-1.5 rounded-lg ${isActiveRoute(item.href)
                         ? "bg-white/20"
-                        : "bg-gray-100/80 group-hover:bg-gray-200/80"
+                        : "bg-gray-100/80 group-hover:bg-primary/20"
                       }`}
                   >
                     <item.icon
@@ -377,7 +377,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
                   <span
                     className={`font-medium truncate ${isActiveRoute(item.href)
                         ? "text-white"
-                        : "text-gray-700 group-hover:text-gray-900"
+                        : "text-gray-700 group-hover:text-primary"
                       }`}
                   >
                     {item.name}
@@ -388,10 +388,10 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
                     className={`relative z-10 px-2 py-0.5 text-xs font-medium rounded-full transition-all duration-200 ${item.badge === "PRO"
                         ? isActiveRoute(item.href)
                           ? "bg-white/20 text-white"
-                          : "bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-sm"
+                          : "bg-gray-100/80 text-gray-700 group-hover:bg-primary/20 group-hover:text-primary"
                         : isActiveRoute(item.href)
                           ? "bg-white/20 text-white"
-                          : "bg-gray-100/80 text-gray-700 group-hover:bg-gray-200/80"
+                          : "bg-gray-100/80 text-gray-700 group-hover:bg-primary/20 group-hover:text-primary"
                       }`}
                   >
                     {item.badge}
@@ -477,7 +477,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
         </nav>
 
         {/* Page Content */}
-        <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100">
+        <main className="flex-1 min-w-0 overflow-x-hidden bg-gradient-to-br from-gray-50 to-gray-100" style={{ touchAction: 'pan-y', overscrollBehavior: 'contain' }}>
           <div className="p-4 lg:p-6">{children}</div>
         </main>
       </div>

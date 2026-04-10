@@ -234,7 +234,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            <nav className="flex-1 p-4 space-y-2" style={{ overflowY: 'auto', touchAction: 'pan-y', overscrollBehavior: 'contain' }}>
               <div className="space-y-1">
                 {navigationItems.map((item) => (
                   <Link

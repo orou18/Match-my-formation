@@ -1,0 +1,88 @@
+[
+  {
+    "id": 101,
+    "title": "Python pour les débutants",
+    "description": "Une introduction complète à Python pour ceux qui débutent en programmation.",
+    "category": "development",
+    "tags": ["python", "programmation", "débutant", "coding"],
+    "learning_objectives": [
+      "Installer et configurer Python",
+      "Comprendre les types de données de base",
+      "Écrire des fonctions simples"
+    ],
+    "visibility": "public",
+    "duration": "25:15",
+    "allow_comments": true,
+    "publish_immediately": true,
+    "is_admin_video": false,
+    "is_published": true,
+    "creator": {
+      "id": 1,
+      "name": "Jean Dupont",
+      "email": "jean.dupont@email.com",
+      "avatar": "/creator-avatar-1.jpg"
+    },
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+    "thumbnail": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg",
+    "generatedThumbnails": [],
+    "selectedThumbnail": null,
+    "students_count": 89,
+    "views": 567,
+    "likes": 45,
+    "comments": [],
+    "resources": [
+      {
+        "id": "101",
+        "type": "pdf",
+        "title": "Exercices Python",
+        "description": "Série d'exercices pour pratiquer",
+        "url": "/resources/python-exercises.pdf"
+      }
+    ],
+    "created_at": "2024-01-12T16:45:00.000Z",
+    "updated_at": "2024-01-12T16:45:00.000Z"
+  },
+  {
+    "id": 102,
+    "title": "Photographie Portrait",
+    "description": "Techniques professionnelles pour réaliser des portraits photographiques exceptionnels.",
+    "category": "photography",
+    "tags": ["photographie", "portrait", "lumière", "technique"],
+    "learning_objectives": [
+      "Maîtriser l'éclairage en studio",
+      "Composer des portraits efficaces",
+      "Traiter les photos en post-production"
+    ],
+    "visibility": "public",
+    "duration": "32:40",
+    "allow_comments": true,
+    "publish_immediately": true,
+    "is_admin_video": false,
+    "is_published": true,
+    "creator": {
+      "id": 2,
+      "name": "Marie Martin",
+      "email": "marie.martin@email.com",
+      "avatar": "/creator-avatar-2.jpg"
+    },
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+    "thumbnail": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg",
+    "generatedThumbnails": [],
+    "selectedThumbnail": null,
+    "students_count": 124,
+    "views": 890,
+    "likes": 78,
+    "comments": [],
+    "resources": [
+      {
+        "id": "102",
+        "type": "link",
+        "title": "Matériel Photographique",
+        "description": "Guide du matériel recommandé",
+        "url": "https://example.com/photo-gear"
+      }
+    ],
+    "created_at": "2024-01-11T11:30:00.000Z",
+    "updated_at": "2024-01-11T11:30:00.000Z"
+  }
+]

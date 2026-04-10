@@ -141,19 +141,27 @@ export default function AddEmployeePage() {
     setLoading(true);
 
     try {
-      console.log("📤 Envoi à l'API...");
+      console.log("Tentative de création d'employé...");
+      console.log("Données du formulaire:", formData);
 
-      const data = await creatorDashboardApi.createEmployee<
-        EmployeeCreationResponse
-      >({
-        name: formData.name,
-        email: formData.email,
-        department: formData.department,
-        domain: formData.department,
+      const response = await fetch("/api/creator/employees", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          department: formData.department,
+          position: formData.position,
+          domain: formData.department,
+        }),
       });
-      console.log("📋 Données API:", data);
 
-      if (data.success) {
+      const data = await response.json();
+      console.log("Réponse de l'API:", data);
+
+      if (response.ok && data.success) {
         const credentials = (data as CreateEmployeeApiResponse)
           .login_credentials;
         const successMessage = credentials

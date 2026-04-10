@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import type { BrandingSettings as ApiBrandingSettings } from "@/types/branding";
+import { useBrandingReload } from "@/hooks/useBrandingReload";
 
 interface BrandingSettings {
   primaryColor: string;
@@ -42,6 +43,9 @@ export default function BrandingPage() {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
+  
+  // Hook pour gérer le rechargement du branding
+  const { isReloading, countdown, applyBrandingStyles } = useBrandingReload();
 
   const [branding, setBranding] = useState<BrandingSettings>({
     primaryColor: "#007A7A",
@@ -214,13 +218,20 @@ export default function BrandingPage() {
       });
       const payload = await response.json();
       const settings = payload.settings || payload;
+      
+      // Appliquer immédiatement les styles via le hook
+      applyBrandingStyles(settings);
+      
+      // Émettre l'événement pour mettre à jour le branding (déclenche le rechargement)
       window.dispatchEvent(
         new CustomEvent("brandingUpdated", { detail: settings })
       );
-      setMessage(payload.message || "Marque blanche sauvegardée");
-    } catch {
-      setMessage("Impossible de sauvegarder la marque blanche");
-    } finally {
+      
+      setMessage("Personnalisation sauvegardée ! Rechargement du dashboard...");
+      
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      setMessage("Impossible de sauvegarder la personnalisation");
       setIsSaving(false);
     }
   };
@@ -294,8 +305,32 @@ export default function BrandingPage() {
       </motion.div>
 
       {message ? (
-        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
-          {message}
+        <div className={`rounded-xl border px-4 py-3 text-sm ${
+          isReloading 
+            ? 'border-blue-200 bg-blue-50 text-blue-700' 
+            : 'border-gray-200 bg-white text-gray-700'
+        }`}>
+          <div className="flex items-center justify-between">
+            <span>{message}</span>
+            {isReloading && countdown !== null && (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="font-mono text-xs bg-blue-100 px-2 py-1 rounded">
+                  {countdown}s
+                </span>
+              </div>
+            )}
+          </div>
+          {isReloading && (
+            <div className="mt-2">
+              <div className="w-full bg-blue-200 rounded-full h-1">
+                <div 
+                  className="bg-blue-600 h-1 rounded-full transition-all duration-1000 ease-linear"
+                  style={{ width: `${countdown !== null ? ((2 - countdown) / 2) * 100 : 0}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
 

@@ -122,10 +122,20 @@ export default function EmployeesPage() {
     }
 
     try {
-      await creatorDashboardApi.deleteEmployee(employeeId);
-      success("Employé supprimé", "L'employé a été supprimé avec succès");
-      loadEmployees();
+      const response = await fetch(`/api/creator/employees?id=${employeeId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        success("Employé supprimé", "L'employé a été supprimé avec succès");
+        loadEmployees();
+      } else {
+        error("Erreur", data.message || "Impossible de supprimer l'employé");
+      }
     } catch (err) {
+      console.error("Delete employee error:", err);
       error("Erreur", "Une erreur technique est survenue");
     }
   };
@@ -401,10 +411,16 @@ export default function EmployeesPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <button className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
+                        <button 
+                          onClick={() => router.push(`/${locale}/dashboard/creator/employees/${employee.id}`)}
+                          className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button 
+                          onClick={() => router.push(`/${locale}/dashboard/creator/employees/${employee.id}/edit`)}
+                          className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button

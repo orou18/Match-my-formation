@@ -65,22 +65,24 @@ async function creatorRequest<T>(
   path: string,
   { query, headers, body, ...init }: CreatorRequestOptions = {}
 ) {
-  const url = new URL(
-    path,
-    typeof window === "undefined" ? "http://localhost" : window.location.origin
-  );
+  // Construire l'URL avec les paramètres de requête
+  let url = path;
+  if (query && Object.keys(query).length > 0) {
+    const searchParams = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        searchParams.set(key, String(value));
+      }
+    });
+    url += `?${searchParams.toString()}`;
+  }
 
-  Object.entries(query || {}).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.set(key, String(value));
-    }
-  });
-
-  const response = await fetch(url.pathname + url.search, {
+  const response = await fetch(url, {
     ...init,
     body,
     headers: buildHeaders(headers, body),
     cache: "no-store",
+    credentials: "include", // Inclure les cookies NextAuth pour l'authentification
   });
 
   return readResponse<T>(response);

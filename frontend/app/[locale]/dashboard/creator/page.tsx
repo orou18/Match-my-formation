@@ -151,7 +151,7 @@ export default function CreatorDashboard() {
       title: "Personnaliser",
       description: "Configurer le dashboard",
       icon: Settings,
-      href: `/${locale}/dashboard/creator/customize`,
+      href: `/${locale}/dashboard/creator/branding`,
       color: "from-indigo-600 to-indigo-700",
       bgColor: "bg-indigo-50",
       borderColor: "border-indigo-200",
