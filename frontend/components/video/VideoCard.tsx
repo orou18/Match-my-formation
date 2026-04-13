@@ -16,7 +16,7 @@ import {
   BookmarkPlus,
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+import SafeImage from "@/components/ui/SafeImage";
 import { useParams } from "next/navigation";
 import type { Video } from "@/types";
 
@@ -76,8 +76,8 @@ export default function VideoCard({ video, locale }: VideoCardProps) {
       <Link href={`/${currentLocale}/video/${video.id}`}>
         {/* Thumbnail avec overlay optimisé */}
         <div className="relative aspect-video bg-gray-200 overflow-hidden rounded-lg group cursor-pointer">
-          <Image
-            src={video.thumbnail}
+          <SafeImage
+            src={video.thumbnail || "/placeholder-video.jpg"}
             alt={video.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"

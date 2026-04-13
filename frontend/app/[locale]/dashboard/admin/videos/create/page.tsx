@@ -5,6 +5,10 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import {
+  buildClientAuthHeaders,
+  ensureServerAuthSession,
+} from "@/lib/api/client-auth";
+import {
   Save,
   X,
   Upload,
@@ -106,7 +110,10 @@ export default function AdminVideoCreate() {
   const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(null);
   const [isGeneratingThumbnails, setIsGeneratingThumbnails] = useState(false);
 
-  const handleInputChange = (field: keyof VideoFormData, value: any) => {
+  const handleInputChange = (
+    field: keyof VideoFormData,
+    value: VideoFormData[keyof VideoFormData]
+  ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
@@ -228,7 +235,11 @@ export default function AdminVideoCreate() {
     }));
   };
 
-  const updateResource = (id: string, field: keyof Resource, value: any) => {
+  const updateResource = (
+    id: string,
+    field: keyof Resource,
+    value: Resource[keyof Resource]
+  ) => {
     setFormData(prev => ({
       ...prev,
       resources: prev.resources.map(resource =>
@@ -267,7 +278,7 @@ export default function AdminVideoCreate() {
       newErrors.video = "La vidéo est obligatoire";
     }
 
-    if (!formData.thumbnail) {
+    if (!formData.thumbnail && !selectedThumbnail) {
       newErrors.thumbnail = "La miniature est obligatoire";
     }
 
@@ -285,6 +296,12 @@ export default function AdminVideoCreate() {
     setIsSubmitting(true);
 
     try {
+      const sessionState = await ensureServerAuthSession();
+      if (!sessionState.ok) {
+        setErrors({ submit: sessionState.message });
+        return;
+      }
+
       const submitData = new FormData();
       
       // Informations de base
@@ -307,6 +324,10 @@ export default function AdminVideoCreate() {
         submitData.append("thumbnail", formData.thumbnail);
       }
 
+      if (selectedThumbnail) {
+        submitData.append("selected_thumbnail", selectedThumbnail);
+      }
+
       // Ressources
       submitData.append("resources", JSON.stringify(formData.resources));
 
@@ -317,6 +338,8 @@ export default function AdminVideoCreate() {
       const response = await fetch("/api/admin/videos", {
         method: "POST",
         body: submitData,
+        credentials: "include",
+        headers: buildClientAuthHeaders(),
       });
 
       if (response.ok) {
@@ -328,7 +351,12 @@ export default function AdminVideoCreate() {
       } else {
         const error = await response.json();
         console.error("Erreur lors de la création:", error);
-        setErrors({ submit: "Erreur lors de la création de la vidéo" });
+        setErrors({
+          submit:
+            error?.message ||
+            error?.error ||
+            "Erreur lors de la création de la vidéo",
+        });
       }
     } catch (error) {
       console.error("Erreur:", error);
@@ -477,7 +505,7 @@ export default function AdminVideoCreate() {
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Target className="w-5 h-5 text-green-500" />
-              Objectifs d'apprentissage
+              Objectifs d&apos;apprentissage
             </h2>
             
             <div className="flex gap-2 mb-3">
@@ -802,7 +830,7 @@ export default function AdminVideoCreate() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <AlertCircle className="w-4 h-4" />
-                <span>Les champs marqués d'un * sont obligatoires</span>
+                <span>Les champs marqués d&apos;un * sont obligatoires</span>
               </div>
               
               <div className="flex gap-3">

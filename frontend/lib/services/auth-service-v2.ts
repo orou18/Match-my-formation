@@ -49,6 +49,10 @@ export class AuthService {
 
       const data = await response.json();
 
+      if (data?.token && typeof window !== "undefined") {
+        localStorage.setItem("auth_token", data.token);
+      }
+
       return {
         success: true,
         token: data.token,
@@ -111,6 +115,10 @@ export class AuthService {
       }
 
       const data = await response.json();
+
+      if (data?.token && typeof window !== "undefined") {
+        localStorage.setItem("auth_token", data.token);
+      }
 
       return {
         success: true,

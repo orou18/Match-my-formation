@@ -21,16 +21,16 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-secondary text-white pt-16 sm:pt-20 pb-10 font-sans border-t border-white/5 overflow-x-hidden">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-16 mb-16 sm:mb-20">
+    <footer className="bg-secondary text-white pt-20 pb-10 font-sans border-t border-white/5">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 mb-20">
           <div className="lg:col-span-4">
             <div className="mb-8">
               <Image
                 src="/matchmyformation_footer.png"
                 alt="Logo"
-                width={100}
-                height={40}
+                width={200}
+                height={60}
                 className="brightness-110"
               />
             </div>
@@ -41,20 +41,20 @@ export default function Footer() {
               diaspora.
             </p>
 
-            <div className="flex w-full max-w-sm flex-col sm:flex-row gap-3">
+            <div className="flex w-full max-w-sm gap-2">
               <input
                 type="email"
                 placeholder="Email"
-                className="flex-1 bg-white text-gray-900 px-6 py-4 rounded-full text-sm outline-none shadow-inner min-w-0"
+                className="flex-1 bg-white text-gray-900 px-6 py-4 rounded-full text-sm outline-none shadow-inner"
               />
 
-              <button className="bg-primary hover:bg-primary-hover text-white px-8 py-4 rounded-full font-bold text-sm transition-all shadow-md active:scale-95 disabled:opacity-50">
+              <button className="bg-primary hover:bg-primary-hover text-white px-8 py-4 rounded-full font-bold text-sm transition-all shadow-md active:scale-95">
                 Souscrire
               </button>
             </div>
           </div>
 
-          <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-4">
+          <div className="lg:col-span-4 grid grid-cols-2 gap-4">
             <div>
               <h3 className="text-xl font-bold mb-8 uppercase tracking-wider text-white/90">
                 Navigation
@@ -85,7 +85,7 @@ export default function Footer() {
           </div>
 
           <div className="lg:col-span-4">
-            <div className="bg-contactCard p-6 sm:p-10 rounded-[28px] sm:rounded-[35px] relative overflow-hidden h-full border border-white/5 shadow-2xl transition-transform hover:shadow-primary/5">
+            <div className="bg-contactCard p-10 rounded-[35px] relative overflow-hidden h-full border border-white/5 shadow-2xl transition-transform hover:shadow-primary/5">
               <div className="absolute right-[-10px] bottom-[-10px] opacity-10 pointer-events-none">
                 <svg width="180" height="180" viewBox="0 0 24 24" fill="white">
                   <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3M4.73 11L12 15L19.27 11L12 7L4.73 11Z" />
@@ -125,7 +125,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-[13px] font-medium tracking-wide">
-          <p className="text-mutedText uppercase text-center md:text-left text-safe">
+          <p className="text-mutedText uppercase">
             Copyright © 2025. MATCHMYFORMATION
           </p>
 

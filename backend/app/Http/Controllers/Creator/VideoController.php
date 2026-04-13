@@ -197,8 +197,8 @@ class VideoController extends Controller
     {
         try {
             $videos = Video::with(['creator:id,name,avatar'])
-                ->where('is_published', true)
                 ->where('visibility', 'public')
+                ->whereNotNull('published_at')
                 ->orderBy('created_at', 'desc')
                 ->limit(50)
                 ->get()
@@ -224,16 +224,16 @@ class VideoController extends Controller
             'id' => $video->id,
             'title' => $video->title,
             'description' => $video->description,
-            'thumbnail' => $video->thumbnail ?? '/videos/video1-thumb.jpg',
-            'video_url' => $video->video_url ?? '/videos/video1.mp4',
-            'duration' => $video->duration ?? '10:30',
-            'views' => $video->views ?? rand(100, 5000),
-            'likes' => $video->likes ?? rand(10, 500),
-            'students_count' => $video->students_count ?? rand(100, 5000),
-            'rating' => $video->rating ?? (rand(40, 50) / 10),
-            'tags' => $video->tags ?? [],
+            'thumbnail' => $video->thumbnail_url,
+            'video_url' => $video->video_url,
+            'duration' => $this->formatDuration($video->duration),
+            'views' => (int) ($video->views ?? 0),
+            'likes' => (int) ($video->likes ?? 0),
+            'students_count' => (int) ($video->views ?? 0),
+            'rating' => 0,
+            'tags' => [],
             'category' => $video->category ?? 'general',
-            'difficulty_level' => $video->difficulty_level ?? 'beginner',
+            'difficulty_level' => 'beginner',
             'language' => $video->language ?? 'fr',
             'created_at' => $video->created_at->toISOString(),
             'updated_at' => $video->updated_at->toISOString(),
@@ -248,10 +248,10 @@ class VideoController extends Controller
             ],
             'is_free' => $video->is_free ?? true,
             'price' => $video->price ?? 0,
-            'learning_objectives' => $video->learning_objectives ?? [],
-            'target_audience' => $video->target_audience ?? [],
-            'prerequisites' => $video->prerequisites ?? [],
-            'certificate_available' => $video->certificate_available ?? false,
+            'learning_objectives' => [],
+            'target_audience' => [],
+            'prerequisites' => [],
+            'certificate_available' => false,
         ];
     }
 

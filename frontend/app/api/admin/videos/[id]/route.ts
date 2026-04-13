@@ -1,85 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeJsonStore, readJsonStore } from "@/lib/server/json-store";
+import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
 
-interface AdminVideo {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  tags: string[];
-  learning_objectives: string[];
-  visibility: string;
-  duration: string;
-  allow_comments: boolean;
-  publish_immediately: boolean;
-  is_admin_video: boolean;
-  is_published: boolean;
-  creator: {
-    id: number;
-    name: string;
-    email: string;
-    avatar: string;
+type BackendVideo = {
+  id: string | number;
+  title?: string;
+  description?: string;
+  category?: string;
+  visibility?: "public" | "private" | "unlisted";
+  duration?: string;
+  allow_comments?: boolean;
+  is_published?: boolean;
+  thumbnail?: string | null;
+  video_url?: string | null;
+  views?: number;
+  likes?: number;
+  comments?: number | unknown[];
+  created_at?: string;
+  updated_at?: string;
+};
+
+function normalizeAdminVideo(video: BackendVideo) {
+  return {
+    id: Number(video.id),
+    title: video.title || "Sans titre",
+    description: video.description || "",
+    category: video.category || "general",
+    tags: [],
+    learning_objectives: [],
+    visibility: video.visibility || "public",
+    duration: video.duration || "00:00",
+    allow_comments: Boolean(video.allow_comments ?? true),
+    publish_immediately: true,
+    is_admin_video: true,
+    is_published: video.is_published ?? video.visibility === "public",
+    creator: {
+      id: 0,
+      name: "Administrateur",
+      email: "admin@matchmyformation.com",
+      avatar: "/temoignage.png",
+    },
+    video_url: video.video_url || "",
+    thumbnail: video.thumbnail || "/placeholder-video.jpg",
+    students_count: Number(video.views || 0),
+    views: Number(video.views || 0),
+    likes: Number(video.likes || 0),
+    comments: Array.isArray(video.comments) ? video.comments : [],
+    resources: [],
+    created_at: video.created_at || new Date().toISOString(),
+    updated_at: video.updated_at || video.created_at || new Date().toISOString(),
   };
-  video_url: string;
-  thumbnail: string;
-  students_count: number;
-  views: number;
-  likes: number;
-  comments: any[];
-  resources: any[];
-  created_at: string;
-  updated_at: string;
-}
-
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await context.params;
-    const videoId = parseInt(id);
-    
-    if (isNaN(videoId)) {
-      return NextResponse.json(
-        { success: false, message: "ID de vidéo invalide" },
-        { status: 400 }
-      );
-    }
-
-    // Lire les vidéos existantes
-    const existingVideos: AdminVideo[] = await readJsonStore("admin-videos", []);
-    
-    // Trouver et supprimer la vidéo
-    const videoIndex = existingVideos.findIndex((video) => video.id === videoId);
-    
-    if (videoIndex === -1) {
-      return NextResponse.json(
-        { success: false, message: "Vidéo non trouvée" },
-        { status: 404 }
-      );
-    }
-
-    // Supprimer la vidéo
-    existingVideos.splice(videoIndex, 1);
-    
-    // Sauvegarder la liste mise à jour
-    await writeJsonStore("admin-videos", existingVideos);
-
-    return NextResponse.json({
-      success: true,
-      message: "Vidéo supprimée avec succès",
-    });
-
-  } catch (error) {
-    console.error("Erreur lors de la suppression de la vidéo:", error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: "Erreur lors de la suppression de la vidéo" 
-      },
-      { status: 500 }
-    );
-  }
 }
 
 export async function GET(
@@ -88,48 +57,21 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
-    console.log("API GET: Looking for video ID:", id);
-    const videoId = parseInt(id);
-    console.log("API GET: Parsed videoId:", videoId);
-    
-    if (isNaN(videoId)) {
-      console.log("API GET: Invalid videoId - NaN");
-      return NextResponse.json(
-        { success: false, message: "ID de vidéo invalide" },
-        { status: 400 }
-      );
-    }
+    const response = await laravelFetch(`/api/creator/videos/${id}`, { request });
+    const data = await parseLaravelJson(response);
 
-    // Lire les vidéos existantes
-    const existingVideos: AdminVideo[] = await readJsonStore("admin-videos", []);
-    console.log("API GET: Total videos found:", existingVideos.length);
-    console.log("API GET: Video IDs:", existingVideos.map(v => v.id));
-    
-    // Trouver la vidéo
-    const video = existingVideos.find((v) => v.id === videoId);
-    console.log("API GET: Found video:", video ? "YES" : "NO");
-    
-    if (!video) {
-      console.log("API GET: Video not found for ID:", videoId);
-      return NextResponse.json(
-        { success: false, message: "Vidéo non trouvée" },
-        { status: 404 }
-      );
-    }
-
-    console.log("API GET: Returning video data:", video);
-    return NextResponse.json({
-      success: true,
-      data: video
-    });
-
-  } catch (error) {
-    console.error("API GET: Erreur lors de la récupération de la vidéo:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: "Erreur lors de la récupération de la vidéo" 
+      {
+        success: response.ok,
+        data: data ? normalizeAdminVideo(data) : null,
+        message: data?.message,
       },
+      { status: response.status }
+    );
+  } catch (error) {
+    console.error("ADMIN VIDEO DETAIL - Erreur:", error);
+    return NextResponse.json(
+      { success: false, message: "Erreur lors du chargement de la vidéo" },
       { status: 500 }
     );
   }
@@ -141,129 +83,82 @@ export async function PUT(
 ) {
   try {
     const { id } = await context.params;
-    const videoId = parseInt(id);
-    
-    if (isNaN(videoId)) {
-      return NextResponse.json(
-        { success: false, message: "ID de vidéo invalide" },
-        { status: 400 }
-      );
-    }
-
     const formData = await request.formData();
-    
-    // Extraire les données du formulaire
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const category = formData.get("category") as string;
-    const tags = JSON.parse(formData.get("tags") as string || "[]");
-    const learning_objectives = JSON.parse(formData.get("learning_objectives") as string || "[]");
-    const visibility = formData.get("visibility") as string || "public";
-    const duration = formData.get("duration") as string;
-    const allow_comments = formData.get("allow_comments") === "true";
-    const publish_immediately = formData.get("publish_immediately") === "true";
-    const resources = JSON.parse(formData.get("resources") as string || "[]");
-    
-    // Lire les vidéos existantes
-    const existingVideos: AdminVideo[] = await readJsonStore("admin-videos", []);
-    
-    // Trouver la vidéo à mettre à jour
-    const videoIndex = existingVideos.findIndex((video) => video.id === videoId);
-    
-    if (videoIndex === -1) {
-      return NextResponse.json(
-        { success: false, message: "Vidéo non trouvée" },
-        { status: 404 }
-      );
-    }
+    const payload = new FormData();
 
-    // Gérer les fichiers
-    const videoFile = formData.get("video") as File;
-    const thumbnailFile = formData.get("thumbnail") as File;
-    
-    let videoUrl = existingVideos[videoIndex].video_url;
-    let thumbnailUrl = existingVideos[videoIndex].thumbnail;
-    
-    // Upload la nouvelle vidéo si fournie
-    if (videoFile) {
-      try {
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", videoFile);
-        uploadFormData.append("type", "video");
-        
-        const uploadResponse = await fetch(`${request.nextUrl.origin}/api/upload`, {
-          method: "POST",
-          body: uploadFormData,
-        });
-        
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
-          videoUrl = uploadResult.url;
-        } else {
-          console.error("Erreur lors de l'upload de la vidéo");
-        }
-      } catch (error) {
-        console.error("Erreur upload vidéo:", error);
+    const fieldNames = [
+      "title",
+      "description",
+      "category",
+      "duration",
+      "allow_comments",
+      "publish_immediately",
+      "selected_thumbnail",
+      "external_url",
+    ];
+
+    fieldNames.forEach((field) => {
+      const value = formData.get(field);
+      if (typeof value === "string" && value.length > 0) {
+        payload.append(field, value);
       }
-    }
-    
-    // Upload la nouvelle miniature si fournie
-    if (thumbnailFile) {
-      try {
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", thumbnailFile);
-        uploadFormData.append("type", "image");
-        
-        const uploadResponse = await fetch(`${request.nextUrl.origin}/api/upload`, {
-          method: "POST",
-          body: uploadFormData,
-        });
-        
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
-          thumbnailUrl = uploadResult.url;
-        }
-      } catch (error) {
-        console.error("Erreur upload miniature:", error);
-      }
-    }
-
-    // Mettre à jour la vidéo
-    const updatedVideo: AdminVideo = {
-      ...existingVideos[videoIndex],
-      title,
-      description,
-      category,
-      tags,
-      learning_objectives,
-      visibility: "public", // Toujours public pour l'admin
-      duration,
-      allow_comments,
-      publish_immediately,
-      resources,
-      video_url: videoUrl,
-      thumbnail: thumbnailUrl,
-      updated_at: new Date().toISOString(),
-    };
-
-    existingVideos[videoIndex] = updatedVideo;
-    
-    // Sauvegarder
-    await writeJsonStore("admin-videos", existingVideos);
-
-    return NextResponse.json({
-      success: true,
-      message: "Vidéo mise à jour avec succès",
-      video: updatedVideo
     });
 
-  } catch (error) {
-    console.error("Erreur lors de la mise à jour de la vidéo:", error);
+    payload.append("visibility", "public");
+
+    const thumbnail = formData.get("thumbnail");
+    if (thumbnail instanceof File && thumbnail.size > 0) {
+      payload.append("thumbnail", thumbnail);
+    }
+
+    const response = await laravelFetch(`/api/creator/videos/${id}`, {
+      request,
+      method: "PUT",
+      body: payload,
+    });
+    const data = await parseLaravelJson(response);
+
     return NextResponse.json(
-      { 
-        success: false, 
-        message: "Erreur lors de la mise à jour de la vidéo" 
+      {
+        success: response.ok,
+        message: data?.message || "Vidéo admin mise à jour",
+        video: data?.video ? normalizeAdminVideo(data.video) : null,
+        error: data?.error,
       },
+      { status: response.status }
+    );
+  } catch (error) {
+    console.error("ADMIN VIDEO UPDATE - Erreur:", error);
+    return NextResponse.json(
+      { success: false, message: "Erreur lors de la mise à jour de la vidéo" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+    const response = await laravelFetch(`/api/creator/videos/${id}`, {
+      request,
+      method: "DELETE",
+    });
+    const data = await parseLaravelJson(response);
+
+    return NextResponse.json(
+      {
+        success: response.ok,
+        message: data?.message || "Vidéo supprimée avec succès",
+      },
+      { status: response.status }
+    );
+  } catch (error) {
+    console.error("ADMIN VIDEO DELETE - Erreur:", error);
+    return NextResponse.json(
+      { success: false, message: "Erreur lors de la suppression de la vidéo" },
       { status: 500 }
     );
   }

@@ -144,21 +144,6 @@ export default function RootLayout({
                   imageObserver.observe(img);
                 });
               }
-              
-              // Optimisation du scroll
-              let scrollTimeout;
-              window.addEventListener('scroll', () => {
-                if (scrollTimeout) {
-                  clearTimeout(scrollTimeout);
-                }
-                scrollTimeout = setTimeout(() => {
-                  document.body.classList.add('scroll-ended');
-                  setTimeout(() => {
-                    document.body.classList.remove('scroll-ended');
-                  }, 100);
-                }, 150);
-              });
-              
             `,
           }}
         />

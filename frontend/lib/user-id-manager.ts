@@ -10,6 +10,8 @@ export interface UserData {
   role: "student" | "creator" | "admin";
   avatar?: string;
   provider?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AuthData {
@@ -53,6 +55,11 @@ export class UserIdManager {
    * Récupère les données utilisateur stockées
    */
   static getStoredUserData(): UserData | null {
+    // Vérifier si nous sommes côté serveur
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    
     const id = localStorage.getItem(this.STORAGE_KEYS.USER_ID);
     const name = localStorage.getItem(this.STORAGE_KEYS.USER_NAME);
     const email = localStorage.getItem(this.STORAGE_KEYS.USER_EMAIL);
@@ -112,6 +119,40 @@ export class UserIdManager {
 
   static getToken(): string | null {
     return localStorage.getItem(this.STORAGE_KEYS.TOKEN);
+  }
+
+  /**
+   * Crée des données utilisateur de test (pour le développement)
+   */
+  static createTestUser(): void {
+    if (typeof window === "undefined") return;
+
+    const testUser: UserData = {
+      id: 1,
+      name: "Étudiant Test",
+      email: "student@example.com",
+      role: "student",
+      avatar: undefined,
+      provider: undefined,
+    };
+
+    const testToken = "test-token-" + Date.now();
+    
+    this.storeAuthData({
+      token: testToken,
+      user: testUser,
+    });
+  }
+
+  /**
+   * Initialise un utilisateur de test si aucun utilisateur n'existe
+   */
+  static initializeTestUserIfNeeded(): void {
+    if (typeof window === "undefined") return;
+    
+    if (!this.isAuthenticated()) {
+      this.createTestUser();
+    }
   }
 }
 

@@ -53,6 +53,11 @@ class Video extends Model
         return $this->belongsTo(User::class, 'uploader_id');
     }
 
+    public function creator(): BelongsTo
+    {
+        return $this->uploader();
+    }
+
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);

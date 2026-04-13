@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const userData = UserIdManager.getStoredUserData();
     
     if (!userData || !userData.id) {
-      // Retourner un utilisateur par défaut pour éviter les erreurs 401
+      // Retourner un utilisateur par défaut pour éviter les erreurs
       const defaultUser = {
         id: 1,
         name: "Étudiant",
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       user: userData,
     });
   } catch (error) {
-    console.error("Erreur /api/me:", error);
+    console.error("Erreur /api/auth/me:", error);
     
     // En cas d'erreur, retourner un utilisateur par défaut
     const fallbackUser = {

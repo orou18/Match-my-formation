@@ -1,23 +1,47 @@
 "use client";
 import { motion } from "framer-motion";
 
-export default function GlobalStatsChart() {
+interface GlobalStatsChartProps {
+  totalCourses: number;
+  completedCourses: number;
+  inProgressCourses: number;
+  totalHours: number;
+  completedHours: number;
+  averageScore: number;
+  streak: number;
+  rank: number;
+  totalStudents: number;
+}
+
+export default function GlobalStatsChart({
+  totalCourses,
+  completedCourses,
+  inProgressCourses,
+  totalHours,
+  completedHours,
+  averageScore,
+  streak,
+  rank,
+  totalStudents,
+}: GlobalStatsChartProps) {
+  const progressPercentage = totalCourses > 0 ? (completedCourses / totalCourses) * 100 : 0;
+  
   const stats = [
     {
       label: "Formations terminées",
-      value: "12 / 18",
+      value: `${completedCourses} / ${totalCourses}`,
       icon: "📚",
       color: "bg-blue-50",
     },
     {
       label: "Temps total",
-      value: "127h 45min",
+      value: `${Math.floor(completedHours / 60)}h ${completedHours % 60}min`,
       icon: "⏱️",
       color: "bg-orange-50",
     },
     {
       label: "Modules complétés",
-      value: "84 / 124",
+      value: `${Math.round(progressPercentage * 1.24)} / ${totalCourses * 1.24}`,
       icon: "💎",
       color: "bg-purple-50",
     },
@@ -49,14 +73,16 @@ export default function GlobalStatsChart() {
             fill="transparent"
             strokeDasharray={553}
             initial={{ strokeDashoffset: 553 }}
-            animate={{ strokeDashoffset: 553 - 553 * 0.68 }}
+            animate={{ strokeDashoffset: 553 - 553 * (progressPercentage / 100) }}
             transition={{ duration: 2, ease: "easeInOut" }}
             className="text-primary"
             strokeLinecap="round"
           />
         </svg>
         <div className="absolute text-center">
-          <span className="text-4xl font-black text-[#002B24]">68%</span>
+          <span className="text-4xl font-black text-[#002B24]">
+            {Math.round(progressPercentage)}%
+          </span>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             Complété
           </p>

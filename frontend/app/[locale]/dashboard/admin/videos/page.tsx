@@ -5,6 +5,10 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import {
+  buildClientAuthHeaders,
+  ensureServerAuthSession,
+} from "@/lib/api/client-auth";
+import {
   Video,
   Play,
   Eye,
@@ -72,7 +76,16 @@ export default function AdminVideosPage() {
   const loadVideos = async () => {
     try {
       setIsLoading(true);
+      const sessionState = await ensureServerAuthSession();
+      if (!sessionState.ok) {
+        console.error(sessionState.message);
+        setVideos([]);
+        return;
+      }
+
       const response = await fetch("/api/admin/videos", {
+        credentials: "include",
+        headers: buildClientAuthHeaders(),
         cache: "no-store",
       });
 
@@ -80,7 +93,11 @@ export default function AdminVideosPage() {
         const result = await response.json();
         setVideos(result.data || []);
       } else {
-        console.error("Erreur lors du chargement des vidéos");
+        const error = await response.json().catch(() => ({}));
+        console.error(
+          "Erreur lors du chargement des vidéos:",
+          error?.message || error?.error || `HTTP ${response.status}`
+        );
       }
     } catch (error) {
       console.error("Erreur:", error);
@@ -100,8 +117,16 @@ export default function AdminVideosPage() {
   const handleDeleteVideo = async (videoId: number) => {
     try {
       setIsDeleting(true);
+      const sessionState = await ensureServerAuthSession();
+      if (!sessionState.ok) {
+        console.error(sessionState.message);
+        return;
+      }
+
       const response = await fetch(`/api/admin/videos/${videoId}`, {
         method: "DELETE",
+        credentials: "include",
+        headers: buildClientAuthHeaders(),
       });
 
       if (response.ok) {
@@ -109,7 +134,11 @@ export default function AdminVideosPage() {
         setShowDeleteModal(false);
         setVideoToDelete(null);
       } else {
-        console.error("Erreur lors de la suppression");
+        const error = await response.json().catch(() => ({}));
+        console.error(
+          "Erreur lors de la suppression:",
+          error?.message || error?.error || `HTTP ${response.status}`
+        );
       }
     } catch (error) {
       console.error("Erreur:", error);
@@ -329,7 +358,7 @@ export default function AdminVideosPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl max-w-4xl w-full h-[90vh] flex flex-col shadow-2xl"
+              className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl"
             >
               <div className="p-6 border-b border-gray-200 flex-shrink-0">
                 <div className="flex items-center justify-between">
@@ -345,7 +374,32 @@ export default function AdminVideosPage() {
                 </div>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-6" style={{ touchAction: 'pan-y', overscrollBehavior: 'contain' }}>
+              <div 
+                className="flex-1 overflow-y-auto p-6" 
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#93c5fd #f3f4f6',
+                  touchAction: 'pan-y',
+                  overscrollBehavior: 'contain'
+                }}
+              >
+                <style jsx>{`
+                  div::-webkit-scrollbar {
+                    width: 8px;
+                  }
+                  div::-webkit-scrollbar-track {
+                    background: #f3f4f6;
+                    border-radius: 4px;
+                  }
+                  div::-webkit-scrollbar-thumb {
+                    background: #93c5fd;
+                    border-radius: 4px;
+                    transition: background 0.2s;
+                  }
+                  div::-webkit-scrollbar-thumb:hover {
+                    background: #60a5fa;
+                  }
+                `}</style>
                 <div className="aspect-video bg-black rounded-lg mb-6">
                   <video
                     src={selectedVideo.video_url}

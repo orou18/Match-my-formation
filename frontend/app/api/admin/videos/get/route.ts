@@ -53,31 +53,48 @@ function normalizeAdminVideo(video: BackendVideo) {
 
 export async function GET(request: NextRequest) {
   try {
-    const response = await laravelFetch("/api/creator/videos", { request });
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: "ID de vidéo requis" },
+        { status: 400 }
+      );
+    }
+
+    const response = await laravelFetch(`/api/creator/videos/${id}`, { request });
     const data = await parseLaravelJson(response);
-    const videos = Array.isArray(data) ? data : data?.videos || [];
 
     return NextResponse.json(
       {
         success: response.ok,
-        data: videos.map(normalizeAdminVideo),
+        data: data ? normalizeAdminVideo(data) : null,
+        message: data?.message,
       },
       { status: response.status }
     );
   } catch (error) {
-    console.error("ADMIN VIDEOS - Erreur chargement:", error);
+    console.error("ADMIN VIDEO GET - Erreur:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Erreur lors de la récupération des vidéos admin",
-      },
+      { success: false, message: "Erreur lors de la récupération de la vidéo" },
       { status: 500 }
     );
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: "ID de vidéo requis" },
+        { status: 400 }
+      );
+    }
+
     const formData = await request.formData();
     const payload = new FormData();
 
@@ -101,19 +118,14 @@ export async function POST(request: NextRequest) {
 
     payload.append("visibility", "public");
 
-    const video = formData.get("video");
-    if (video instanceof File && video.size > 0) {
-      payload.append("video", video);
-    }
-
     const thumbnail = formData.get("thumbnail");
     if (thumbnail instanceof File && thumbnail.size > 0) {
       payload.append("thumbnail", thumbnail);
     }
 
-    const response = await laravelFetch("/api/creator/videos", {
+    const response = await laravelFetch(`/api/creator/videos/${id}`, {
       request,
-      method: "POST",
+      method: "PUT",
       body: payload,
     });
     const data = await parseLaravelJson(response);
@@ -121,20 +133,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: response.ok,
-        message:
-          data?.message || "Vidéo admin créée avec succès",
+        message: data?.message || "Vidéo mise à jour avec succès",
         video: data?.video ? normalizeAdminVideo(data.video) : null,
-        error: data?.error,
       },
       { status: response.status }
     );
   } catch (error) {
-    console.error("ADMIN VIDEOS - Erreur création:", error);
+    console.error("ADMIN VIDEO PUT - Erreur:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Erreur lors de la création de la vidéo admin",
-      },
+      { success: false, message: "Erreur lors de la mise à jour de la vidéo" },
       { status: 500 }
     );
   }

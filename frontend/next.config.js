@@ -8,6 +8,12 @@ const nextConfig = {
         hostname: "images.unsplash.com",
         pathname: "/**",
       },
+      // Allow Google Cloud Storage for video thumbnails
+      {
+        protocol: "https",
+        hostname: "commondatastorage.googleapis.com",
+        pathname: "/**",
+      },
       // Allow local backend thumbnails served over HTTP during development
       {
         protocol: "http",

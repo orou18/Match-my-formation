@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
 import { authOptions } from "@/lib/auth/auth-options";
 import { fetchBackend, getBackendBaseUrls } from "@/lib/api/backend-fetch";
@@ -40,10 +41,25 @@ async function resolveAccessToken(request?: NextRequest) {
     return cookieToken;
   }
 
-  // 3. Vérifier les cookies NextAuth
-  const nextAuthToken = request?.cookies.get("next-auth.session-token")?.value;
-  if (nextAuthToken) {
-    return nextAuthToken;
+  // 3. Décoder le JWT NextAuth pour récupérer le vrai accessToken backend
+  if (request) {
+    try {
+      const nextAuthJwt = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+
+      const nextAuthAccessToken =
+        typeof nextAuthJwt?.accessToken === "string"
+          ? nextAuthJwt.accessToken
+          : null;
+
+      if (nextAuthAccessToken) {
+        return nextAuthAccessToken;
+      }
+    } catch (error) {
+      console.error("Erreur de décodage du token NextAuth:", error);
+    }
   }
 
   // 4. Vérifier la session NextAuth
@@ -54,17 +70,11 @@ async function resolveAccessToken(request?: NextRequest) {
       return accessToken;
     }
 
-    // 5. Essayer de récupérer l'ID utilisateur depuis la session
-    const userId = (session?.user as { id?: string } | undefined)?.id;
-    if (userId) {
-      // Créer un token temporaire basé sur l'ID utilisateur
-      return `temp-user-${userId}`;
-    }
   } catch (error) {
     console.error("Erreur de resolution de session NextAuth:", error);
   }
 
-  // 6. Retourner null si aucun token trouvé
+  // 5. Retourner null si aucun vrai token backend n'a été trouvé
   return null;
 }
 

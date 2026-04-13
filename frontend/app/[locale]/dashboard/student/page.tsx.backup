@@ -47,25 +47,13 @@ interface DashboardUser {
   created_at?: string;
 }
 
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { type: "spring", stiffness: 100 },
-  },
-};
+interface StudentDashboardPayload {
+  user: DashboardUser;
+  courses: DashboardCourse[];
+  stats?: {
+    courses_in_progress?: number;
+  };
+}
 
 export default function StudentDashboard() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -84,37 +72,21 @@ export default function StudentDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      const scrollAmount = 300;
-      scrollRef.current.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
-      });
-    }
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Récupérer l'utilisateur depuis la session
-        const userResponse = await fetch("/api/auth/me", {
-          cache: "no-store",
-        });
-
-        let user: DashboardUser = {
-          id: 0,
+        setLoading(true);
+        setError(null);
+        
+        // Utiliser des données utilisateur par défaut pour le dashboard student
+        const user = {
+          id: 1,
           name: "Étudiant",
           email: "student@example.com",
-          role: "student",
+          role: "student" as const,
+          created_at: new Date().toISOString(),
+          avatar: null,
         };
-
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          if (userData?.user) {
-            user = userData.user;
-          }
-        }
 
         setUser(user);
 
@@ -140,8 +112,8 @@ export default function StudentDashboard() {
         if (publicVideosResponse.ok) {
           const publicVideosPayload = await publicVideosResponse.json();
           // L'API videos/public retourne déjà les vidéos normalisées avec les vidéos admin incluses
-          allCourses = Array.isArray(publicVideosPayload?.data)
-            ? publicVideosPayload.data
+          allCourses = Array.isArray(publicVideosPayload?.data) 
+            ? publicVideosPayload.data 
             : Array.isArray(publicVideosPayload)
               ? publicVideosPayload
               : [];
@@ -149,14 +121,14 @@ export default function StudentDashboard() {
 
         if (creatorVideosResponse.ok) {
           const creatorVideosPayload = await creatorVideosResponse.json();
-          creatorVideosData = Array.isArray(creatorVideosPayload?.data)
+          creatorVideosData = Array.isArray(creatorVideosPayload?.data) 
             ? creatorVideosPayload.data.slice(0, 6) // Limiter à 6 vidéos pour la section pépites
             : [];
         }
 
         if (adminVideosResponse.ok) {
           const adminVideosPayload = await adminVideosResponse.json();
-          adminVideosData = Array.isArray(adminVideosPayload?.data)
+          adminVideosData = Array.isArray(adminVideosPayload?.data) 
             ? adminVideosPayload.data
             : [];
         }
@@ -170,39 +142,96 @@ export default function StudentDashboard() {
         setTotalPages(1);
 
         // Vérifier si c'est un nouvel utilisateur (créé il y a moins de 24h)
-        const createdAt = user.created_at ? new Date(user.created_at) : new Date();
+        const createdAt = new Date(user.created_at);
         const now = new Date();
         const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
         setIsNewUser(hoursDiff < 24);
 
       } catch (error: unknown) {
         console.error("Erreur dashboard étudiant:", error);
-        setError("Impossible de charger votre tableau de bord. Veuillez réessayer.");
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Erreur lors du chargement du dashboard"
+        );
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
+
+    // Exposer une fonction de rechargement global
+    const refreshStudentVideos = async () => {
+      try {
+        // Recharger les vidéos publiques (incluant les vidéos admin)
+        const publicVideosResponse = await fetch("/api/videos/public", {
+          cache: "no-store",
+        });
+
+        if (publicVideosResponse.ok) {
+          const publicVideosPayload = await publicVideosResponse.json();
+          const allCourses = Array.isArray(publicVideosPayload?.data) 
+            ? publicVideosPayload.data 
+            : Array.isArray(publicVideosPayload)
+              ? publicVideosPayload
+              : [];
+
+          setCourses(allCourses);
+          setPublicVideos(allCourses.slice(0, 6));
+        }
+      } catch (error) {
+        console.error("Erreur lors du rechargement des vidéos étudiant:", error);
+      }
+    };
+
+    // Stocker la fonction de rechargement globalement
+    (window as any).refreshStudentVideos = refreshStudentVideos;
+    
+    return () => {
+      delete (window as any).refreshStudentVideos;
+    };
   }, []);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      const scrollTo =
+        direction === "left"
+          ? scrollLeft - clientWidth
+          : scrollLeft + clientWidth;
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
+    }
+  };
+
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  };
+
+  const itemVariants: Variants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { type: "spring", stiffness: 100 },
+    },
+  };
+
+  // Fonction pour charger plus de cours
+  const loadMoreCourses = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFB] p-6 text-center">
-        <div className="bg-white p-8 rounded-[3rem] border border-gray-200 max-w-md shadow-2xl">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Video className="w-8 h-8 text-primary animate-pulse" />
-          </div>
-          <h2 className="text-xl font-bold text-[#002B24] mb-2">
-            Accès à l&apos;académie...
-          </h2>
-          <p className="text-gray-500 mb-8 text-sm leading-relaxed">
-            Chargement de votre espace d&apos;apprentissage personnalisé
-          </p>
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFB]">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-4"></div>
+        <p className="text-gray-600 font-medium text-sm tracking-[0.1em]">
+          Accès à l&apos;académie...
+        </p>
       </div>
     );
   }
@@ -233,55 +262,146 @@ export default function StudentDashboard() {
       <div className="flex-1 overflow-y-auto">
         <StudentHero user={user} />
 
-        {/* Message de bienvenue pour les nouveaux utilisateurs */}
-        {isNewUser && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="container mx-auto px-4 md:px-8 -mt-8 mb-8"
-          >
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-8 text-center">
-              <div className="max-w-2xl mx-auto">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white text-2xl">? </span>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  Bienvenue dans votre espace d&apos;apprentissage !
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  Nous sommes ravis de vous accueillir. Votre parcours commence
-                  maintenant ! Explorez nos formations et commencez à développer
-                  vos compétences.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
-                    onClick={() => setIsNewUser(false)}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105"
-                  >
-                    Commencer à explorer
-                  </button>
-                  <button
-                    onClick={() =>
-                      router.push(`/${locale}/dashboard/student/profile`)
-                    }
-                    className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-300"
-                  >
-                    Compléter mon profil
-                  </button>
+          {/* Message de bienvenue pour les nouveaux utilisateurs */}
+          {isNewUser && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="container mx-auto px-4 md:px-8 -mt-8 mb-8"
+            >
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-8 text-center">
+                <div className="max-w-2xl mx-auto">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-white text-2xl">🎉</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                    Bienvenue dans votre espace d&apos;apprentissage !
+                  </h2>
+                  <p className="text-gray-600 mb-6">
+                    Nous sommes ravis de vous accueillir. Votre parcours commence
+                    maintenant ! Explorez nos formations et commencez à développer
+                    vos compétences.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
+                      onClick={() => setIsNewUser(false)}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105"
+                    >
+                      Commencer à explorer
+                    </button>
+                    <button
+                      onClick={() =>
+                        router.push(`/${locale}/dashboard/student/profile`)
+                      }
+                      className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-300"
+                    >
+                      Compléter mon profil
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        )}
-        <br />
-        <br />
+            </motion.div>
+          )}
 
-        <FeaturedGrid />
-        <div className="container mx-auto px-4 md:px-8 py-10">
-          <CategoryFilters />
+          <div className="container mx-auto px-4 md:px-8 py-10">
+            <CategoryFilters />
 
-          {/* --- SECTION PÉPITES DE NOS EXPERTS --- */}
+            <section className="mt-20">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#002B24] tracking-tight">
+                    Catalogue des formations
+                  </h2>
+                  <p className="text-gray-500 mt-2 text-sm font-medium uppercase tracking-[0.15em]">
+                    Explorez l&apos;excellence académique
+                  </p>
+                </div>
+              </div>
+
+              {courses.length > 0 ? (
+                <motion.div
+                  variants={containerVariants}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+                >
+                  {courses.map((course) => (
+                    <motion.div variants={itemVariants} key={course.id} className="relative">
+                      {/* Badge Admin pour les vidéos admin */}
+                      {course.is_admin_video && (
+                        <div className="absolute -top-2 -right-2 z-20">
+                          <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1">
+                            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                            Admin
+                          </div>
+                        </div>
+                      )}
+                      
+                      <VideoCard video={{
+                        id: course.id,
+                        title: course.title,
+                        description: course.description || "",
+                        thumbnail: course.thumbnail || course.image || "/placeholder-course.jpg",
+                        video_url: course.video_url || "",
+                        duration: course.duration || '00:00',
+                        order: 0,
+                        creator_id: 0,
+                        views: course.students_count || 0,
+                        likes: Math.floor((course.students_count || 0) * 0.8),
+                        comments: [],
+                        tags: course.tags || [],
+                        is_published: course.is_published ?? true,
+                        visibility: "public",
+                        created_at: course.created_at || new Date().toISOString(),
+                        updated_at: course.updated_at || new Date().toISOString(),
+                        creator: {
+                          id: 0,
+                          name: course.creator?.name || "Créateur",
+                          email: "",
+                          avatar: course.creator?.avatar || "/default-avatar.png",
+                        },
+                        is_free: true,
+                        price: 0,
+                        rating: 0,
+                      }} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              ) : (
+                <div className="py-20 text-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200">
+                  <div className="max-w-md mx-auto">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <AlertCircle className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Aucune formation disponible
+                    </h3>
+                    <p className="text-gray-500 text-sm">
+                      Les formations apparaîtront ici dès qu&apos;elles seront publiées par les créateurs.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+                    onClick={loadMoreCourses}
+                    className="px-6 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
+                  >
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Charger plus de formations
+                  </button>
+                </div>
+              )}
+            </section>
+
+          {/* --- SECTION EXPERTS --- */}
           <section className="mt-4 mb-16 bg-[#002B24] py-12 relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
@@ -315,8 +435,8 @@ export default function StudentDashboard() {
                 </div>
               </div>
 
-              <div ref={scrollRef} className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4">
-                {creatorVideos.slice(0, 6).map((video: any, index: number) => (
+              <div className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4">
+                {creatorVideos.slice(0, 6).map((video, index) => (
                   <motion.div
                     key={video.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -356,7 +476,7 @@ export default function StudentDashboard() {
                         </div>
                       </div>
                     </div>
-
+                    
                     {/* Content */}
                     <div className="p-4">
                       <h3 className="font-bold text-white text-sm mb-2 line-clamp-2">
@@ -388,88 +508,7 @@ export default function StudentDashboard() {
               </div>
             </div>
           </section>
-
-          {/* --- SECTION CATALOGUE DES FORMATIONS --- */}
-          <section className="mt-20">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-              <div>
-                <h2 className="text-2xl font-bold text-[#002B24] tracking-tight">
-                  Catalogue des formations
-                </h2>
-                <p className="text-gray-500 mt-2 text-sm font-medium uppercase tracking-[0.15em]">
-                  Explorez l&apos;excellence académique
-                </p>
-              </div>
-            </div>
-
-            {courses.length > 0 ? (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
-              >
-                {courses.map((course) => (
-                  <motion.div variants={itemVariants} key={course.id} className="relative">
-                    {/* Badge Admin pour les vidéos admin */}
-                    {course.is_admin_video && (
-                      <div className="absolute -top-2 -right-2 z-20">
-                        <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1">
-                          <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                          Admin
-                        </div>
-                      </div>
-                    )}
-
-                    <VideoCard
-                      video={{
-                        id: course.id,
-                        title: course.title,
-                        description: course.description || "",
-                        thumbnail: course.thumbnail || course.image || "/placeholder-course.jpg",
-                        video_url: course.video_url || "",
-                        duration: course.duration || '00:00',
-                        order: 0,
-                        creator_id: 0,
-                        views: course.students_count || 0,
-                        likes: Math.floor((course.students_count || 0) * 0.8),
-                        comments: [],
-                        tags: course.tags || [],
-                        is_published: course.is_published ?? true,
-                        visibility: "public",
-                        created_at: course.created_at || new Date().toISOString(),
-                        updated_at: course.updated_at || new Date().toISOString(),
-                        creator: {
-                          id: 0,
-                          name: course.creator?.name || "Créateur",
-                          email: "",
-                          avatar: course.creator?.avatar || "/default-avatar.png",
-                        },
-                        is_free: true,
-                        price: 0,
-                        rating: 0,
-                      }}
-                    />
-                  </motion.div>
-                ))}
-              </motion.div>
-            ) : (
-              <div className="py-20 text-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200">
-                <div className="max-w-md mx-auto">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Aucune formation disponible
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    Les formations apparaîtront ici dès qu&apos;elles seront publiées par les créateurs.
-                  </p>
-                </div>
-              </div>
-            )}
-          </section>
+          </div>
         </div>
       </div>
     </div>

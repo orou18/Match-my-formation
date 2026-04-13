@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
 import {
+  buildClientAuthHeaders,
+  ensureServerAuthSession,
+} from "@/lib/api/client-auth";
+import {
   ArrowLeft,
   Save,
   Upload,
@@ -107,14 +111,42 @@ export default function EditVideoPage() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
+  // Fonction pour gérer les URLs des fichiers locaux
+  const getFileUrl = (url: string) => {
+    if (!url) return "";
+    
+    // Si c'est une URL externe (commence par http), la retourner telle quelle
+    if (url.startsWith('http')) {
+      return url;
+    }
+    
+    // Si c'est un chemin local, s'assurer qu'il commence par /
+    if (!url.startsWith('/')) {
+      return `/${url}`;
+    }
+    
+    return url;
+  };
+
   useEffect(() => {
-    fetchVideo();
+    if (videoId) {
+      fetchVideo();
+    }
   }, [videoId]);
 
   const fetchVideo = async () => {
     console.log("Fetching video with ID:", videoId);
     try {
-      const response = await fetch(`/api/admin/videos/${videoId}`);
+      const sessionState = await ensureServerAuthSession();
+      if (!sessionState.ok) {
+        setError(sessionState.message);
+        return;
+      }
+
+      const response = await fetch(`/api/admin/videos/get?id=${videoId}`, {
+        credentials: "include",
+        headers: buildClientAuthHeaders(),
+      });
       console.log("Response status:", response.status);
       
       if (response.ok) {
@@ -136,16 +168,21 @@ export default function EditVideoPage() {
             publish_immediately: data.data.publish_immediately ?? true,
             resources: data.data.resources || [],
           });
-          setVideoPreview(data.data.video_url || "");
-          setThumbnailPreview(data.data.thumbnail || "");
+          setVideoPreview(getFileUrl(data.data.video_url || ""));
+          setThumbnailPreview(getFileUrl(data.data.thumbnail || ""));
         } else {
           console.error("API returned success=false or no data:", data);
           setError("Format de réponse invalide");
         }
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("API error:", errorData);
-        setError(errorData.message || "Vidéo non trouvée");
+        try {
+          const errorData = await response.json();
+          console.error("API error:", errorData);
+          setError(errorData.message || "Vidéo non trouvée");
+        } catch (jsonError) {
+          console.error("Failed to parse error response:", jsonError);
+          setError("Erreur lors de la récupération de la vidéo");
+        }
       }
     } catch (error) {
       console.error("Fetch error:", error);
@@ -255,6 +292,12 @@ export default function EditVideoPage() {
     setSuccess("");
 
     try {
+      const sessionState = await ensureServerAuthSession();
+      if (!sessionState.ok) {
+        setError(sessionState.message);
+        return;
+      }
+
       const submitData = new FormData();
       submitData.append("title", formData.title);
       submitData.append("description", formData.description);
@@ -274,9 +317,11 @@ export default function EditVideoPage() {
         submitData.append("thumbnail", thumbnailFile);
       }
 
-      const response = await fetch(`/api/admin/videos/${videoId}`, {
+      const response = await fetch(`/api/admin/videos/get?id=${videoId}`, {
         method: "PUT",
         body: submitData,
+        credentials: "include",
+        headers: buildClientAuthHeaders(),
       });
 
       if (response.ok) {
@@ -285,7 +330,12 @@ export default function EditVideoPage() {
           router.push("/dashboard/admin/videos");
         }, 2000);
       } else {
-        setError("Erreur lors de la mise à jour de la vidéo");
+        const error = await response.json().catch(() => ({}));
+        setError(
+          error?.message ||
+            error?.error ||
+            "Erreur lors de la mise à jour de la vidéo"
+        );
       }
     } catch (error) {
       setError("Erreur lors de la mise à jour de la vidéo");

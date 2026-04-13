@@ -3,22 +3,52 @@ import { motion } from "framer-motion";
 import { Play, Clock } from "lucide-react";
 
 interface RecentModuleProps {
+  id: number;
   title: string;
   course: string;
   date: string;
+  duration?: string;
+  type?: "video" | "interactive" | "exam" | "workshop" | "project";
+  completed?: boolean;
+  score?: number;
+  certificate?: {
+    earned: boolean;
+    downloadUrl?: string | null;
+  };
+  videoUrl?: string;
+  thumbnail?: string;
+  progress?: number;
+  liked?: boolean;
+  favorite?: boolean;
+  isPremium?: boolean;
+  onClick?: () => void;
 }
 
 export default function RecentModuleItem({
+  id,
   title,
   course,
   date,
+  duration,
+  type,
+  completed,
+  score,
+  certificate,
+  videoUrl,
+  thumbnail,
+  progress,
+  liked,
+  favorite,
+  isPremium,
+  onClick,
 }: RecentModuleProps) {
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       whileInView={{ opacity: 1, x: 0 }}
       whileHover={{ scale: 1.01, backgroundColor: "rgba(249, 250, 251, 1)" }}
-      className="group flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 transition-all duration-300 mb-3"
+      onClick={onClick}
+      className="group flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 transition-all duration-300 mb-3 cursor-pointer"
     >
       <div className="flex items-center gap-4">
         {/* Icône de lecture animée */}

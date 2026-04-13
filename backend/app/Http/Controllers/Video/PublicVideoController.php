@@ -18,8 +18,8 @@ class PublicVideoController extends Controller
         try {
             // Récupérer les vidéos publiques avec leurs créateurs
             $videos = Video::with(['creator:id,name,avatar'])
-                ->where('is_published', true)
                 ->where('visibility', 'public')
+                ->whereNotNull('published_at')
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($video) {
@@ -27,17 +27,17 @@ class PublicVideoController extends Controller
                         'id' => $video->id,
                         'title' => $video->title,
                         'description' => $video->description,
-                        'thumbnail' => $video->thumbnail,
+                        'thumbnail' => $video->thumbnail_url,
                         'video_url' => $video->video_url,
-                        'duration' => $video->duration,
+                        'duration' => $this->formatDuration($video->duration),
                         'views' => $video->views ?? 0,
                         'likes' => $video->likes ?? 0,
-                        'students_count' => $video->students_count ?? rand(100, 5000),
-                        'rating' => $video->rating ?? 4.5,
-                        'tags' => $video->tags ?? [],
+                        'students_count' => $video->views ?? 0,
+                        'rating' => 0,
+                        'tags' => [],
                         'category' => $video->category ?? 'general',
-                        'difficulty_level' => $video->difficulty_level ?? 'beginner',
-                        'language' => $video->language ?? 'fr',
+                        'difficulty_level' => 'beginner',
+                        'language' => 'fr',
                         'created_at' => $video->created_at->toISOString(),
                         'updated_at' => $video->updated_at->toISOString(),
                         'creator' => $video->creator ? [
@@ -49,12 +49,12 @@ class PublicVideoController extends Controller
                             'name' => 'Expert',
                             'avatar' => '/avatars/default-creator.jpg',
                         ],
-                        'is_free' => $video->is_free ?? true,
-                        'price' => $video->price ?? 0,
-                        'learning_objectives' => $video->learning_objectives ?? [],
-                        'target_audience' => $video->target_audience ?? [],
-                        'prerequisites' => $video->prerequisites ?? [],
-                        'certificate_available' => $video->certificate_available ?? false,
+                        'is_free' => true,
+                        'price' => 0,
+                        'learning_objectives' => [],
+                        'target_audience' => [],
+                        'prerequisites' => [],
+                        'certificate_available' => false,
                     ];
                 });
 
@@ -81,8 +81,8 @@ class PublicVideoController extends Controller
         try {
             $video = Video::with(['creator:id,name,avatar'])
                 ->where('id', $id)
-                ->where('is_published', true)
                 ->where('visibility', 'public')
+                ->whereNotNull('published_at')
                 ->first();
 
             if (!$video) {
@@ -101,17 +101,17 @@ class PublicVideoController extends Controller
                     'id' => $video->id,
                     'title' => $video->title,
                     'description' => $video->description,
-                    'thumbnail' => $video->thumbnail,
+                    'thumbnail' => $video->thumbnail_url,
                     'video_url' => $video->video_url,
-                    'duration' => $video->duration,
+                    'duration' => $this->formatDuration($video->duration),
                     'views' => ($video->views ?? 0) + 1,
                     'likes' => $video->likes ?? 0,
-                    'students_count' => $video->students_count ?? rand(100, 5000),
-                    'rating' => $video->rating ?? 4.5,
-                    'tags' => $video->tags ?? [],
+                    'students_count' => ($video->views ?? 0) + 1,
+                    'rating' => 0,
+                    'tags' => [],
                     'category' => $video->category ?? 'general',
-                    'difficulty_level' => $video->difficulty_level ?? 'beginner',
-                    'language' => $video->language ?? 'fr',
+                    'difficulty_level' => 'beginner',
+                    'language' => 'fr',
                     'created_at' => $video->created_at->toISOString(),
                     'updated_at' => $video->updated_at->toISOString(),
                     'creator' => $video->creator ? [
@@ -123,12 +123,12 @@ class PublicVideoController extends Controller
                         'name' => 'Expert',
                         'avatar' => '/avatars/default-creator.jpg',
                     ],
-                    'is_free' => $video->is_free ?? true,
-                    'price' => $video->price ?? 0,
-                    'learning_objectives' => $video->learning_objectives ?? [],
-                    'target_audience' => $video->target_audience ?? [],
-                    'prerequisites' => $video->prerequisites ?? [],
-                    'certificate_available' => $video->certificate_available ?? false,
+                    'is_free' => true,
+                    'price' => 0,
+                    'learning_objectives' => [],
+                    'target_audience' => [],
+                    'prerequisites' => [],
+                    'certificate_available' => false,
                 ]
             ]);
 
@@ -152,8 +152,8 @@ class PublicVideoController extends Controller
             $limit = min($request->get('limit', 20), 50);
 
             $videosQuery = Video::with(['creator:id,name,avatar'])
-                ->where('is_published', true)
                 ->where('visibility', 'public');
+                $videosQuery->whereNotNull('published_at');
 
             // Recherche par texte
             if (!empty($query)) {
@@ -182,17 +182,17 @@ class PublicVideoController extends Controller
                         'id' => $video->id,
                         'title' => $video->title,
                         'description' => $video->description,
-                        'thumbnail' => $video->thumbnail,
+                        'thumbnail' => $video->thumbnail_url,
                         'video_url' => $video->video_url,
-                        'duration' => $video->duration,
+                        'duration' => $this->formatDuration($video->duration),
                         'views' => $video->views ?? 0,
                         'likes' => $video->likes ?? 0,
-                        'students_count' => $video->students_count ?? rand(100, 5000),
-                        'rating' => $video->rating ?? 4.5,
-                        'tags' => $video->tags ?? [],
+                        'students_count' => $video->views ?? 0,
+                        'rating' => 0,
+                        'tags' => [],
                         'category' => $video->category ?? 'general',
-                        'difficulty_level' => $video->difficulty_level ?? 'beginner',
-                        'language' => $video->language ?? 'fr',
+                        'difficulty_level' => 'beginner',
+                        'language' => 'fr',
                         'created_at' => $video->created_at->toISOString(),
                         'updated_at' => $video->updated_at->toISOString(),
                         'creator' => $video->creator ? [
@@ -204,8 +204,8 @@ class PublicVideoController extends Controller
                             'name' => 'Expert',
                             'avatar' => '/avatars/default-creator.jpg',
                         ],
-                        'is_free' => $video->is_free ?? true,
-                        'price' => $video->price ?? 0,
+                        'is_free' => true,
+                        'price' => 0,
                     ];
                 });
 
@@ -226,5 +226,22 @@ class PublicVideoController extends Controller
                 'message' => 'Erreur lors de la recherche: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    private function formatDuration(?int $duration): string
+    {
+        if (!$duration || $duration < 1) {
+            return '00:00';
+        }
+
+        $hours = intdiv($duration, 3600);
+        $minutes = intdiv($duration % 3600, 60);
+        $seconds = $duration % 60;
+
+        if ($hours > 0) {
+            return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+        }
+
+        return sprintf('%02d:%02d', $minutes, $seconds);
     }
 }
