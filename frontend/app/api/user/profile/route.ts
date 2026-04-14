@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
   try {
     const userId = getUserIdFromToken(request);
     const session = userId ? null : await getServerSession(authOptions);
-    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
     if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -38,7 +39,8 @@ export async function PUT(request: NextRequest) {
   try {
     const userId = getUserIdFromToken(request);
     const session = userId ? null : await getServerSession(authOptions);
-    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
     if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -57,10 +59,13 @@ export async function PUT(request: NextRequest) {
     ];
     const filteredUpdates = Object.keys(updates)
       .filter((key) => allowedFields.includes(key))
-      .reduce((obj, key) => {
-        obj[key] = updates[key] as string;
-        return obj;
-      }, {} as Record<string, string>);
+      .reduce(
+        (obj, key) => {
+          obj[key] = updates[key] as string;
+          return obj;
+        },
+        {} as Record<string, string>
+      );
 
     const updatedProfile = updateProfile(String(finalUserId), filteredUpdates);
     return NextResponse.json(updatedProfile);

@@ -31,11 +31,11 @@ export async function GET() {
     // Pour l'instant, nous allons simuler les données
     // En production, cela viendrait d'une vraie base de données bancaire
     const balances: UserBalance[] = await readJsonStore("user-balances", []);
-    
+
     // Simuler un utilisateur avec un solde
     const mockBalance: UserBalance = {
       userId: 1,
-      balance: 150.50,
+      balance: 150.5,
       currency: "EUR",
       lastUpdated: new Date().toISOString(),
       transactions: [
@@ -43,30 +43,38 @@ export async function GET() {
           id: "txn_001",
           userId: 1,
           type: "credit",
-          amount: 100.00,
+          amount: 100.0,
           currency: "EUR",
           description: "Rechargement compte",
           status: "completed",
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          createdAt: new Date(
+            Date.now() - 7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+          completedAt: new Date(
+            Date.now() - 7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
         },
         {
           id: "txn_002",
           userId: 1,
           type: "debit",
-          amount: 25.00,
+          amount: 25.0,
           currency: "EUR",
           description: "Achat cours Python",
           status: "completed",
-          createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          createdAt: new Date(
+            Date.now() - 2 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+          completedAt: new Date(
+            Date.now() - 2 * 24 * 60 * 60 * 1000
+          ).toISOString(),
           relatedEntity: {
             type: "course",
             id: 101,
-            name: "Python pour les débutants"
-          }
-        }
-      ]
+            name: "Python pour les débutants",
+          },
+        },
+      ],
     };
 
     return NextResponse.json({
@@ -74,9 +82,8 @@ export async function GET() {
       balance: mockBalance.balance,
       currency: mockBalance.currency,
       lastUpdated: mockBalance.lastUpdated,
-      transactions: mockBalance.transactions
+      transactions: mockBalance.transactions,
     });
-
   } catch (error) {
     console.error("Erreur solde utilisateur:", error);
     return NextResponse.json(
@@ -108,9 +115,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: "Transaction traitée avec succès",
-      transaction: newTransaction
+      transaction: newTransaction,
     });
-
   } catch (error) {
     console.error("Erreur transaction:", error);
     return NextResponse.json(

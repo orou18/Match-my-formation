@@ -47,7 +47,10 @@ export async function GET(request: NextRequest) {
         employeesData = employeesPayload;
       }
     } catch (backendError) {
-      console.warn("Backend non accessible, utilisation des données fallback:", backendError);
+      console.warn(
+        "Backend non accessible, utilisation des données fallback:",
+        backendError
+      );
     }
 
     // Utiliser les données du backend si disponibles, sinon utiliser les fallbacks
@@ -59,20 +62,52 @@ export async function GET(request: NextRequest) {
           { id: 2, name: "Jean Dupont", email: "jean@example.com" },
           { id: 3, name: "Sophie Martin", email: "sophie@example.com" },
         ];
-    const employeeStats = employeeStatsData?.data || { total_employees: employees.length };
+    const employeeStats = employeeStatsData?.data || {
+      total_employees: employees.length,
+    };
     const recentVideos = Array.isArray(dashboardData?.recentVideos)
       ? dashboardData.recentVideos
       : [
-          { id: 1, title: "Introduction au Marketing Digital", views: 1250, revenue: 12.50, created_at: "2024-01-15T10:30:00Z" },
-          { id: 2, title: "Techniques de Vente Avancées", views: 980, revenue: 9.80, created_at: "2024-01-14T14:20:00Z" },
-          { id: 3, title: "Gestion de la Relation Client", views: 756, revenue: 7.56, created_at: "2024-01-13T09:15:00Z" },
+          {
+            id: 1,
+            title: "Introduction au Marketing Digital",
+            views: 1250,
+            revenue: 12.5,
+            created_at: "2024-01-15T10:30:00Z",
+          },
+          {
+            id: 2,
+            title: "Techniques de Vente Avancées",
+            views: 980,
+            revenue: 9.8,
+            created_at: "2024-01-14T14:20:00Z",
+          },
+          {
+            id: 3,
+            title: "Gestion de la Relation Client",
+            views: 756,
+            revenue: 7.56,
+            created_at: "2024-01-13T09:15:00Z",
+          },
         ];
 
     const data = {
       totalVideos: overview.totalVideos || recentVideos.length || 3,
       totalEmployees: employeeStats.total_employees || employees.length || 3,
-      totalViews: overview.totalViews || recentVideos.reduce((sum: number, video: any) => sum + Number(video.views || 0), 0) || 2986,
-      totalRevenue: overview.totalRevenue || recentVideos.reduce((sum: number, video: any) => sum + Number(video.revenue || 0), 0) || 29.86,
+      totalViews:
+        overview.totalViews ||
+        recentVideos.reduce(
+          (sum: number, video: any) => sum + Number(video.views || 0),
+          0
+        ) ||
+        2986,
+      totalRevenue:
+        overview.totalRevenue ||
+        recentVideos.reduce(
+          (sum: number, video: any) => sum + Number(video.revenue || 0),
+          0
+        ) ||
+        29.86,
       monthlyGrowth: overview.monthlyGrowth || 15.2,
       recentVideos: recentVideos.map((video: CreatorDashboardVideo) => {
         const views = Number(video.views || 0);
@@ -94,12 +129,14 @@ export async function GET(request: NextRequest) {
           completion_rate: Math.max(0, 85 - index * 5),
           progress: Math.max(0, 75 - index * 10),
         })),
-      recentActivity: recentVideos.slice(0, 5).map((video: CreatorDashboardVideo) => ({
-        id: Number(video.id),
-        type: "video_created",
-        message: `Nouvelle vidéo "${video.title}" ajoutée`,
-        created_at: video.created_at,
-      })),
+      recentActivity: recentVideos
+        .slice(0, 5)
+        .map((video: CreatorDashboardVideo) => ({
+          id: Number(video.id),
+          type: "video_created",
+          message: `Nouvelle vidéo "${video.title}" ajoutée`,
+          created_at: video.created_at,
+        })),
     };
 
     return NextResponse.json({ success: true, data });

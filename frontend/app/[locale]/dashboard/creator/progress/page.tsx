@@ -94,7 +94,8 @@ export default function EmployeeProgressPage() {
 
   const loadGlobalProgress = async () => {
     try {
-      const data = await creatorDashboardApi.getEmployeesGlobalProgress<GlobalStats>();
+      const data =
+        await creatorDashboardApi.getEmployeesGlobalProgress<GlobalStats>();
       if (data.success) {
         setGlobalStats(data.data);
       } else {

@@ -21,21 +21,21 @@ export const useBrandingReload = () => {
   useEffect(() => {
     const handleBrandingUpdate = (event: CustomEvent<BrandingSettings>) => {
       console.log("Branding update received:", event.detail);
-      
+
       // Démarrer le countdown
       setCountdown(2);
-      
+
       // Appliquer les changements CSS immédiatement
       applyBrandingStyles(event.detail);
-      
+
       // Démarrer le rechargement après 2 secondes
       setIsReloading(true);
-      
+
       let remaining = 2;
       const countdownInterval = setInterval(() => {
         remaining -= 1;
         setCountdown(remaining);
-        
+
         if (remaining <= 0) {
           clearInterval(countdownInterval);
           // Recharger la page pour appliquer tous les changements
@@ -45,51 +45,60 @@ export const useBrandingReload = () => {
     };
 
     // Écouter l'événement de mise à jour du branding
-    window.addEventListener("brandingUpdated", handleBrandingUpdate as EventListener);
-    
+    window.addEventListener(
+      "brandingUpdated",
+      handleBrandingUpdate as EventListener
+    );
+
     return () => {
-      window.removeEventListener("brandingUpdated", handleBrandingUpdate as EventListener);
+      window.removeEventListener(
+        "brandingUpdated",
+        handleBrandingUpdate as EventListener
+      );
     };
   }, []);
 
   const applyBrandingStyles = (settings: BrandingSettings) => {
     // Appliquer les variables CSS dynamiquement
     const root = document.documentElement;
-    
+
     // Couleurs principales - utiliser les mêmes noms que dans globals.css
-    root.style.setProperty('--color-primary', settings.primary_color);
-    root.style.setProperty('--color-primary-hover', settings.primary_color);
-    root.style.setProperty('--color-secondary', settings.secondary_color);
-    root.style.setProperty('--color-accent', settings.accent_color);
-    
+    root.style.setProperty("--color-primary", settings.primary_color);
+    root.style.setProperty("--color-primary-hover", settings.primary_color);
+    root.style.setProperty("--color-secondary", settings.secondary_color);
+    root.style.setProperty("--color-accent", settings.accent_color);
+
     // Variables supplémentaires pour compatibilité
-    root.style.setProperty('--primary', settings.primary_color);
-    root.style.setProperty('--secondary', settings.secondary_color);
-    root.style.setProperty('--accent', settings.accent_color);
-    root.style.setProperty('--primary-rgb', hexToRgb(settings.primary_color));
-    
+    root.style.setProperty("--primary", settings.primary_color);
+    root.style.setProperty("--secondary", settings.secondary_color);
+    root.style.setProperty("--accent", settings.accent_color);
+    root.style.setProperty("--primary-rgb", hexToRgb(settings.primary_color));
+
     // Polices avec vérification de sécurité
     if (settings.font_settings) {
-      const titleFont = settings.font_settings.title_font || 'Inter';
-      const bodyFont = settings.font_settings.body_font || 'Inter';
-      
-      root.style.setProperty('--font-primary', `"${titleFont}", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif`);
-      root.style.setProperty('--font-title', titleFont);
-      root.style.setProperty('--font-body', bodyFont);
+      const titleFont = settings.font_settings.title_font || "Inter";
+      const bodyFont = settings.font_settings.body_font || "Inter";
+
+      root.style.setProperty(
+        "--font-primary",
+        `"${titleFont}", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif`
+      );
+      root.style.setProperty("--font-title", titleFont);
+      root.style.setProperty("--font-body", bodyFont);
     } else {
       // Valeurs par défaut
-      root.style.setProperty('--font-title', 'Inter');
-      root.style.setProperty('--font-body', 'Inter');
+      root.style.setProperty("--font-title", "Inter");
+      root.style.setProperty("--font-body", "Inter");
     }
-    
+
     // CRÉER DES STYLES DYNAMIQUES avec haute spécificité
-    let dynamicStyles = document.getElementById('branding-dynamic-styles');
+    let dynamicStyles = document.getElementById("branding-dynamic-styles");
     if (!dynamicStyles) {
-      dynamicStyles = document.createElement('style');
-      dynamicStyles.id = 'branding-dynamic-styles';
+      dynamicStyles = document.createElement("style");
+      dynamicStyles.id = "branding-dynamic-styles";
       document.head.appendChild(dynamicStyles);
     }
-    
+
     // Générer les CSS dynamiques avec haute spécificité
     dynamicStyles.textContent = `
       /* Styles de branding avec haute spécificité */
@@ -271,61 +280,63 @@ export const useBrandingReload = () => {
       input,
       textarea,
       select {
-        font-family: "${settings.font_settings?.body_font || 'Inter'}", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif !important;
+        font-family: "${settings.font_settings?.body_font || "Inter"}", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif !important;
       }
       
       h1, h2, h3, h4, h5, h6,
       h1 *, h2 *, h3 *, h4 *, h5 *, h6 * {
-        font-family: "${settings.font_settings?.title_font || 'Inter'}", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif !important;
+        font-family: "${settings.font_settings?.title_font || "Inter"}", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif !important;
       }
     `;
-    
+
     // Forcer le reflow pour s'assurer que les styles sont appliqués
     setTimeout(() => {
-      document.body.style.display = 'none';
+      document.body.style.display = "none";
       document.body.offsetHeight; // Force reflow
-      document.body.style.display = '';
+      document.body.style.display = "";
     }, 100);
-    
+
     // Appliquer le logo et favicon
-    const logoElements = document.querySelectorAll('.branding-logo');
-    logoElements.forEach(el => {
+    const logoElements = document.querySelectorAll(".branding-logo");
+    logoElements.forEach((el) => {
       if (el instanceof HTMLImageElement && settings.logo_url) {
         el.src = settings.logo_url;
       }
     });
-    
+
     // Mettre à jour le favicon
     if (settings.favicon_url) {
-      const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
+      const favicon = document.querySelector(
+        'link[rel="icon"]'
+      ) as HTMLLinkElement;
       if (favicon) {
         favicon.href = settings.favicon_url;
       }
     }
-    
+
     // Appliquer le CSS personnalisé
     if (settings.custom_css) {
-      let customStyleElement = document.getElementById('branding-custom-css');
+      let customStyleElement = document.getElementById("branding-custom-css");
       if (!customStyleElement) {
-        customStyleElement = document.createElement('style');
-        customStyleElement.id = 'branding-custom-css';
+        customStyleElement = document.createElement("style");
+        customStyleElement.id = "branding-custom-css";
         document.head.appendChild(customStyleElement);
       }
       customStyleElement.textContent = settings.custom_css;
     }
-    
+
     console.log("Branding styles applied:", settings);
     console.log("CSS Variables updated:", {
-      '--color-primary': settings.primary_color,
-      '--color-secondary': settings.secondary_color,
-      '--color-accent': settings.accent_color,
-      '--font-title': settings.font_settings?.title_font || 'Inter'
+      "--color-primary": settings.primary_color,
+      "--color-secondary": settings.secondary_color,
+      "--color-accent": settings.accent_color,
+      "--font-title": settings.font_settings?.title_font || "Inter",
     });
   };
 
   const hexToRgb = (hex: string): string => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result 
+    return result
       ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
       : "0, 122, 122"; // Valeur par défaut
   };
@@ -333,6 +344,6 @@ export const useBrandingReload = () => {
   return {
     isReloading,
     countdown,
-    applyBrandingStyles
+    applyBrandingStyles,
   };
 };

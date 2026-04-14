@@ -12,14 +12,17 @@ export async function GET(request: NextRequest) {
   try {
     const userId = getUserIdFromToken(request);
     const session = userId ? null : await getServerSession(authOptions);
-    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
     if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const notifications = getUserNotifications(String(finalUserId), "student");
-    const count = notifications.filter((notification) => !notification.isRead).length;
+    const count = notifications.filter(
+      (notification) => !notification.isRead
+    ).length;
 
     return NextResponse.json({ count });
   } catch (error) {

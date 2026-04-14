@@ -71,13 +71,16 @@ export default function PathwaysManagement() {
   });
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
     const fetchData = async () => {
       try {
         // Fetch pathways for creator
-        const pRes = await fetch('http://127.0.0.1:8000/api/creator/pathways', {
-          headers: token ? { Authorization: `Bearer ${token}`, Accept: 'application/json' } : { Accept: 'application/json' }
+        const pRes = await fetch("http://127.0.0.1:8000/api/creator/pathways", {
+          headers: token
+            ? { Authorization: `Bearer ${token}`, Accept: "application/json" }
+            : { Accept: "application/json" },
         });
         if (pRes.ok) {
           const pJson = await pRes.json();
@@ -85,8 +88,10 @@ export default function PathwaysManagement() {
         }
 
         // Fetch videos to allow selection when creating pathway
-        const vRes = await fetch('http://127.0.0.1:8000/api/creator/videos', {
-          headers: token ? { Authorization: `Bearer ${token}`, Accept: 'application/json' } : { Accept: 'application/json' }
+        const vRes = await fetch("http://127.0.0.1:8000/api/creator/videos", {
+          headers: token
+            ? { Authorization: `Bearer ${token}`, Accept: "application/json" }
+            : { Accept: "application/json" },
         });
         if (vRes.ok) {
           const vJson = await vRes.json();
@@ -94,12 +99,12 @@ export default function PathwaysManagement() {
           const mapped = (vJson || []).map((v: any) => ({
             id: v.id,
             title: v.title,
-            description: v.description ?? '',
-            category: v.category ?? 'General',
-            level: 'N/A',
+            description: v.description ?? "",
+            category: v.category ?? "General",
+            level: "N/A",
             duration: v.duration ?? 0,
             enrolledUsers: 0,
-            status: v.visibility ?? 'published',
+            status: v.visibility ?? "published",
           }));
           setCourses(mapped);
         }
@@ -107,7 +112,7 @@ export default function PathwaysManagement() {
         // Playlists: not yet supported server-side, keep empty
         setPlaylists([]);
       } catch (err) {
-        console.error('Error fetching pathways data', err);
+        console.error("Error fetching pathways data", err);
       } finally {
         setLoading(false);
       }
@@ -118,22 +123,32 @@ export default function PathwaysManagement() {
 
   const handleCreatePathway = async () => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
       // duration_hours: approximate from selected videos
-      const durationHours = Math.max(1, Math.round((formData.selectedCourses.length * 20) / 1));
+      const durationHours = Math.max(
+        1,
+        Math.round((formData.selectedCourses.length * 20) / 1)
+      );
 
       const payload = {
         title: formData.title,
         description: formData.description,
-        domain: 'general',
+        domain: "general",
         duration_hours: durationHours,
         difficulty_level: formData.difficulty,
         video_ids: formData.selectedCourses,
       };
 
-      const res = await fetch('http://127.0.0.1:8000/api/creator/pathways', {
-        method: 'POST',
-        headers: token ? { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, Accept: 'application/json' } : { 'Content-Type': 'application/json', Accept: 'application/json' },
+      const res = await fetch("http://127.0.0.1:8000/api/creator/pathways", {
+        method: "POST",
+        headers: token
+          ? {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            }
+          : { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -144,10 +159,10 @@ export default function PathwaysManagement() {
         setShowCreateModal(false);
         resetForm();
       } else {
-        console.error('Failed to create pathway', await res.text());
+        console.error("Failed to create pathway", await res.text());
       }
     } catch (err) {
-      console.error('Error creating pathway', err);
+      console.error("Error creating pathway", err);
     }
   };
 

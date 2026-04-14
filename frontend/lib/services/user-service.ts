@@ -4,7 +4,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'student' | 'creator' | 'admin';
+  role: "student" | "creator" | "admin";
   avatar?: string;
   bio?: string;
   phone?: string;
@@ -34,14 +34,14 @@ class UserService {
     const token = getAuthToken();
     return {
       "Content-Type": "application/json",
-      "Accept": "application/json",
-      ...(token && { "Authorization": `Bearer ${token}` }),
+      Accept: "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
 
   async getCurrentUser(): Promise<User> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/user/profile`, {
         method: "GET",
@@ -61,7 +61,7 @@ class UserService {
 
   async updateProfile(userData: Partial<User>): Promise<User> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/user/profile`, {
         method: "PUT",
@@ -83,13 +83,13 @@ class UserService {
   async uploadAvatar(file: File): Promise<{ avatar_url: string }> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
     const formData = new FormData();
-    formData.append('avatar', file);
+    formData.append("avatar", file);
 
     try {
       const response = await fetch(`${apiBase}/api/user/upload-avatar`, {
         method: "POST",
         headers: {
-          ...(getAuthToken() && { "Authorization": `Bearer ${getAuthToken()}` }),
+          ...(getAuthToken() && { Authorization: `Bearer ${getAuthToken()}` }),
         },
         body: formData,
       });
@@ -107,7 +107,7 @@ class UserService {
 
   async getNotifications(): Promise<any[]> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/user/notifications`, {
         method: "GET",
@@ -128,12 +128,15 @@ class UserService {
 
   async getUnreadNotificationsCount(): Promise<number> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
-      const response = await fetch(`${apiBase}/api/user/notifications/unread-count`, {
-        method: "GET",
-        headers: await this.getHeaders(),
-      });
+      const response = await fetch(
+        `${apiBase}/api/user/notifications/unread-count`,
+        {
+          method: "GET",
+          headers: await this.getHeaders(),
+        }
+      );
 
       if (!response.ok) {
         return 0; // Return 0 if API fails
@@ -149,7 +152,7 @@ class UserService {
 
   async markNotificationAsRead(notificationId: number): Promise<void> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       await fetch(`${apiBase}/api/user/notifications/${notificationId}/read`, {
         method: "POST",
@@ -163,7 +166,7 @@ class UserService {
 
   async deleteNotification(notificationId: number): Promise<void> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       await fetch(`${apiBase}/api/user/notifications/${notificationId}`, {
         method: "DELETE",
@@ -183,7 +186,7 @@ class UserService {
     average_progress: number;
   }> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/student/stats`, {
         method: "GET",

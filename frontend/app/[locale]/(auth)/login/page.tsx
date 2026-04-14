@@ -78,15 +78,18 @@ export default function AuthPage() {
 
     if (isLogin) {
       try {
-        const loginResponse = await authService.login(formData.email, formData.password);
-        
+        const loginResponse = await authService.login(
+          formData.email,
+          formData.password
+        );
+
         const authData: AuthData = {
           token: loginResponse.token!,
           user: {
             id: loginResponse.user!.id,
             name: loginResponse.user!.name,
             email: loginResponse.user!.email,
-            role: loginResponse.user!.role as 'student' | 'creator' | 'admin',
+            role: loginResponse.user!.role as "student" | "creator" | "admin",
           },
         };
 
@@ -100,13 +103,19 @@ export default function AuthPage() {
             redirect: false,
           });
         } catch (nextAuthError) {
-          console.warn("NextAuth signin failed, mais continuation avec UserIdManager:", nextAuthError);
+          console.warn(
+            "NextAuth signin failed, mais continuation avec UserIdManager:",
+            nextAuthError
+          );
         }
 
         // Redirection directe
         window.location.href = `/${locale}/dashboard/${loginResponse.user!.role}`;
       } catch (error: any) {
-        setError(error.message || "Une erreur est survenue lors de la connexion. Réessayez.");
+        setError(
+          error.message ||
+            "Une erreur est survenue lors de la connexion. Réessayez."
+        );
         setLoading(false);
       }
     } else {
@@ -215,7 +224,9 @@ export default function AuthPage() {
       });
 
       if (result?.error) {
-        setError(`Connexion ${provider} indisponible. Vérifiez la configuration OAuth.`);
+        setError(
+          `Connexion ${provider} indisponible. Vérifiez la configuration OAuth.`
+        );
       }
     } catch (error) {
       console.error("Social login error:", error);

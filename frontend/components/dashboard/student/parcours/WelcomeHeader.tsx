@@ -8,7 +8,11 @@ interface WelcomeHeaderProps {
   rank: number;
 }
 
-export default function WelcomeHeader({ userName, streak, rank }: WelcomeHeaderProps) {
+export default function WelcomeHeader({
+  userName,
+  streak,
+  rank,
+}: WelcomeHeaderProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -67,19 +71,27 @@ export default function WelcomeHeader({ userName, streak, rank }: WelcomeHeaderP
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="text-center">
           <div className="text-2xl font-bold text-primary">{streak}</div>
-          <div className="text-xs text-gray-500 uppercase tracking-wider">Jours d'affilée</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">
+            Jours d'affilée
+          </div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-green-600">#{rank}</div>
-          <div className="text-xs text-gray-500 uppercase tracking-wider">Classement</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">
+            Classement
+          </div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-blue-600">12</div>
-          <div className="text-xs text-gray-500 uppercase tracking-wider">Cours</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">
+            Cours
+          </div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-purple-600">8.5h</div>
-          <div className="text-xs text-gray-500 uppercase tracking-wider">Cette semaine</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">
+            Cette semaine
+          </div>
         </div>
       </div>
     </motion.div>

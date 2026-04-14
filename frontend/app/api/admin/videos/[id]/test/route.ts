@@ -7,18 +7,18 @@ export async function GET(
   try {
     const { id } = await context.params;
     console.log("Test API called with ID:", id);
-    
+
     return NextResponse.json({
       success: true,
       message: "Test API working",
-      id: id
+      id: id,
     });
   } catch (error) {
     console.error("Test API error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: "Test API error" 
+      {
+        success: false,
+        message: "Test API error",
       },
       { status: 500 }
     );

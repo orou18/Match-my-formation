@@ -81,11 +81,14 @@ export async function GET(request: NextRequest) {
         featured: false,
       }));
 
-    let filteredCreators = [...creators, ...accountCreators, ...pendingApplications]
-      .filter(
-        (creator, index, list) =>
-          list.findIndex((item) => item.email === creator.email) === index
-      );
+    let filteredCreators = [
+      ...creators,
+      ...accountCreators,
+      ...pendingApplications,
+    ].filter(
+      (creator, index, list) =>
+        list.findIndex((item) => item.email === creator.email) === index
+    );
 
     // Filtrage
     if (status && status !== "all") {

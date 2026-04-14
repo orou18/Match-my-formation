@@ -24,8 +24,9 @@ export default function GlobalStatsChart({
   rank,
   totalStudents,
 }: GlobalStatsChartProps) {
-  const progressPercentage = totalCourses > 0 ? (completedCourses / totalCourses) * 100 : 0;
-  
+  const progressPercentage =
+    totalCourses > 0 ? (completedCourses / totalCourses) * 100 : 0;
+
   const stats = [
     {
       label: "Formations terminées",
@@ -73,7 +74,9 @@ export default function GlobalStatsChart({
             fill="transparent"
             strokeDasharray={553}
             initial={{ strokeDashoffset: 553 }}
-            animate={{ strokeDashoffset: 553 - 553 * (progressPercentage / 100) }}
+            animate={{
+              strokeDashoffset: 553 - 553 * (progressPercentage / 100),
+            }}
             transition={{ duration: 2, ease: "easeInOut" }}
             className="text-primary"
             strokeLinecap="round"

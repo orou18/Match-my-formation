@@ -17,18 +17,20 @@ function getLaravelBaseUrl() {
 async function resolveAccessToken(request?: NextRequest) {
   // Vérifier le rôle de l'utilisateur
   const userRole = request?.cookies.get("userRole")?.value;
-  
+
   // Vérifier si l'utilisateur a le rôle approprié pour les endpoints creator
   const pathname = request?.nextUrl?.pathname;
   if (pathname?.includes("/creator")) {
     // Permettre l'accès si le rôle est creator, admin, ou si aucun rôle n'est défini (fallback)
     if (userRole && userRole !== "creator" && userRole !== "admin") {
-      console.warn(`Rôle utilisateur "${userRole}" tente d'accéder aux endpoints creator`);
+      console.warn(
+        `Rôle utilisateur "${userRole}" tente d'accéder aux endpoints creator`
+      );
       // Ne pas bloquer l'accès, juste logger un avertissement
       // throw new Error("Unauthorized: User role does not match required creator role");
     }
   }
-  
+
   // 1. Vérifier le header Authorization
   const header = request?.headers.get("authorization");
   if (header?.startsWith("Bearer ")) {
@@ -65,11 +67,11 @@ async function resolveAccessToken(request?: NextRequest) {
   // 4. Vérifier la session NextAuth
   try {
     const session = await getServerSession(authOptions);
-    const accessToken = (session?.user as { accessToken?: string } | undefined)?.accessToken;
+    const accessToken = (session?.user as { accessToken?: string } | undefined)
+      ?.accessToken;
     if (accessToken) {
       return accessToken;
     }
-
   } catch (error) {
     console.error("Erreur de resolution de session NextAuth:", error);
   }
@@ -97,33 +99,37 @@ export async function laravelFetch(
   if (!finalHeaders.has("Accept")) {
     finalHeaders.set("Accept", "application/json");
   }
-  
+
   // Forward incoming cookies from the NextRequest to the backend so session-based
   // auth (Sanctum) works when proxying server-side requests.
   const incomingCookie = request?.headers.get("cookie");
   if (incomingCookie) {
     finalHeaders.set("Cookie", incomingCookie);
   }
-  
+
   // Ajouter des cookies spécifiques pour NextAuth
   if (request) {
     const cookies = request.cookies.getAll();
     const authCookies = cookies
-      .filter(cookie => 
-        cookie.name.includes('next-auth') || 
-        cookie.name.includes('authToken') ||
-        cookie.name.includes('session')
+      .filter(
+        (cookie) =>
+          cookie.name.includes("next-auth") ||
+          cookie.name.includes("authToken") ||
+          cookie.name.includes("session")
       )
-      .map(cookie => `${cookie.name}=${cookie.value}`)
-      .join('; ');
-    
+      .map((cookie) => `${cookie.name}=${cookie.value}`)
+      .join("; ");
+
     if (authCookies && !finalHeaders.has("Cookie")) {
       finalHeaders.set("Cookie", authCookies);
     } else if (authCookies && finalHeaders.has("Cookie")) {
-      finalHeaders.set("Cookie", finalHeaders.get("Cookie") + '; ' + authCookies);
+      finalHeaders.set(
+        "Cookie",
+        finalHeaders.get("Cookie") + "; " + authCookies
+      );
     }
   }
-  
+
   if (token && !finalHeaders.has("Authorization")) {
     finalHeaders.set("Authorization", `Bearer ${token}`);
   }

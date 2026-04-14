@@ -88,7 +88,9 @@ export default function EditVideoPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoDuration, setVideoDuration] = useState("00:00");
-  const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(null);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(
+    null
+  );
   const [generatedThumbnails, setGeneratedThumbnails] = useState<string[]>([]);
   const [expandedSections, setExpandedSections] = useState({
     basic: true,
@@ -134,12 +136,12 @@ export default function EditVideoPage() {
         },
         cache: "no-store",
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         const videosList = Array.isArray(data.videos) ? data.videos : [];
         const currentVideo = videosList.find((v: any) => v.id === videoId);
-        
+
         if (currentVideo) {
           setVideo(currentVideo);
           setFormData({
@@ -163,10 +165,17 @@ export default function EditVideoPage() {
       }
     } catch (err) {
       console.error("Erreur lors du chargement de la vidéo:", err);
-      if (typeof err === 'object' && err !== null && 'message' in err) {
-        error("Erreur de chargement", (err as any).message || "Impossible de charger les détails de la vidéo");
+      if (typeof err === "object" && err !== null && "message" in err) {
+        error(
+          "Erreur de chargement",
+          (err as any).message ||
+            "Impossible de charger les détails de la vidéo"
+        );
       } else {
-        error("Erreur de chargement", "Impossible de charger les détails de la vidéo");
+        error(
+          "Erreur de chargement",
+          "Impossible de charger les détails de la vidéo"
+        );
       }
     } finally {
       setLoading(false);
@@ -260,7 +269,9 @@ export default function EditVideoPage() {
         const duration = video.duration;
         const minutes = Math.floor(duration / 60);
         const seconds = Math.floor(duration % 60);
-        setVideoDuration(`${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`);
+        setVideoDuration(
+          `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+        );
       };
       video.src = URL.createObjectURL(file);
     }
@@ -358,7 +369,7 @@ export default function EditVideoPage() {
         body: formDataToSend,
         cache: "no-store",
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         setUploadProgress(100);
@@ -369,7 +380,10 @@ export default function EditVideoPage() {
         );
 
         // Recharger la liste des vidéos dans le dashboard creator
-        if (typeof window !== 'undefined' && (window as any).refreshCreatorVideos) {
+        if (
+          typeof window !== "undefined" &&
+          (window as any).refreshCreatorVideos
+        ) {
           (window as any).refreshCreatorVideos();
         }
 
@@ -381,7 +395,10 @@ export default function EditVideoPage() {
       }
     } catch (err) {
       console.error("Erreur:", err);
-      error("Erreur lors de la mise à jour", "Une erreur technique est survenue");
+      error(
+        "Erreur lors de la mise à jour",
+        "Une erreur technique est survenue"
+      );
     } finally {
       setIsSubmitting(false);
       setUploadProgress(0);
@@ -423,7 +440,10 @@ export default function EditVideoPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NotificationContainer notifications={notifications} onRemove={removeNotification} />
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
+      />
 
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
@@ -431,7 +451,9 @@ export default function EditVideoPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <button
-                onClick={() => router.push(`/${locale}/dashboard/creator/videos`)}
+                onClick={() =>
+                  router.push(`/${locale}/dashboard/creator/videos`)
+                }
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors mr-4"
               >
                 <X className="w-5 h-5 text-gray-500" />
@@ -476,7 +498,9 @@ export default function EditVideoPage() {
                   <span className="text-sm font-medium text-gray-700">
                     Progression de la mise à jour
                   </span>
-                  <span className="text-sm text-gray-500">{uploadProgress}%</span>
+                  <span className="text-sm text-gray-500">
+                    {uploadProgress}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
@@ -670,8 +694,8 @@ export default function EditVideoPage() {
                       <div className="flex items-center gap-2">
                         <AlertCircle className="w-4 h-4 text-blue-600" />
                         <p className="text-sm text-blue-700">
-                          Cette vidéo sera visible par tous les utilisateurs dans la
-                          section "Pépites de nos experts"
+                          Cette vidéo sera visible par tous les utilisateurs
+                          dans la section "Pépites de nos experts"
                         </p>
                       </div>
                     </div>

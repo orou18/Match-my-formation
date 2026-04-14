@@ -7,9 +7,12 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const response = await laravelFetch(`/api/creator/employees/${id}/progress`, {
-      request,
-    });
+    const response = await laravelFetch(
+      `/api/creator/employees/${id}/progress`,
+      {
+        request,
+      }
+    );
     const data = await parseLaravelJson(response);
     return NextResponse.json(data, { status: response.status });
   } catch (error) {

@@ -25,7 +25,7 @@ export class AuthService {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           email,
@@ -43,7 +43,7 @@ export class AuthService {
         } catch {
           // Si le JSON ne peut être parsé, garder le message par défaut
         }
-        
+
         throw new Error(errorMessage);
       }
 
@@ -90,7 +90,7 @@ export class AuthService {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           name,
@@ -110,7 +110,7 @@ export class AuthService {
         } catch {
           // Si le JSON ne peut être parsé, garder le message par défaut
         }
-        
+
         throw new Error(errorMessage);
       }
 
@@ -153,8 +153,8 @@ export class AuthService {
       await fetch(this.getProxyUrl("/api/auth/logout"), {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
-          "Accept": "application/json",
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
         },
       });
     } catch (error) {
@@ -163,8 +163,8 @@ export class AuthService {
   }
 
   getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null;
-  
+    if (typeof window === "undefined") return null;
+
     const userIdToken = localStorage.getItem("auth_token");
     if (userIdToken) return userIdToken;
 
@@ -177,14 +177,14 @@ export class AuthService {
   }
 
   setAuthToken(token: string): void {
-    if (typeof window === 'undefined') return;
-  
+    if (typeof window === "undefined") return;
+
     localStorage.setItem("auth_token", token);
   }
 
   clearAuthToken(): void {
-    if (typeof window === 'undefined') return;
-  
+    if (typeof window === "undefined") return;
+
     localStorage.removeItem("auth_token");
   }
 

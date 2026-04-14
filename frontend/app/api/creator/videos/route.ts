@@ -5,10 +5,9 @@ export async function GET(request: NextRequest) {
   try {
     const response = await laravelFetch("/api/creator/videos", { request });
     const data = await parseLaravelJson(response);
-    return NextResponse.json(
-      Array.isArray(data) ? { videos: data } : data,
-      { status: response.status }
-    );
+    return NextResponse.json(Array.isArray(data) ? { videos: data } : data, {
+      status: response.status,
+    });
   } catch (error) {
     console.error("CREATOR VIDEOS - Erreur:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

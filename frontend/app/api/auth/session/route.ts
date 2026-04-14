@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     // Vérifier l'authentification avec UserIdManager
     const userData = UserIdManager.getStoredUserData();
-    
+
     if (!userData || !userData.id) {
       // Retourner une session par défaut
       return NextResponse.json({
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Erreur /api/auth/session:", error);
-    
+
     // En cas d'erreur, retourner une session vide
     return NextResponse.json({
       user: null,

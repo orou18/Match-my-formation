@@ -275,7 +275,9 @@ export default function EmployeeLoginPage() {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
             <div className="flex items-center gap-3 mb-4">
               <AlertCircle className="w-5 h-5 text-amber-500" />
-              <h3 className="font-medium text-gray-900">Besoin d&apos;aide ?</h3>
+              <h3 className="font-medium text-gray-900">
+                Besoin d&apos;aide ?
+              </h3>
             </div>
             <p className="text-sm text-gray-600 mb-3">
               Si vous rencontrez des difficultés pour vous connecter :

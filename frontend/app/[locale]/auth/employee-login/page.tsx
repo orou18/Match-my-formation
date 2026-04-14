@@ -4,7 +4,15 @@ import { useState, useEffect } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, User, Building2, ArrowLeft } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Building2,
+  ArrowLeft,
+} from "lucide-react";
 import Link from "next/link";
 
 interface EmployeeLoginData {
@@ -90,7 +98,7 @@ export default function EmployeeLoginPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -117,9 +125,7 @@ export default function EmployeeLoginPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Connexion Employé
           </h1>
-          <p className="text-gray-600">
-            Accédez à votre espace de formation
-          </p>
+          <p className="text-gray-600">Accédez à votre espace de formation</p>
         </div>
 
         {/* Card */}
@@ -192,7 +198,11 @@ export default function EmployeeLoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>

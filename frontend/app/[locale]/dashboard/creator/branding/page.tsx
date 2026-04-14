@@ -43,7 +43,7 @@ export default function BrandingPage() {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
-  
+
   // Hook pour gérer le rechargement du branding
   const { isReloading, countdown, applyBrandingStyles } = useBrandingReload();
 
@@ -106,9 +106,7 @@ export default function BrandingPage() {
     },
   ];
 
-  const mapApiToLocal = (
-    settings: ApiBrandingSettings
-  ): BrandingSettings => ({
+  const mapApiToLocal = (settings: ApiBrandingSettings): BrandingSettings => ({
     primaryColor: settings.primary_color,
     secondaryColor: settings.secondary_color,
     accentColor: settings.accent_color,
@@ -218,17 +216,16 @@ export default function BrandingPage() {
       });
       const payload = await response.json();
       const settings = payload.settings || payload;
-      
+
       // Appliquer immédiatement les styles via le hook
       applyBrandingStyles(settings);
-      
+
       // Émettre l'événement pour mettre à jour le branding (déclenche le rechargement)
       window.dispatchEvent(
         new CustomEvent("brandingUpdated", { detail: settings })
       );
-      
+
       setMessage("Personnalisation sauvegardée ! Rechargement du dashboard...");
-      
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
       setMessage("Impossible de sauvegarder la personnalisation");
@@ -305,11 +302,13 @@ export default function BrandingPage() {
       </motion.div>
 
       {message ? (
-        <div className={`rounded-xl border px-4 py-3 text-sm ${
-          isReloading 
-            ? 'border-blue-200 bg-blue-50 text-blue-700' 
-            : 'border-gray-200 bg-white text-gray-700'
-        }`}>
+        <div
+          className={`rounded-xl border px-4 py-3 text-sm ${
+            isReloading
+              ? "border-blue-200 bg-blue-50 text-blue-700"
+              : "border-gray-200 bg-white text-gray-700"
+          }`}
+        >
           <div className="flex items-center justify-between">
             <span>{message}</span>
             {isReloading && countdown !== null && (
@@ -324,9 +323,11 @@ export default function BrandingPage() {
           {isReloading && (
             <div className="mt-2">
               <div className="w-full bg-blue-200 rounded-full h-1">
-                <div 
+                <div
                   className="bg-blue-600 h-1 rounded-full transition-all duration-1000 ease-linear"
-                  style={{ width: `${countdown !== null ? ((2 - countdown) / 2) * 100 : 0}%` }}
+                  style={{
+                    width: `${countdown !== null ? ((2 - countdown) / 2) * 100 : 0}%`,
+                  }}
                 ></div>
               </div>
             </div>

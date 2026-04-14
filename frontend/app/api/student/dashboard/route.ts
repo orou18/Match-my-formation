@@ -5,12 +5,9 @@ export async function GET(request: NextRequest) {
   try {
     // Récupérer les données depuis UserIdManager (stocké localement)
     const authData = UserIdManager.getStoredUserData();
-    
+
     if (!authData) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     // Créer les données du dashboard avec les informations utilisateur

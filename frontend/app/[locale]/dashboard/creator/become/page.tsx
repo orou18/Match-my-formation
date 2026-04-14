@@ -4,11 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import UserIdManager from "@/lib/user-id-manager";
-import {
-  User,
-  Briefcase,
-  CheckCircle,
-} from "lucide-react";
+import { User, Briefcase, CheckCircle } from "lucide-react";
 
 export default function BecomeCreatorPage() {
   const params = useParams<{ locale?: string }>();

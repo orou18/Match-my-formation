@@ -47,7 +47,8 @@ function normalizeAdminVideo(video: BackendVideo) {
     comments: Array.isArray(video.comments) ? video.comments : [],
     resources: [],
     created_at: video.created_at || new Date().toISOString(),
-    updated_at: video.updated_at || video.created_at || new Date().toISOString(),
+    updated_at:
+      video.updated_at || video.created_at || new Date().toISOString(),
   };
 }
 
@@ -57,7 +58,9 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
-    const response = await laravelFetch(`/api/creator/videos/${id}`, { request });
+    const response = await laravelFetch(`/api/creator/videos/${id}`, {
+      request,
+    });
     const data = await parseLaravelJson(response);
 
     return NextResponse.json(

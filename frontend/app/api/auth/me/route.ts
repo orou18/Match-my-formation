@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     // Vérifier l'authentification avec UserIdManager
     const userData = UserIdManager.getStoredUserData();
-    
+
     if (!userData || !userData.id) {
       // Retourner un utilisateur par défaut pour éviter les erreurs
       const defaultUser = {
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-      
+
       return NextResponse.json({
         success: true,
         user: defaultUser,
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Erreur /api/auth/me:", error);
-    
+
     // En cas d'erreur, retourner un utilisateur par défaut
     const fallbackUser = {
       id: 1,
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    
+
     return NextResponse.json({
       success: true,
       user: fallbackUser,

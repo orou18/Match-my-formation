@@ -197,13 +197,14 @@ export const studentProfileApi = {
   },
 
   setupTwoFactor(payload: { method: "email" | "sms" | "app" }) {
-    return studentRequest<{ success: boolean; message: string; method: string }>(
-      "/api/user/2fa/setup",
-      {
-        method: "POST",
-        body: JSON.stringify(payload),
-      }
-    );
+    return studentRequest<{
+      success: boolean;
+      message: string;
+      method: string;
+    }>("/api/user/2fa/setup", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
   },
 
   verifyTwoFactor(payload: { code: string; method: "email" | "sms" | "app" }) {
@@ -273,19 +274,20 @@ export const studentProfileApi = {
   },
 
   getPreferences() {
-    return studentRequest<{ success: boolean; preferences: StudentPreferences }>(
-      "/api/user/preferences"
-    );
+    return studentRequest<{
+      success: boolean;
+      preferences: StudentPreferences;
+    }>("/api/user/preferences");
   },
 
   updatePreferences(payload: StudentPreferences) {
-    return studentRequest<{ success: boolean; preferences: StudentPreferences }>(
-      "/api/user/preferences",
-      {
-        method: "PUT",
-        body: JSON.stringify({ preferences: payload }),
-      }
-    );
+    return studentRequest<{
+      success: boolean;
+      preferences: StudentPreferences;
+    }>("/api/user/preferences", {
+      method: "PUT",
+      body: JSON.stringify({ preferences: payload }),
+    });
   },
 
   getBilling() {

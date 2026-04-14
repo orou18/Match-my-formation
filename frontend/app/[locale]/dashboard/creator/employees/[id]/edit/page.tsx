@@ -65,11 +65,15 @@ export default function EditEmployeePage() {
 
   const loadEmployee = async () => {
     try {
-      const response = await fetch("/api/creator/employees");
+      const response = await fetch("/api/creator/employees", {
+        credentials: "include",
+      });
       const data = await response.json();
 
       if (response.ok && data.success) {
-        const employeeData = data.data.find((emp: Employee) => emp.id === parseInt(employeeId!));
+        const employeeData = data.data.find(
+          (emp: Employee) => emp.id === parseInt(employeeId!)
+        );
         if (employeeData) {
           setEmployee(employeeData);
           setFormData({
@@ -124,7 +128,10 @@ export default function EditEmployeePage() {
     e.preventDefault();
 
     if (!validateForm()) {
-      error("Erreur de validation", "Veuillez corriger les erreurs dans le formulaire");
+      error(
+        "Erreur de validation",
+        "Veuillez corriger les erreurs dans le formulaire"
+      );
       return;
     }
 
@@ -136,6 +143,7 @@ export default function EditEmployeePage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           id: employeeId,
           name: formData.name,
@@ -143,13 +151,17 @@ export default function EditEmployeePage() {
           department: formData.department,
           position: formData.position,
           phone: formData.phone,
+          domain: formData.department,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        success("Employé modifié", "Les informations de l'employé ont été mises à jour avec succès");
+        success(
+          "Employé modifié",
+          "Les informations de l'employé ont été mises à jour avec succès"
+        );
         setTimeout(() => {
           router.push(withLocale("/dashboard/creator/employees"));
         }, 1500);
@@ -164,15 +176,17 @@ export default function EditEmployeePage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
         [name]: "",
       }));
@@ -189,7 +203,10 @@ export default function EditEmployeePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NotificationContainer notifications={notifications} onRemove={removeNotification} />
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
+      />
 
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
@@ -197,7 +214,9 @@ export default function EditEmployeePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => router.push(withLocale("/dashboard/creator/employees"))}
+                onClick={() =>
+                  router.push(withLocale("/dashboard/creator/employees"))
+                }
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -225,8 +244,12 @@ export default function EditEmployeePage() {
           className="bg-white rounded-xl shadow-sm border border-gray-100"
         >
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Informations de l'employé</h2>
-            <p className="text-gray-600 text-sm mt-1">Modifiez les informations ci-dessous</p>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Informations de l'employé
+            </h2>
+            <p className="text-gray-600 text-sm mt-1">
+              Modifiez les informations ci-dessous
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -370,7 +393,9 @@ export default function EditEmployeePage() {
 
               <motion.button
                 type="button"
-                onClick={() => router.push(withLocale("/dashboard/creator/employees"))}
+                onClick={() =>
+                  router.push(withLocale("/dashboard/creator/employees"))
+                }
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"

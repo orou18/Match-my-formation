@@ -130,25 +130,25 @@ export const creatorDashboardApi = {
   },
 
   getVideos<T = unknown>() {
-    return creatorRequest<T>("/api/creator/videos-simple");
+    return creatorRequest<T>("/api/creator/videos");
   },
 
   createVideo<T = unknown>(payload: FormData) {
-    return creatorRequest<T>("/api/creator/videos-simple", {
+    return creatorRequest<T>("/api/creator/videos", {
       method: "POST",
       body: payload,
     });
   },
 
   updateVideo<T = unknown>(payload: unknown) {
-    return creatorRequest<T>("/api/creator/videos-simple", {
+    return creatorRequest<T>("/api/creator/videos", {
       method: "PUT",
       body: JSON.stringify(payload),
     });
   },
 
   deleteVideo<T = unknown>(id: number | string) {
-    return creatorRequest<T>("/api/creator/videos-simple", {
+    return creatorRequest<T>("/api/creator/videos", {
       method: "DELETE",
       query: { id },
     });

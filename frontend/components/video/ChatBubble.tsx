@@ -127,9 +127,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
 
         {/* Time et Interactions */}
         <div className="flex items-center justify-between gap-2 mt-2 text-xs opacity-70">
-          <span>
-            {formatRelativeTime(message.created_at)}
-          </span>
+          <span>{formatRelativeTime(message.created_at)}</span>
 
           <div className="flex items-center gap-2">
             {onLike && (

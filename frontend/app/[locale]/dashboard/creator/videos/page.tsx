@@ -20,6 +20,7 @@ import {
   FileText,
   X,
   Calendar,
+  Copy,
 } from "lucide-react";
 import { isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/video-utils";
 import { creatorDashboardApi } from "@/lib/services/creator-dashboard-api";
@@ -65,17 +66,17 @@ export default function VideosPage() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
-    // Charger les vidéos depuis l'API
     const fetchVideos = async () => {
+      setLoading(true);
       try {
-        // Utiliser fetch direct pour éviter le problème d'import
-        const response = await fetch("/api/creator/videos-simple", {
+        const response = await fetch("/api/creator/videos", {
           headers: {
             Accept: "application/json",
           },
           cache: "no-store",
+          credentials: "include",
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           const videosList = Array.isArray(data.videos) ? data.videos : [];
@@ -87,7 +88,6 @@ export default function VideosPage() {
         setLoading(false);
       }
     };
-
     fetchVideos();
   }, []);
 
@@ -95,13 +95,14 @@ export default function VideosPage() {
   const refreshVideos = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/creator/videos-simple", {
+      const response = await fetch("/api/creator/videos", {
         headers: {
           Accept: "application/json",
         },
         cache: "no-store",
+        credentials: "include",
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         const videosList = Array.isArray(data.videos) ? data.videos : [];
@@ -118,7 +119,7 @@ export default function VideosPage() {
   useEffect(() => {
     // Stocker la fonction de rechargement pour y accéder depuis d'autres composants
     (window as any).refreshCreatorVideos = refreshVideos;
-    
+
     return () => {
       delete (window as any).refreshCreatorVideos;
     };
@@ -187,13 +188,13 @@ export default function VideosPage() {
     .filter((video) => {
       // Gestion du filtre par statut
       const matchesFilter = filter === "all" || video.status === filter;
-      
+
       // Gestion du filtre par recherche avec valeurs par défaut
       const title = video.title || "";
       const description = video.description || "";
       const category = video.category || "";
       const searchLower = searchTerm.toLowerCase();
-      
+
       const matchesSearch =
         title.toLowerCase().includes(searchLower) ||
         description.toLowerCase().includes(searchLower) ||
@@ -205,8 +206,12 @@ export default function VideosPage() {
       switch (sortBy) {
         case "date":
           // Gestion des différentes propriétés de date possibles
-          const dateA = new Date(a.updatedAt || a.updated_at || a.createdAt || a.created_at || 0);
-          const dateB = new Date(b.updatedAt || b.updated_at || b.createdAt || b.created_at || 0);
+          const dateA = new Date(
+            a.updatedAt || a.updated_at || a.createdAt || a.created_at || 0
+          );
+          const dateB = new Date(
+            b.updatedAt || b.updated_at || b.createdAt || b.created_at || 0
+          );
           return dateB.getTime() - dateA.getTime();
         case "views":
           return (b.views || 0) - (a.views || 0);
@@ -243,11 +248,15 @@ export default function VideosPage() {
   const handleVideoPreview = (video: VideoData) => {
     setSelectedVideo(video);
     setIsPreviewOpen(true);
+    // Bloquer le scroll du body
+    document.body.style.overflow = "hidden";
   };
 
   const closePreview = () => {
     setIsPreviewOpen(false);
     setSelectedVideo(null);
+    // Restaurer le scroll du body
+    document.body.style.overflow = "";
   };
 
   const handleBulkAction = async (
@@ -262,9 +271,25 @@ export default function VideosPage() {
         // Appeler l'API DELETE pour chaque vidéo sélectionnée
         try {
           await Promise.all(
-            selectedVideos.map((videoId) =>
-              creatorDashboardApi.deleteVideo(videoId)
-            )
+            selectedVideos.map(async (videoId) => {
+              const response = await fetch(
+                `/api/creator/videos?id=${videoId}`,
+                {
+                  method: "DELETE",
+                  headers: {
+                    Accept: "application/json",
+                  },
+                  cache: "no-store",
+                  credentials: "include",
+                }
+              );
+
+              if (!response.ok) {
+                throw new Error(
+                  `Erreur lors de la suppression de la vidéo ${videoId}`
+                );
+              }
+            })
           );
 
           // Mettre à jour le state local
@@ -281,8 +306,14 @@ export default function VideosPage() {
       // Appeler l'API PUT pour chaque vidéo sélectionnée
       try {
         await Promise.all(
-          selectedVideos.map((videoId) =>
-            creatorDashboardApi.updateVideo({
+          selectedVideos.map(async (videoId) => {
+            const response = await fetch(`/api/creator/videos`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify({
                 id: videoId,
                 visibility:
                   action === "publish"
@@ -290,8 +321,18 @@ export default function VideosPage() {
                     : action === "unlisted"
                       ? "unlisted"
                       : "private",
-            })
-          )
+                is_published: action === "publish",
+              }),
+              cache: "no-store",
+              credentials: "include",
+            });
+
+            if (!response.ok) {
+              throw new Error(
+                `Erreur lors de la mise à jour de la vidéo ${videoId}`
+              );
+            }
+          })
         );
 
         // Mettre à jour le state local
@@ -306,12 +347,8 @@ export default function VideosPage() {
                       : action === "unlisted"
                         ? "unlisted"
                         : "private",
-                  status:
-                    action === "publish"
-                      ? "published"
-                      : action === "unlisted"
-                        ? "unlisted"
-                        : "draft",
+                  status: action === "publish" ? "published" : "draft",
+                  is_published: action === "publish",
                 }
               : v
           )
@@ -325,40 +362,48 @@ export default function VideosPage() {
   };
 
   const handleEditVideo = (video: VideoData) => {
+    if (!video || !video.id) {
+      console.error("Video ID is missing:", video);
+      return;
+    }
     router.push(`/${locale}/dashboard/creator/videos/${video.id}/edit`);
   };
 
   const handleDeleteSelected = async () => {
     if (selectedVideos.length === 0) return;
 
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${selectedVideos.length} vidéo(s) ?`)) {
+    if (
+      !confirm(
+        `Êtes-vous sûr de vouloir supprimer ${selectedVideos.length} vidéo(s) ?`
+      )
+    ) {
       return;
     }
 
     try {
-      // Utiliser fetch direct pour éviter le problème d'import
+      // Utiliser le bon endpoint API
       for (const videoId of selectedVideos) {
-        const response = await fetch(`/api/creator/videos-simple?id=${videoId}`, {
+        const response = await fetch(`/api/creator/videos?id=${videoId}`, {
           method: "DELETE",
           headers: {
             Accept: "application/json",
           },
           cache: "no-store",
         });
-        
+
         if (!response.ok) {
-          throw new Error(`Erreur lors de la suppression de la vidéo ${videoId}`);
+          throw new Error(
+            `Erreur lors de la suppression de la vidéo ${videoId}`
+          );
         }
       }
 
       // Mettre à jour le state local
-      setVideos((prev) =>
-        prev.filter((v) => !selectedVideos.includes(v.id))
-      );
+      setVideos((prev) => prev.filter((v) => !selectedVideos.includes(v.id)));
       setSelectedVideos([]);
     } catch (error) {
       console.error("Erreur suppression vidéo:", error);
-      alert("Erreur lors de la suppression de la vidéo");
+      alert("Erreur lors de la suppression des vidéos");
     }
   };
 
@@ -368,15 +413,15 @@ export default function VideosPage() {
     }
 
     try {
-      // Utiliser fetch direct pour éviter le problème d'import
-      const response = await fetch(`/api/creator/videos-simple?id=${video.id}`, {
+      // Utiliser le bon endpoint API
+      const response = await fetch(`/api/creator/videos?id=${video.id}`, {
         method: "DELETE",
         headers: {
           Accept: "application/json",
         },
         cache: "no-store",
       });
-      
+
       if (response.ok) {
         setVideos((prev) => prev.filter((v) => v.id !== video.id));
       } else {
@@ -677,7 +722,11 @@ export default function VideosPage() {
                     {video.thumbnail &&
                     video.thumbnail !== "/api/placeholder/320/180" ? (
                       <img
-                        src={video.thumbnail}
+                        src={
+                          typeof video.thumbnail === "string"
+                            ? video.thumbnail
+                            : (video.thumbnail as any)?.url || ""
+                        }
                         alt={video.title}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -794,8 +843,12 @@ export default function VideosPage() {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden"
             onClick={(e) => e.stopPropagation()}
+            style={{
+              scrollbarWidth: "thin",
+              scrollbarColor: "#93c5fd #f3f4f6",
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -847,10 +900,10 @@ export default function VideosPage() {
                               <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
                               <p style="color: #6b7280; margin-bottom: 0.5rem;">Erreur de chargement vidéo</p>
                               <p style="color: #9ca3af; font-size: 0.875rem; margin-top: 0.5rem;">
-                                URL: ${selectedVideo.video_url || 'Non définie'}
+                                URL: ${selectedVideo.video_url || "Non définie"}
                               </p>
                               <button 
-                                onclick="window.open('${selectedVideo.video_url || '#'}', '_blank')"
+                                onclick="window.open('${selectedVideo.video_url || "#"}', '_blank')"
                                 style="margin-top: 1rem; padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 0.5rem; cursor: pointer;"
                               >
                                 Ouvrir dans un nouvel onglet
@@ -861,15 +914,30 @@ export default function VideosPage() {
                       }
                     }}
                     onLoadStart={() => {
-                      console.log("Début du chargement vidéo:", selectedVideo.video_url);
+                      console.log(
+                        "Début du chargement vidéo:",
+                        selectedVideo.video_url
+                      );
                     }}
                     onCanPlay={() => {
-                      console.log("Vidéo prête à jouer:", selectedVideo.video_url);
+                      console.log(
+                        "Vidéo prête à jouer:",
+                        selectedVideo.video_url
+                      );
                     }}
                   >
-                    <source src={selectedVideo.video_url || ""} type="video/mp4" />
-                    <source src={selectedVideo.video_url || ""} type="video/webm" />
-                    <source src={selectedVideo.video_url || ""} type="video/ogg" />
+                    <source
+                      src={selectedVideo.video_url || ""}
+                      type="video/mp4"
+                    />
+                    <source
+                      src={selectedVideo.video_url || ""}
+                      type="video/webm"
+                    />
+                    <source
+                      src={selectedVideo.video_url || ""}
+                      type="video/ogg"
+                    />
                     Votre navigateur ne supporte pas la lecture vidéo.
                   </video>
                 )
@@ -886,72 +954,105 @@ export default function VideosPage() {
               )}
             </div>
 
-            {/* Video Info */}
-            <div className="p-6 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    Informations
+            {/* Video Details */}
+            <div className="flex-1 p-6">
+              <div className="space-y-6">
+                {/* Video Info */}
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Détails de la vidéo
                   </h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Durée:</span>
-                      <span className="font-medium">
-                        {selectedVideo.duration}
-                      </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Titre</p>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {selectedVideo.title}
+                      </p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Catégorie:</span>
-                      <span className="font-medium">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Catégorie
+                      </p>
+                      <p className="text-sm text-gray-900 mt-1">
                         {selectedVideo.category}
-                      </span>
+                      </p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Statut:</span>
-                      <span
-                        className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1 w-fit ${getStatusColor(selectedVideo.status)}`}
-                      >
-                        {getStatusIcon(selectedVideo.status)}
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Durée</p>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {selectedVideo.duration}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Statut
+                      </p>
+                      <p className="text-sm text-gray-900 mt-1">
                         {getStatusLabel(selectedVideo.status)}
-                      </span>
+                      </p>
                     </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    Statistiques
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Vues:</span>
-                      <span className="font-medium">
-                        {formatNumber(selectedVideo.views)}
-                      </span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Vues</p>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {selectedVideo.views.toLocaleString()}
+                      </p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Étudiants:</span>
-                      <span className="font-medium">
-                        {selectedVideo.students}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Revenus:</span>
-                      <span className="font-medium text-green-600">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Revenus
+                      </p>
+                      <p className="text-sm text-gray-900 mt-1">
                         {formatCurrency(selectedVideo.revenue)}
-                      </span>
+                      </p>
                     </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-sm font-medium text-gray-700">
+                      Description
+                    </p>
+                    <p className="text-sm text-gray-900 mt-1">
+                      {selectedVideo.description}
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Actions</h3>
-                  <div className="flex gap-2">
-                    <button className="px-3 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors">
+                {/* Action Buttons */}
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Actions
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={() => {
+                        handleEditVideo(selectedVideo);
+                        closePreview();
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
                       Modifier
                     </button>
-                    <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors">
+                    <button
+                      onClick={() => {
+                        // Dupliquer la vidéo
+                        closePreview();
+                        // TODO: Implémenter la duplication
+                        alert("Fonction de duplication à implémenter");
+                      }}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+                    >
+                      <Copy className="w-4 h-4" />
                       Dupliquer
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleDeleteVideo(selectedVideo);
+                        closePreview();
+                      }}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Supprimer
                     </button>
                   </div>
                 </div>

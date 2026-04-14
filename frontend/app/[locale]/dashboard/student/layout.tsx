@@ -28,7 +28,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Commencer à false pour éviter le blocage
   const [user, setUser] = useState<Student | null>(null);
   const router = useRouter();
   const params = useParams();
@@ -51,14 +51,14 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
           certificates: [],
           progress: [],
         };
-        
+
         // Initialiser un utilisateur de test si nécessaire (côté client uniquement)
         if (typeof window !== "undefined") {
           UserIdManager.initializeTestUserIfNeeded();
-          
+
           // Récupérer les données utilisateur depuis UserIdManager
           const storedUserData = UserIdManager.getStoredUserData();
-          
+
           if (storedUserData && storedUserData.role === "student") {
             const studentData: Student = {
               id: storedUserData.id,
@@ -73,18 +73,20 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
               certificates: [],
               progress: [],
             };
-            
+
             setUser(studentData);
             return;
           }
         }
-        
+
         // Utiliser l'utilisateur par défaut
         setUser(defaultStudent);
-        
       } catch (error) {
-        console.error("Erreur lors du chargement des données utilisateur:", error);
-        
+        console.error(
+          "Erreur lors du chargement des données utilisateur:",
+          error
+        );
+
         // En cas d'erreur, utiliser un utilisateur par défaut
         const fallbackStudent: Student = {
           id: 1,
@@ -99,7 +101,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
           certificates: [],
           progress: [],
         };
-        
+
         setUser(fallbackStudent);
       } finally {
         setLoading(false);
@@ -108,10 +110,6 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
 
     fetchUserData();
   }, [router, locale]);
-
-  if (loading) {
-    return <PageLoader />;
-  }
 
   // Utiliser un utilisateur par défaut si aucun n'est défini
   const currentUser: Student = user || {
@@ -223,13 +221,20 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-2" style={{ overflowY: 'auto', touchAction: 'pan-y', overscrollBehavior: 'contain' }}>
+            <nav
+              className="flex-1 p-4 space-y-2"
+              style={{
+                overflowY: "auto",
+                touchAction: "pan-y",
+                overscrollBehavior: "contain",
+              }}
+            >
               <div className="space-y-1">
                 {navigationItems.map((item) => (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all w-full"
                     onClick={() => setSidebarOpen(false)}
                   >
                     <item.icon className="w-5 h-5" />
@@ -245,7 +250,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all w-full"
                     onClick={() => setSidebarOpen(false)}
                   >
                     <item.icon className="w-5 h-5" />
@@ -276,12 +281,12 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Contenu principal */}
-      <main className="min-h-screen pt-20 overflow-x-hidden">
+      <main className="flex-1 min-h-screen pt-20 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full min-w-0"
+          className="w-full min-w-0 -p-2 "
         >
           {children}
         </motion.div>

@@ -68,7 +68,9 @@ export default function EmployeeDetailPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        const employeeData = data.data.find((emp: Employee) => emp.id === parseInt(employeeId!));
+        const employeeData = data.data.find(
+          (emp: Employee) => emp.id === parseInt(employeeId!)
+        );
         if (employeeData) {
           setEmployee(employeeData);
         } else {
@@ -142,7 +144,9 @@ export default function EmployeeDetailPage() {
             Employé non trouvé
           </h2>
           <button
-            onClick={() => router.push(withLocale("/dashboard/creator/employees"))}
+            onClick={() =>
+              router.push(withLocale("/dashboard/creator/employees"))
+            }
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             Retour à la liste
@@ -154,7 +158,10 @@ export default function EmployeeDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NotificationContainer notifications={notifications} onRemove={removeNotification} />
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
+      />
 
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
@@ -162,7 +169,9 @@ export default function EmployeeDetailPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => router.push(withLocale("/dashboard/creator/employees"))}
+                onClick={() =>
+                  router.push(withLocale("/dashboard/creator/employees"))
+                }
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -179,7 +188,13 @@ export default function EmployeeDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => router.push(withLocale(`/dashboard/creator/employees/${employee.id}/edit`))}
+                onClick={() =>
+                  router.push(
+                    withLocale(
+                      `/dashboard/creator/employees/${employee.id}/edit`
+                    )
+                  )
+                }
                 className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
                 <Edit className="w-4 h-4" />
@@ -219,7 +234,9 @@ export default function EmployeeDetailPage() {
           >
             {/* Carte profil */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations personnelles</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Informations personnelles
+              </h2>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <User className="w-5 h-5 text-gray-400" />
@@ -232,21 +249,27 @@ export default function EmployeeDetailPage() {
                   <Mail className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Email professionnel</p>
-                    <p className="font-medium text-gray-900">{employee.email}</p>
+                    <p className="font-medium text-gray-900">
+                      {employee.email}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Building className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Département</p>
-                    <p className="font-medium text-gray-900">{employee.department}</p>
+                    <p className="font-medium text-gray-900">
+                      {employee.department}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Briefcase className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Position</p>
-                    <p className="font-medium text-gray-900">{employee.position}</p>
+                    <p className="font-medium text-gray-900">
+                      {employee.position}
+                    </p>
                   </div>
                 </div>
                 {employee.phone && (
@@ -254,7 +277,9 @@ export default function EmployeeDetailPage() {
                     <Phone className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="text-sm text-gray-600">Téléphone</p>
-                      <p className="font-medium text-gray-900">{employee.phone}</p>
+                      <p className="font-medium text-gray-900">
+                        {employee.phone}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -263,30 +288,42 @@ export default function EmployeeDetailPage() {
 
             {/* Statistiques */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Statistiques de formation</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Statistiques de formation
+              </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <BookOpen className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-blue-900">{employee.enrolled_courses}</p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {employee.enrolled_courses}
+                  </p>
                   <p className="text-sm text-blue-700">Cours inscrits</p>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
                   <Award className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-green-900">{employee.completed_courses}</p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {employee.completed_courses}
+                  </p>
                   <p className="text-sm text-green-700">Cours terminés</p>
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
                   <TrendingUp className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-purple-900">{employee.completion_rate}%</p>
+                  <p className="text-2xl font-bold text-purple-900">
+                    {employee.completion_rate}%
+                  </p>
                   <p className="text-sm text-purple-700">Taux de complétion</p>
                 </div>
               </div>
-              
+
               {/* Barre de progression */}
               <div className="mt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">Progression globale</span>
-                  <span className="text-sm text-gray-600">{employee.progress}%</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Progression globale
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    {employee.progress}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
@@ -307,10 +344,16 @@ export default function EmployeeDetailPage() {
           >
             {/* Statut */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Statut</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Statut
+              </h2>
               <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${employee.status === "active" ? "bg-green-500" : "bg-red-500"}`}></div>
-                <span className={`font-medium ${employee.status === "active" ? "text-green-700" : "text-red-700"}`}>
+                <div
+                  className={`w-3 h-3 rounded-full ${employee.status === "active" ? "bg-green-500" : "bg-red-500"}`}
+                ></div>
+                <span
+                  className={`font-medium ${employee.status === "active" ? "text-green-700" : "text-red-700"}`}
+                >
                   {employee.status === "active" ? "Actif" : "Inactif"}
                 </span>
               </div>
@@ -318,21 +361,29 @@ export default function EmployeeDetailPage() {
 
             {/* Informations système */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations système</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Informations système
+              </h2>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Date de création</p>
-                    <p className="font-medium text-gray-900">{formatDate(employee.created_at)}</p>
+                    <p className="font-medium text-gray-900">
+                      {formatDate(employee.created_at)}
+                    </p>
                   </div>
                 </div>
                 {employee.last_login && (
                   <div className="flex items-center gap-3">
                     <Clock className="w-5 h-5 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-600">Dernière connexion</p>
-                      <p className="font-medium text-gray-900">{formatDate(employee.last_login)}</p>
+                      <p className="text-sm text-gray-600">
+                        Dernière connexion
+                      </p>
+                      <p className="font-medium text-gray-900">
+                        {formatDate(employee.last_login)}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -348,17 +399,27 @@ export default function EmployeeDetailPage() {
 
             {/* Actions rapides */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions rapides</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Actions rapides
+              </h2>
               <div className="space-y-2">
                 <button
-                  onClick={() => router.push(withLocale(`/dashboard/creator/employees/${employee.id}/edit`))}
+                  onClick={() =>
+                    router.push(
+                      withLocale(
+                        `/dashboard/creator/employees/${employee.id}/edit`
+                      )
+                    )
+                  }
                   className="w-full flex items-center gap-3 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                 >
                   <Edit className="w-4 h-4" />
                   Modifier l'employé
                 </button>
                 <button
-                  onClick={() => window.open(`mailto:${employee.email}`, "_blank")}
+                  onClick={() =>
+                    window.open(`mailto:${employee.email}`, "_blank")
+                  }
                   className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 >
                   <Mail className="w-4 h-4" />

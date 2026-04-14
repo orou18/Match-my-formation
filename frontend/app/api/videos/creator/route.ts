@@ -28,15 +28,18 @@ interface CreatorVideo {
 export async function GET() {
   try {
     // Lire les vidéos des créateurs
-    const creatorVideos: CreatorVideo[] = await readJsonStore("creator-videos", []);
-    
+    const creatorVideos: CreatorVideo[] = await readJsonStore(
+      "creator-videos",
+      []
+    );
+
     // Filtrer uniquement les vidéos publiques (visibilité "public" et publiées)
-    const publicCreatorVideos = creatorVideos.filter(video => 
-      video.is_published && video.visibility === "public"
+    const publicCreatorVideos = creatorVideos.filter(
+      (video) => video.is_published && video.visibility === "public"
     );
 
     // Normaliser les données pour le frontend
-    const normalizedVideos = publicCreatorVideos.map(video => ({
+    const normalizedVideos = publicCreatorVideos.map((video) => ({
       id: video.id,
       title: video.title,
       description: video.description,
@@ -53,7 +56,7 @@ export async function GET() {
         id: video.creator.id,
         name: video.creator.name,
         email: video.creator.email,
-        avatar: video.creator.avatar || "/default-avatar.png"
+        avatar: video.creator.avatar || "/default-avatar.png",
       },
       views: video.views || 0,
       likes: video.likes || 0,
@@ -61,23 +64,28 @@ export async function GET() {
       is_free: true,
       price: 0,
       resources: [],
-      comments: []
+      comments: [],
     }));
 
     return NextResponse.json({
       success: true,
       data: normalizedVideos,
       count: normalizedVideos.length,
-      message: "Vidéos créateurs récupérées avec succès"
+      message: "Vidéos créateurs récupérées avec succès",
     });
-
   } catch (error) {
-    console.error("Erreur lors de la récupération des vidéos créateurs:", error);
-    return NextResponse.json({
-      success: false,
-      data: [],
-      count: 0,
-      message: "Erreur lors de la récupération des vidéos créateurs"
-    }, { status: 500 });
+    console.error(
+      "Erreur lors de la récupération des vidéos créateurs:",
+      error
+    );
+    return NextResponse.json(
+      {
+        success: false,
+        data: [],
+        count: 0,
+        message: "Erreur lors de la récupération des vidéos créateurs",
+      },
+      { status: 500 }
+    );
   }
 }

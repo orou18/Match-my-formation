@@ -51,16 +51,19 @@ export default function SafeImage({
   ];
 
   // Vérifier si l'URL provient d'un domaine externe
-  const isExternal = externalDomains.some(domain => 
-    typeof src === 'string' && src.includes(domain)
+  const isExternal = externalDomains.some(
+    (domain) => typeof src === "string" && src.includes(domain)
   );
 
   // Vérifier si l'image est une URL locale qui n'existe pas
-  const isLocalMissing = typeof src === 'string' && 
-    (src.includes('/videos/video') || src.includes('/matchmyformation_footer.png'));
+  const isLocalMissing =
+    typeof src === "string" &&
+    (src.includes("/videos/video") ||
+      src.includes("/matchmyformation_footer.png"));
 
   // Utiliser le fallback si nécessaire
-  const shouldUseFallback = useFallback || imageError || isExternal || isLocalMissing;
+  const shouldUseFallback =
+    useFallback || imageError || isExternal || isLocalMissing;
 
   const handleError = () => {
     setImageError(true);
@@ -77,9 +80,9 @@ export default function SafeImage({
           className={className}
           style={{
             ...style,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
           }}
           loading={loading}
           onError={handleError}

@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     if (response.ok && data.success) {
       // Créer une session NextAuth pour l'employé
       const session = await getServerSession(authOptions);
-      
+
       // Si l'authentification réussit, retourner les données de l'employé
       return NextResponse.json({
         success: true,
@@ -49,19 +49,19 @@ export async function POST(request: NextRequest) {
       });
     } else {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: data.message || "Identifiants incorrects" 
+        {
+          success: false,
+          message: data.message || "Identifiants incorrects",
         },
         { status: 401 }
       );
     }
   } catch (error) {
     console.error("Erreur de connexion employé:", error);
-    
+
     // Fallback: vérifier si c'est un employé de test
     const { email, password } = await request.json().catch(() => ({}));
-    
+
     if (email === "marie@example.com" && password === "password123") {
       return NextResponse.json({
         success: true,
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         token: "test-token-employee-1",
       });
     }
-    
+
     if (email === "jean@example.com" && password === "password123") {
       return NextResponse.json({
         success: true,
@@ -97,9 +97,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { 
-        success: false, 
-        message: "Erreur serveur lors de la connexion" 
+      {
+        success: false,
+        message: "Erreur serveur lors de la connexion",
       },
       { status: 500 }
     );

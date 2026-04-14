@@ -39,16 +39,16 @@ class CoursesService {
     const token = getAuthToken();
     return {
       "Content-Type": "application/json",
-      "Accept": "application/json",
-      ...(token && { "Authorization": `Bearer ${token}` }),
+      Accept: "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
 
   async getCourses(page = 1, perPage = 12): Promise<CourseResponse> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
     const url = new URL(`${apiBase}/api/courses`);
-    url.searchParams.append('page', page.toString());
-    url.searchParams.append('per_page', perPage.toString());
+    url.searchParams.append("page", page.toString());
+    url.searchParams.append("per_page", perPage.toString());
 
     try {
       const response = await fetch(url.toString(), {
@@ -69,7 +69,7 @@ class CoursesService {
 
   async getCourse(id: number): Promise<Course> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/courses/${id}`, {
         method: "GET",
@@ -89,7 +89,7 @@ class CoursesService {
 
   async getStudentCourses(): Promise<Course[]> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/student/courses`, {
         method: "GET",
@@ -110,12 +110,15 @@ class CoursesService {
 
   async enrollInCourse(courseId: number): Promise<void> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
-      const response = await fetch(`${apiBase}/api/student/courses/${courseId}/enroll`, {
-        method: "POST",
-        headers: await this.getHeaders(),
-      });
+      const response = await fetch(
+        `${apiBase}/api/student/courses/${courseId}/enroll`,
+        {
+          method: "POST",
+          headers: await this.getHeaders(),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -126,23 +129,26 @@ class CoursesService {
     }
   }
 
-  async searchCourses(query: string, filters?: {
-    category?: string;
-    rating?: number;
-    minStudents?: number;
-  }): Promise<CourseResponse> {
+  async searchCourses(
+    query: string,
+    filters?: {
+      category?: string;
+      rating?: number;
+      minStudents?: number;
+    }
+  ): Promise<CourseResponse> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
     const url = new URL(`${apiBase}/api/courses/search`);
-    url.searchParams.append('q', query);
-    
+    url.searchParams.append("q", query);
+
     if (filters?.category) {
-      url.searchParams.append('category', filters.category);
+      url.searchParams.append("category", filters.category);
     }
     if (filters?.rating) {
-      url.searchParams.append('rating', filters.rating.toString());
+      url.searchParams.append("rating", filters.rating.toString());
     }
     if (filters?.minStudents) {
-      url.searchParams.append('min_students', filters.minStudents.toString());
+      url.searchParams.append("min_students", filters.minStudents.toString());
     }
 
     try {

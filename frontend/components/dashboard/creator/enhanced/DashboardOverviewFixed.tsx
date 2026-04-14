@@ -751,7 +751,9 @@ export default function DashboardOverviewFixed() {
                           <div className="relative aspect-video w-full">
                             <div className="relative w-full h-full bg-gray-100">
                               <img
-                                src={video.thumbnail || "/api/placeholder/320/180"}
+                                src={
+                                  video.thumbnail || "/api/placeholder/320/180"
+                                }
                                 alt={video.title}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />

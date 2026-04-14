@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
   try {
     const userId = getUserIdFromToken(request);
     const session = userId ? null : await getServerSession(authOptions);
-    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
     if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -37,7 +38,11 @@ export async function POST(request: NextRequest) {
     const expectedHash = request.cookies.get("twoFactorCodeHash")?.value;
     const providedHash = crypto.createHash("sha256").update(code).digest("hex");
 
-    if (expectedMethod === method && expectedHash && providedHash === expectedHash) {
+    if (
+      expectedMethod === method &&
+      expectedHash &&
+      providedHash === expectedHash
+    ) {
       updateUserSecurity(String(finalUserId), {
         twoFactorEnabled: true,
         twoFactorMethod: method,

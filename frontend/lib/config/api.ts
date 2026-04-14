@@ -4,7 +4,7 @@ import { getBackendBaseUrls } from "@/lib/api/backend-fetch";
 export const API_CONFIG = {
   // URL de base de l'API Laravel
   BASE_URL: getBackendBaseUrls()[0] || "http://127.0.0.1:8000",
-  
+
   // Endpoints principaux
   ENDPOINTS: {
     AUTH: {
@@ -46,13 +46,13 @@ export const API_CONFIG = {
       ADMIN_BRANDING: "/api/admin/branding",
     },
   },
-  
+
   // Configuration par défaut
   DEFAULT_HEADERS: {
     "Content-Type": "application/json",
-    "Accept": "application/json",
+    Accept: "application/json",
   },
-  
+
   // Timeout par défaut (10 secondes)
   TIMEOUT: 10000,
 } as const;
@@ -65,16 +65,18 @@ export function buildUrl(endpoint: string): string {
 // Helper pour construire les headers avec authentification
 export function buildHeaders(token?: string): Record<string, string> {
   const headers: Record<string, string> = { ...API_CONFIG.DEFAULT_HEADERS };
-  
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
-  
+
   return headers;
 }
 
 // Helper pour créer un AbortController avec timeout
-export function createTimeoutController(timeoutMs: number = API_CONFIG.TIMEOUT): AbortController {
+export function createTimeoutController(
+  timeoutMs: number = API_CONFIG.TIMEOUT
+): AbortController {
   const controller = new AbortController();
   setTimeout(() => controller.abort(), timeoutMs);
   return controller;

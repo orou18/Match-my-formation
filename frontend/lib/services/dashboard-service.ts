@@ -31,7 +31,7 @@ function buildAuthHeaders() {
   }
 
   // Utiliser les mêmes tokens que le service d'authentification
-  const token = 
+  const token =
     window.localStorage.getItem("auth_token") ||
     window.localStorage.getItem("nextauth.session-token") ||
     window.localStorage.getItem("token") ||
@@ -49,8 +49,8 @@ function buildAuthHeaders() {
 
 function getApiBaseUrl(): string {
   const rawUrl = process.env.NEXT_PUBLIC_API_URL;
-  return rawUrl && rawUrl !== "undefined" 
-    ? rawUrl.replace(/\/$/, "") 
+  return rawUrl && rawUrl !== "undefined"
+    ? rawUrl.replace(/\/$/, "")
     : "http://127.0.0.1:8000";
 }
 

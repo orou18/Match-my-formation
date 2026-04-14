@@ -1,7 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause, Volume2, Maximize2, Heart, Bookmark, Share2, ThumbsUp, ThumbsDown } from "lucide-react";
+import {
+  Play,
+  Pause,
+  Volume2,
+  Maximize2,
+  Heart,
+  Bookmark,
+  Share2,
+  ThumbsUp,
+  ThumbsDown,
+} from "lucide-react";
 
 interface VideoPlayerProps {
   video: {
@@ -22,16 +32,20 @@ interface VideoPlayerProps {
       avatar: string;
     };
   };
-  onProgressUpdate: (videoId: number, progress: number, position: number) => void;
+  onProgressUpdate: (
+    videoId: number,
+    progress: number,
+    position: number
+  ) => void;
   onLike: (videoId: number) => void;
   onFavorite: (videoId: number) => void;
 }
 
-export default function VideoPlayer({ 
-  video, 
-  onProgressUpdate, 
-  onLike, 
-  onFavorite 
+export default function VideoPlayer({
+  video,
+  onProgressUpdate,
+  onLike,
+  onFavorite,
 }: VideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -40,7 +54,7 @@ export default function VideoPlayer({
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -55,7 +69,7 @@ export default function VideoPlayer({
 
       const current = video.currentTime as number;
       const total = video.duration;
-      
+
       if (!isNaN(total) && total > 0) {
         const progress = (current / total) * 100;
         setCurrentTime(current);
@@ -103,9 +117,12 @@ export default function VideoPlayer({
 
     const rect = progressBar.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
-    const clickPercent = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
+    const clickPercent = Math.max(
+      0,
+      Math.min(100, (clickX / rect.width) * 100)
+    );
     const seekTime = (clickPercent / 100) * Number(video.duration);
-    
+
     video.currentTime = seekTime;
   };
 
@@ -120,7 +137,7 @@ export default function VideoPlayer({
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const toggleFullscreen = () => {
@@ -160,7 +177,8 @@ export default function VideoPlayer({
     }, 3000);
   };
 
-  const progressPercent = duration > 0 ? (currentTime / Number(duration)) * 100 : 0;
+  const progressPercent =
+    duration > 0 ? (currentTime / Number(duration)) * 100 : 0;
 
   return (
     <div className="relative bg-black rounded-lg overflow-hidden group">
@@ -178,9 +196,9 @@ export default function VideoPlayer({
       </video>
 
       {/* Overlay Controls */}
-      <div 
+      <div
         className={`absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent transition-opacity duration-300 ${
-          showControls ? 'opacity-100' : 'opacity-0'
+          showControls ? "opacity-100" : "opacity-0"
         }`}
       />
 
@@ -199,23 +217,23 @@ export default function VideoPlayer({
       </button>
 
       {/* Bottom Controls */}
-      <div 
+      <div
         className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-transform duration-300 ${
-          showControls ? 'translate-y-0' : 'translate-y-full'
+          showControls ? "translate-y-0" : "translate-y-full"
         }`}
       >
         {/* Progress Bar */}
         <div className="mb-3">
-          <div 
+          <div
             ref={progressBarRef}
             className="relative h-1 bg-gray-600 rounded-full cursor-pointer"
             onClick={handleSeek}
           >
-            <div 
+            <div
               className="absolute left-0 top-0 h-full bg-red-600 rounded-full transition-all duration-150"
               style={{ width: `${progressPercent}%` }}
             />
-            <div 
+            <div
               className="absolute left-0 top-0 h-full bg-red-500 rounded-full"
               style={{ width: `${Math.min(video.progress, progressPercent)}%` }}
             />
@@ -266,23 +284,29 @@ export default function VideoPlayer({
             <button
               onClick={() => onLike(video.id)}
               className={`p-1 rounded transition-colors ${
-                video.liked 
-                  ? 'text-red-500 hover:text-red-600' 
-                  : 'text-white hover:text-red-400'
+                video.liked
+                  ? "text-red-500 hover:text-red-600"
+                  : "text-white hover:text-red-400"
               }`}
             >
-              <ThumbsUp size={16} className={video.liked ? 'fill-current' : ''} />
+              <ThumbsUp
+                size={16}
+                className={video.liked ? "fill-current" : ""}
+              />
             </button>
 
             <button
               onClick={() => onFavorite(video.id)}
               className={`p-1 rounded transition-colors ${
-                video.favorite 
-                  ? 'text-yellow-500 hover:text-yellow-600' 
-                  : 'text-white hover:text-yellow-400'
+                video.favorite
+                  ? "text-yellow-500 hover:text-yellow-600"
+                  : "text-white hover:text-yellow-400"
               }`}
             >
-              <Bookmark size={16} className={video.favorite ? 'fill-current' : ''} />
+              <Bookmark
+                size={16}
+                className={video.favorite ? "fill-current" : ""}
+              />
             </button>
 
             <button className="p-1 text-white hover:text-gray-300 transition-colors">
@@ -308,7 +332,9 @@ export default function VideoPlayer({
 
       {/* Video Info Overlay */}
       <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm text-white p-3 rounded-lg max-w-xs opacity-0 group-hover:opacity-100 transition-opacity">
-        <h3 className="font-semibold text-sm mb-1 line-clamp-2">{video.title}</h3>
+        <h3 className="font-semibold text-sm mb-1 line-clamp-2">
+          {video.title}
+        </h3>
         <p className="text-xs opacity-80 line-clamp-3">{video.description}</p>
         <div className="flex items-center gap-2 mt-2">
           <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center">

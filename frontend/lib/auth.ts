@@ -33,7 +33,10 @@ export function getRoleFromToken(request: NextRequest): string | null {
 /**
  * Crée une réponse avec les cookies d'authentification
  */
-export function createAuthResponse(data: unknown, userId: string): NextResponse {
+export function createAuthResponse(
+  data: unknown,
+  userId: string
+): NextResponse {
   const response = NextResponse.json(data);
 
   // Ajouter les cookies pour la persistance

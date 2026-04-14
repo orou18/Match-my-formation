@@ -41,16 +41,24 @@ export async function POST(request: Request) {
 
     // Simuler la validation du paiement
     // En production, cela intégrerait Stripe, PayPal, etc.
-    
+
     // 1. Valider la méthode de paiement
-    const paymentMethods: PaymentMethod[] = await readJsonStore("payment-methods", []);
-    const paymentMethod = paymentMethods.find(pm => pm.id === paymentMethodId);
-    
+    const paymentMethods: PaymentMethod[] = await readJsonStore(
+      "payment-methods",
+      []
+    );
+    const paymentMethod = paymentMethods.find(
+      (pm) => pm.id === paymentMethodId
+    );
+
     if (!paymentMethod) {
-      return NextResponse.json({
-        success: false,
-        message: "Méthode de paiement invalide"
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Méthode de paiement invalide",
+        },
+        { status: 400 }
+      );
     }
 
     // 2. Valider le code promo si fourni
@@ -58,12 +66,13 @@ export async function POST(request: Request) {
     if (promoCode) {
       // Simuler la validation du code promo
       const promoCodes: any[] = await readJsonStore("promo-codes", []);
-      const validPromo = promoCodes.find((pc: any) => 
-        pc.code === promoCode && 
-        pc.courseId === courseId && 
-        new Date(pc.expiresAt) > new Date()
+      const validPromo = promoCodes.find(
+        (pc: any) =>
+          pc.code === promoCode &&
+          pc.courseId === courseId &&
+          new Date(pc.expiresAt) > new Date()
       );
-      
+
       if (validPromo) {
         discountAmount = (amount * validPromo.discount) / 100;
       }
@@ -73,7 +82,10 @@ export async function POST(request: Request) {
 
     // 3. Simuler le traitement du paiement
     // En production, cela appellerait l'API du fournisseur de paiement
-    const paymentResult = await simulatePaymentProcessing(paymentMethod, finalAmount);
+    const paymentResult = await simulatePaymentProcessing(
+      paymentMethod,
+      finalAmount
+    );
 
     // 4. Créer la transaction
     const transaction: Transaction = {
@@ -103,25 +115,30 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: paymentResult.success,
-      message: paymentResult.success 
-        ? "Paiement traité avec succès" 
+      message: paymentResult.success
+        ? "Paiement traité avec succès"
         : `Échec du paiement: ${paymentResult.error}`,
       transactionId: transaction.id,
       transaction: paymentResult.success ? transaction : undefined,
     });
-
   } catch (error) {
     console.error("Erreur traitement paiement:", error);
-    return NextResponse.json({
-      success: false,
-      message: "Erreur serveur lors du traitement du paiement"
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Erreur serveur lors du traitement du paiement",
+      },
+      { status: 500 }
+    );
   }
 }
 
-async function simulatePaymentProcessing(paymentMethod: PaymentMethod, amount: number): Promise<{ success: boolean; error?: string }> {
+async function simulatePaymentProcessing(
+  paymentMethod: PaymentMethod,
+  amount: number
+): Promise<{ success: boolean; error?: string }> {
   // Simuler un délai de traitement
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   // Simuler un taux de succès de 95%
   const isSuccess = Math.random() > 0.05;
@@ -129,18 +146,21 @@ async function simulatePaymentProcessing(paymentMethod: PaymentMethod, amount: n
   if (isSuccess) {
     return { success: true };
   } else {
-    return { 
-      success: false, 
-      error: "Fonds insuffisants" 
+    return {
+      success: false,
+      error: "Fonds insuffisants",
     };
   }
 }
 
-async function handleSuccessfulEnrollment(courseId: number, transactionId: string) {
+async function handleSuccessfulEnrollment(
+  courseId: number,
+  transactionId: string
+) {
   try {
     // En production, cela mettrait à jour la base de données des parcours
     const parcours: any[] = await readJsonStore("student-parcours", []);
-    
+
     const newEnrollment = {
       id: Date.now(),
       studentId: 1, // En production, viendrait de la session
@@ -166,7 +186,9 @@ async function handleSuccessfulEnrollment(courseId: number, transactionId: strin
     parcours.push(newEnrollment);
     await writeJsonStore("student-parcours", parcours);
 
-    console.log(`Inscription réussie pour le cours ${courseId} avec transaction ${transactionId}`);
+    console.log(
+      `Inscription réussie pour le cours ${courseId} avec transaction ${transactionId}`
+    );
   } catch (error) {
     console.error("Erreur inscription après paiement:", error);
   }
@@ -175,8 +197,11 @@ async function handleSuccessfulEnrollment(courseId: number, transactionId: strin
 export async function GET() {
   try {
     // Récupérer les méthodes de paiement de l'utilisateur
-    const paymentMethods: PaymentMethod[] = await readJsonStore("payment-methods", []);
-    
+    const paymentMethods: PaymentMethod[] = await readJsonStore(
+      "payment-methods",
+      []
+    );
+
     // Simuler des méthodes de paiement si aucune n'existe
     if (paymentMethods.length === 0) {
       const mockMethods: PaymentMethod[] = [
@@ -187,7 +212,7 @@ export async function GET() {
           brand: "Visa",
           expiry: "12/25",
           isDefault: true,
-          token: "tok_test_123456789"
+          token: "tok_test_123456789",
         },
         {
           id: "pm_002",
@@ -196,22 +221,21 @@ export async function GET() {
           brand: "Mastercard",
           expiry: "08/24",
           isDefault: false,
-          token: "tok_test_987654321"
-        }
+          token: "tok_test_987654321",
+        },
       ];
-      
+
       await writeJsonStore("payment-methods", mockMethods);
       return NextResponse.json({
         success: true,
-        methods: mockMethods
+        methods: mockMethods,
       });
     }
 
     return NextResponse.json({
       success: true,
-      methods: paymentMethods
+      methods: paymentMethods,
     });
-
   } catch (error) {
     console.error("Erreur méthodes paiement:", error);
     return NextResponse.json(

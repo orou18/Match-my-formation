@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CreditCard, Lock, CheckCircle, AlertCircle, Crown, Zap } from "lucide-react";
+import {
+  CreditCard,
+  Lock,
+  CheckCircle,
+  AlertCircle,
+  Crown,
+  Zap,
+} from "lucide-react";
 
 interface BankingIntegrationProps {
   courseId: number;
@@ -32,17 +39,18 @@ interface Transaction {
   completedAt?: string;
 }
 
-export default function BankingIntegration({ 
-  courseId, 
-  courseTitle, 
-  isPremium, 
+export default function BankingIntegration({
+  courseId,
+  courseTitle,
+  isPremium,
   price,
   onPurchaseComplete,
-  onEnrollmentComplete 
+  onEnrollmentComplete,
 }: BankingIntegrationProps) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [userBalance, setUserBalance] = useState(0);
@@ -88,7 +96,9 @@ export default function BankingIntegration({
         const data = await response.json();
         setPaymentMethods(data.methods || []);
         // Sélectionner la méthode par défaut
-        const defaultMethod = data.methods?.find((m: PaymentMethod) => m.isDefault);
+        const defaultMethod = data.methods?.find(
+          (m: PaymentMethod) => m.isDefault
+        );
         if (defaultMethod) {
           setSelectedPaymentMethod(defaultMethod.id);
         }
@@ -225,7 +235,9 @@ export default function BankingIntegration({
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Mon Solde</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Mon Solde
+            </h3>
             <p className="text-3xl font-bold text-blue-600">
               {new Intl.NumberFormat("fr-FR", {
                 style: "currency",
@@ -251,7 +263,8 @@ export default function BankingIntegration({
             </h3>
           </div>
           <p className="text-gray-600 mb-4">
-            Ce cours est disponible gratuitement. Commencez votre apprentissage maintenant !
+            Ce cours est disponible gratuitement. Commencez votre apprentissage
+            maintenant !
           </p>
           <button
             onClick={handleFreeEnrollment}
@@ -268,7 +281,7 @@ export default function BankingIntegration({
               Cours Premium
             </h3>
           </div>
-          
+
           <div className="space-y-4">
             {/* Prix et promo */}
             <div className="flex items-center justify-between">
@@ -324,15 +337,17 @@ export default function BankingIntegration({
 
             {/* Méthodes de paiement */}
             <div className="space-y-3">
-              <h4 className="font-semibold text-gray-900">Méthode de paiement</h4>
+              <h4 className="font-semibold text-gray-900">
+                Méthode de paiement
+              </h4>
               <div className="grid grid-cols-1 gap-2">
                 {paymentMethods.map((method) => (
                   <label
                     key={method.id}
                     className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
                       selectedPaymentMethod === method.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-300 hover:border-gray-400'
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-300 hover:border-gray-400"
                     }`}
                   >
                     <input
@@ -402,10 +417,15 @@ export default function BankingIntegration({
       {/* Historique des transactions */}
       {transactions.length > 0 && (
         <div className="bg-white p-6 rounded-xl border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Historique des transactions</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Historique des transactions
+          </h3>
           <div className="space-y-2">
             {transactions.slice(0, 5).map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={transaction.id}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
                 <div>
                   <div className="font-medium text-gray-900">
                     {new Intl.NumberFormat("fr-FR", {
@@ -414,18 +434,22 @@ export default function BankingIntegration({
                     }).format(transaction.amount)}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {new Date(transaction.createdAt).toLocaleDateString("fr-FR")}
+                    {new Date(transaction.createdAt).toLocaleDateString(
+                      "fr-FR"
+                    )}
                   </div>
                 </div>
-                <div className={`px-2 py-1 rounded text-xs font-medium ${
-                  transaction.status === "completed"
-                    ? "bg-green-100 text-green-800"
-                    : transaction.status === "pending"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : transaction.status === "failed"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}>
+                <div
+                  className={`px-2 py-1 rounded text-xs font-medium ${
+                    transaction.status === "completed"
+                      ? "bg-green-100 text-green-800"
+                      : transaction.status === "pending"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : transaction.status === "failed"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-gray-100 text-gray-800"
+                  }`}
+                >
                   {transaction.status === "completed" && "Complété"}
                   {transaction.status === "pending" && "En cours"}
                   {transaction.status === "failed" && "Échoué"}

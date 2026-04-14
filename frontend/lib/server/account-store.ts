@@ -349,10 +349,7 @@ export function getProfile(userId: string) {
   };
 }
 
-export function updateProfile(
-  userId: string,
-  updates: Partial<UserAccount>
-) {
+export function updateProfile(userId: string, updates: Partial<UserAccount>) {
   const profiles = getProfiles();
   profiles[userId] = {
     ...(profiles[userId] || {}),

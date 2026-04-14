@@ -36,40 +36,54 @@ interface AnalyticsData {
     improvement_needed: EmployeeAnalytics[];
   };
   performance_trends: {
-    daily: Array<{ date: string; active_users: number; completion_rate: number }>;
+    daily: Array<{
+      date: string;
+      active_users: number;
+      completion_rate: number;
+    }>;
     weekly: Array<{ week: string; progress: number; engagement: number }>;
-    monthly: Array<{ month: string; videos_watched: number; time_spent: number }>;
+    monthly: Array<{
+      month: string;
+      videos_watched: number;
+      time_spent: number;
+    }>;
   };
 }
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = new URL(request.url).searchParams;
-    const department = searchParams.get('department');
-    const dateRange = searchParams.get('dateRange') || '30d';
-    const sortBy = searchParams.get('sortBy') || 'progress';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const department = searchParams.get("department");
+    const dateRange = searchParams.get("dateRange") || "30d";
+    const sortBy = searchParams.get("sortBy") || "progress";
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
 
     let analyticsData = null;
 
     try {
       // Tenter de récupérer les données du backend Laravel
       const backendParams = new URLSearchParams();
-      if (department) backendParams.set('department', department);
-      backendParams.set('date_range', dateRange);
-      backendParams.set('sort_by', sortBy);
-      backendParams.set('page', page.toString());
-      backendParams.set('limit', limit.toString());
+      if (department) backendParams.set("department", department);
+      backendParams.set("date_range", dateRange);
+      backendParams.set("sort_by", sortBy);
+      backendParams.set("page", page.toString());
+      backendParams.set("limit", limit.toString());
 
-      const response = await laravelFetch(`/api/creator/analytics/employees?${backendParams}`, { request });
+      const response = await laravelFetch(
+        `/api/creator/analytics/employees?${backendParams}`,
+        { request }
+      );
       const data = await parseLaravelJson(response);
 
       if (response.ok) {
         analyticsData = data;
       }
     } catch (backendError) {
-      console.warn("Backend non accessible pour les analytics employés, utilisation des données fallback:", backendError);
+      console.warn(
+        "Backend non accessible pour les analytics employés, utilisation des données fallback:",
+        backendError
+      );
     }
 
     // Utiliser les données du backend si disponibles, sinon utiliser les fallbacks
@@ -97,7 +111,7 @@ export async function GET(request: NextRequest) {
         milestones_achieved: 8,
         total_milestones: 10,
         streak_days: 12,
-        certificates_earned: 2
+        certificates_earned: 2,
       },
       {
         id: 2,
@@ -117,7 +131,7 @@ export async function GET(request: NextRequest) {
         milestones_achieved: 5,
         total_milestones: 8,
         streak_days: 5,
-        certificates_earned: 1
+        certificates_earned: 1,
       },
       {
         id: 3,
@@ -137,7 +151,7 @@ export async function GET(request: NextRequest) {
         milestones_achieved: 12,
         total_milestones: 14,
         streak_days: 18,
-        certificates_earned: 3
+        certificates_earned: 3,
       },
       {
         id: 4,
@@ -157,7 +171,7 @@ export async function GET(request: NextRequest) {
         milestones_achieved: 4,
         total_milestones: 8,
         streak_days: 3,
-        certificates_earned: 1
+        certificates_earned: 1,
       },
       {
         id: 5,
@@ -177,31 +191,34 @@ export async function GET(request: NextRequest) {
         milestones_achieved: 7,
         total_milestones: 9,
         streak_days: 8,
-        certificates_earned: 2
-      }
+        certificates_earned: 2,
+      },
     ];
 
     // Filtrage par département si nécessaire
     let filteredEmployees = fallbackEmployees;
-    if (department && department !== 'all') {
-      filteredEmployees = fallbackEmployees.filter(emp => 
-        emp.department.toLowerCase() === department.toLowerCase()
+    if (department && department !== "all") {
+      filteredEmployees = fallbackEmployees.filter(
+        (emp) => emp.department.toLowerCase() === department.toLowerCase()
       );
     }
 
     // Tri
     filteredEmployees.sort((a, b) => {
       switch (sortBy) {
-        case 'progress':
+        case "progress":
           return b.progress - a.progress;
-        case 'engagement':
+        case "engagement":
           return b.engagement_score - a.engagement_score;
-        case 'time_spent':
+        case "time_spent":
           return b.time_spent - a.time_spent;
-        case 'completion_rate':
+        case "completion_rate":
           return b.completion_rate - a.completion_rate;
-        case 'last_active':
-          return new Date(b.last_active).getTime() - new Date(a.last_active).getTime();
+        case "last_active":
+          return (
+            new Date(b.last_active).getTime() -
+            new Date(a.last_active).getTime()
+          );
         default:
           return b.progress - a.progress;
       }
@@ -209,28 +226,47 @@ export async function GET(request: NextRequest) {
 
     // Pagination
     const startIndex = (page - 1) * limit;
-    const paginatedEmployees = filteredEmployees.slice(startIndex, startIndex + limit);
+    const paginatedEmployees = filteredEmployees.slice(
+      startIndex,
+      startIndex + limit
+    );
 
     // Calcul du résumé
     const totalEmployees = filteredEmployees.length;
-    const activeEmployees = filteredEmployees.filter(emp => 
-      new Date(emp.last_active).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
+    const activeEmployees = filteredEmployees.filter(
+      (emp) =>
+        new Date(emp.last_active).getTime() >
+        Date.now() - 7 * 24 * 60 * 60 * 1000
     ).length;
     const averageProgress = Math.round(
-      filteredEmployees.reduce((sum, emp) => sum + emp.progress, 0) / totalEmployees
+      filteredEmployees.reduce((sum, emp) => sum + emp.progress, 0) /
+        totalEmployees
     );
-    const totalTimeSpent = filteredEmployees.reduce((sum, emp) => sum + emp.time_spent, 0);
-    const totalVideosWatched = filteredEmployees.reduce((sum, emp) => sum + emp.videos_watched, 0);
+    const totalTimeSpent = filteredEmployees.reduce(
+      (sum, emp) => sum + emp.time_spent,
+      0
+    );
+    const totalVideosWatched = filteredEmployees.reduce(
+      (sum, emp) => sum + emp.videos_watched,
+      0
+    );
     const completionRate = Math.round(
-      filteredEmployees.reduce((sum, emp) => sum + emp.completion_rate, 0) / totalEmployees
+      filteredEmployees.reduce((sum, emp) => sum + emp.completion_rate, 0) /
+        totalEmployees
     );
     const engagementRate = Math.round(
-      filteredEmployees.reduce((sum, emp) => sum + emp.engagement_score, 0) / totalEmployees
+      filteredEmployees.reduce((sum, emp) => sum + emp.engagement_score, 0) /
+        totalEmployees
     );
-    const topPerformer = filteredEmployees.length > 0 
-      ? filteredEmployees.reduce((best, emp) => emp.progress > best.progress ? emp : best)
-      : null;
-    const improvementNeeded = filteredEmployees.filter(emp => emp.progress < 70);
+    const topPerformer =
+      filteredEmployees.length > 0
+        ? filteredEmployees.reduce((best, emp) =>
+            emp.progress > best.progress ? emp : best
+          )
+        : null;
+    const improvementNeeded = filteredEmployees.filter(
+      (emp) => emp.progress < 70
+    );
 
     // Données de tendances (simulation)
     const generateTrends = () => {
@@ -243,20 +279,20 @@ export async function GET(request: NextRequest) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         daily.push({
-          date: date.toISOString().split('T')[0],
+          date: date.toISOString().split("T")[0],
           active_users: Math.floor(Math.random() * 20) + 10,
-          completion_rate: Math.floor(Math.random() * 30) + 60
+          completion_rate: Math.floor(Math.random() * 30) + 60,
         });
       }
 
       // Générer 4 semaines de données
       for (let i = 3; i >= 0; i--) {
         const weekStart = new Date();
-        weekStart.setDate(weekStart.getDate() - (i * 7));
+        weekStart.setDate(weekStart.getDate() - i * 7);
         weekly.push({
           week: `Semaine ${4 - i}`,
           progress: Math.floor(Math.random() * 20) + 70,
-          engagement: Math.floor(Math.random() * 25) + 65
+          engagement: Math.floor(Math.random() * 25) + 65,
         });
       }
 
@@ -265,9 +301,12 @@ export async function GET(request: NextRequest) {
         const month = new Date();
         month.setMonth(month.getMonth() - i);
         monthly.push({
-          month: month.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+          month: month.toLocaleDateString("fr-FR", {
+            month: "long",
+            year: "numeric",
+          }),
           videos_watched: Math.floor(Math.random() * 200) + 100,
-          time_spent: Math.floor(Math.random() * 5000) + 2000
+          time_spent: Math.floor(Math.random() * 5000) + 2000,
         });
       }
 
@@ -285,22 +324,24 @@ export async function GET(request: NextRequest) {
         completion_rate: completionRate,
         engagement_rate: engagementRate,
         top_performer: topPerformer,
-        improvement_needed: improvementNeeded
+        improvement_needed: improvementNeeded,
       },
-      performance_trends: generateTrends()
+      performance_trends: generateTrends(),
     };
 
-    return NextResponse.json({
-      success: true,
-      data: analyticsResponse,
-      pagination: {
-        page,
-        limit,
-        total: filteredEmployees.length,
-        pages: Math.ceil(filteredEmployees.length / limit)
-      }
-    }, { status: 200 });
-
+    return NextResponse.json(
+      {
+        success: true,
+        data: analyticsResponse,
+        pagination: {
+          page,
+          limit,
+          total: filteredEmployees.length,
+          pages: Math.ceil(filteredEmployees.length / limit),
+        },
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Analytics employees API Error:", error);
     return NextResponse.json(

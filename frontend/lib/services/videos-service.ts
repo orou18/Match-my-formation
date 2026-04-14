@@ -32,7 +32,7 @@ export interface VideoFormData {
   is_published: boolean;
   learning_objectives?: string[];
   resources?: Array<{
-    type: 'link' | 'pdf' | 'document' | 'image' | 'video' | 'audio';
+    type: "link" | "pdf" | "document" | "image" | "video" | "audio";
     title: string;
     url?: string;
     file?: File;
@@ -55,15 +55,15 @@ class VideosService {
     const token = getAuthToken();
     return {
       "Content-Type": "application/json",
-      "Accept": "application/json",
-      ...(token && { "Authorization": `Bearer ${token}` }),
+      Accept: "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
 
   // CRUD - CREATE
   async createVideo(videoData: VideoFormData): Promise<Video> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/videos`, {
         method: "POST",
@@ -84,12 +84,12 @@ class VideosService {
 
   async createVideoWithFormData(formData: FormData): Promise<Video> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/videos`, {
         method: "POST",
         headers: {
-          ...(getAuthToken() && { "Authorization": `Bearer ${getAuthToken()}` }),
+          ...(getAuthToken() && { Authorization: `Bearer ${getAuthToken()}` }),
         },
         body: formData,
       });
@@ -106,24 +106,28 @@ class VideosService {
   }
 
   // CRUD - READ
-  async getVideos(page = 1, perPage = 12, filters?: {
-    category?: string;
-    creator_id?: number;
-    is_published?: boolean;
-  }): Promise<VideoResponse> {
+  async getVideos(
+    page = 1,
+    perPage = 12,
+    filters?: {
+      category?: string;
+      creator_id?: number;
+      is_published?: boolean;
+    }
+  ): Promise<VideoResponse> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
     const url = new URL(`${apiBase}/api/videos`);
-    url.searchParams.append('page', page.toString());
-    url.searchParams.append('per_page', perPage.toString());
-    
+    url.searchParams.append("page", page.toString());
+    url.searchParams.append("per_page", perPage.toString());
+
     if (filters?.category) {
-      url.searchParams.append('category', filters.category);
+      url.searchParams.append("category", filters.category);
     }
     if (filters?.creator_id) {
-      url.searchParams.append('creator_id', filters.creator_id.toString());
+      url.searchParams.append("creator_id", filters.creator_id.toString());
     }
     if (filters?.is_published !== undefined) {
-      url.searchParams.append('is_published', filters.is_published.toString());
+      url.searchParams.append("is_published", filters.is_published.toString());
     }
 
     try {
@@ -145,7 +149,7 @@ class VideosService {
 
   async getVideo(id: number): Promise<Video> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/videos/${id}`, {
         method: "GET",
@@ -165,10 +169,10 @@ class VideosService {
 
   async getCreatorVideos(creatorId?: number): Promise<Video[]> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    const url = creatorId 
+    const url = creatorId
       ? `${apiBase}/api/creator/${creatorId}/videos`
       : `${apiBase}/api/creator/videos`;
-    
+
     try {
       const response = await fetch(url, {
         method: "GET",
@@ -189,13 +193,13 @@ class VideosService {
 
   async getPublicVideos(): Promise<Video[]> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/videos/public`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
+          Accept: "application/json",
         },
       });
 
@@ -212,9 +216,12 @@ class VideosService {
   }
 
   // CRUD - UPDATE
-  async updateVideo(id: number, videoData: Partial<VideoFormData>): Promise<Video> {
+  async updateVideo(
+    id: number,
+    videoData: Partial<VideoFormData>
+  ): Promise<Video> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/videos/${id}`, {
         method: "PUT",
@@ -233,14 +240,17 @@ class VideosService {
     }
   }
 
-  async updateVideoWithFormData(id: number, formData: FormData): Promise<Video> {
+  async updateVideoWithFormData(
+    id: number,
+    formData: FormData
+  ): Promise<Video> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/videos/${id}`, {
         method: "POST", // Using POST for FormData compatibility
         headers: {
-          ...(getAuthToken() && { "Authorization": `Bearer ${getAuthToken()}` }),
+          ...(getAuthToken() && { Authorization: `Bearer ${getAuthToken()}` }),
           "X-HTTP-Method-Override": "PUT",
         },
         body: formData,
@@ -260,7 +270,7 @@ class VideosService {
   // CRUD - DELETE
   async deleteVideo(id: number): Promise<void> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/videos/${id}`, {
         method: "DELETE",
@@ -279,12 +289,15 @@ class VideosService {
   // Additional CRUD operations
   async toggleVideoPublishStatus(id: number): Promise<Video> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
-      const response = await fetch(`${apiBase}/api/videos/${id}/toggle-publish`, {
-        method: "POST",
-        headers: await this.getHeaders(),
-      });
+      const response = await fetch(
+        `${apiBase}/api/videos/${id}/toggle-publish`,
+        {
+          method: "POST",
+          headers: await this.getHeaders(),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -299,7 +312,7 @@ class VideosService {
 
   async likeVideo(id: number): Promise<{ likes: number }> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/videos/${id}/like`, {
         method: "POST",
@@ -319,7 +332,7 @@ class VideosService {
 
   async unlikeVideo(id: number): Promise<{ likes: number }> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     try {
       const response = await fetch(`${apiBase}/api/videos/${id}/unlike`, {
         method: "POST",
@@ -337,23 +350,26 @@ class VideosService {
     }
   }
 
-  async searchVideos(query: string, filters?: {
-    category?: string;
-    creator?: string;
-    tags?: string[];
-  }): Promise<VideoResponse> {
+  async searchVideos(
+    query: string,
+    filters?: {
+      category?: string;
+      creator?: string;
+      tags?: string[];
+    }
+  ): Promise<VideoResponse> {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
     const url = new URL(`${apiBase}/api/videos/search`);
-    url.searchParams.append('q', query);
-    
+    url.searchParams.append("q", query);
+
     if (filters?.category) {
-      url.searchParams.append('category', filters.category);
+      url.searchParams.append("category", filters.category);
     }
     if (filters?.creator) {
-      url.searchParams.append('creator', filters.creator);
+      url.searchParams.append("creator", filters.creator);
     }
     if (filters?.tags) {
-      filters.tags.forEach(tag => url.searchParams.append('tags[]', tag));
+      filters.tags.forEach((tag) => url.searchParams.append("tags[]", tag));
     }
 
     try {

@@ -73,16 +73,120 @@ export default function StudentDashboard() {
   const params = useParams();
   const locale = params.locale || "fr";
 
-  const [courses, setCourses] = useState<DashboardCourse[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
   const [publicVideos, setPublicVideos] = useState<any[]>([]);
   const [creatorVideos, setCreatorVideos] = useState<any[]>([]);
   const [adminVideos, setAdminVideos] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<DashboardUser | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Gérer les changements de filtres
+  const handleFilterChange = (filters: any) => {
+    // Appliquer les filtres aux cours
+    let filtered = [...courses];
+
+    // Filtre par recherche
+    if (filters.search) {
+      filtered = filtered.filter(
+        (course) =>
+          course.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
+          course.description
+            ?.toLowerCase()
+            .includes(filters.search.toLowerCase()) ||
+          course.category
+            ?.toLowerCase()
+            .includes(filters.search.toLowerCase()) ||
+          course.tags?.some((tag: string) =>
+            tag.toLowerCase().includes(filters.search.toLowerCase())
+          )
+      );
+    }
+
+    // Filtre par catégorie
+    if (filters.category !== "all") {
+      filtered = filtered.filter(
+        (course) => course.category === filters.category
+      );
+    }
+
+    // Filtre par difficulté
+    if (filters.difficulty !== "all") {
+      filtered = filtered.filter(
+        (course) => course.difficulty_level === filters.difficulty
+      );
+    }
+
+    // Filtre par durée
+    if (filters.duration !== "all") {
+      filtered = filtered.filter((course) => {
+        const durationInMinutes = parseDuration(course.duration);
+        switch (filters.duration) {
+          case "short":
+            return durationInMinutes < 30;
+          case "medium":
+            return durationInMinutes >= 30 && durationInMinutes <= 60;
+          case "long":
+            return durationInMinutes > 60;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Filtre par note
+    if (filters.rating !== "all") {
+      filtered = filtered.filter((course) => {
+        const rating = course.rating || 0;
+        switch (filters.rating) {
+          case "4+":
+            return rating >= 4;
+          case "3+":
+            return rating >= 3;
+          case "2+":
+            return rating >= 2;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Tri
+    filtered.sort((a, b) => {
+      switch (filters.sortBy) {
+        case "recent":
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+        case "popular":
+          return (b.views || 0) - (a.views || 0);
+        case "rating":
+          return (b.rating || 0) - (a.rating || 0);
+        case "duration":
+          return parseDuration(a.duration) - parseDuration(b.duration);
+        case "title":
+          return (a.title || "").localeCompare(b.title || "");
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredCourses(filtered);
+  };
+
+  // Helper pour parser la durée
+  const parseDuration = (duration: string): number => {
+    if (!duration) return 0;
+    const parts = duration.split(":");
+    if (parts.length === 2) {
+      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    }
+    return 0;
+  };
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -118,66 +222,147 @@ export default function StudentDashboard() {
 
         setUser(user);
 
-        // Charger les vidéos publiques (incluant les vidéos admin) pour le catalogue des formations
-        const publicVideosResponse = await fetch("/api/videos/public", {
-          cache: "no-store",
-        });
-
-        // Charger les vidéos créateurs pour la section pépites de nos experts
-        const creatorVideosResponse = await fetch("/api/videos/creator", {
-          cache: "no-store",
-        });
-
-        // Charger les vidéos admin pour le catalogue de formations
-        const adminVideosResponse = await fetch("/api/videos/admin", {
-          cache: "no-store",
-        });
-
+        // Charger les vidéos selon le rôle de l'utilisateur
         let allCourses: any[] = [];
         let creatorVideosData: any[] = [];
         let adminVideosData: any[] = [];
 
-        if (publicVideosResponse.ok) {
-          const publicVideosPayload = await publicVideosResponse.json();
-          // L'API videos/public retourne déjà les vidéos normalisées avec les vidéos admin incluses
-          allCourses = Array.isArray(publicVideosPayload?.data)
-            ? publicVideosPayload.data
-            : Array.isArray(publicVideosPayload)
-              ? publicVideosPayload
-              : [];
+        // Pour les employés, charger les vidéos créateurs (privées, publiques, non listées)
+        if (user.role === "employee") {
+          const creatorVideosResponse = await fetch("/api/creator/videos", {
+            cache: "no-store",
+            credentials: "include",
+          });
+
+          if (creatorVideosResponse.ok) {
+            const creatorVideosPayload = await creatorVideosResponse.json();
+            creatorVideosData = Array.isArray(creatorVideosPayload?.videos)
+              ? creatorVideosPayload.videos
+              : Array.isArray(creatorVideosPayload)
+                ? creatorVideosPayload
+                : [];
+
+            // Transformer les données pour le dashboard
+            allCourses = creatorVideosData.map((video: any) => ({
+              id: video.id,
+              title: video.title,
+              description: video.description,
+              thumbnail: video.thumbnail,
+              duration: video.duration,
+              creator: {
+                name: video.creator_name || "Créateur",
+                avatar: video.creator_avatar || null,
+              },
+              category: video.category,
+              tags: video.tags || [],
+              video_url: video.video_url,
+              is_published: video.is_published,
+              visibility: video.visibility, // private, public, unlisted
+              created_at: video.created_at,
+              is_creator_video: true,
+            }));
+          }
+
+          // Charger les vidéos admin pour le catalogue de formations (TOUJOURS pour les employés)
+          const adminVideosResponse = await fetch("/api/admin/videos", {
+            cache: "no-store",
+          });
+
+          if (adminVideosResponse.ok) {
+            const adminVideosPayload = await adminVideosResponse.json();
+            adminVideosData = Array.isArray(adminVideosPayload?.videos)
+              ? adminVideosPayload.videos
+              : Array.isArray(adminVideosPayload?.data)
+                ? adminVideosPayload.data
+                : [];
+          }
+        } else {
+          // Pour les étudiants standards, charger les vidéos publiques
+          const publicVideosResponse = await fetch("/api/videos/public", {
+            cache: "no-store",
+          });
+
+          if (publicVideosResponse.ok) {
+            const publicVideosPayload = await publicVideosResponse.json();
+            allCourses = Array.isArray(publicVideosPayload?.data)
+              ? publicVideosPayload.data
+              : Array.isArray(publicVideosPayload)
+                ? publicVideosPayload
+                : [];
+          }
+
+          // Charger les vidéos créateurs publiques pour la section pépites de nos experts (ENDPOINT PUBLIC)
+          const creatorVideosResponse = await fetch(
+            "/api/creator/videos-public",
+            {
+              cache: "no-store",
+              // Pas besoin de credentials pour l'endpoint public
+            }
+          );
+
+          if (creatorVideosResponse.ok) {
+            const creatorVideosPayload = await creatorVideosResponse.json();
+            // L'endpoint public retourne déjà les vidéos publiques filtrées
+            creatorVideosData = Array.isArray(creatorVideosPayload?.data)
+              ? creatorVideosPayload.data
+              : Array.isArray(creatorVideosPayload?.videos)
+                ? creatorVideosPayload.videos
+                : [];
+          } else {
+            // En cas d'erreur, utiliser un tableau vide pour la section pépites
+            creatorVideosData = [];
+          }
+
+          // Charger les vidéos admin pour le catalogue de formations (ENDPOINT PUBLIC)
+          const adminVideosResponse = await fetch("/api/admin/videos-public", {
+            cache: "no-store",
+            // Pas besoin de credentials pour l'endpoint public
+          });
+
+          if (adminVideosResponse.ok) {
+            const adminVideosPayload = await adminVideosResponse.json();
+            // L'endpoint public retourne déjà les vidéos admin transformées
+            adminVideosData = Array.isArray(adminVideosPayload?.data)
+              ? adminVideosPayload.data
+              : Array.isArray(adminVideosPayload?.videos)
+                ? adminVideosPayload.videos
+                : [];
+          } else {
+            // En cas d'erreur, utiliser un tableau vide pour les vidéos admin
+            adminVideosData = [];
+          }
         }
 
-        if (creatorVideosResponse.ok) {
-          const creatorVideosPayload = await creatorVideosResponse.json();
-          creatorVideosData = Array.isArray(creatorVideosPayload?.data)
-            ? creatorVideosPayload.data.slice(0, 6) // Limiter à 6 vidéos pour la section pépites
-            : [];
-        }
+        // Catalogue des formations: combiner les vidéos admin et les vidéos publiques
+        const allAdminVideos = adminVideosData.filter(
+          (video) => video.is_admin_video
+        );
+        const allPublicVideos = allCourses.filter(
+          (video: any) => !video.is_admin_video
+        );
 
-        if (adminVideosResponse.ok) {
-          const adminVideosPayload = await adminVideosResponse.json();
-          adminVideosData = Array.isArray(adminVideosPayload?.data)
-            ? adminVideosPayload.data
-            : [];
-        }
-
-        // Utiliser les vidéos admin comme cours pour le catalogue
-        const coursesData = adminVideosData.length > 0 ? adminVideosData : allCourses;
-        setCourses(coursesData);
-        setPublicVideos(allCourses.slice(0, 6)); // Limiter les vidéos pour la section pépites
-        setCreatorVideos(creatorVideosData); // Stocker les vidéos créateurs
+        // Combiner toutes les vidéos pour le catalogue complet
+        const coursesData = [...allAdminVideos, ...allPublicVideos];
+        setCourses(coursesData); // Toutes les vidéos sont incluses ici
+        setFilteredCourses(coursesData); // Initialiser les cours filtrés
+        setPublicVideos(allPublicVideos.slice(0, 6)); // Exclure les vidéos admin des pépites publiques
+        setCreatorVideos(creatorVideosData); // Stocker les vidéos créateurs publiques
         setAdminVideos(adminVideosData); // Stocker les vidéos admin
         setTotalPages(1);
 
         // Vérifier si c'est un nouvel utilisateur (créé il y a moins de 24h)
-        const createdAt = user.created_at ? new Date(user.created_at) : new Date();
+        const createdAt = user.created_at
+          ? new Date(user.created_at)
+          : new Date();
         const now = new Date();
-        const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+        const hoursDiff =
+          (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
         setIsNewUser(hoursDiff < 24);
-
       } catch (error: unknown) {
         console.error("Erreur dashboard étudiant:", error);
-        setError("Impossible de charger votre tableau de bord. Veuillez réessayer.");
+        setError(
+          "Impossible de charger votre tableau de bord. Veuillez réessayer."
+        );
       } finally {
         setLoading(false);
       }
@@ -229,7 +414,7 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFB] overflow-hidden font-sans">
-      {/* Contenu principal - plein écran */}
+      {/* Contenu principal - plein écran sans padding */}
       <div className="flex-1 overflow-y-auto">
         <StudentHero user={user} />
 
@@ -239,7 +424,7 @@ export default function StudentDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="container mx-auto px-4 md:px-8 -mt-8 mb-8"
+            className="w-full -mt-8 mb-8"
           >
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-8 text-center">
               <div className="max-w-2xl mx-auto">
@@ -274,29 +459,31 @@ export default function StudentDashboard() {
             </div>
           </motion.div>
         )}
-        <br />
-        <br />
-
         <FeaturedGrid />
-        <div className="container mx-auto px-4 md:px-8 py-10">
-          <CategoryFilters />
+        <div className="w-full py-2">
+          <CategoryFilters
+            courses={courses}
+            onFilterChange={handleFilterChange}
+          />
 
           {/* --- SECTION PÉPITES DE NOS EXPERTS --- */}
-          <section className="mt-4 mb-16 bg-[#002B24] py-12 relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+          <section className="mt-0 mb-4 bg-[#002B24] p-4 relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
-            <div className="max-w-[1440px] mx-auto px-4 md:px-8">
-              <div className="flex justify-between items-center mb-8 relative z-10">
+            <div className="max-w-[1440px] p-6 mx-auto w-full">
+              <div className="flex justify-between items-center mb-4 relative z-10">
                 <div className="max-w-xl">
                   <span className="text-primary text-[9px] font-black uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
                     Elite Experts
                   </span>
                   <h2 className="text-xl font-bold text-white mt-3 leading-tight">
                     Pépites de nos{" "}
-                    <span className="italic text-primary font-serif">experts</span>
+                    <span className="italic text-primary font-serif">
+                      experts
+                    </span>
                   </h2>
                   <p className="text-gray-400 text-sm mt-2">
-                    Apprenez des meilleurs dans leur domaine
+                    Découvrez les meilleures formations créées par nos experts certifiés
                   </p>
                 </div>
                 <div className="hidden md:flex gap-2">
@@ -315,7 +502,10 @@ export default function StudentDashboard() {
                 </div>
               </div>
 
-              <div ref={scrollRef} className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4">
+              <div
+                ref={scrollRef}
+                className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+              >
                 {creatorVideos.slice(0, 6).map((video: any, index: number) => (
                   <motion.div
                     key={video.id}
@@ -338,8 +528,8 @@ export default function StudentDashboard() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
-                            <Play size={20} className="text-primary" />
+                          <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
+                            <Play size={24} className="text-primary" />
                           </div>
                         </div>
                       )}
@@ -367,8 +557,13 @@ export default function StudentDashboard() {
                       </p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
-                          <Star size={12} className="text-yellow-400 fill-current" />
-                          <span className="text-white text-xs">{video.rating || 4.8}</span>
+                          <Star
+                            size={12}
+                            className="text-yellow-400 fill-current"
+                          />
+                          <span className="text-white text-xs">
+                            {video.rating || 4.8}
+                          </span>
                         </div>
                         <div className="text-gray-400 text-xs">
                           {video.views || 0} vues
@@ -388,10 +583,11 @@ export default function StudentDashboard() {
               </div>
             </div>
           </section>
+          
 
           {/* --- SECTION CATALOGUE DES FORMATIONS --- */}
-          <section className="mt-20">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+          <section className="mt-4 w-full">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4 px-2 md:px-4">
               <div>
                 <h2 className="text-2xl font-bold text-[#002B24] tracking-tight">
                   Catalogue des formations
@@ -400,19 +596,36 @@ export default function StudentDashboard() {
                   Explorez l&apos;excellence académique
                 </p>
               </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full font-medium">
+                  {filteredCourses.length} {filteredCourses.length === 1 ? "formation" : "formations"}
+                </span>
+                <div className="flex gap-2">
+                  <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                    {creatorVideos.length} créateur{creatorVideos.length > 1 ? "s" : ""}
+                  </span>
+                  <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+                    {adminVideos.length} admin{adminVideos.length > 1 ? "s" : ""}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {courses.length > 0 ? (
+            {filteredCourses.length > 0 ? (
               <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 px-2 md:px-4"
               >
-                {courses.map((course) => (
-                  <motion.div variants={itemVariants} key={course.id} className="relative">
-                    {/* Badge Admin pour les vidéos admin */}
+                {filteredCourses.map((course) => (
+                  <motion.div
+                    variants={itemVariants}
+                    key={course.id}
+                    className="relative"
+                  >
+                    {/* Badge pour les vidéos admin */}
                     {course.is_admin_video && (
                       <div className="absolute -top-2 -right-2 z-20">
                         <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1">
@@ -422,12 +635,23 @@ export default function StudentDashboard() {
                       </div>
                     )}
 
+                    {/* Badge pour les vidéos créateurs */}
+                    {!course.is_admin_video && creatorVideos.some(cv => cv.id === course.id) && (
+                      <div className="absolute -top-2 -right-2 z-20">
+                        <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-current" />
+                          Créateur
+                        </div>
+                      </div>
+                    )}
+
                     <VideoCard
                       video={{
                         id: course.id,
                         title: course.title,
                         description: course.description || "",
-                        thumbnail: course.thumbnail || course.image || "/placeholder-course.jpg",
+                        thumbnail:
+                          course.thumbnail || course.image || "/placeholder-course.jpg",
                         video_url: course.video_url || "",
                         duration: course.duration || '00:00',
                         order: 0,
@@ -442,20 +666,20 @@ export default function StudentDashboard() {
                         updated_at: course.updated_at || new Date().toISOString(),
                         creator: {
                           id: 0,
-                          name: course.creator?.name || "Créateur",
-                          email: "",
-                          avatar: course.creator?.avatar || "/default-avatar.png",
+                          name: course.creator?.name || (course.is_admin_video ? "Admin" : "Créateur"),
+                          email: course.is_admin_video ? "admin@matchmyformation.com" : "creator@example.com",
+                          avatar: course.creator?.avatar || (course.is_admin_video ? "/admin-avatar.png" : "/default-avatar.png"),
                         },
                         is_free: true,
                         price: 0,
-                        rating: 0,
+                        rating: course.rating || 0,
                       }}
                     />
                   </motion.div>
                 ))}
               </motion.div>
             ) : (
-              <div className="py-20 text-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200">
+              <div className="py-20 text-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200 mx-2 md:mx-4">
                 <div className="max-w-md mx-auto">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <AlertCircle className="w-8 h-8 text-gray-400" />
@@ -464,7 +688,7 @@ export default function StudentDashboard() {
                     Aucune formation disponible
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    Les formations apparaîtront ici dès qu&apos;elles seront publiées par les créateurs.
+                    Les formations apparaîtront ici dès qu&apos;elles seront publiées par les créateurs et administrateurs.
                   </p>
                 </div>
               </div>

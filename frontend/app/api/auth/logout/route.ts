@@ -5,9 +5,13 @@ export async function POST(request: NextRequest) {
   let status = 200;
 
   try {
-    const response = await fetchBackendWithRequestAuth(request, "/api/auth/logout", {
-      method: "POST",
-    });
+    const response = await fetchBackendWithRequestAuth(
+      request,
+      "/api/auth/logout",
+      {
+        method: "POST",
+      }
+    );
 
     status = response.status;
   } catch (error) {

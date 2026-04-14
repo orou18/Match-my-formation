@@ -56,10 +56,10 @@ export class UserIdManager {
    */
   static getStoredUserData(): UserData | null {
     // Vérifier si nous sommes côté serveur
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return null;
     }
-    
+
     const id = localStorage.getItem(this.STORAGE_KEYS.USER_ID);
     const name = localStorage.getItem(this.STORAGE_KEYS.USER_NAME);
     const email = localStorage.getItem(this.STORAGE_KEYS.USER_EMAIL);
@@ -82,7 +82,6 @@ export class UserIdManager {
       provider: provider || undefined,
     };
   }
-
 
   /**
    * Vérifie si l'utilisateur est authentifié
@@ -137,7 +136,7 @@ export class UserIdManager {
     };
 
     const testToken = "test-token-" + Date.now();
-    
+
     this.storeAuthData({
       token: testToken,
       user: testUser,
@@ -149,7 +148,7 @@ export class UserIdManager {
    */
   static initializeTestUserIfNeeded(): void {
     if (typeof window === "undefined") return;
-    
+
     if (!this.isAuthenticated()) {
       this.createTestUser();
     }

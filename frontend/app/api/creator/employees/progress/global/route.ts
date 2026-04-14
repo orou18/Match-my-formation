@@ -3,9 +3,12 @@ import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
 
 export async function GET(request: NextRequest) {
   try {
-    const response = await laravelFetch("/api/creator/employees/progress/global", {
-      request,
-    });
+    const response = await laravelFetch(
+      "/api/creator/employees/progress/global",
+      {
+        request,
+      }
+    );
     const data = await parseLaravelJson(response);
     return NextResponse.json(data, { status: response.status });
   } catch (error) {

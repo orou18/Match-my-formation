@@ -6,37 +6,51 @@ export async function GET(request: NextRequest) {
   try {
     let videosData = null;
     let responseStatus = 200;
-    
+
     try {
       const response = await laravelFetch("/api/creator/videos", { request });
       const data = await parseLaravelJson(response);
-      
+
       if (response.ok) {
         videosData = data;
         responseStatus = response.status;
       }
     } catch (backendError) {
-      console.warn("Backend non accessible pour les vidéos, utilisation du store local:", backendError);
+      console.warn(
+        "Backend non accessible pour les vidéos, utilisation du store local:",
+        backendError
+      );
     }
 
     // Si le backend a répondu avec succès, retourner sa réponse
     if (videosData) {
-      const videos = Array.isArray(videosData) ? videosData : videosData?.videos || [];
-      return NextResponse.json({ videos, total: videos.length }, { status: responseStatus });
+      const videos = Array.isArray(videosData)
+        ? videosData
+        : videosData?.videos || [];
+      return NextResponse.json(
+        { videos, total: videos.length },
+        { status: responseStatus }
+      );
     }
 
     // Sinon, utiliser le store local
     try {
       const allVideos = await videosStore.getAllVideos();
-      
+
       if (allVideos && allVideos.length > 0) {
-        return NextResponse.json({ 
-          videos: allVideos, 
-          total: allVideos.length 
-        }, { status: 200 });
+        return NextResponse.json(
+          {
+            videos: allVideos,
+            total: allVideos.length,
+          },
+          { status: 200 }
+        );
       }
     } catch (storeError) {
-      console.warn("Store local inaccessible, utilisation du fallback:", storeError);
+      console.warn(
+        "Store local inaccessible, utilisation du fallback:",
+        storeError
+      );
     }
 
     // Fallback final avec données par défaut
@@ -54,7 +68,7 @@ export async function GET(request: NextRequest) {
         tags: ["marketing", "digital", "base"],
         is_published: true,
         visibility: "public",
-        created_at: "2024-01-15T10:30:00Z"
+        created_at: "2024-01-15T10:30:00Z",
       },
       {
         id: 2,
@@ -69,33 +83,38 @@ export async function GET(request: NextRequest) {
         tags: ["vente", "techniques", "avancé"],
         is_published: true,
         visibility: "public",
-        created_at: "2024-01-14T14:20:00Z"
-      }
+        created_at: "2024-01-14T14:20:00Z",
+      },
     ];
 
-    return NextResponse.json({ 
-      videos: fallbackVideos, 
-      total: fallbackVideos.length 
-    }, { status: 200 });
-    
+    return NextResponse.json(
+      {
+        videos: fallbackVideos,
+        total: fallbackVideos.length,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("CREATOR VIDEOS SIMPLE - Error:", error);
-    return NextResponse.json({ 
-      success: false,
-      message: "Erreur lors de la récupération des vidéos",
-      error: error instanceof Error ? error.message : "Erreur inconnue"
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Erreur lors de la récupération des vidéos",
+        error: error instanceof Error ? error.message : "Erreur inconnue",
+      },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    
+
     // Tenter de contacter le backend, mais utiliser le store local en priorité
     let backendData = null;
     let backendStatus = 200;
-    
+
     try {
       const response = await laravelFetch("/api/creator/videos", {
         method: "POST",
@@ -103,40 +122,46 @@ export async function POST(request: NextRequest) {
         request,
       });
       const data = await parseLaravelJson(response);
-      
+
       if (response.ok) {
         backendData = data;
         backendStatus = response.status;
       }
     } catch (backendError) {
-      console.warn("Backend non accessible pour la création de vidéo, utilisation du store local:", backendError);
+      console.warn(
+        "Backend non accessible pour la création de vidéo, utilisation du store local:",
+        backendError
+      );
     }
 
     // Si le backend a répondu avec succès, retourner sa réponse
     if (backendData) {
-      return NextResponse.json({
-        success: true,
-        message: "Vidéo créée avec succès",
-        data: backendData
-      }, { status: backendStatus });
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Vidéo créée avec succès",
+          data: backendData,
+        },
+        { status: backendStatus }
+      );
     }
 
     // Sinon, créer la vidéo dans le store local
     try {
       // Extraire les données du formData
-      const title = formData.get('title') as string;
-      const description = formData.get('description') as string;
-      const category = formData.get('category') as string;
-      const visibility = formData.get('visibility') as string;
-      const is_published = formData.get('is_published') === 'true';
-      const thumbnail = formData.get('thumbnail') as string;
-      const video_url = formData.get('video_url') as string;
-      const duration = formData.get('duration') as string;
-      const tags = formData.get('tags') as string;
-      const difficulty_level = formData.get('difficulty_level') as string;
-      const language = formData.get('language') as string;
-      const is_free = formData.get('is_free') === 'true';
-      const price = parseFloat(formData.get('price') as string) || 0;
+      const title = formData.get("title") as string;
+      const description = formData.get("description") as string;
+      const category = formData.get("category") as string;
+      const visibility = formData.get("visibility") as string;
+      const is_published = formData.get("is_published") === "true";
+      const thumbnail = formData.get("thumbnail") as string;
+      const video_url = formData.get("video_url") as string;
+      const duration = formData.get("duration") as string;
+      const tags = formData.get("tags") as string;
+      const difficulty_level = formData.get("difficulty_level") as string;
+      const language = formData.get("language") as string;
+      const is_free = formData.get("is_free") === "true";
+      const price = parseFloat(formData.get("price") as string) || 0;
 
       // Parser les tags si c'est une chaîne JSON
       let parsedTags = [];
@@ -144,7 +169,10 @@ export async function POST(request: NextRequest) {
         try {
           parsedTags = JSON.parse(tags);
         } catch {
-          parsedTags = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+          parsedTags = tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean);
         }
       }
 
@@ -160,7 +188,7 @@ export async function POST(request: NextRequest) {
         difficulty_level: difficulty_level || "beginner",
         language: language || "fr",
         is_published: is_published,
-        visibility: visibility as 'public' | 'private' | 'unlisted',
+        visibility: visibility as "public" | "private" | "unlisted",
         is_free: is_free,
         price: price,
         learning_objectives: [],
@@ -170,24 +198,29 @@ export async function POST(request: NextRequest) {
         creator: {
           id: 1, // ID du créateur par défaut
           name: "Créateur",
-          avatar: "/avatars/default-creator.jpg"
-        }
+          avatar: "/avatars/default-creator.jpg",
+        },
       });
 
-      return NextResponse.json({
-        success: true,
-        message: "Vidéo créée avec succès dans le store local",
-        data: newVideo
-      }, { status: 201 });
-
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Vidéo créée avec succès dans le store local",
+          data: newVideo,
+        },
+        { status: 201 }
+      );
     } catch (storeError) {
-      console.error("Erreur lors de la création dans le store local:", storeError);
-      
+      console.error(
+        "Erreur lors de la création dans le store local:",
+        storeError
+      );
+
       // Fallback final avec simulation
       const fallbackVideo = {
         id: Date.now(),
-        title: formData.get('title') as string || "Nouvelle Vidéo",
-        description: formData.get('description') as string || "",
+        title: (formData.get("title") as string) || "Nouvelle Vidéo",
+        description: (formData.get("description") as string) || "",
         thumbnail: "/videos/video1-thumb.jpg",
         video_url: "/videos/video1.mp4",
         duration: "10:30",
@@ -195,25 +228,30 @@ export async function POST(request: NextRequest) {
         likes: 0,
         comments: [],
         tags: [],
-        is_published: formData.get('is_published') === 'true',
-        visibility: formData.get('visibility') as string || 'private',
-        created_at: new Date().toISOString()
+        is_published: formData.get("is_published") === "true",
+        visibility: (formData.get("visibility") as string) || "private",
+        created_at: new Date().toISOString(),
       };
 
-      return NextResponse.json({
-        success: true,
-        message: "Vidéo créée avec succès (fallback)",
-        data: fallbackVideo
-      }, { status: 201 });
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Vidéo créée avec succès (fallback)",
+          data: fallbackVideo,
+        },
+        { status: 201 }
+      );
     }
-    
   } catch (error) {
     console.error("CREATOR VIDEOS SIMPLE POST - Error:", error);
-    return NextResponse.json({
-      success: false,
-      message: "Erreur lors de la création de la vidéo",
-      error: error instanceof Error ? error.message : "Erreur inconnue"
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Erreur lors de la création de la vidéo",
+        error: error instanceof Error ? error.message : "Erreur inconnue",
+      },
+      { status: 500 }
+    );
   }
 }
 

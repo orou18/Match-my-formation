@@ -23,12 +23,12 @@ async function resolveCreatorId(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const creatorId = await resolveCreatorId(request);
-    
+
     // Utiliser le stockage en mémoire si disponible, sinon utiliser le store
     if (libraryStore.length > 0) {
       return NextResponse.json({ items: libraryStore });
     }
-    
+
     const items = getCreatorLibrary(creatorId);
     libraryStore = items; // Mettre en cache
     return NextResponse.json({ items });
@@ -41,10 +41,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const creatorId = await resolveCreatorId(request);
-    
+
     let body;
     const contentType = request.headers.get("content-type");
-    
+
     if (contentType?.includes("multipart/form-data")) {
       // Gérer les FormData (upload de fichiers)
       const formData = await request.formData();
@@ -54,13 +54,13 @@ export async function POST(request: NextRequest) {
         size: formData.get("size"),
         visibility: formData.get("visibility"),
         path: formData.get("path"),
-        tags: []
+        tags: [],
       };
     } else {
       // Gérer les JSON (création de dossiers)
       body = await request.json();
     }
-    
+
     const newItem = {
       id: Date.now().toString(),
       name: body.name,
@@ -74,18 +74,18 @@ export async function POST(request: NextRequest) {
       visibility: body.visibility || "private",
       starred: false,
       path: body.path || "/",
-      children: body.children || []
+      children: body.children || [],
     };
-    
+
     // Ajouter au stockage en mémoire
     libraryStore.push(newItem);
-    
+
     console.log("Nouvel élément ajouté à la bibliothèque:", newItem);
-    
-    return NextResponse.json({ 
-      success: true, 
+
+    return NextResponse.json({
+      success: true,
       message: "Élément ajouté avec succès",
-      item: newItem 
+      item: newItem,
     });
   } catch (error) {
     console.error("Creator library add error:", error);
@@ -97,16 +97,17 @@ export async function PUT(request: NextRequest) {
   try {
     const creatorId = await resolveCreatorId(request);
     const body = await request.json();
-    const items = libraryStore.length > 0 ? libraryStore : getCreatorLibrary(creatorId);
+    const items =
+      libraryStore.length > 0 ? libraryStore : getCreatorLibrary(creatorId);
     const next = items.map((item) =>
       item.id === String(body.id)
         ? { ...item, starred: body.starred ?? !item.starred }
         : item
     );
-    
+
     // Mettre à jour le stockage en mémoire
     libraryStore = next;
-    
+
     return NextResponse.json({ items: next });
   } catch (error) {
     console.error("Creator library update error:", error);
@@ -117,20 +118,20 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    const id = url.searchParams.get('id');
-    
+    const id = url.searchParams.get("id");
+
     if (!id) {
       return NextResponse.json({ error: "ID requis" }, { status: 400 });
     }
-    
+
     // Supprimer du stockage en mémoire
-    libraryStore = libraryStore.filter(item => item.id !== id);
-    
+    libraryStore = libraryStore.filter((item) => item.id !== id);
+
     console.log("Élément supprimé de la bibliothèque:", id);
-    
-    return NextResponse.json({ 
-      success: true, 
-      message: "Élément supprimé avec succès" 
+
+    return NextResponse.json({
+      success: true,
+      message: "Élément supprimé avec succès",
     });
   } catch (error) {
     console.error("Creator library delete error:", error);

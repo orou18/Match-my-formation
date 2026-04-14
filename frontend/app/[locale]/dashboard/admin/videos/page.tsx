@@ -107,10 +107,11 @@ export default function AdminVideosPage() {
   };
 
   // Filtrer les vidéos
-  const filteredVideos = videos.filter(video =>
-    video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    video.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    video.category.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredVideos = videos.filter(
+    (video) =>
+      video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Supprimer une vidéo
@@ -130,7 +131,7 @@ export default function AdminVideosPage() {
       });
 
       if (response.ok) {
-        setVideos(prev => prev.filter(video => video.id !== videoId));
+        setVideos((prev) => prev.filter((video) => video.id !== videoId));
         setShowDeleteModal(false);
         setVideoToDelete(null);
       } else {
@@ -167,7 +168,7 @@ export default function AdminVideosPage() {
   ];
 
   const getCategoryLabel = (category: string) => {
-    const cat = categories.find(c => c.value === category);
+    const cat = categories.find((c) => c.value === category);
     return cat ? cat.label : category;
   };
 
@@ -191,7 +192,9 @@ export default function AdminVideosPage() {
               </p>
             </div>
             <button
-              onClick={() => router.push(`/${locale}/dashboard/admin/videos/create`)}
+              onClick={() =>
+                router.push(`/${locale}/dashboard/admin/videos/create`)
+              }
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
             >
               <Plus className="w-5 h-5" />
@@ -232,14 +235,15 @@ export default function AdminVideosPage() {
               {searchTerm ? "Aucune vidéo trouvée" : "Aucune vidéo créée"}
             </h3>
             <p className="text-gray-600 mb-6">
-              {searchTerm 
+              {searchTerm
                 ? "Essayez de modifier votre recherche"
-                : "Commencez par créer votre première vidéo admin"
-              }
+                : "Commencez par créer votre première vidéo admin"}
             </p>
             {!searchTerm && (
               <button
-                onClick={() => router.push(`/${locale}/dashboard/admin/videos/create`)}
+                onClick={() =>
+                  router.push(`/${locale}/dashboard/admin/videos/create`)
+                }
                 className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Plus className="w-5 h-5" />
@@ -290,7 +294,7 @@ export default function AdminVideosPage() {
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                     {video.description}
                   </p>
-                  
+
                   <div className="flex items-center gap-2 mb-3">
                     <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
                       {getCategoryLabel(video.category)}
@@ -373,14 +377,14 @@ export default function AdminVideosPage() {
                   </button>
                 </div>
               </div>
-              
-              <div 
-                className="flex-1 overflow-y-auto p-6" 
+
+              <div
+                className="flex-1 overflow-y-auto p-6"
                 style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#93c5fd #f3f4f6',
-                  touchAction: 'pan-y',
-                  overscrollBehavior: 'contain'
+                  scrollbarWidth: "thin",
+                  scrollbarColor: "#93c5fd #f3f4f6",
+                  touchAction: "pan-y",
+                  overscrollBehavior: "contain",
                 }}
               >
                 <style jsx>{`
@@ -408,10 +412,12 @@ export default function AdminVideosPage() {
                     poster={selectedVideo.thumbnail}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Informations</h3>
+                    <h3 className="font-semibold text-gray-900 mb-2">
+                      Informations
+                    </h3>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Catégorie:</span>
@@ -423,19 +429,31 @@ export default function AdminVideosPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Créé le:</span>
-                        <span>{new Date(selectedVideo.created_at).toLocaleDateString()}</span>
+                        <span>
+                          {new Date(
+                            selectedVideo.created_at
+                          ).toLocaleDateString()}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Statut:</span>
-                        <span className={selectedVideo.is_published ? "text-green-600" : "text-yellow-600"}>
+                        <span
+                          className={
+                            selectedVideo.is_published
+                              ? "text-green-600"
+                              : "text-yellow-600"
+                          }
+                        >
                           {selectedVideo.is_published ? "Publié" : "Brouillon"}
                         </span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Statistiques</h3>
+                    <h3 className="font-semibold text-gray-900 mb-2">
+                      Statistiques
+                    </h3>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Vues:</span>
@@ -456,14 +474,18 @@ export default function AdminVideosPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 {selectedVideo.description && (
                   <div className="mt-6">
-                    <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
-                    <p className="text-gray-600 text-sm">{selectedVideo.description}</p>
+                    <h3 className="font-semibold text-gray-900 mb-2">
+                      Description
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      {selectedVideo.description}
+                    </p>
                   </div>
                 )}
-                
+
                 {selectedVideo.tags.length > 0 && (
                   <div className="mt-6">
                     <h3 className="font-semibold text-gray-900 mb-2">Tags</h3>
@@ -496,14 +518,15 @@ export default function AdminVideosPage() {
               <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4">
                 <Trash2 className="w-6 h-6 text-red-600" />
               </div>
-              
+
               <h3 className="text-lg font-bold text-gray-900 mb-2 text-center">
                 Supprimer la vidéo
               </h3>
               <p className="text-gray-600 text-center mb-6">
-                Êtes-vous sûr de vouloir supprimer cette vidéo ? Cette action est irréversible.
+                Êtes-vous sûr de vouloir supprimer cette vidéo ? Cette action
+                est irréversible.
               </p>
-              
+
               <div className="flex gap-3">
                 <button
                   onClick={() => {
@@ -515,7 +538,9 @@ export default function AdminVideosPage() {
                   Annuler
                 </button>
                 <button
-                  onClick={() => videoToDelete && handleDeleteVideo(videoToDelete)}
+                  onClick={() =>
+                    videoToDelete && handleDeleteVideo(videoToDelete)
+                  }
                   disabled={isDeleting}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >

@@ -29,8 +29,7 @@ export async function GET() {
         department: "Administration",
         language: "fr",
         timezone: "Africa/Porto-Novo",
-        twoFactorEnabled:
-          role === "super_admin" || role === "admin",
+        twoFactorEnabled: role === "super_admin" || role === "admin",
         emailNotifications: true,
       },
       session: {
@@ -67,10 +66,13 @@ export async function PUT(request: NextRequest) {
 
     const filteredUpdates = Object.keys(updates)
       .filter((key) => allowedFields.includes(key))
-      .reduce((result, key) => {
-        result[key] = updates[key];
-        return result;
-      }, {} as Record<string, unknown>);
+      .reduce(
+        (result, key) => {
+          result[key] = updates[key];
+          return result;
+        },
+        {} as Record<string, unknown>
+      );
 
     const updated = updateProfile(String(sessionUser.id), filteredUpdates);
     return NextResponse.json(updated);

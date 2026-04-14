@@ -95,7 +95,7 @@ export default function RootLayout({
             <NextAuthProvider>
               <BrandingProvider>
                 <NotificationsProvider>
-                  <div className="min-h-screen flex flex-col">
+                  <div className="flex flex-col min-h-screen">
                     {/* Skip to main content for accessibility */}
                     <a
                       href="#main-content"

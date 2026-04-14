@@ -114,17 +114,17 @@ export default function EditVideoPage() {
   // Fonction pour gérer les URLs des fichiers locaux
   const getFileUrl = (url: string) => {
     if (!url) return "";
-    
+
     // Si c'est une URL externe (commence par http), la retourner telle quelle
-    if (url.startsWith('http')) {
+    if (url.startsWith("http")) {
       return url;
     }
-    
+
     // Si c'est un chemin local, s'assurer qu'il commence par /
-    if (!url.startsWith('/')) {
+    if (!url.startsWith("/")) {
       return `/${url}`;
     }
-    
+
     return url;
   };
 
@@ -148,11 +148,11 @@ export default function EditVideoPage() {
         headers: buildClientAuthHeaders(),
       });
       console.log("Response status:", response.status);
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log("Video data received:", data);
-        
+
         if (data.success && data.data) {
           console.log("Setting form data with:", data.data);
           setVideo(data.data);
@@ -192,11 +192,16 @@ export default function EditVideoPage() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+      [name]:
+        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }));
   };
 
@@ -204,7 +209,7 @@ export default function EditVideoPage() {
     const input = document.getElementById("new-tag") as HTMLInputElement;
     const tag = input.value.trim();
     if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         tags: [...prev.tags, tag],
       }));
@@ -213,7 +218,7 @@ export default function EditVideoPage() {
   };
 
   const removeTag = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       tags: prev.tags.filter((_, i) => i !== index),
     }));
@@ -223,7 +228,7 @@ export default function EditVideoPage() {
     const input = document.getElementById("new-objective") as HTMLInputElement;
     const objective = input.value.trim();
     if (objective && !formData.learning_objectives.includes(objective)) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         learning_objectives: [...prev.learning_objectives, objective],
       }));
@@ -232,27 +237,32 @@ export default function EditVideoPage() {
   };
 
   const removeObjective = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      learning_objectives: prev.learning_objectives.filter((_, i) => i !== index),
+      learning_objectives: prev.learning_objectives.filter(
+        (_, i) => i !== index
+      ),
     }));
   };
 
   const addResource = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      resources: [...prev.resources, {
-        id: Date.now(),
-        type: "link",
-        title: "",
-        description: "",
-        url: "",
-      }],
+      resources: [
+        ...prev.resources,
+        {
+          id: Date.now(),
+          type: "link",
+          title: "",
+          description: "",
+          url: "",
+        },
+      ],
     }));
   };
 
   const updateResource = (index: number, field: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       resources: prev.resources.map((resource, i) =>
         i === index ? { ...resource, [field]: value } : resource
@@ -261,7 +271,7 @@ export default function EditVideoPage() {
   };
 
   const removeResource = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       resources: prev.resources.filter((_, i) => i !== index),
     }));
@@ -303,11 +313,17 @@ export default function EditVideoPage() {
       submitData.append("description", formData.description);
       submitData.append("category", formData.category);
       submitData.append("tags", JSON.stringify(formData.tags));
-      submitData.append("learning_objectives", JSON.stringify(formData.learning_objectives));
+      submitData.append(
+        "learning_objectives",
+        JSON.stringify(formData.learning_objectives)
+      );
       submitData.append("visibility", formData.visibility);
       submitData.append("duration", formData.duration);
       submitData.append("allow_comments", formData.allow_comments.toString());
-      submitData.append("publish_immediately", formData.publish_immediately.toString());
+      submitData.append(
+        "publish_immediately",
+        formData.publish_immediately.toString()
+      );
       submitData.append("resources", JSON.stringify(formData.resources));
 
       if (videoFile) {
@@ -375,7 +391,9 @@ export default function EditVideoPage() {
                 Retour
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Modifier la vidéo</h1>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Modifier la vidéo
+                </h1>
                 <p className="text-gray-600 text-sm mt-1">
                   Mettez à jour les informations de votre vidéo
                 </p>
@@ -671,7 +689,9 @@ export default function EditVideoPage() {
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <Save className="w-4 h-4" />
-                  {saving ? "Enregistrement..." : "Enregistrer les modifications"}
+                  {saving
+                    ? "Enregistrement..."
+                    : "Enregistrer les modifications"}
                 </button>
               </div>
             </div>

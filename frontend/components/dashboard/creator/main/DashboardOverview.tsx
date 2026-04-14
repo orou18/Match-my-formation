@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { 
-  Video, 
-  Users, 
-  TrendingUp, 
+import {
+  Video,
+  Users,
+  TrendingUp,
   DollarSign,
   PlayCircle,
   Eye,
@@ -13,7 +13,7 @@ import {
   MessageCircle,
   Share2,
   Plus,
-  BarChart3
+  BarChart3,
 } from "lucide-react";
 
 interface DashboardStats {
@@ -46,7 +46,7 @@ export default function DashboardOverview() {
     total_comments: 0,
     total_shares: 0,
     total_revenue: 0,
-    recent_videos: []
+    recent_videos: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -54,7 +54,7 @@ export default function DashboardOverview() {
     const fetchDashboard = async () => {
       try {
         setLoading(true);
-        
+
         // Simuler des données pour le moment
         const mockStats: DashboardStats = {
           total_videos: 24,
@@ -75,7 +75,7 @@ export default function DashboardOverview() {
               likes: 89,
               comments: 12,
               tags: ["marketing", "digital", "base"],
-              created_at: "2024-01-15"
+              created_at: "2024-01-15",
             },
             {
               id: 2,
@@ -88,9 +88,9 @@ export default function DashboardOverview() {
               likes: 67,
               comments: 8,
               tags: ["vente", "techniques", "avancé"],
-              created_at: "2024-01-12"
-            }
-          ]
+              created_at: "2024-01-12",
+            },
+          ],
         };
 
         setStats(mockStats);
@@ -119,7 +119,7 @@ export default function DashboardOverview() {
       icon: Video,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
-      change: "+3 cette semaine"
+      change: "+3 cette semaine",
     },
     {
       title: "Vues Totales",
@@ -127,7 +127,7 @@ export default function DashboardOverview() {
       icon: Eye,
       color: "text-green-600",
       bgColor: "bg-green-50",
-      change: "+12% vs mois dernier"
+      change: "+12% vs mois dernier",
     },
     {
       title: "Likes",
@@ -135,7 +135,7 @@ export default function DashboardOverview() {
       icon: ThumbsUp,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
-      change: "+8% vs mois dernier"
+      change: "+8% vs mois dernier",
     },
     {
       title: "Revenus",
@@ -143,8 +143,8 @@ export default function DashboardOverview() {
       icon: DollarSign,
       color: "text-orange-600",
       bgColor: "bg-orange-50",
-      change: "+15% vs mois dernier"
-    }
+      change: "+15% vs mois dernier",
+    },
   ];
 
   return (
@@ -162,7 +162,9 @@ export default function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {stat.value}
+                </p>
                 <p className="text-sm text-green-600 mt-1">{stat.change}</p>
               </div>
               <div className={`${stat.bgColor} p-3 rounded-lg`}>
@@ -181,7 +183,9 @@ export default function DashboardOverview() {
         className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100"
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Vidéos Récentes</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Vidéos Récentes
+          </h2>
           <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <Plus className="w-4 h-4" />
             <span>Nouvelle Vidéo</span>
@@ -211,8 +215,12 @@ export default function DashboardOverview() {
                 </div>
               </div>
               <div className="mt-4">
-                <h3 className="font-semibold text-gray-900 line-clamp-2">{video.title}</h3>
-                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{video.description}</p>
+                <h3 className="font-semibold text-gray-900 line-clamp-2">
+                  {video.title}
+                </h3>
+                <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                  {video.description}
+                </p>
                 <div className="flex items-center justify-between mt-3 text-sm text-gray-500">
                   <div className="flex items-center space-x-3">
                     <span className="flex items-center space-x-1">
@@ -252,7 +260,9 @@ export default function DashboardOverview() {
         transition={{ delay: 0.6 }}
         className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100"
       >
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Actions Rapides</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          Actions Rapides
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <Video className="w-5 h-5 text-blue-600" />

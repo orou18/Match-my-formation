@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
   try {
     const userId = getUserIdFromToken(request);
     const session = userId ? null : await getServerSession(authOptions);
-    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
     const role =
       getRoleFromToken(request) ||
       (session?.user as SessionUser | undefined)?.role ||
@@ -49,7 +50,8 @@ export async function PUT(request: NextRequest) {
   try {
     const userId = getUserIdFromToken(request);
     const session = userId ? null : await getServerSession(authOptions);
-    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
     if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
@@ -79,7 +81,10 @@ export async function PUT(request: NextRequest) {
     }
 
     if (!body.id) {
-      return NextResponse.json({ error: "ID notification requis" }, { status: 400 });
+      return NextResponse.json(
+        { error: "ID notification requis" },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json(
@@ -101,7 +106,8 @@ export async function DELETE(request: NextRequest) {
   try {
     const userId = getUserIdFromToken(request);
     const session = userId ? null : await getServerSession(authOptions);
-    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
     if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
@@ -117,7 +123,9 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json(
       saveUserNotifications(
         String(finalUserId),
-        notifications.filter((notification) => notification.id !== notificationId)
+        notifications.filter(
+          (notification) => notification.id !== notificationId
+        )
       )
     );
   } catch {

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/auth-options";
-import { findAccountById, updateAccount, updateUserSecurity } from "@/lib/server/account-store";
+import {
+  findAccountById,
+  updateAccount,
+  updateUserSecurity,
+} from "@/lib/server/account-store";
 
 type SessionUser = {
   id?: string | number;
@@ -43,7 +47,9 @@ export async function POST(request: NextRequest) {
     }
 
     updateAccount(account.id, { password: newPassword });
-    updateUserSecurity(account.id, { lastPasswordChange: new Date().toISOString() });
+    updateUserSecurity(account.id, {
+      lastPasswordChange: new Date().toISOString(),
+    });
 
     return NextResponse.json({
       message: "Mot de passe modifié avec succès",

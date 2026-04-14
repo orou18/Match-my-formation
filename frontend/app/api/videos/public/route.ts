@@ -52,7 +52,8 @@ function normalizeVideo(video: PublicVideo) {
     is_published: video.is_published ?? video.visibility === "public",
     visibility: video.visibility || "public",
     created_at: video.created_at || new Date().toISOString(),
-    updated_at: video.updated_at || video.created_at || new Date().toISOString(),
+    updated_at:
+      video.updated_at || video.created_at || new Date().toISOString(),
     resources: Array.isArray(video.resources) ? video.resources : [],
     is_free: video.is_free ?? true,
     price: Number(video.price || 0),
@@ -75,7 +76,10 @@ export async function GET() {
       { status: response.status }
     );
   } catch (error) {
-    console.error("Erreur lors de la récupération des vidéos publiques:", error);
+    console.error(
+      "Erreur lors de la récupération des vidéos publiques:",
+      error
+    );
     return NextResponse.json(
       {
         success: false,

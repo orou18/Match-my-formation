@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
   try {
     const userId = getUserIdFromToken(request);
     const session = userId ? null : await getServerSession(authOptions);
-    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
     if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -35,7 +36,8 @@ export async function PUT(request: NextRequest) {
   try {
     const userId = getUserIdFromToken(request);
     const session = userId ? null : await getServerSession(authOptions);
-    const finalUserId = userId || (session?.user as SessionUser | undefined)?.id;
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
     if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -54,10 +56,13 @@ export async function PUT(request: NextRequest) {
     ];
     const filteredSettings = Object.keys(newSettings)
       .filter((key) => allowedFields.includes(key))
-      .reduce((obj, key) => {
-        obj[key] = newSettings[key] as boolean;
-        return obj;
-      }, {} as Record<string, boolean>);
+      .reduce(
+        (obj, key) => {
+          obj[key] = newSettings[key] as boolean;
+          return obj;
+        },
+        {} as Record<string, boolean>
+      );
 
     const nextSettings = updateUserNotificationSettings(
       String(finalUserId),

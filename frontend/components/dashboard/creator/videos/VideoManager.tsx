@@ -42,11 +42,12 @@ export default function VideoManager() {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        const res = await fetch('http://127.0.0.1:8000/api/creator/videos', {
+        const token =
+          typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const res = await fetch("http://127.0.0.1:8000/api/creator/videos", {
           headers: token
-            ? { Authorization: `Bearer ${token}`, Accept: 'application/json' }
-            : { Accept: 'application/json' },
+            ? { Authorization: `Bearer ${token}`, Accept: "application/json" }
+            : { Accept: "application/json" },
         });
         if (res.ok) {
           const data = await res.json();
@@ -54,21 +55,29 @@ export default function VideoManager() {
           const mapped = (data || []).map((v: any) => ({
             id: String(v.id),
             title: v.title,
-            description: v.description || '',
-            thumbnail: v.thumbnail ?? v.thumbnail_url ?? v.thumbnail_url ?? v.thumbnail_url ?? v.thumbnail ?? '/videos/video1-thumb.jpg',
-            duration: v.duration ? String(v.duration) : v.duration_display ?? '',
+            description: v.description || "",
+            thumbnail:
+              v.thumbnail ??
+              v.thumbnail_url ??
+              v.thumbnail_url ??
+              v.thumbnail_url ??
+              v.thumbnail ??
+              "/videos/video1-thumb.jpg",
+            duration: v.duration
+              ? String(v.duration)
+              : (v.duration_display ?? ""),
             views: Number(v.views ?? 0),
             likes: Number(v.likes ?? 0),
             comments: Number(v.comments ?? 0),
-            publishedAt: v.published_at ?? v.created_at ?? '',
-            visibility: v.visibility ?? 'public',
+            publishedAt: v.published_at ?? v.created_at ?? "",
+            visibility: v.visibility ?? "public",
             pathway: v.pathway_title ?? undefined,
-            status: v.status ?? (v.published_at ? 'published' : 'processing'),
+            status: v.status ?? (v.published_at ? "published" : "processing"),
           }));
           setVideos(mapped);
         }
       } catch (err) {
-        console.error('Error fetching videos', err);
+        console.error("Error fetching videos", err);
       }
     };
 
@@ -133,17 +142,23 @@ export default function VideoManager() {
     // videoData expected from backend as created video object
     const newVideo: CreatorVideo = {
       id: String(videoData.id ?? Date.now()),
-      title: videoData.title ?? 'Nouvelle vidéo',
-      description: videoData.description ?? '',
-      thumbnail: videoData.thumbnail ?? videoData.thumbnail_url ?? '/videos/video1-thumb.jpg',
-      duration: videoData.duration ? String(videoData.duration) : '',
+      title: videoData.title ?? "Nouvelle vidéo",
+      description: videoData.description ?? "",
+      thumbnail:
+        videoData.thumbnail ??
+        videoData.thumbnail_url ??
+        "/videos/video1-thumb.jpg",
+      duration: videoData.duration ? String(videoData.duration) : "",
       views: Number(videoData.views ?? 0),
       likes: Number(videoData.likes ?? 0),
       comments: Number(videoData.comments ?? 0),
-      publishedAt: videoData.published_at ?? videoData.created_at ?? "À l'instant",
-      visibility: videoData.visibility ?? 'public',
+      publishedAt:
+        videoData.published_at ?? videoData.created_at ?? "À l'instant",
+      visibility: videoData.visibility ?? "public",
       pathway: videoData.pathway_title ?? undefined,
-      status: videoData.status ?? (videoData.published_at ? 'published' : 'processing'),
+      status:
+        videoData.status ??
+        (videoData.published_at ? "published" : "processing"),
     };
     setVideos((prev) => [newVideo, ...prev]);
     setShowUploadForm(false);
@@ -151,18 +166,24 @@ export default function VideoManager() {
 
   const deleteVideo = async (id: string) => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const res = await fetch(`http://127.0.0.1:8000/api/creator/videos/${id}`, {
-        method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${token}`, Accept: 'application/json' } : { Accept: 'application/json' },
-      });
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/creator/videos/${id}`,
+        {
+          method: "DELETE",
+          headers: token
+            ? { Authorization: `Bearer ${token}`, Accept: "application/json" }
+            : { Accept: "application/json" },
+        }
+      );
       if (res.ok) {
         setVideos((prev) => prev.filter((v) => v.id !== id));
       } else {
-        console.error('Failed to delete video', await res.text());
+        console.error("Failed to delete video", await res.text());
       }
     } catch (err) {
-      console.error('Error deleting video', err);
+      console.error("Error deleting video", err);
     }
   };
 
@@ -422,7 +443,10 @@ export default function VideoManager() {
                   <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                     <Edit className="w-4 h-4" />
                   </button>
-                  <button onClick={() => deleteVideo(video.id)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                  <button
+                    onClick={() => deleteVideo(video.id)}
+                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>

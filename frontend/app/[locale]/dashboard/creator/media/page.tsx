@@ -192,7 +192,9 @@ export default function MediaPage() {
   };
 
   const moveItems = async () => {
-    const targetPath = prompt("Entrez le chemin de destination (ex: /Documents/):");
+    const targetPath = prompt(
+      "Entrez le chemin de destination (ex: /Documents/):"
+    );
     if (targetPath && selectedItems.length > 0) {
       try {
         const response = await fetch("/api/creator/media/batch", {
@@ -203,17 +205,23 @@ export default function MediaPage() {
           body: JSON.stringify({
             action: "move",
             itemIds: selectedItems,
-            targetPath: targetPath
+            targetPath: targetPath,
           }),
         });
-        
+
         const data = await response.json();
         if (response.ok && data.success) {
-          setMediaItems(prev => prev.map(item => 
-            selectedItems.includes(item.id) 
-              ? { ...item, url: targetPath + "/" + item.name, modifiedAt: new Date().toISOString() }
-              : item
-          ));
+          setMediaItems((prev) =>
+            prev.map((item) =>
+              selectedItems.includes(item.id)
+                ? {
+                    ...item,
+                    url: targetPath + "/" + item.name,
+                    modifiedAt: new Date().toISOString(),
+                  }
+                : item
+            )
+          );
           setSelectedItems([]);
           console.log("Médias déplacés avec succès");
         } else {
@@ -235,13 +243,13 @@ export default function MediaPage() {
           },
           body: JSON.stringify({
             action: "copy",
-            itemIds: selectedItems
+            itemIds: selectedItems,
           }),
         });
-        
+
         const data = await response.json();
         if (response.ok && data.success) {
-          setMediaItems(prev => [...prev, ...data.items]);
+          setMediaItems((prev) => [...prev, ...data.items]);
           setSelectedItems([]);
           console.log("Médias copiés avec succès");
         } else {
@@ -254,7 +262,12 @@ export default function MediaPage() {
   };
 
   const archiveItems = async () => {
-    if (confirm(`Êtes-vous sûr de vouloir archiver ${selectedItems.length} média(s) ?`) && selectedItems.length > 0) {
+    if (
+      confirm(
+        `Êtes-vous sûr de vouloir archiver ${selectedItems.length} média(s) ?`
+      ) &&
+      selectedItems.length > 0
+    ) {
       try {
         const response = await fetch("/api/creator/media/batch", {
           method: "PUT",
@@ -263,17 +276,23 @@ export default function MediaPage() {
           },
           body: JSON.stringify({
             action: "archive",
-            itemIds: selectedItems
+            itemIds: selectedItems,
           }),
         });
-        
+
         const data = await response.json();
         if (response.ok && data.success) {
-          setMediaItems(prev => prev.map(item => 
-            selectedItems.includes(item.id) 
-              ? { ...item, metadata: { ...item.metadata, archived: true }, modifiedAt: new Date().toISOString() }
-              : item
-          ));
+          setMediaItems((prev) =>
+            prev.map((item) =>
+              selectedItems.includes(item.id)
+                ? {
+                    ...item,
+                    metadata: { ...item.metadata, archived: true },
+                    modifiedAt: new Date().toISOString(),
+                  }
+                : item
+            )
+          );
           setSelectedItems([]);
           console.log("Médias archivés avec succès");
         } else {
@@ -286,7 +305,12 @@ export default function MediaPage() {
   };
 
   const deleteItems = async () => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedItems.length} média(s) ? Cette action est irréversible.`) && selectedItems.length > 0) {
+    if (
+      confirm(
+        `Êtes-vous sûr de vouloir supprimer ${selectedItems.length} média(s) ? Cette action est irréversible.`
+      ) &&
+      selectedItems.length > 0
+    ) {
       try {
         const response = await fetch("/api/creator/media/batch", {
           method: "DELETE",
@@ -294,13 +318,15 @@ export default function MediaPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            itemIds: selectedItems
+            itemIds: selectedItems,
           }),
         });
-        
+
         const data = await response.json();
         if (response.ok && data.success) {
-          setMediaItems(prev => prev.filter(item => !selectedItems.includes(item.id)));
+          setMediaItems((prev) =>
+            prev.filter((item) => !selectedItems.includes(item.id))
+          );
           setSelectedItems([]);
           console.log("Médias supprimés avec succès");
         } else {
@@ -482,19 +508,31 @@ export default function MediaPage() {
               {selectedItems.length} média(s) sélectionné(s)
             </span>
             <div className="flex gap-2">
-              <button onClick={moveItems} className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 flex items-center gap-1">
+              <button
+                onClick={moveItems}
+                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 flex items-center gap-1"
+              >
                 <Move className="w-3 h-3" />
                 Déplacer
               </button>
-              <button onClick={copyItems} className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 flex items-center gap-1">
+              <button
+                onClick={copyItems}
+                className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 flex items-center gap-1"
+              >
                 <Copy className="w-3 h-3" />
                 Copier
               </button>
-              <button onClick={archiveItems} className="px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 flex items-center gap-1">
+              <button
+                onClick={archiveItems}
+                className="px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 flex items-center gap-1"
+              >
                 <Archive className="w-3 h-3" />
                 Archiver
               </button>
-              <button onClick={deleteItems} className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 flex items-center gap-1">
+              <button
+                onClick={deleteItems}
+                className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 flex items-center gap-1"
+              >
                 <Trash2 className="w-3 h-3" />
                 Supprimer
               </button>

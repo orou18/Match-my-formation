@@ -501,7 +501,8 @@ export default function AdminAdmins() {
                   <button
                     onClick={() =>
                       handleUpdateAdmin(admin.id, {
-                        status: admin.status === "active" ? "inactive" : "active",
+                        status:
+                          admin.status === "active" ? "inactive" : "active",
                       })
                     }
                     className="text-blue-600 hover:text-blue-700"

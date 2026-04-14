@@ -143,8 +143,10 @@ export default function ParcoursPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<VideoData | null>(null);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "progress" | "achievements">("overview");
-  
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "progress" | "achievements"
+  >("overview");
+
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
@@ -154,7 +156,7 @@ export default function ParcoursPage() {
       try {
         // Récupérer le token d'authentification
         const token = localStorage.getItem("token");
-        
+
         if (!token) {
           setError("Utilisateur non authentifié");
           setLoading(false);
@@ -167,7 +169,7 @@ export default function ParcoursPage() {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
-            "Accept": "application/json",
+            Accept: "application/json",
           },
         });
 
@@ -176,7 +178,9 @@ export default function ParcoursPage() {
           if (data.success) {
             setParcoursData(data.data);
           } else {
-            setError(data.message || "Erreur lors de la récupération des parcours");
+            setError(
+              data.message || "Erreur lors de la récupération des parcours"
+            );
           }
         } else {
           setError("Erreur lors de la communication avec le serveur");
@@ -217,10 +221,14 @@ export default function ParcoursPage() {
     }
   };
 
-  const handleProgressUpdate = async (videoId: number, progress: number, position: number) => {
+  const handleProgressUpdate = async (
+    videoId: number,
+    progress: number,
+    position: number
+  ) => {
     try {
       const token = localStorage.getItem("token");
-      
+
       const response = await fetch("/api/student/parcours", {
         method: "POST",
         headers: {
@@ -257,7 +265,7 @@ export default function ParcoursPage() {
   const handleLike = async (videoId: number) => {
     try {
       const token = localStorage.getItem("token");
-      
+
       const response = await fetch("/api/student/parcours", {
         method: "POST",
         headers: {
@@ -291,7 +299,7 @@ export default function ParcoursPage() {
   const handleFavorite = async (videoId: number) => {
     try {
       const token = localStorage.getItem("token");
-      
+
       const response = await fetch("/api/student/parcours", {
         method: "POST",
         headers: {
@@ -392,7 +400,9 @@ export default function ParcoursPage() {
           <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-xl font-bold text-gray-900">{selectedVideo.title}</h3>
+              <h3 className="text-xl font-bold text-gray-900">
+                {selectedVideo.title}
+              </h3>
               <button
                 onClick={() => setShowVideoPlayer(false)}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -400,7 +410,7 @@ export default function ParcoursPage() {
                 ×
               </button>
             </div>
-            
+
             {/* Video Player */}
             <div className="flex-1 overflow-hidden">
               <VideoPlayer
@@ -422,7 +432,7 @@ export default function ParcoursPage() {
       >
         {/* HEADER SECTION */}
         <motion.section variants={itemVariants}>
-          <WelcomeHeader 
+          <WelcomeHeader
             userName="Étudiant"
             streak={parcoursData.globalStats?.streak || 0}
             rank={parcoursData.globalStats?.rank || 0}
@@ -430,12 +440,23 @@ export default function ParcoursPage() {
         </motion.section>
 
         {/* TABS NAVIGATION */}
-        <motion.section variants={itemVariants} className="bg-white rounded-xl p-1 shadow-sm">
+        <motion.section
+          variants={itemVariants}
+          className="bg-white rounded-xl p-1 shadow-sm"
+        >
           <div className="flex space-x-1">
             {[
               { id: "overview", label: "Aperçu", icon: <BookOpen size={16} /> },
-              { id: "progress", label: "Progression", icon: <TrendingUp size={16} /> },
-              { id: "achievements", label: "Achievements", icon: <Award size={16} /> },
+              {
+                id: "progress",
+                label: "Progression",
+                icon: <TrendingUp size={16} />,
+              },
+              {
+                id: "achievements",
+                label: "Achievements",
+                icon: <Award size={16} />,
+              },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -470,8 +491,8 @@ export default function ParcoursPage() {
                   </div>
                   <div className="grid grid-cols-1 gap-6">
                     {parcoursData.coursesInProgress.map((course: Course) => (
-                      <CourseProgressCard 
-                        key={course.id} 
+                      <CourseProgressCard
+                        key={course.id}
                         {...course}
                         onVideoClick={handleVideoClick}
                       />
@@ -485,8 +506,8 @@ export default function ParcoursPage() {
                   </h2>
                   <div className="space-y-2">
                     {parcoursData.recentModules.map((mod: Module) => (
-                      <RecentModuleItem 
-                        key={mod.id} 
+                      <RecentModuleItem
+                        key={mod.id}
                         {...mod}
                         onClick={() => handleVideoClick(mod)}
                       />
@@ -503,25 +524,37 @@ export default function ParcoursPage() {
                 </h2>
                 <div className="space-y-4">
                   {parcoursData.coursesInProgress.map((course: Course) => (
-                    <div key={course.id} className="bg-white p-6 rounded-xl border border-gray-200">
+                    <div
+                      key={course.id}
+                      className="bg-white p-6 rounded-xl border border-gray-200"
+                    >
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="font-semibold text-lg text-gray-900">{course.title}</h3>
-                          <p className="text-sm text-gray-600">{course.instructor.name}</p>
+                          <h3 className="font-semibold text-lg text-gray-900">
+                            {course.title}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {course.instructor.name}
+                          </p>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-blue-600">{course.progress}%</div>
+                          <div className="text-2xl font-bold text-blue-600">
+                            {course.progress}%
+                          </div>
                           <p className="text-sm text-gray-500">complété</p>
                         </div>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-blue-600 h-2 rounded-full transition-all duration-500"
                           style={{ width: `${course.progress}%` }}
                         />
                       </div>
                       <div className="flex justify-between text-sm text-gray-600 mt-2">
-                        <span>{course.completedModules} / {course.totalModules} modules</span>
+                        <span>
+                          {course.completedModules} / {course.totalModules}{" "}
+                          modules
+                        </span>
                         <span>Temps estimé: {course.estimatedTime}</span>
                       </div>
                     </div>
@@ -578,13 +611,24 @@ export default function ParcoursPage() {
             </motion.section>
 
             {/* Banking Integration pour les cours premium */}
-            {parcoursData.coursesInProgress.some((course: Course) => course.isPremium) && (
+            {parcoursData.coursesInProgress.some(
+              (course: Course) => course.isPremium
+            ) && (
               <motion.section variants={itemVariants}>
                 <BankingIntegration
-                  courseId={parcoursData.coursesInProgress.find(c => c.isPremium)?.id || 0}
-                  courseTitle={parcoursData.coursesInProgress.find(c => c.isPremium)?.title || ""}
+                  courseId={
+                    parcoursData.coursesInProgress.find((c) => c.isPremium)
+                      ?.id || 0
+                  }
+                  courseTitle={
+                    parcoursData.coursesInProgress.find((c) => c.isPremium)
+                      ?.title || ""
+                  }
                   isPremium={true}
-                  price={parcoursData.coursesInProgress.find(c => c.isPremium)?.price || 0}
+                  price={
+                    parcoursData.coursesInProgress.find((c) => c.isPremium)
+                      ?.price || 0
+                  }
                   onPurchaseComplete={handlePurchaseComplete}
                   onEnrollmentComplete={handleEnrollmentComplete}
                 />

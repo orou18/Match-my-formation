@@ -75,7 +75,9 @@ export default function BillingPage() {
                   <Download size={20} />
                 </div>
                 <div>
-                  <p className="font-bold text-[#002B24]">{transaction.label}</p>
+                  <p className="font-bold text-[#002B24]">
+                    {transaction.label}
+                  </p>
                   <p className="text-xs text-gray-400">
                     Payé le{" "}
                     {new Date(transaction.paidAt).toLocaleDateString("fr-FR", {
@@ -91,7 +93,9 @@ export default function BillingPage() {
                   {transaction.amount.toFixed(2)} {transaction.currency}
                 </p>
                 <span className="text-[10px] font-black uppercase text-green-500">
-                  {transaction.status === "paid" ? "Succès" : transaction.status}
+                  {transaction.status === "paid"
+                    ? "Succès"
+                    : transaction.status}
                 </span>
               </div>
             </div>

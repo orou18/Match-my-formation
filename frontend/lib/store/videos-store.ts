@@ -1,4 +1,4 @@
-import { writeJsonStore, readJsonStore } from './json-store';
+import { writeJsonStore, readJsonStore } from "./json-store";
 
 export interface Video {
   id: number;
@@ -15,7 +15,7 @@ export interface Video {
   difficulty_level: string;
   language: string;
   is_published: boolean;
-  visibility: 'public' | 'private' | 'unlisted';
+  visibility: "public" | "private" | "unlisted";
   is_free: boolean;
   price: number;
   learning_objectives: string[];
@@ -37,14 +37,15 @@ interface VideosDataStore {
   lastUpdated: string;
 }
 
-const VIDEOS_STORE_FILE = 'videos.json';
+const VIDEOS_STORE_FILE = "videos.json";
 
 // Vidéos par défaut pour le seeder
 const DEFAULT_VIDEOS: Video[] = [
   {
     id: 1,
     title: "Introduction au Marketing Digital",
-    description: "Découvrez les bases du marketing digital et transformez votre stratégie",
+    description:
+      "Découvrez les bases du marketing digital et transformez votre stratégie",
     thumbnail: "/videos/video1-thumb.jpg",
     video_url: "/videos/video1.mp4",
     duration: "15:30",
@@ -59,8 +60,15 @@ const DEFAULT_VIDEOS: Video[] = [
     visibility: "public",
     is_free: true,
     price: 0,
-    learning_objectives: ["Comprendre les fondamentaux du marketing digital", "Maîtriser les outils essentiels"],
-    target_audience: ["Débutants", "Entrepreneurs", "Professionnels du marketing"],
+    learning_objectives: [
+      "Comprendre les fondamentaux du marketing digital",
+      "Maîtriser les outils essentiels",
+    ],
+    target_audience: [
+      "Débutants",
+      "Entrepreneurs",
+      "Professionnels du marketing",
+    ],
     prerequisites: ["Connaissances de base en marketing"],
     certificate_available: true,
     students_count: 3420,
@@ -69,13 +77,14 @@ const DEFAULT_VIDEOS: Video[] = [
     creator: {
       id: 1,
       name: "Expert Marketing",
-      avatar: "/avatars/default-creator.jpg"
-    }
+      avatar: "/avatars/default-creator.jpg",
+    },
   },
   {
     id: 2,
     title: "Techniques de Vente Avancées",
-    description: "Maîtrisez les techniques de vente modernes pour augmenter vos conversions",
+    description:
+      "Maîtrisez les techniques de vente modernes pour augmenter vos conversions",
     thumbnail: "/videos/video2-thumb.jpg",
     video_url: "/videos/video2.mp4",
     duration: "22:15",
@@ -90,7 +99,10 @@ const DEFAULT_VIDEOS: Video[] = [
     visibility: "public",
     is_free: true,
     price: 0,
-    learning_objectives: ["Développer des techniques de vente avancées", "Maîtriser la psychologie client"],
+    learning_objectives: [
+      "Développer des techniques de vente avancées",
+      "Maîtriser la psychologie client",
+    ],
     target_audience: ["Commerciaux", "Chef de vente", "Entrepreneurs"],
     prerequisites: ["Expérience en vente"],
     certificate_available: true,
@@ -100,13 +112,14 @@ const DEFAULT_VIDEOS: Video[] = [
     creator: {
       id: 2,
       name: "Expert Commercial",
-      avatar: "/avatars/default-creator.jpg"
-    }
+      avatar: "/avatars/default-creator.jpg",
+    },
   },
   {
     id: 3,
     title: "Gestion de la Relation Client",
-    description: "Apprenez à fidéliser vos clients et à gérer efficacement la relation client",
+    description:
+      "Apprenez à fidéliser vos clients et à gérer efficacement la relation client",
     thumbnail: "/videos/video1-thumb.jpg",
     video_url: "/videos/video1.mp4",
     duration: "18:45",
@@ -121,7 +134,10 @@ const DEFAULT_VIDEOS: Video[] = [
     visibility: "public",
     is_free: true,
     price: 0,
-    learning_objectives: ["Comprendre la relation client", "Développer des stratégies de fidélisation"],
+    learning_objectives: [
+      "Comprendre la relation client",
+      "Développer des stratégies de fidélisation",
+    ],
     target_audience: ["Service client", "Commerciaux", "Managers"],
     prerequisites: ["Expérience client"],
     certificate_available: true,
@@ -131,9 +147,9 @@ const DEFAULT_VIDEOS: Video[] = [
     creator: {
       id: 3,
       name: "Expert Service Client",
-      avatar: "/avatars/default-creator.jpg"
-    }
-  }
+      avatar: "/avatars/default-creator.jpg",
+    },
+  },
 ];
 
 class VideosStore {
@@ -155,18 +171,18 @@ class VideosStore {
   private async loadVideos(): Promise<void> {
     try {
       const store = await readJsonStore<VideosStore>(VIDEOS_STORE_FILE);
-      
+
       if (store && store.videos && store.videos.length > 0) {
         this.videos = store.videos;
         // Trouver le prochain ID
-        this.nextId = Math.max(...this.videos.map(v => v.id)) + 1;
+        this.nextId = Math.max(...this.videos.map((v) => v.id)) + 1;
       } else {
         // Utiliser les vidéos par défaut pour le seeder
         this.videos = [...DEFAULT_VIDEOS];
         await this.saveVideos();
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des vidéos:', error);
+      console.error("Erreur lors du chargement des vidéos:", error);
       this.videos = [...DEFAULT_VIDEOS];
     }
   }
@@ -175,11 +191,11 @@ class VideosStore {
     try {
       const store: VideosDataStore = {
         videos: this.videos,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
       await writeJsonStore(VIDEOS_STORE_FILE, store);
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des vidéos:', error);
+      console.error("Erreur lors de la sauvegarde des vidéos:", error);
     }
   }
 
@@ -190,18 +206,29 @@ class VideosStore {
 
   // Obtenir les vidéos d'un créateur spécifique
   public async getCreatorVideos(creatorId: number): Promise<Video[]> {
-    return this.videos.filter(video => video.creator.id === creatorId);
+    return this.videos.filter((video) => video.creator.id === creatorId);
   }
 
   // Obtenir les vidéos publiques (pour les étudiants)
   public async getPublicVideos(): Promise<Video[]> {
-    return this.videos.filter(video => 
-      video.is_published && video.visibility === 'public'
+    return this.videos.filter(
+      (video) => video.is_published && video.visibility === "public"
     );
   }
 
   // Créer une nouvelle vidéo
-  public async createVideo(videoData: Omit<Video, 'id' | 'created_at' | 'updated_at' | 'views' | 'likes' | 'comments' | 'students_count'>): Promise<Video> {
+  public async createVideo(
+    videoData: Omit<
+      Video,
+      | "id"
+      | "created_at"
+      | "updated_at"
+      | "views"
+      | "likes"
+      | "comments"
+      | "students_count"
+    >
+  ): Promise<Video> {
     const newVideo: Video = {
       ...videoData,
       id: this.nextId++,
@@ -210,19 +237,22 @@ class VideosStore {
       comments: [],
       students_count: 0,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     this.videos.unshift(newVideo); // Ajouter au début
     await this.saveVideos();
-    
+
     return newVideo;
   }
 
   // Mettre à jour une vidéo
-  public async updateVideo(id: number, updates: Partial<Video>): Promise<Video | null> {
-    const videoIndex = this.videos.findIndex(v => v.id === id);
-    
+  public async updateVideo(
+    id: number,
+    updates: Partial<Video>
+  ): Promise<Video | null> {
+    const videoIndex = this.videos.findIndex((v) => v.id === id);
+
     if (videoIndex === -1) {
       return null;
     }
@@ -230,7 +260,7 @@ class VideosStore {
     this.videos[videoIndex] = {
       ...this.videos[videoIndex],
       ...updates,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     await this.saveVideos();
@@ -239,8 +269,8 @@ class VideosStore {
 
   // Supprimer une vidéo
   public async deleteVideo(id: number): Promise<boolean> {
-    const videoIndex = this.videos.findIndex(v => v.id === id);
-    
+    const videoIndex = this.videos.findIndex((v) => v.id === id);
+
     if (videoIndex === -1) {
       return false;
     }
@@ -252,53 +282,63 @@ class VideosStore {
 
   // Publier une vidéo (changer sa visibilité)
   public async publishVideo(id: number): Promise<Video | null> {
-    return this.updateVideo(id, { 
-      is_published: true, 
-      visibility: 'public' 
+    return this.updateVideo(id, {
+      is_published: true,
+      visibility: "public",
     });
   }
 
   // Rendre une vidéo privée
   public async unpublishVideo(id: number): Promise<Video | null> {
-    return this.updateVideo(id, { 
-      is_published: false, 
-      visibility: 'private' 
+    return this.updateVideo(id, {
+      is_published: false,
+      visibility: "private",
     });
   }
 
   // Obtenir une vidéo par son ID
   public async getVideoById(id: number): Promise<Video | null> {
-    return this.videos.find(v => v.id === id) || null;
+    return this.videos.find((v) => v.id === id) || null;
   }
 
   // Rechercher des vidéos
-  public async searchVideos(query: string, filters?: {
-    category?: string;
-    difficulty?: string;
-    visibility?: string;
-  }): Promise<Video[]> {
+  public async searchVideos(
+    query: string,
+    filters?: {
+      category?: string;
+      difficulty?: string;
+      visibility?: string;
+    }
+  ): Promise<Video[]> {
     let filteredVideos = [...this.videos];
 
     // Filtrer par recherche textuelle
     if (query) {
       const searchLower = query.toLowerCase();
-      filteredVideos = filteredVideos.filter(video =>
-        video.title.toLowerCase().includes(searchLower) ||
-        video.description.toLowerCase().includes(searchLower) ||
-        video.tags.some(tag => tag.toLowerCase().includes(searchLower))
+      filteredVideos = filteredVideos.filter(
+        (video) =>
+          video.title.toLowerCase().includes(searchLower) ||
+          video.description.toLowerCase().includes(searchLower) ||
+          video.tags.some((tag) => tag.toLowerCase().includes(searchLower))
       );
     }
 
     // Appliquer les filtres
     if (filters) {
-      if (filters.category && filters.category !== 'all') {
-        filteredVideos = filteredVideos.filter(video => video.category === filters.category);
+      if (filters.category && filters.category !== "all") {
+        filteredVideos = filteredVideos.filter(
+          (video) => video.category === filters.category
+        );
       }
-      if (filters.difficulty && filters.difficulty !== 'all') {
-        filteredVideos = filteredVideos.filter(video => video.difficulty_level === filters.difficulty);
+      if (filters.difficulty && filters.difficulty !== "all") {
+        filteredVideos = filteredVideos.filter(
+          (video) => video.difficulty_level === filters.difficulty
+        );
       }
-      if (filters.visibility && filters.visibility !== 'all') {
-        filteredVideos = filteredVideos.filter(video => video.visibility === filters.visibility);
+      if (filters.visibility && filters.visibility !== "all") {
+        filteredVideos = filteredVideos.filter(
+          (video) => video.visibility === filters.visibility
+        );
       }
     }
 
@@ -314,8 +354,10 @@ class VideosStore {
     totalLikes: number;
   }> {
     const total = this.videos.length;
-    const published = this.videos.filter(v => v.is_published).length;
-    const publicVideos = this.videos.filter(v => v.is_published && v.visibility === 'public').length;
+    const published = this.videos.filter((v) => v.is_published).length;
+    const publicVideos = this.videos.filter(
+      (v) => v.is_published && v.visibility === "public"
+    ).length;
     const totalViews = this.videos.reduce((sum, v) => sum + v.views, 0);
     const totalLikes = this.videos.reduce((sum, v) => sum + v.likes, 0);
 
@@ -324,7 +366,7 @@ class VideosStore {
       published,
       public: publicVideos,
       totalViews,
-      totalLikes
+      totalLikes,
     };
   }
 }

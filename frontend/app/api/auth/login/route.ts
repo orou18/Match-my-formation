@@ -14,7 +14,9 @@ export async function POST(request: NextRequest) {
     });
 
     const payload = await response.json().catch(() => null);
-    const nextResponse = NextResponse.json(payload, { status: response.status });
+    const nextResponse = NextResponse.json(payload, {
+      status: response.status,
+    });
 
     if (response.ok && payload?.user?.id) {
       nextResponse.cookies.set("userId", String(payload.user.id), {

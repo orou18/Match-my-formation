@@ -21,12 +21,17 @@ async function readJsonStore(filename: string, defaultValue: any = []) {
 }
 
 // Transformer les données pour correspondre à l'interface attendue
-function transformParcoursData(parcours: any[], videoProgress: any[], userData: any) {
+function transformParcoursData(
+  parcours: any[],
+  videoProgress: any[],
+  userData: any
+) {
   return {
     coursesInProgress: parcours.map((course: any) => ({
       id: course.id || 1,
       title: course.title || "Formation Web Complète",
-      description: course.description || "Apprenez le développement web moderne",
+      description:
+        course.description || "Apprenez le développement web moderne",
       progress: course.progress || 75,
       totalModules: course.totalModules || 12,
       completedModules: course.completedModules || 9,
@@ -78,7 +83,8 @@ function transformParcoursData(parcours: any[], videoProgress: any[], userData: 
     globalStats: {
       totalCourses: parcours.length || 3,
       completedCourses: parcours.filter((c: any) => c.isCompleted).length || 1,
-      inProgressCourses: parcours.filter((c: any) => !c.isCompleted).length || 2,
+      inProgressCourses:
+        parcours.filter((c: any) => !c.isCompleted).length || 2,
       totalHours: 24.5,
       completedHours: 18.5,
       averageScore: 85,
@@ -116,16 +122,16 @@ export async function GET(request: NextRequest) {
   try {
     // Vérifier l'authentification avec UserIdManager
     const userData = UserIdManager.getStoredUserData();
-    
+
     if (!userData || !userData.id) {
       // Retourner des données par défaut si pas d'utilisateur
       const defaultData = transformParcoursData([], [], {
         id: 1,
         name: "Étudiant",
         email: "student@example.com",
-        role: "student"
+        role: "student",
       });
-      
+
       return NextResponse.json({
         success: true,
         data: defaultData,
@@ -133,14 +139,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Appeler l'API backend Laravel pour récupérer les parcours détaillés
-    const response = await fetch(`${BACKEND_URL}/api/student/parcours/${userData.id}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${UserIdManager.getToken()}`,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-    });
+    const response = await fetch(
+      `${BACKEND_URL}/api/student/parcours/${userData.id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${UserIdManager.getToken()}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      }
+    );
 
     if (response.ok) {
       const data = await response.json();
@@ -152,17 +161,22 @@ export async function GET(request: NextRequest) {
       } else {
         return NextResponse.json({
           success: false,
-          message: data.message || "Erreur lors de la récupération des parcours",
+          message:
+            data.message || "Erreur lors de la récupération des parcours",
         });
       }
     } else {
       // En cas d'erreur backend, utiliser les données locales
       const parcours = await readJsonStore("student-parcours", []);
       const videoProgress = await readJsonStore("video-progress", []);
-      
+
       // Transformer les données pour correspondre à l'interface attendue
-      const transformedData = transformParcoursData(parcours, videoProgress, userData);
-      
+      const transformedData = transformParcoursData(
+        parcours,
+        videoProgress,
+        userData
+      );
+
       return NextResponse.json({
         success: true,
         data: transformedData,
@@ -170,10 +184,13 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error("Erreur parcours:", error);
-    return NextResponse.json({
-      success: false,
-      message: "Erreur de connexion au serveur"
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Erreur de connexion au serveur",
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -181,58 +198,73 @@ export async function POST(request: NextRequest) {
   try {
     // Vérifier l'authentification avec UserIdManager
     const userData = UserIdManager.getStoredUserData();
-    
+
     if (!userData || !userData.id) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Non authentifié" 
-      }, { status: 401 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Non authentifié",
+        },
+        { status: 401 }
+      );
     }
 
     // Récupérer le token d'authentification
     const token = localStorage.getItem("token") || UserIdManager.getToken();
-    
+
     if (!token) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Token d'authentification manquant" 
-      }, { status: 401 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Token d'authentification manquant",
+        },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
     const { action, courseId, moduleId, progress } = body;
 
     // Appeler le backend Laravel pour mettre à jour la progression
-    const progressResponse = await fetch(`${BACKEND_URL}/api/employee/progress/update`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-      body: JSON.stringify({
-        pathway_id: courseId,
-        video_id: moduleId,
-        progress_percentage: progress || 0,
-        action: action,
-      }),
-    });
+    const progressResponse = await fetch(
+      `${BACKEND_URL}/api/employee/progress/update`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          pathway_id: courseId,
+          video_id: moduleId,
+          progress_percentage: progress || 0,
+          action: action,
+        }),
+      }
+    );
 
     if (!progressResponse.ok) {
       console.error("Backend progress update error:", progressResponse.status);
-      return NextResponse.json({ 
-        success: false, 
-        error: "Erreur lors de la mise à jour de la progression" 
-      }, { status: progressResponse.status });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Erreur lors de la mise à jour de la progression",
+        },
+        { status: progressResponse.status }
+      );
     }
 
     const progressData = await progressResponse.json();
-    
+
     if (!progressData.success) {
-      return NextResponse.json({ 
-        success: false, 
-        error: progressData.message || "Erreur backend" 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: progressData.message || "Erreur backend",
+        },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json({
@@ -242,9 +274,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Erreur lors de la mise à jour des parcours:", error);
-    return NextResponse.json({ 
-      success: false, 
-      error: "Erreur de connexion au serveur" 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Erreur de connexion au serveur",
+      },
+      { status: 500 }
+    );
   }
 }

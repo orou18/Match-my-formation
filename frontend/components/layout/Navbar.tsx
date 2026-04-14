@@ -28,22 +28,22 @@ export default function Navbar() {
     // Gérer le body overflow seulement si pas déjà géré par un autre composant
     if (open) {
       const currentOverflow = document.body.style.overflow;
-      if (currentOverflow !== 'hidden') {
-        document.body.style.overflow = 'hidden';
+      if (currentOverflow !== "hidden") {
+        document.body.style.overflow = "hidden";
         // Stocker l'état précédent pour le restaurer proprement
         (document.body as any).previousOverflow = currentOverflow;
       }
     } else {
       // Restaurer seulement si on a été celui qui a mis hidden
       const previousOverflow = (document.body as any).previousOverflow;
-      document.body.style.overflow = previousOverflow || '';
+      document.body.style.overflow = previousOverflow || "";
       delete (document.body as any).previousOverflow;
     }
-    
+
     return () => {
       // Nettoyer en cas de démontage
       const previousOverflow = (document.body as any).previousOverflow;
-      document.body.style.overflow = previousOverflow || '';
+      document.body.style.overflow = previousOverflow || "";
       delete (document.body as any).previousOverflow;
     };
   }, [open]);

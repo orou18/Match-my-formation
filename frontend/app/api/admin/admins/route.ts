@@ -35,7 +35,9 @@ export async function GET(request: NextRequest) {
 
     const admins = getAdminAdmins();
     const accountAdmins = getAccounts()
-      .filter((account) => account.role === "admin" || account.role === "super_admin")
+      .filter(
+        (account) => account.role === "admin" || account.role === "super_admin"
+      )
       .map((account) => ({
         id: account.id,
         name: account.name,

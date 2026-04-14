@@ -75,7 +75,10 @@ export async function PUT(request: NextRequest) {
     });
 
     if (!reviewed) {
-      return NextResponse.json({ error: "Demande introuvable" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Demande introuvable" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({

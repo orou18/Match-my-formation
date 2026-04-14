@@ -24,10 +24,13 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
     if (body.action === "mark_all_read") {
-      const response = await laravelFetch("/api/creator/notifications/read-all", {
-        request,
-        method: "POST",
-      });
+      const response = await laravelFetch(
+        "/api/creator/notifications/read-all",
+        {
+          request,
+          method: "POST",
+        }
+      );
       const data = await parseLaravelJson(response);
       return NextResponse.json(data, { status: response.status });
     }
@@ -36,10 +39,13 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "ID requis" }, { status: 400 });
     }
 
-    const response = await laravelFetch(`/api/creator/notifications/${body.id}/read`, {
-      request,
-      method: "POST",
-    });
+    const response = await laravelFetch(
+      `/api/creator/notifications/${body.id}/read`,
+      {
+        request,
+        method: "POST",
+      }
+    );
     const data = await parseLaravelJson(response);
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
@@ -57,9 +63,13 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (!id) {
-      const listResponse = await laravelFetch("/api/creator/notifications", { request });
+      const listResponse = await laravelFetch("/api/creator/notifications", {
+        request,
+      });
       const listData = await parseLaravelJson(listResponse);
-      const notifications = Array.isArray(listData) ? listData : listData?.notifications || [];
+      const notifications = Array.isArray(listData)
+        ? listData
+        : listData?.notifications || [];
       await Promise.all(
         notifications.map((notification: { id: string | number }) =>
           laravelFetch(`/api/creator/notifications/${notification.id}`, {

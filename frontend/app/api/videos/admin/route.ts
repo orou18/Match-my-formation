@@ -31,14 +31,14 @@ export async function GET() {
   try {
     // Lire les vidéos admin
     const adminVideos: AdminVideo[] = await readJsonStore("admin-videos", []);
-    
+
     // Filtrer uniquement les vidéos publiques (visibilité "public" et publiées)
-    const publicAdminVideos = adminVideos.filter(video => 
-      video.is_published && video.visibility === "public"
+    const publicAdminVideos = adminVideos.filter(
+      (video) => video.is_published && video.visibility === "public"
     );
 
     // Normaliser les données pour le frontend
-    const normalizedVideos = publicAdminVideos.map(video => ({
+    const normalizedVideos = publicAdminVideos.map((video) => ({
       id: video.id,
       title: video.title,
       description: video.description,
@@ -55,7 +55,7 @@ export async function GET() {
         id: video.creator.id,
         name: video.creator.name,
         email: video.creator.email,
-        avatar: video.creator.avatar || "/admin-avatar.png"
+        avatar: video.creator.avatar || "/admin-avatar.png",
       },
       views: video.views || 0,
       likes: video.likes || 0,
@@ -64,23 +64,25 @@ export async function GET() {
       price: 0,
       resources: video.resources || [],
       comments: video.comments || [],
-      is_admin_video: true // Marquer comme vidéo admin
+      is_admin_video: true, // Marquer comme vidéo admin
     }));
 
     return NextResponse.json({
       success: true,
       data: normalizedVideos,
       count: normalizedVideos.length,
-      message: "Vidéos admin récupérées avec succès"
+      message: "Vidéos admin récupérées avec succès",
     });
-
   } catch (error) {
     console.error("Erreur lors de la récupération des vidéos admin:", error);
-    return NextResponse.json({
-      success: false,
-      data: [],
-      count: 0,
-      message: "Erreur lors de la récupération des vidéos admin"
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        data: [],
+        count: 0,
+        message: "Erreur lors de la récupération des vidéos admin",
+      },
+      { status: 500 }
+    );
   }
 }

@@ -47,7 +47,8 @@ function normalizeAdminVideo(video: BackendVideo) {
     comments: Array.isArray(video.comments) ? video.comments : [],
     resources: [],
     created_at: video.created_at || new Date().toISOString(),
-    updated_at: video.updated_at || video.created_at || new Date().toISOString(),
+    updated_at:
+      video.updated_at || video.created_at || new Date().toISOString(),
   };
 }
 
@@ -121,8 +122,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: response.ok,
-        message:
-          data?.message || "Vidéo admin créée avec succès",
+        message: data?.message || "Vidéo admin créée avec succès",
         video: data?.video ? normalizeAdminVideo(data.video) : null,
         error: data?.error,
       },

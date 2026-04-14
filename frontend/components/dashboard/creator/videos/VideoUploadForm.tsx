@@ -183,21 +183,27 @@ export default function VideoUploadForm({
       uploadData.append("visibility", formData.visibility);
       if (formData.pathway) uploadData.append("pathway", formData.pathway);
       if (formData.video) uploadData.append("video", formData.video);
-      if (formData.thumbnail) uploadData.append("thumbnail", formData.thumbnail);
+      if (formData.thumbnail)
+        uploadData.append("thumbnail", formData.thumbnail);
 
       // Use XMLHttpRequest to track upload progress
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        xhr.open('POST', 'http://127.0.0.1:8000/api/creator/videos');
+        const token =
+          typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        xhr.open("POST", "http://127.0.0.1:8000/api/creator/videos");
         if (token) {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          xhr.setRequestHeader("Authorization", `Bearer ${token}`);
         }
 
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
             const percent = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress((prev) => ({ ...prev, video: percent, thumbnail: percent }));
+            setUploadProgress((prev) => ({
+              ...prev,
+              video: percent,
+              thumbnail: percent,
+            }));
           }
         };
 
@@ -215,7 +221,7 @@ export default function VideoUploadForm({
               }
               resolve();
             } catch (err) {
-              console.error('Parse response error', err);
+              console.error("Parse response error", err);
               reject(err);
             }
           } else {
@@ -223,12 +229,12 @@ export default function VideoUploadForm({
           }
         };
 
-        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.onerror = () => reject(new Error("Network error during upload"));
 
         xhr.send(uploadData);
       });
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       setErrors({ video: "Erreur lors de l'upload de la vidéo" });
     } finally {
       setIsSubmitting(false);

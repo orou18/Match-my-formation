@@ -149,12 +149,18 @@ export default function AddEmployeePage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
+          phone: formData.phone,
           department: formData.department,
           position: formData.position,
           domain: formData.department,
+          role: formData.role,
+          password: formData.password,
+          hire_date: formData.hire_date,
+          is_active: formData.status === "active",
         }),
       });
 

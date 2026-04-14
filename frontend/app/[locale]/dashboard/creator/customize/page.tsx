@@ -197,7 +197,8 @@ export default function CustomizeDashboard() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const data = await creatorDashboardApi.getCustomizeSettings<DashboardSettings>();
+        const data =
+          await creatorDashboardApi.getCustomizeSettings<DashboardSettings>();
         if (data.settings) {
           setSettings(data.settings);
         }

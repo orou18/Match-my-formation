@@ -92,6 +92,8 @@ export default function CreateVideoPage() {
     tags: [],
     video_url: "",
     thumbnail_url: "",
+    video_file: undefined,
+    thumbnail: undefined,
   });
 
   const [newObjective, setNewObjective] = useState("");
@@ -124,7 +126,7 @@ export default function CreateVideoPage() {
         },
         cache: "no-store",
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         const videosList = Array.isArray(data.videos) ? data.videos : [];
@@ -146,7 +148,7 @@ export default function CreateVideoPage() {
         },
         cache: "no-store",
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         const videosList = Array.isArray(data.videos) ? data.videos : [];
@@ -227,14 +229,14 @@ export default function CreateVideoPage() {
       }, 200);
 
       clearInterval(progressInterval);
-      
+
       // Utiliser fetch direct pour éviter le problème d'import
       const response = await fetch("/api/creator/videos-simple", {
         method: "POST",
         body: formDataToSend,
         cache: "no-store",
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         setUploadProgress(100);
@@ -250,15 +252,21 @@ export default function CreateVideoPage() {
         const createdVideo = result.data || result;
         if (createdVideo.visibility === "public") {
           loadStats();
-          
+
           // Recharger la section pépites du dashboard student
-          if (typeof window !== 'undefined' && (window as any).refreshStudentVideos) {
+          if (
+            typeof window !== "undefined" &&
+            (window as any).refreshStudentVideos
+          ) {
             (window as any).refreshStudentVideos();
           }
         }
 
         // Recharger la liste des vidéos dans le dashboard creator
-        if (typeof window !== 'undefined' && (window as any).refreshCreatorVideos) {
+        if (
+          typeof window !== "undefined" &&
+          (window as any).refreshCreatorVideos
+        ) {
           (window as any).refreshCreatorVideos();
         }
 
@@ -334,21 +342,21 @@ export default function CreateVideoPage() {
       publishData.append("duration", videoDuration);
 
       clearInterval(progressInterval);
-      
+
       // Utiliser fetch direct pour éviter le problème d'import
       const response = await fetch("/api/creator/videos-simple", {
         method: "POST",
         body: publishData,
         cache: "no-store",
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         console.log("Vidéo créée avec succès:", result);
       } else {
         throw new Error("Erreur lors de la création de la vidéo");
       }
-      
+
       setUploadProgress(100);
 
       success(
@@ -357,12 +365,18 @@ export default function CreateVideoPage() {
       );
 
       // Recharger la section pépites du dashboard student (vidéo publique)
-      if (typeof window !== 'undefined' && (window as any).refreshStudentVideos) {
+      if (
+        typeof window !== "undefined" &&
+        (window as any).refreshStudentVideos
+      ) {
         (window as any).refreshStudentVideos();
       }
 
       // Recharger la liste des vidéos dans le dashboard creator
-      if (typeof window !== 'undefined' && (window as any).refreshCreatorVideos) {
+      if (
+        typeof window !== "undefined" &&
+        (window as any).refreshCreatorVideos
+      ) {
         (window as any).refreshCreatorVideos();
       }
 
@@ -739,7 +753,7 @@ export default function CreateVideoPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-2 sm:p-4"
-              style={{ touchAction: 'pan-y' }}
+              style={{ touchAction: "pan-y" }}
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -799,15 +813,7 @@ export default function CreateVideoPage() {
                   )}
 
                   {/* Form Content */}
-                  <div
-                    className="flex-1 overflow-y-auto overflow-x-hidden"
-                    style={{
-                      scrollbarWidth: "thin",
-                      scrollbarColor: "#93c5fd #f3f4f6",
-                      touchAction: 'pan-y',
-                      overscrollBehavior: 'contain'
-                    }}
-                  >
+                  <div className="flex-1">
                     <style jsx>{`
                       div::-webkit-scrollbar {
                         width: 8px;
@@ -860,7 +866,7 @@ export default function CreateVideoPage() {
                                 </label>
                                 <input
                                   type="text"
-                                  value={formData.title}
+                                  value={formData.title || ""}
                                   onChange={(e) =>
                                     setFormData((prev) => ({
                                       ...prev,
@@ -878,7 +884,7 @@ export default function CreateVideoPage() {
                                   Catégorie
                                 </label>
                                 <select
-                                  value={formData.category}
+                                  value={formData.category || ""}
                                   onChange={(e) =>
                                     setFormData((prev) => ({
                                       ...prev,
@@ -914,7 +920,7 @@ export default function CreateVideoPage() {
                                 Description *
                               </label>
                               <textarea
-                                value={formData.description}
+                                value={formData.description || ""}
                                 onChange={(e) =>
                                   setFormData((prev) => ({
                                     ...prev,
@@ -1427,7 +1433,7 @@ export default function CreateVideoPage() {
                                   Visibilité
                                 </label>
                                 <select
-                                  value={formData.visibility}
+                                  value={formData.visibility || ""}
                                   onChange={(e) =>
                                     setFormData((prev) => ({
                                       ...prev,

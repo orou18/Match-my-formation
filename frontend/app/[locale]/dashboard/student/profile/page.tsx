@@ -64,41 +64,49 @@ export default function ProfilePage() {
   const { data: session } = useSession();
   const sessionUser = session?.user as SessionUser | undefined;
 
-  const defaultUser = useMemo<UserProfile>(
-    () => {
-      const storedUserData = UserIdManager.getStoredUserData();
+  const defaultUser = useMemo<UserProfile>(() => {
+    const storedUserData = UserIdManager.getStoredUserData();
 
-      return {
-        id: String(
-          sessionUser?.id || storedUserData?.id || UserIdManager.getCurrentUserId() || 3
-        ),
-        name: sessionUser?.name || storedUserData?.name || "Étudiant",
-        email:
-          sessionUser?.email || storedUserData?.email || "etudiant@example.com",
-        phone: "+229 00 00 00 00",
-        bio: "Passionné par l'apprentissage et le développement personnel",
-        location: "Cotonou, Bénin",
-        website: "https://monportfolio.com",
-        avatar: sessionUser?.image || "/temoignage.png",
-        role: "student",
-        subscription: "FREE",
-        level: 5,
-        joinDate: "15 janvier 2024",
-        coursesCompleted: 12,
-        certificates: 8,
-        averageRating: 4.7,
-        completionRate: 85,
-        learningTime: 156,
-      };
-    },
-    [sessionUser?.email, sessionUser?.id, sessionUser?.image, sessionUser?.name]
-  );
+    return {
+      id: String(
+        sessionUser?.id ||
+          storedUserData?.id ||
+          UserIdManager.getCurrentUserId() ||
+          3
+      ),
+      name: sessionUser?.name || storedUserData?.name || "Étudiant",
+      email:
+        sessionUser?.email || storedUserData?.email || "etudiant@example.com",
+      phone: "+229 00 00 00 00",
+      bio: "Passionné par l'apprentissage et le développement personnel",
+      location: "Cotonou, Bénin",
+      website: "https://monportfolio.com",
+      avatar: sessionUser?.image || "/temoignage.png",
+      role: "student",
+      subscription: "FREE",
+      level: 5,
+      joinDate: "15 janvier 2024",
+      coursesCompleted: 12,
+      certificates: 8,
+      averageRating: 4.7,
+      completionRate: 85,
+      learningTime: 156,
+    };
+  }, [
+    sessionUser?.email,
+    sessionUser?.id,
+    sessionUser?.image,
+    sessionUser?.name,
+  ]);
 
   // Charger les données utilisateur
   useEffect(() => {
     const loadUserData = async () => {
       try {
+        // D'ABORD définir l'utilisateur par défaut pour l'affichage immédiat
         setUser(defaultUser);
+
+        // ENSUITE essayer de charger les données depuis l'API
         try {
           const profile = await studentProfileApi.getProfile();
           setUser({
@@ -119,23 +127,14 @@ export default function ProfilePage() {
             ),
             completionRate: Number(
               profile.completionRate || defaultUser.completionRate
-            ), 
+            ),
             learningTime: Number(
               profile.learningTime || defaultUser.learningTime
             ),
           });
-        } catch {
-          const storedUserData = UserIdManager.getStoredUserData();
-
-          if (storedUserData && storedUserData.role === "student") {
-            setUser((prev) => ({
-              ...(prev || defaultUser),
-              id: storedUserData.id.toString(),
-              name: storedUserData.name,
-              email: storedUserData.email,
-              avatar: storedUserData.avatar || "/temoignage.png",
-            }));
-          }
+        } catch (apiError) {
+          console.log("API non disponible, utilisation des données par défaut");
+          // Garder l'utilisateur par défaut déjà défini
         }
       } catch (error) {
         console.error("Erreur lors du chargement du profil:", error);
@@ -257,11 +256,11 @@ export default function ProfilePage() {
   const currentUser = user || defaultUser;
 
   return (
-    <div className="w-full min-w-0 max-w-none space-y-6">
+    <div className="w-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="block w-full min-w-0 max-w-none space-y-6"
+        className="w-full"
       >
         {/* Header avec bouton d'édition */}
         <div className="bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -314,9 +313,9 @@ export default function ProfilePage() {
           </motion.div>
         )}
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Colonne principale - Informations du profil */}
-          <div className="space-y-6 min-w-0">
+          <div className="lg:col-span-3 space-y-6">
             {/* Informations personnelles */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h2 className="text-lg font-bold text-[#002B24] mb-6 flex items-center gap-3">
@@ -472,7 +471,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Colonne latérale - Avatar et progression */}
-          <div className="space-y-6 min-w-0">
+          <div className="lg:col-span-1 space-y-6">
             {/* Avatar */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h2 className="text-lg font-bold text-[#002B24] mb-6">

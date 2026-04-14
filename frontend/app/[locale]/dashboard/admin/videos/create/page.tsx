@@ -61,13 +61,37 @@ interface VideoFormData {
 }
 
 const categories = [
-  { value: "marketing", label: "📈 Marketing Digital", color: "from-blue-500 to-blue-600" },
-  { value: "development", label: "💻 Développement Web", color: "from-purple-500 to-purple-600" },
-  { value: "design", label: "🎨 Design Graphique", color: "from-pink-500 to-pink-600" },
-  { value: "business", label: "💼 Business", color: "from-green-500 to-green-600" },
-  { value: "languages", label: "🗣️ Langues", color: "from-yellow-500 to-yellow-600" },
+  {
+    value: "marketing",
+    label: "📈 Marketing Digital",
+    color: "from-blue-500 to-blue-600",
+  },
+  {
+    value: "development",
+    label: "💻 Développement Web",
+    color: "from-purple-500 to-purple-600",
+  },
+  {
+    value: "design",
+    label: "🎨 Design Graphique",
+    color: "from-pink-500 to-pink-600",
+  },
+  {
+    value: "business",
+    label: "💼 Business",
+    color: "from-green-500 to-green-600",
+  },
+  {
+    value: "languages",
+    label: "🗣️ Langues",
+    color: "from-yellow-500 to-yellow-600",
+  },
   { value: "music", label: "🎵 Musique", color: "from-red-500 to-red-600" },
-  { value: "photography", label: "📷 Photographie", color: "from-indigo-500 to-indigo-600" },
+  {
+    value: "photography",
+    label: "📷 Photographie",
+    color: "from-indigo-500 to-indigo-600",
+  },
   { value: "fitness", label: "💪 Fitness", color: "from-teal-500 to-teal-600" },
 ];
 
@@ -107,50 +131,60 @@ export default function AdminVideoCreate() {
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [videoDuration, setVideoDuration] = useState<string>("00:00");
   const [generatedThumbnails, setGeneratedThumbnails] = useState<string[]>([]);
-  const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(null);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(
+    null
+  );
   const [isGeneratingThumbnails, setIsGeneratingThumbnails] = useState(false);
 
   const handleInputChange = (
     field: keyof VideoFormData,
     value: VideoFormData[keyof VideoFormData]
   ) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, tagInput.trim()]
+        tags: [...prev.tags, tagInput.trim()],
       }));
       setTagInput("");
     }
   };
 
   const removeTag = (tagToRemove: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }));
   };
 
   const addObjective = () => {
-    if (objectiveInput.trim() && !formData.learning_objectives.includes(objectiveInput.trim())) {
-      setFormData(prev => ({
+    if (
+      objectiveInput.trim() &&
+      !formData.learning_objectives.includes(objectiveInput.trim())
+    ) {
+      setFormData((prev) => ({
         ...prev,
-        learning_objectives: [...prev.learning_objectives, objectiveInput.trim()]
+        learning_objectives: [
+          ...prev.learning_objectives,
+          objectiveInput.trim(),
+        ],
       }));
       setObjectiveInput("");
     }
   };
 
   const removeObjective = (objectiveToRemove: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      learning_objectives: prev.learning_objectives.filter(obj => obj !== objectiveToRemove)
+      learning_objectives: prev.learning_objectives.filter(
+        (obj) => obj !== objectiveToRemove
+      ),
     }));
   };
 
@@ -158,23 +192,28 @@ export default function AdminVideoCreate() {
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFormData(prev => ({ ...prev, video: file }));
-      
+      setFormData((prev) => ({ ...prev, video: file }));
+
       // Créer l'URL de prévisualisation
       const url = URL.createObjectURL(file);
       setVideoPreview(url);
-      
+
       // Extraire la durée de la vidéo
-      const video = document.createElement('video');
+      const video = document.createElement("video");
       video.src = url;
-      video.addEventListener('loadedmetadata', () => {
+      video.addEventListener("loadedmetadata", () => {
         const duration = Math.floor(video.duration);
         const minutes = Math.floor(duration / 60);
         const seconds = duration % 60;
-        setVideoDuration(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-        handleInputChange('duration', `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        setVideoDuration(
+          `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+        );
+        handleInputChange(
+          "duration",
+          `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+        );
       });
-      
+
       // Générer des miniatures automatiquement
       generateThumbnails(url);
     }
@@ -183,35 +222,39 @@ export default function AdminVideoCreate() {
   // Génération de miniatures depuis la vidéo
   const generateThumbnails = (videoUrl: string) => {
     setIsGeneratingThumbnails(true);
-    const video = document.createElement('video');
+    const video = document.createElement("video");
     video.src = videoUrl;
-    video.addEventListener('loadedmetadata', () => {
+    video.addEventListener("loadedmetadata", () => {
       const thumbnailCount = 6;
       const thumbnails: string[] = [];
       const duration = video.duration;
-      
+
       for (let i = 0; i < thumbnailCount; i++) {
         const time = (duration / thumbnailCount) * i;
         video.currentTime = time;
-        
-        video.addEventListener('seeked', () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = 320;
-          canvas.height = 180;
-          
-          if (ctx) {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.8);
-            thumbnails.push(thumbnailUrl);
-            
-            if (thumbnails.length === thumbnailCount) {
-              setGeneratedThumbnails(thumbnails);
-              setSelectedThumbnail(thumbnails[0]);
-              setIsGeneratingThumbnails(false);
+
+        video.addEventListener(
+          "seeked",
+          () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = 320;
+            canvas.height = 180;
+
+            if (ctx) {
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const thumbnailUrl = canvas.toDataURL("image/jpeg", 0.8);
+              thumbnails.push(thumbnailUrl);
+
+              if (thumbnails.length === thumbnailCount) {
+                setGeneratedThumbnails(thumbnails);
+                setSelectedThumbnail(thumbnails[0]);
+                setIsGeneratingThumbnails(false);
+              }
             }
-          }
-        }, { once: true });
+          },
+          { once: true }
+        );
       }
     });
   };
@@ -229,9 +272,9 @@ export default function AdminVideoCreate() {
       description: "",
       url: "",
     };
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      resources: [...prev.resources, newResource]
+      resources: [...prev.resources, newResource],
     }));
   };
 
@@ -240,23 +283,23 @@ export default function AdminVideoCreate() {
     field: keyof Resource,
     value: Resource[keyof Resource]
   ) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      resources: prev.resources.map(resource =>
+      resources: prev.resources.map((resource) =>
         resource.id === id ? { ...resource, [field]: value } : resource
-      )
+      ),
     }));
   };
 
   const removeResource = (id: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      resources: prev.resources.filter(resource => resource.id !== id)
+      resources: prev.resources.filter((resource) => resource.id !== id),
     }));
   };
 
   const handleFileUpload = (field: "video" | "thumbnail", file: File) => {
-    setFormData(prev => ({ ...prev, [field]: file }));
+    setFormData((prev) => ({ ...prev, [field]: file }));
   };
 
   const validateForm = () => {
@@ -303,23 +346,29 @@ export default function AdminVideoCreate() {
       }
 
       const submitData = new FormData();
-      
+
       // Informations de base
       submitData.append("title", formData.title);
       submitData.append("description", formData.description);
       submitData.append("category", formData.category);
       submitData.append("tags", JSON.stringify(formData.tags));
-      submitData.append("learning_objectives", JSON.stringify(formData.learning_objectives));
+      submitData.append(
+        "learning_objectives",
+        JSON.stringify(formData.learning_objectives)
+      );
       submitData.append("visibility", formData.visibility);
       submitData.append("duration", formData.duration);
       submitData.append("allow_comments", formData.allow_comments.toString());
-      submitData.append("publish_immediately", formData.publish_immediately.toString());
-      
+      submitData.append(
+        "publish_immediately",
+        formData.publish_immediately.toString()
+      );
+
       // Fichiers
       if (formData.video) {
         submitData.append("video", formData.video);
       }
-      
+
       if (formData.thumbnail) {
         submitData.append("thumbnail", formData.thumbnail);
       }
@@ -345,7 +394,7 @@ export default function AdminVideoCreate() {
       if (response.ok) {
         const result = await response.json();
         console.log("Vidéo admin créée avec succès:", result);
-        
+
         // Rediriger vers le dashboard admin
         router.push(`/${locale}/dashboard/admin`);
       } else {
@@ -402,7 +451,7 @@ export default function AdminVideoCreate() {
               <FileText className="w-5 h-5 text-primary" />
               Informations de base
             </h2>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -426,11 +475,13 @@ export default function AdminVideoCreate() {
                 </label>
                 <select
                   value={formData.category}
-                  onChange={(e) => handleInputChange("category", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("category", e.target.value)
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="">Sélectionnez une catégorie</option>
-                  {categories.map(cat => (
+                  {categories.map((cat) => (
                     <option key={cat.value} value={cat.value}>
                       {cat.label}
                     </option>
@@ -448,13 +499,17 @@ export default function AdminVideoCreate() {
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("description", e.target.value)
+                }
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Décrivez le contenu de votre vidéo..."
               />
               {errors.description && (
-                <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.description}
+                </p>
               )}
             </div>
 
@@ -468,7 +523,9 @@ export default function AdminVideoCreate() {
                   type="text"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" && (e.preventDefault(), addTag())
+                  }
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="Ajoutez un tag et appuyez sur Entrée..."
                 />
@@ -481,7 +538,7 @@ export default function AdminVideoCreate() {
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {formData.tags.map(tag => (
+                {formData.tags.map((tag) => (
                   <span
                     key={tag}
                     className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
@@ -507,13 +564,15 @@ export default function AdminVideoCreate() {
               <Target className="w-5 h-5 text-green-500" />
               Objectifs d&apos;apprentissage
             </h2>
-            
+
             <div className="flex gap-2 mb-3">
               <input
                 type="text"
                 value={objectiveInput}
                 onChange={(e) => setObjectiveInput(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addObjective())}
+                onKeyPress={(e) =>
+                  e.key === "Enter" && (e.preventDefault(), addObjective())
+                }
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Ajoutez un objectif d'apprentissage..."
               />
@@ -551,7 +610,7 @@ export default function AdminVideoCreate() {
               <Upload className="w-5 h-5 text-blue-500" />
               Fichiers média
             </h2>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -568,7 +627,9 @@ export default function AdminVideoCreate() {
                   <label htmlFor="video-upload" className="cursor-pointer">
                     <Video className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                     <p className="text-gray-600">
-                      {formData.video ? formData.video.name : "Cliquez pour uploader une vidéo"}
+                      {formData.video
+                        ? formData.video.name
+                        : "Cliquez pour uploader une vidéo"}
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
                       MP4, WebM, MOV (max 500MB)
@@ -588,14 +649,19 @@ export default function AdminVideoCreate() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => e.target.files?.[0] && handleFileUpload("thumbnail", e.target.files[0])}
+                    onChange={(e) =>
+                      e.target.files?.[0] &&
+                      handleFileUpload("thumbnail", e.target.files[0])
+                    }
                     className="hidden"
                     id="thumbnail-upload"
                   />
                   <label htmlFor="thumbnail-upload" className="cursor-pointer">
                     <Image className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                     <p className="text-gray-600">
-                      {formData.thumbnail ? formData.thumbnail.name : "Cliquez pour uploader une miniature"}
+                      {formData.thumbnail
+                        ? formData.thumbnail.name
+                        : "Cliquez pour uploader une miniature"}
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
                       JPG, PNG, GIF (max 10MB)
@@ -603,7 +669,9 @@ export default function AdminVideoCreate() {
                   </label>
                 </div>
                 {errors.thumbnail && (
-                  <p className="text-red-500 text-sm mt-1">{errors.thumbnail}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.thumbnail}
+                  </p>
                 )}
               </div>
             </div>
@@ -615,7 +683,7 @@ export default function AdminVideoCreate() {
                   <Eye className="w-5 h-5 text-blue-500" />
                   Prévisualisation et miniatures
                 </h2>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Prévisualisation vidéo */}
                   {videoPreview && (
@@ -655,8 +723,8 @@ export default function AdminVideoCreate() {
                             onClick={() => selectThumbnail(thumbnail)}
                             className={`relative rounded-lg overflow-hidden border-2 transition-all ${
                               selectedThumbnail === thumbnail
-                                ? 'border-blue-500 ring-2 ring-blue-200'
-                                : 'border-gray-300 hover:border-gray-400'
+                                ? "border-blue-500 ring-2 ring-blue-200"
+                                : "border-gray-300 hover:border-gray-400"
                             }`}
                           >
                             <img
@@ -706,12 +774,14 @@ export default function AdminVideoCreate() {
               <Globe className="w-5 h-5 text-purple-500" />
               Paramètres de publication
             </h2>
-            
+
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
                 <Globe className="w-5 h-5 text-blue-500" />
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">Visibilité : Publique</p>
+                  <p className="font-medium text-gray-900">
+                    Visibilité : Publique
+                  </p>
                   <p className="text-sm text-gray-600">
                     Cette vidéo sera visible par tous les utilisateurs
                   </p>
@@ -723,10 +793,15 @@ export default function AdminVideoCreate() {
                   type="checkbox"
                   id="allow-comments"
                   checked={formData.allow_comments}
-                  onChange={(e) => handleInputChange("allow_comments", e.target.checked)}
+                  onChange={(e) =>
+                    handleInputChange("allow_comments", e.target.checked)
+                  }
                   className="w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded"
                 />
-                <label htmlFor="allow-comments" className="text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="allow-comments"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Autoriser les commentaires
                 </label>
               </div>
@@ -736,10 +811,15 @@ export default function AdminVideoCreate() {
                   type="checkbox"
                   id="publish-immediately"
                   checked={formData.publish_immediately}
-                  onChange={(e) => handleInputChange("publish_immediately", e.target.checked)}
+                  onChange={(e) =>
+                    handleInputChange("publish_immediately", e.target.checked)
+                  }
                   className="w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded"
                 />
-                <label htmlFor="publish-immediately" className="text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="publish-immediately"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Publier immédiatement
                 </label>
               </div>
@@ -762,10 +842,13 @@ export default function AdminVideoCreate() {
                 Ajouter une ressource
               </button>
             </div>
-            
+
             <div className="space-y-4">
               {formData.resources.map((resource) => (
-                <div key={resource.id} className="border border-gray-200 rounded-lg p-4">
+                <div
+                  key={resource.id}
+                  className="border border-gray-200 rounded-lg p-4"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -773,17 +856,19 @@ export default function AdminVideoCreate() {
                       </label>
                       <select
                         value={resource.type}
-                        onChange={(e) => updateResource(resource.id, "type", e.target.value)}
+                        onChange={(e) =>
+                          updateResource(resource.id, "type", e.target.value)
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                       >
-                        {resourceTypes.map(type => (
+                        {resourceTypes.map((type) => (
                           <option key={type.value} value={type.value}>
                             {type.label}
                           </option>
                         ))}
                       </select>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Titre
@@ -791,12 +876,14 @@ export default function AdminVideoCreate() {
                       <input
                         type="text"
                         value={resource.title}
-                        onChange={(e) => updateResource(resource.id, "title", e.target.value)}
+                        onChange={(e) =>
+                          updateResource(resource.id, "title", e.target.value)
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                         placeholder="Titre de la ressource"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         URL/Contenu
@@ -804,12 +891,14 @@ export default function AdminVideoCreate() {
                       <input
                         type="text"
                         value={resource.url || ""}
-                        onChange={(e) => updateResource(resource.id, "url", e.target.value)}
+                        onChange={(e) =>
+                          updateResource(resource.id, "url", e.target.value)
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                         placeholder="URL ou description"
                       />
                     </div>
-                    
+
                     <div className="flex items-end">
                       <button
                         type="button"
@@ -832,7 +921,7 @@ export default function AdminVideoCreate() {
                 <AlertCircle className="w-4 h-4" />
                 <span>Les champs marqués d&apos;un * sont obligatoires</span>
               </div>
-              
+
               <div className="flex gap-3">
                 <button
                   type="button"
@@ -841,7 +930,7 @@ export default function AdminVideoCreate() {
                 >
                   Annuler
                 </button>
-                
+
                 <button
                   type="submit"
                   disabled={isSubmitting}

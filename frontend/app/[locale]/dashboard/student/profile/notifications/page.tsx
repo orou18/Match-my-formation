@@ -142,9 +142,7 @@ export default function NotificationsPage() {
     }
   };
 
-  const updateSettings = async (
-    newSettings: StudentNotificationSettings
-  ) => {
+  const updateSettings = async (newSettings: StudentNotificationSettings) => {
     try {
       await studentProfileApi.updateNotificationSettings(newSettings);
       setSettings(newSettings);

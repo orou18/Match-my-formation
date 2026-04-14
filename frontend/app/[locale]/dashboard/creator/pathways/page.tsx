@@ -103,13 +103,13 @@ export default function PathwaysPage() {
 
   // Charger les parcours locaux depuis localStorage au démarrage
   useEffect(() => {
-    const savedLocalPathways = localStorage.getItem('localPathways');
+    const savedLocalPathways = localStorage.getItem("localPathways");
     if (savedLocalPathways) {
       try {
         const parsed = JSON.parse(savedLocalPathways);
         setLocalPathways(parsed);
       } catch (e) {
-        console.error('Erreur lors du chargement des parcours locaux:', e);
+        console.error("Erreur lors du chargement des parcours locaux:", e);
       }
     }
   }, []);
@@ -171,7 +171,7 @@ export default function PathwaysPage() {
         credentials: "include", // Inclure les cookies NextAuth
       });
       const data = await response.json();
-      
+
       // Gérer la structure de données de l'API qui retourne { videos: [...], total: X }
       let videosList = [];
       if (Array.isArray(data?.videos)) {
@@ -181,7 +181,7 @@ export default function PathwaysPage() {
       } else if (Array.isArray(data?.data)) {
         videosList = data.data;
       }
-      
+
       // Transformer les données pour correspondre au format CreatorVideoOption
       const transformedVideos = videosList.map((video: any) => ({
         id: video.id,
@@ -198,8 +198,9 @@ export default function PathwaysPage() {
         students_count: video.students_count || 0,
         created_at: video.created_at,
       }));
-      
+
       setVideos(transformedVideos);
+      console.log("Vidéos chargées pour parcours:", transformedVideos);
     } catch (error: any) {
       console.error("Erreur loadVideos:", error);
       // En cas d'erreur, utiliser le fallback
@@ -211,7 +212,7 @@ export default function PathwaysPage() {
           thumbnail: "/placeholder-video.jpg",
           duration: "15:30",
           visibility: "public",
-        }
+        },
       ];
       setVideos(fallbackVideos);
       error("Erreur", "Utilisation des vidéos de démonstration");
@@ -229,7 +230,7 @@ export default function PathwaysPage() {
 
   const createPathway = async (e: React.FormEvent) => {
     e.preventDefault(); // Empêcher le rechargement de la page
-    
+
     try {
       const response = await fetch("/api/creator/pathways", {
         method: "POST",
@@ -260,15 +261,17 @@ export default function PathwaysPage() {
 
         // Mode démo : ajouter aux parcours locaux
         console.log("Ajout du parcours aux locaux:", newPathway);
-        setLocalPathways(prev => {
+        setLocalPathways((prev) => {
           const updated = [...prev, newPathway];
           console.log("Parcours locaux mis à jour:", updated);
           // Sauvegarder dans localStorage pour la persistance
-          localStorage.setItem('localPathways', JSON.stringify(updated));
+          localStorage.setItem("localPathways", JSON.stringify(updated));
           return updated;
         });
 
-        success("Parcours créé avec succès! Il est maintenant visible dans la liste.");
+        success(
+          "Parcours créé avec succès! Il est maintenant visible dans la liste."
+        );
         setShowCreateModal(false);
         setFormData({
           title: "",
@@ -336,7 +339,7 @@ export default function PathwaysPage() {
         credentials: "include", // Inclure les cookies NextAuth
       });
       const data = await response.json();
-      
+
       if (data.success) {
         success("Parcours supprimé", `Le parcours a été supprimé avec succès`);
         loadPathways();
@@ -383,7 +386,7 @@ export default function PathwaysPage() {
   console.log("Tous les parcours combinés:", allPathways);
   console.log("Parcours backend:", pathways);
   console.log("Parcours locaux:", localPathways);
-  
+
   const filteredPathways = allPathways.filter((pathway) => {
     const matchesSearch =
       pathway.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -397,7 +400,7 @@ export default function PathwaysPage() {
 
     return matchesSearch && matchesDomain && matchesDifficulty;
   });
-  
+
   console.log("Parcours filtrés:", filteredPathways);
 
   if (loading) {
@@ -902,7 +905,8 @@ export default function PathwaysPage() {
                         Videos du parcours *
                       </label>
                       <p className="text-sm text-gray-500 mt-1">
-                        Choisissez l&apos;ordre pedagogique des videos qui composent ce parcours.
+                        Choisissez l&apos;ordre pedagogique des videos qui
+                        composent ce parcours.
                       </p>
                     </div>
                     <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700">
@@ -931,7 +935,8 @@ export default function PathwaysPage() {
                                     alt={video.title}
                                     className="h-10 w-14 rounded object-cover"
                                     onError={(e) => {
-                                      e.currentTarget.src = "/placeholder-video.jpg";
+                                      e.currentTarget.src =
+                                        "/placeholder-video.jpg";
                                     }}
                                   />
                                 ) : (
@@ -960,7 +965,9 @@ export default function PathwaysPage() {
                       </div>
                     ) : (
                       videos.map((video) => {
-                        const isSelected = formData.video_ids.includes(video.id);
+                        const isSelected = formData.video_ids.includes(
+                          video.id
+                        );
 
                         return (
                           <button
@@ -981,7 +988,8 @@ export default function PathwaysPage() {
                                   alt={video.title}
                                   className="h-16 w-24 rounded-lg object-cover"
                                   onError={(e) => {
-                                    e.currentTarget.src = "/placeholder-video.jpg";
+                                    e.currentTarget.src =
+                                      "/placeholder-video.jpg";
                                   }}
                                 />
                               ) : (
@@ -990,7 +998,7 @@ export default function PathwaysPage() {
                                 </div>
                               )}
                             </div>
-                            
+
                             <div className="mt-1">
                               <div
                                 className={`flex h-5 w-5 items-center justify-center rounded border ${
