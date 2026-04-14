@@ -1,20 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/auth-options";
+import { getUserIdFromToken } from "@/lib/auth";
+import { getUserNotifications } from "@/lib/server/account-store";
+
+type SessionUser = {
+  id?: string | number;
+};
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const userId = getUserIdFromToken(request);
+    const session = userId ? null : await getServerSession(authOptions);
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
-    if (!session?.user) {
+    if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    // Mock unread count - Remplacer par appel à votre base de données
-    // Simuler un nombre de notifications non lues
-    const unreadCount = 3;
+    const notifications = getUserNotifications(String(finalUserId), "student");
+    const count = notifications.filter(
+      (notification) => !notification.isRead
+    ).length;
 
-    return NextResponse.json({ count: unreadCount });
+    return NextResponse.json({ count });
   } catch (error) {
     console.error(
       "Erreur lors de la récupération du nombre de notifications non lues:",

@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import { usePathname, useRouter, useParams } from "next/navigation";
 import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 import UserIdManager from "@/lib/user-id-manager";
 import AdminSidebar from "@/components/dashboard/admin/AdminSidebar";
 
@@ -14,21 +15,48 @@ export default function AdminLayout({
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
+  const { status } = useSession();
 
-  // Vérifier l'authentification au chargement
   useEffect(() => {
-    if (!UserIdManager.isAuthenticated()) {
-      router.push(`/${locale}/login`);
-      return;
-    }
+    const checkAuth = async () => {
+      if (status === "loading") {
+        return;
+      }
 
-    // Vérifier que l'utilisateur a le rôle admin
-    const userData = UserIdManager.getStoredUserData();
-    if (userData && userData.role !== "admin") {
-      router.push(`/${locale}/dashboard/${userData.role}`);
-      return;
-    }
-  }, [router, locale]);
+      try {
+        const response = await fetch("/api/me", {
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const profile = await response.json();
+
+          if (profile?.role !== "admin") {
+            router.push(`/${locale}/dashboard/${profile?.role || "student"}`);
+          }
+
+          return;
+        }
+      } catch (error) {
+        console.error("Erreur de validation admin:", error);
+      }
+
+      const userData = UserIdManager.getStoredUserData();
+      if (!userData) {
+        router.push(`/${locale}/login`);
+        return;
+      }
+
+      if (userData.role !== "admin") {
+        router.push(`/${locale}/dashboard/${userData.role}`);
+      }
+    };
+
+    checkAuth();
+  }, [router, locale, status]);
 
   return (
     <div className="flex min-h-screen bg-gray-50 overflow-x-hidden">

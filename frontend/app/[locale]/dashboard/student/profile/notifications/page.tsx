@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import {
   BellRing,
@@ -8,53 +7,27 @@ import {
   MessageSquare,
   Megaphone,
   Check,
-  X,
   Trash2,
   Eye,
   EyeOff,
   Settings,
-  Filter,
   Search,
-  CheckCircle,
   AlertCircle,
-  Info,
-  Star,
   Award,
   BookOpen,
   Calendar,
-  ChevronDown,
-  MoreHorizontal,
 } from "lucide-react";
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: "info" | "success" | "warning" | "error";
-  category: "course" | "system" | "message" | "achievement" | "marketing";
-  isRead: boolean;
-  createdAt: string;
-  actionUrl?: string;
-  metadata?: {
-    courseName?: string;
-    instructor?: string;
-    amount?: string;
-  };
-}
-
-interface NotificationSettings {
-  courseAlerts: boolean;
-  marketingEmails: boolean;
-  directMessages: boolean;
-  systemAnnouncements: boolean;
-  achievementAlerts: boolean;
-  weeklyDigest: boolean;
-}
+import {
+  studentProfileApi,
+  type StudentNotification,
+  type StudentNotificationSettings,
+} from "@/lib/services/student-profile-api";
 
 export default function NotificationsPage() {
-  const { data: session } = useSession();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [settings, setSettings] = useState<NotificationSettings | null>(null);
+  const [notifications, setNotifications] = useState<StudentNotification[]>([]);
+  const [settings, setSettings] = useState<StudentNotificationSettings | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -65,84 +38,14 @@ export default function NotificationsPage() {
   useEffect(() => {
     loadNotifications();
     loadSettings();
-  }, [session]);
+  }, []);
 
   const loadNotifications = async () => {
     try {
       setLoading(true);
 
-      if (session?.user) {
-        const response = await fetch("/api/user/notifications", {
-          headers: {
-            Authorization: `Bearer ${(session.user as any)?.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setNotifications(data);
-        } else {
-          // Données mockées
-          setNotifications([
-            {
-              id: "1",
-              title: "Nouveau cours disponible",
-              message:
-                "React Avancé est maintenant disponible dans votre parcours",
-              type: "info",
-              category: "course",
-              isRead: false,
-              createdAt: "2024-06-18T10:30:00Z",
-              actionUrl: "/courses/react-advanced",
-              metadata: {
-                courseName: "React Avancé",
-                instructor: "Jean Dupont",
-              },
-            },
-            {
-              id: "2",
-              title: "Félicitations !",
-              message: "Vous avez terminé le cours TypeScript avec succès",
-              type: "success",
-              category: "achievement",
-              isRead: false,
-              createdAt: "2024-06-17T15:45:00Z",
-              metadata: { courseName: "TypeScript" },
-            },
-            {
-              id: "3",
-              title: "Message de votre instructeur",
-              message:
-                "Bonjour ! J'ai regardé votre dernier exercice, excellent travail.",
-              type: "info",
-              category: "message",
-              isRead: true,
-              createdAt: "2024-06-16T09:20:00Z",
-              metadata: { instructor: "Marie Curie" },
-            },
-            {
-              id: "4",
-              title: "Maintenance système",
-              message: "La plateforme sera en maintenance demain de 2h à 4h",
-              type: "warning",
-              category: "system",
-              isRead: true,
-              createdAt: "2024-06-15T14:00:00Z",
-            },
-            {
-              id: "5",
-              title: "Offre spéciale",
-              message: "-30% sur tous les cours premium cette semaine",
-              type: "info",
-              category: "marketing",
-              isRead: false,
-              createdAt: "2024-06-14T11:30:00Z",
-              metadata: { amount: "-30%" },
-            },
-          ]);
-        }
-      }
+      const data = await studentProfileApi.getNotifications();
+      setNotifications(data);
     } catch (error) {
       console.error("Error loading notifications:", error);
     } finally {
@@ -152,29 +55,8 @@ export default function NotificationsPage() {
 
   const loadSettings = async () => {
     try {
-      if (session?.user) {
-        const response = await fetch("/api/user/notification-settings", {
-          headers: {
-            Authorization: `Bearer ${(session.user as any)?.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setSettings(data);
-        } else {
-          // Paramètres par défaut
-          setSettings({
-            courseAlerts: true,
-            marketingEmails: false,
-            directMessages: true,
-            systemAnnouncements: true,
-            achievementAlerts: true,
-            weeklyDigest: true,
-          });
-        }
-      }
+      const data = await studentProfileApi.getNotificationSettings();
+      setSettings(data);
     } catch (error) {
       console.error("Error loading settings:", error);
     }
@@ -182,25 +64,21 @@ export default function NotificationsPage() {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch(
-        `/api/user/notifications/${notificationId}/read`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const next = await studentProfileApi.updateNotification({
+        id: notificationId,
+        isRead: true,
+      });
 
-      if (response.ok) {
+      if (Array.isArray(next)) {
+        setNotifications(next);
+      } else {
         setNotifications((prev) =>
           prev.map((n) =>
             n.id === notificationId ? { ...n, isRead: true } : n
           )
         );
-        showMessage("Notification marquée comme lue");
       }
+      showMessage("Notification marquée comme lue");
     } catch (error) {
       console.error("Error marking as read:", error);
     }
@@ -208,25 +86,21 @@ export default function NotificationsPage() {
 
   const markAsUnread = async (notificationId: string) => {
     try {
-      const response = await fetch(
-        `/api/user/notifications/${notificationId}/unread`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const next = await studentProfileApi.updateNotification({
+        id: notificationId,
+        isRead: false,
+      });
 
-      if (response.ok) {
+      if (Array.isArray(next)) {
+        setNotifications(next);
+      } else {
         setNotifications((prev) =>
           prev.map((n) =>
             n.id === notificationId ? { ...n, isRead: false } : n
           )
         );
-        showMessage("Notification marquée comme non lue");
       }
+      showMessage("Notification marquée comme non lue");
     } catch (error) {
       console.error("Error marking as unread:", error);
     }
@@ -234,21 +108,9 @@ export default function NotificationsPage() {
 
   const deleteNotification = async (notificationId: string) => {
     try {
-      const response = await fetch(
-        `/api/user/notifications/${notificationId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.ok) {
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-        showMessage("Notification supprimée");
-      }
+      const next = await studentProfileApi.deleteNotification(notificationId);
+      setNotifications(next);
+      showMessage("Notification supprimée");
     } catch (error) {
       console.error("Error deleting notification:", error);
     }
@@ -256,18 +118,15 @@ export default function NotificationsPage() {
 
   const markAllAsRead = async () => {
     try {
-      const response = await fetch("/api/user/notifications/mark-all-read", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const next = await studentProfileApi.updateNotification({
+        action: "mark_all_read",
       });
-
-      if (response.ok) {
+      if (Array.isArray(next)) {
+        setNotifications(next);
+      } else {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-        showMessage("Toutes les notifications marquées comme lues");
       }
+      showMessage("Toutes les notifications marquées comme lues");
     } catch (error) {
       console.error("Error marking all as read:", error);
     }
@@ -275,38 +134,19 @@ export default function NotificationsPage() {
 
   const clearAllNotifications = async () => {
     try {
-      const response = await fetch("/api/user/notifications/clear-all", {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        setNotifications([]);
-        showMessage("Toutes les notifications supprimées");
-      }
+      const next = await studentProfileApi.deleteNotification();
+      setNotifications(next);
+      showMessage("Toutes les notifications supprimées");
     } catch (error) {
       console.error("Error clearing notifications:", error);
     }
   };
 
-  const updateSettings = async (newSettings: NotificationSettings) => {
+  const updateSettings = async (newSettings: StudentNotificationSettings) => {
     try {
-      const response = await fetch("/api/user/notification-settings", {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newSettings),
-      });
-
-      if (response.ok) {
-        setSettings(newSettings);
-        showMessage("Paramètres mis à jour");
-      }
+      await studentProfileApi.updateNotificationSettings(newSettings);
+      setSettings(newSettings);
+      showMessage("Paramètres mis à jour");
     } catch (error) {
       console.error("Error updating settings:", error);
     }
@@ -381,8 +221,8 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="w-full min-w-0 space-y-8">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-black text-[#002B24]">Notifications</h1>
           {unreadCount > 0 && (
@@ -392,7 +232,7 @@ export default function NotificationsPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => setShowSettings(!showSettings)}
             className="p-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
@@ -578,7 +418,7 @@ export default function NotificationsPage() {
 
       {/* Filters */}
       <div className="bg-white border border-gray-100 rounded-[2.5rem] p-6 shadow-sm">
-        <div className="flex flex-col lg:flex-row gap-4">
+        <div className="flex flex-col xl:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -590,10 +430,12 @@ export default function NotificationsPage() {
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value as any)}
+              onChange={(e) =>
+                setFilter(e.target.value as "all" | "unread" | "read")
+              }
               className="px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="all">Toutes</option>
@@ -657,8 +499,8 @@ export default function NotificationsPage() {
                       <Icon className="w-5 h-5" />
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                         <div className="flex-1">
                           <h3
                             className={`font-semibold text-gray-900 mb-1 ${
@@ -671,7 +513,7 @@ export default function NotificationsPage() {
                             {notification.message}
                           </p>
 
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                             <span>
                               {new Date(
                                 notification.createdAt
@@ -699,7 +541,7 @@ export default function NotificationsPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 ml-4">
+                        <div className="flex items-center gap-2 xl:ml-4">
                           {!notification.isRead && (
                             <button
                               onClick={() => markAsRead(notification.id)}

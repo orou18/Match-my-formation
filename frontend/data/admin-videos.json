@@ -1,0 +1,166 @@
+[
+  {
+    "id": 1775816663853,
+    "title": "Formation Python Avancé",
+    "description": "Apprenez les concepts avancés de Python avec des exemples pratiques et des projets réels.",
+    "category": "development",
+    "tags": ["python", "programmation", "avancé", "projets"],
+    "learning_objectives": [
+      "Maîtriser les classes et objets avancés",
+      "Comprendre la programmation asynchrone",
+      "Créer des applications Python complètes"
+    ],
+    "visibility": "public",
+    "duration": "45:20",
+    "allow_comments": true,
+    "publish_immediately": true,
+    "is_admin_video": true,
+    "is_published": true,
+    "creator": {
+      "id": 0,
+      "name": "Administrateur",
+      "email": "admin@matchmyformation.com",
+      "avatar": "/admin-avatar.png"
+    },
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    "thumbnail": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg",
+    "generatedThumbnails": [],
+    "selectedThumbnail": null,
+    "students_count": 89,
+    "views": 567,
+    "likes": 45,
+    "comments": [],
+    "resources": [
+      {
+        "id": "1",
+        "type": "document",
+        "title": "Exercices Python Avancé",
+        "description": "Série d'exercices pour pratiquer",
+        "url": "/resources/python-advanced-exercises.pdf"
+      }
+    ],
+    "created_at": "2024-01-10T14:30:00.000Z",
+    "updated_at": "2024-01-10T14:30:00.000Z"
+  },
+  {
+    "id": 1,
+    "title": "Introduction au Marketing Digital",
+    "description": "Découvrez les fondamentaux du marketing digital et comment créer une stratégie efficace pour votre entreprise.",
+    "category": "marketing",
+    "tags": ["marketing", "digital", "stratégie", "business"],
+    "learning_objectives": [
+      "Comprendre les bases du marketing digital",
+      "Définir une stratégie marketing",
+      "Analyser les indicateurs de performance"
+    ],
+    "visibility": "public",
+    "duration": "15:30",
+    "allow_comments": true,
+    "publish_immediately": true,
+    "is_admin_video": true,
+    "is_published": true,
+    "creator": {
+      "id": 0,
+      "name": "Administrateur",
+      "email": "admin@matchmyformation.com",
+      "avatar": "/admin-avatar.png"
+    },
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    "thumbnail": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
+    "generatedThumbnails": [],
+    "selectedThumbnail": null,
+    "students_count": 145,
+    "views": 1234,
+    "likes": 89,
+    "comments": [],
+    "resources": [
+      {
+        "id": "1",
+        "type": "link",
+        "title": "Guide Marketing Digital",
+        "description": "Ressource complète sur le marketing digital",
+        "url": "https://example.com/marketing-guide"
+      }
+    ],
+    "created_at": "2024-01-15T10:30:00.000Z",
+    "updated_at": "2024-01-15T10:30:00.000Z"
+  },
+  {
+    "id": 2,
+    "title": "Développement Web avec React",
+    "description": "Apprenez à créer des applications web modernes avec React, hooks et meilleures pratiques.",
+    "category": "development",
+    "tags": ["react", "javascript", "web", "frontend"],
+    "learning_objectives": [
+      "Maîtriser les concepts de base de React",
+      "Utiliser les hooks efficacement",
+      "Créer des composants réutilisables"
+    ],
+    "visibility": "public",
+    "duration": "22:45",
+    "allow_comments": true,
+    "publish_immediately": true,
+    "is_admin_video": true,
+    "is_published": true,
+    "creator": {
+      "id": 0,
+      "name": "Administrateur",
+      "email": "admin@matchmyformation.com",
+      "avatar": "/admin-avatar.png"
+    },
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    "thumbnail": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg",
+    "generatedThumbnails": [],
+    "selectedThumbnail": null,
+    "students_count": 203,
+    "views": 2156,
+    "likes": 167,
+    "comments": [],
+    "resources": [
+      {
+        "id": "2",
+        "type": "document",
+        "title": "Documentation React",
+        "description": "Documentation officielle de React",
+        "url": "https://react.dev"
+      }
+    ],
+    "created_at": "2024-01-14T14:20:00.000Z",
+    "updated_at": "2024-01-14T14:20:00.000Z"
+  },
+  {
+    "id": 3,
+    "title": "Design UX/UI Principes Fondamentaux",
+    "description": "Explorez les principes essentiels du design UX/UI et comment créer des interfaces utilisateur intuitives.",
+    "category": "design",
+    "tags": ["design", "ux", "ui", "interface"],
+    "learning_objectives": [
+      "Comprendre les principes UX fondamentaux",
+      "Appliquer les bonnes pratiques UI",
+      "Créer des wireframes efficaces"
+    ],
+    "visibility": "public",
+    "duration": "18:20",
+    "allow_comments": true,
+    "publish_immediately": true,
+    "is_admin_video": true,
+    "is_published": true,
+    "creator": {
+      "id": 0,
+      "name": "Administrateur",
+      "email": "admin@matchmyformation.com",
+      "avatar": "/admin-avatar.png"
+    },
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    "thumbnail": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg",
+    "generatedThumbnails": [],
+    "selectedThumbnail": null,
+    "students_count": 178,
+    "views": 1892,
+    "likes": 134,
+    "comments": [],
+    "resources": [],
+    "created_at": "2024-01-13T09:15:00.000Z",
+    "updated_at": "2024-01-13T09:15:00.000Z"
+  }
+]

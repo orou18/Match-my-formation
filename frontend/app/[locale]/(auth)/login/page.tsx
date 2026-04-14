@@ -21,6 +21,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import UserIdManager, { AuthData } from "@/lib/user-id-manager";
+import { authService } from "@/lib/services/auth-service-v2";
+import BackendStatus from "@/components/BackendStatus";
 
 export default function AuthPage() {
   const params = useParams();
@@ -40,19 +42,6 @@ export default function AuthPage() {
     password_confirmation: "",
     remember: false,
   });
-
-  // Données de test pour connexion rapide
-  const testUsers = {
-    student: { email: "student@match.com", password: "Azerty123!" },
-    creator: { email: "creator@match.com", password: "Azerty123!" },
-    admin: { email: "admin@match.com", password: "Azerty123!" },
-  };
-
-  const rawUrl = process.env.NEXT_PUBLIC_API_URL;
-  const baseUrl =
-    rawUrl && rawUrl !== "undefined"
-      ? rawUrl.replace(/\/$/, "")
-      : "http://localhost:3000";
 
   // PAS de vérification automatique - l'utilisateur doit pouvoir s'authentifier manuellement
   // useEffect(() => {
@@ -83,179 +72,122 @@ export default function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("🔥 handleSubmit appelé - isLogin:", isLogin);
-
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
 
     if (isLogin) {
       try {
-        // Utiliser UserIdManager pour une gestion cohérente des IDs
-        let authData: AuthData | null = null;
-
-        // Vérifier les comptes de test
-        authData = UserIdManager.createTestUser(
+        const loginResponse = await authService.login(
           formData.email,
           formData.password
         );
 
-        if (!authData) {
-          // Vérifier les comptes créés via inscription
-          const storedUserData = UserIdManager.getStoredUserData();
-          if (storedUserData && storedUserData.email === formData.email) {
-            authData = {
-              token:
-                localStorage.getItem("token") || `mock-token-${Date.now()}`,
-              user: storedUserData,
-            };
-          }
-        }
+        const authData: AuthData = {
+          token: loginResponse.token!,
+          user: {
+            id: loginResponse.user!.id,
+            name: loginResponse.user!.name,
+            email: loginResponse.user!.email,
+            role: loginResponse.user!.role as "student" | "creator" | "admin",
+          },
+        };
 
-        if (!authData) {
-          setError("Identifiants incorrects ou compte inexistant.");
-          setLoading(false);
-          return;
-        }
-
-        // Stocker les données de manière cohérente
         UserIdManager.storeAuthData(authData);
 
-        // Détermination de la destination selon le rôle
-        const role = authData.user.role;
-        const redirectPath = `/${locale}/dashboard/${role}`;
+        // Signin avec NextAuth (optionnel, pour la session)
+        try {
+          await signIn("credentials", {
+            email: formData.email,
+            password: formData.password,
+            redirect: false,
+          });
+        } catch (nextAuthError) {
+          console.warn(
+            "NextAuth signin failed, mais continuation avec UserIdManager:",
+            nextAuthError
+          );
+        }
 
-        // Redirection forcée
-        window.location.href = redirectPath;
-      } catch (err) {
-        console.error("Login Error:", err);
+        // Redirection directe
+        window.location.href = `/${locale}/dashboard/${loginResponse.user!.role}`;
+      } catch (error: any) {
         setError(
-          "Le serveur Laravel est injoignable (Vérifiez qu'il tourne sur le port 8000)."
+          error.message ||
+            "Une erreur est survenue lors de la connexion. Réessayez."
         );
         setLoading(false);
       }
     } else {
-      // --- LOGIQUE D'INSCRIPTION ---
-      console.log("🚀 DÉBUT INSCRIPTION - isLogin = false");
-
-      // Validation côté client simple
       if (
         !formData.name ||
         !formData.email ||
         !formData.password ||
         !formData.password_confirmation
       ) {
-        console.log("❌ Validation: champs manquants");
         setError("Tous les champs sont obligatoires");
         setLoading(false);
         return;
       }
 
       if (formData.password !== formData.password_confirmation) {
-        console.log("❌ Validation: passwords ne correspondent pas");
         setError("Les mots de passe ne correspondent pas");
         setLoading(false);
         return;
       }
 
       if (formData.password.length < 8) {
-        console.log("❌ Validation: mot de passe trop court");
         setError("Le mot de passe doit contenir au moins 8 caractères");
         setLoading(false);
         return;
       }
 
       try {
-        console.log("🚀 DÉBUT INSCRIPTION COMPLET");
-        console.log("📧 Email:", formData.email);
-        console.log("👤 Name:", formData.name);
-        console.log("🔑 Password length:", formData.password?.length || 0);
-        console.log(
-          "🔑 Password Confirmation length:",
-          formData.password_confirmation?.length || 0
-        );
-        console.log("🔗 Base URL:", baseUrl);
-        console.log("🔗 API URL complète:", `${baseUrl}/api/auth/register`);
-        console.log("📋 FormData complet:", JSON.stringify(formData, null, 2));
-
-        const response = await fetch(`${baseUrl}/api/auth/register`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            password_confirmation: formData.password_confirmation,
-          }),
-        });
-
-        console.log("📨 Response status:", response.status);
-        console.log("📨 Response ok:", response.ok);
-        console.log(
-          "📨 Response headers:",
-          Object.fromEntries(response.headers.entries())
+        const response = await authService.register(
+          formData.name,
+          formData.email,
+          formData.password,
+          formData.password_confirmation
         );
 
-        const data = await response.json();
-        console.log("📋 Response data:", data);
-        console.log("📋 Response data type:", typeof data);
-
-        if (response.ok) {
-          console.log("✅ INSCRIPTION RÉUSSIE - Sauvegarde locale");
-
-          // Sauvegarder l'utilisateur localement pour persistance
+        if (response.success && response.user) {
           try {
             const userData = {
-              id: data.user.id,
-              name: data.user.name,
-              email: data.user.email,
-              role: data.user.role,
-              token: data.token,
+              id: response.user.id,
+              name: response.user.name,
+              email: response.user.email,
+              role: response.user.role,
               createdAt: new Date().toISOString(),
             };
 
-            // Sauvegarder dans UserIdManager avec la bonne méthode
             UserIdManager.storeAuthData({
-              token: data.token,
+              token: response.token || "",
               user: {
-                id: data.user.id,
-                name: data.user.name,
-                email: data.user.email,
-                role: data.user.role as "student" | "creator" | "admin",
+                id: response.user.id,
+                name: response.user.name,
+                email: response.user.email,
+                role: response.user.role as "student" | "creator" | "admin",
               },
             });
 
-            // Sauvegarder aussi dans localStorage directement pour backup
             localStorage.setItem("user_backup", JSON.stringify(userData));
-
-            // Sauvegarder dans la liste des utilisateurs inscrits
-            const registeredUsers = JSON.parse(
-              localStorage.getItem("registered_users") || "[]"
-            );
-            const userExists = registeredUsers.some(
-              (user: any) => user.email === userData.email
-            );
-            if (!userExists) {
-              registeredUsers.push(userData);
-              localStorage.setItem(
-                "registered_users",
-                JSON.stringify(registeredUsers)
-              );
-            }
-
-            console.log("💾 Utilisateur sauvegardé localement:", userData);
-            console.log(
-              "📊 Total utilisateurs locaux:",
-              registeredUsers.length
-            );
           } catch (saveError) {
-            console.error("❌ Erreur sauvegarde locale:", saveError);
+            console.error("Erreur sauvegarde locale:", saveError);
           }
 
-          // Redirection automatique vers le dashboard étudiant
+          try {
+            await signIn("credentials", {
+              email: formData.email,
+              password: formData.password,
+              redirect: false,
+            });
+          } catch (nextAuthError) {
+            console.warn(
+              "NextAuth signin failed après inscription, poursuite avec token local:",
+              nextAuthError
+            );
+          }
+
           setSuccessMessage(
             "Compte créé avec succès ! Redirection vers votre dashboard..."
           );
@@ -266,28 +198,15 @@ export default function AuthPage() {
           }, 1500);
         } else {
           setError(
-            data.message ||
+            response.message ||
               "L'inscription a échoué. Cet email est peut-être déjà utilisé."
           );
         }
-      } catch (err: any) {
-        console.error("❌ ERREUR INSCRIPTION DÉTAILLÉE:", err);
-        console.error("❌ Type d'erreur:", err?.constructor?.name || "Unknown");
-        console.error("❌ Message:", err?.message || "No message");
-        console.error("❌ Stack:", err?.stack || "No stack");
-
-        // Vérifier si c'est une erreur réseau
-        if (err instanceof TypeError && err.message.includes("fetch")) {
-          setError(
-            "Erreur réseau: Impossible de contacter le serveur. Vérifiez votre connexion."
-          );
-        } else if (err instanceof TypeError && err.message.includes("JSON")) {
-          setError("Erreur serveur: La réponse n'est pas valide. Réessayez.");
-        } else {
-          setError(
+      } catch (error: any) {
+        setError(
+          error?.message ||
             "Erreur lors de l'inscription. Vérifiez vos informations et réessayez."
-          );
-        }
+        );
       } finally {
         setLoading(false);
       }
@@ -300,34 +219,19 @@ export default function AuthPage() {
     setError("");
 
     try {
-      // Clés arbitraires pour démonstration
-      const socialKeys = {
-        google: "demo-google-key-12345",
-        linkedIn: "demo-linkedin-key-67890",
-        facebook: "demo-facebook-key-09876",
-      };
+      const result = await signIn(provider, {
+        callbackUrl: `/${locale}/dashboard/student`,
+      });
 
-      console.log(`Connexion avec ${provider}...`);
-      console.log(
-        `Clé API (démo): ${socialKeys[provider as keyof typeof socialKeys]}`
-      );
-
-      // Simulation de connexion sociale réussie
-      setTimeout(() => {
-        const authData = UserIdManager.createSocialUser(provider);
-        UserIdManager.storeAuthData(authData);
-
-        setSuccessMessage(
-          `Connexion avec ${provider.charAt(0).toUpperCase() + provider.slice(1)} réussie !`
+      if (result?.error) {
+        setError(
+          `Connexion ${provider} indisponible. Vérifiez la configuration OAuth.`
         );
-
-        setTimeout(() => {
-          window.location.href = `/${locale}/dashboard/student`;
-        }, 1000);
-      }, 1500);
+      }
     } catch (error) {
       console.error("Social login error:", error);
       setError(`Erreur lors de la connexion avec ${provider}`);
+    } finally {
       setLoading(false);
     }
   };

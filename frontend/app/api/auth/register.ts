@@ -1,56 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Proxy server-side vers le backend Laravel pour l'inscription
 export async function POST(request: NextRequest) {
   try {
-    console.log("🚀 API REGISTER SIMPLE");
-
     const body = await request.json();
-    const {
-      name,
-      email,
-      password,
-      password_confirmation,
-      role = "student",
-    } = body;
 
-    console.log("📋 Données:", { name, email, role });
-
-    // Validation simple
-    if (!name || !email || !password || !password_confirmation) {
-      return NextResponse.json(
-        { message: "Tous les champs sont obligatoires" },
-        { status: 400 }
-      );
-    }
-
-    if (password !== password_confirmation) {
-      return NextResponse.json(
-        { message: "Les mots de passe ne correspondent pas" },
-        { status: 400 }
-      );
-    }
-
-    // Créer utilisateur
-    const newUser = {
-      id: Date.now(),
-      name,
-      email,
-      role,
-      created_at: new Date().toISOString(),
-    };
-
-    // Token simple
-    const token = `mock-jwt-token-${newUser.id}-${Date.now()}`;
-
-    console.log("✅ Utilisateur créé:", newUser);
-
-    return NextResponse.json({
-      message: "Inscription réussie",
-      user: newUser,
-      token: token,
+    // Forward to backend API (assumes backend accessible sur 127.0.0.1:8000)
+    const backendRes = await fetch("http://127.0.0.1:8000/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(body),
     });
+
+    const text = await backendRes.text();
+    const status = backendRes.status;
+
+    let json: any = null;
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch (e) {
+      json = { message: text };
+    }
+
+    return NextResponse.json(json ?? {}, { status });
   } catch (error) {
-    console.error("❌ Erreur:", error);
-    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+    console.error("register proxy error", error);
+    return NextResponse.json({ message: "Erreur interne" }, { status: 500 });
   }
 }

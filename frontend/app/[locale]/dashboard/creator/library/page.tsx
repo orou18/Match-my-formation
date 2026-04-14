@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Folder,
@@ -43,7 +43,7 @@ interface LibraryItem {
   createdAt: string;
   modifiedAt: string;
   tags: string[];
-  visibility: "public" | "private";
+  visibility: "public" | "private" | "archived";
   starred: boolean;
   path: string;
   children?: LibraryItem[];
@@ -56,110 +56,25 @@ export default function LibraryPage() {
   const [sortBy, setSortBy] = useState("name");
   const [filterType, setFilterType] = useState("all");
 
-  const libraryItems: LibraryItem[] = [
-    {
-      id: "1",
-      name: "Formation Tourisme",
-      type: "folder",
-      createdAt: "2024-01-15",
-      modifiedAt: "2024-06-15",
-      tags: ["formation", "tourisme"],
-      visibility: "public",
-      starred: true,
-      path: "/formations/tourisme",
-      children: [],
-    },
-    {
-      id: "2",
-      name: "Introduction au Tourisme Durable",
-      type: "video",
-      size: "245 MB",
-      duration: "12:34",
-      thumbnail: "/videos/video1-thumb.jpg",
-      createdAt: "2024-06-10",
-      modifiedAt: "2024-06-14",
-      tags: ["tourisme", "durable", "introduction"],
-      visibility: "public",
-      starred: true,
-      path: "/videos/intro-tourisme-durable",
-    },
-    {
-      id: "3",
-      name: "Marketing Digital",
-      type: "folder",
-      createdAt: "2024-02-20",
-      modifiedAt: "2024-06-12",
-      tags: ["marketing", "digital"],
-      visibility: "public",
-      starred: false,
-      path: "/formations/marketing-digital",
-      children: [],
-    },
-    {
-      id: "4",
-      name: "Thumbnail Hôtellerie",
-      type: "image",
-      size: "2.4 MB",
-      thumbnail: "/images/hotellerie-thumb.jpg",
-      createdAt: "2024-06-08",
-      modifiedAt: "2024-06-08",
-      tags: ["thumbnail", "hôtellerie"],
-      visibility: "private",
-      starred: false,
-      path: "/images/thumbnails/hotellerie",
-    },
-    {
-      id: "5",
-      name: "Musique d'Intro",
-      type: "audio",
-      size: "4.8 MB",
-      duration: "0:30",
-      createdAt: "2024-05-15",
-      modifiedAt: "2024-05-15",
-      tags: ["musique", "intro"],
-      visibility: "public",
-      starred: true,
-      path: "/audio/intro-music",
-    },
-    {
-      id: "6",
-      name: "Guide Hôtellerie",
-      type: "document",
-      size: "1.2 MB",
-      createdAt: "2024-06-01",
-      modifiedAt: "2024-06-10",
-      tags: ["guide", "hôtellerie", "pdf"],
-      visibility: "public",
-      starred: false,
-      path: "/documents/guide-hotellerie",
-    },
-    {
-      id: "7",
-      name: "Service Client Vidéo",
-      type: "video",
-      size: "389 MB",
-      duration: "22:10",
-      thumbnail: "/videos/video3-thumb.jpg",
-      createdAt: "2024-06-05",
-      modifiedAt: "2024-06-13",
-      tags: ["service", "client", "excellence"],
-      visibility: "public",
-      starred: false,
-      path: "/videos/service-client",
-    },
-    {
-      id: "8",
-      name: "Ressources Pédagogiques",
-      type: "folder",
-      createdAt: "2024-03-10",
-      modifiedAt: "2024-06-14",
-      tags: ["ressources", "pédagogiques"],
-      visibility: "private",
-      starred: false,
-      path: "/ressources/pedagogiques",
-      children: [],
-    },
-  ];
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
+
+  useEffect(() => {
+    const loadItems = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
+      const response = await fetch("/api/creator/library", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setLibraryItems(data.items || []);
+      }
+    };
+
+    loadItems();
+  }, []);
 
   const filteredItems = libraryItems.filter((item) => {
     const matchesSearch =
@@ -240,11 +155,255 @@ export default function LibraryPage() {
   };
 
   const toggleStar = (itemId: string) => {
-    console.log(`Toggle star for item ${itemId}`);
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("token")
+        : null;
+    setLibraryItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, starred: !item.starred } : item
+      )
+    );
+    fetch("/api/creator/library", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ id: itemId }),
+    });
   };
 
   const handleItemAction = (action: string, itemId: string) => {
     console.log(`Action ${action} on item ${itemId}`);
+  };
+
+  const moveItems = async () => {
+    const targetPath = prompt(
+      "Entrez le chemin de destination (ex: /Documents/):"
+    );
+    if (targetPath && selectedItems.length > 0) {
+      try {
+        const response = await fetch("/api/creator/library/batch", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "move",
+            itemIds: selectedItems,
+            targetPath: targetPath,
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setLibraryItems((prev) =>
+            prev.map((item) =>
+              selectedItems.includes(item.id)
+                ? {
+                    ...item,
+                    path: targetPath,
+                    modifiedAt: new Date().toISOString(),
+                  }
+                : item
+            )
+          );
+          setSelectedItems([]);
+          console.log("Éléments déplacés avec succès");
+        } else {
+          console.error("Erreur lors du déplacement:", data.error);
+        }
+      } catch (error) {
+        console.error("Erreur API:", error);
+      }
+    }
+  };
+
+  const copyItems = async () => {
+    if (selectedItems.length > 0) {
+      try {
+        const response = await fetch("/api/creator/library/batch", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "copy",
+            itemIds: selectedItems,
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setLibraryItems((prev) => [...prev, ...data.items]);
+          setSelectedItems([]);
+          console.log("Éléments copiés avec succès");
+        } else {
+          console.error("Erreur lors de la copie:", data.error);
+        }
+      } catch (error) {
+        console.error("Erreur API:", error);
+      }
+    }
+  };
+
+  const archiveItems = async () => {
+    if (
+      confirm(
+        `Êtes-vous sûr de vouloir archiver ${selectedItems.length} élément(s) ?`
+      ) &&
+      selectedItems.length > 0
+    ) {
+      try {
+        const response = await fetch("/api/creator/library/batch", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "archive",
+            itemIds: selectedItems,
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setLibraryItems((prev) =>
+            prev.map((item) =>
+              selectedItems.includes(item.id)
+                ? {
+                    ...item,
+                    visibility: "archived",
+                    modifiedAt: new Date().toISOString(),
+                  }
+                : item
+            )
+          );
+          setSelectedItems([]);
+          console.log("Éléments archivés avec succès");
+        } else {
+          console.error("Erreur lors de l'archivage:", data.error);
+        }
+      } catch (error) {
+        console.error("Erreur API:", error);
+      }
+    }
+  };
+
+  const deleteItems = async () => {
+    if (
+      confirm(
+        `Êtes-vous sûr de vouloir supprimer ${selectedItems.length} élément(s) ? Cette action est irréversible.`
+      ) &&
+      selectedItems.length > 0
+    ) {
+      try {
+        const response = await fetch("/api/creator/library/batch", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            itemIds: selectedItems,
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setLibraryItems((prev) =>
+            prev.filter((item) => !selectedItems.includes(item.id))
+          );
+          setSelectedItems([]);
+          console.log("Éléments supprimés avec succès");
+        } else {
+          console.error("Erreur lors de la suppression:", data.error);
+        }
+      } catch (error) {
+        console.error("Erreur API:", error);
+      }
+    }
+  };
+
+  const createFolder = async () => {
+    const folderName = prompt("Entrez le nom du nouveau dossier:");
+    if (folderName) {
+      try {
+        const response = await fetch("/api/creator/library", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: folderName,
+            type: "folder",
+            path: "/",
+            visibility: "private",
+            tags: [],
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setLibraryItems((prev) => [data.item, ...prev]);
+          console.log("Dossier créé avec succès:", data.item);
+        } else {
+          console.error("Erreur lors de la création du dossier:", data.error);
+        }
+      } catch (error) {
+        console.error("Erreur API:", error);
+      }
+    }
+  };
+
+  const uploadFile = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = true;
+    input.onchange = async (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files) {
+        for (const file of files) {
+          try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("name", file.name);
+            formData.append(
+              "type",
+              file.type.startsWith("video/")
+                ? "video"
+                : file.type.startsWith("image/")
+                  ? "image"
+                  : file.type.startsWith("audio/")
+                    ? "audio"
+                    : "document"
+            );
+            formData.append(
+              "size",
+              `${(file.size / 1024 / 1024).toFixed(2)} MB`
+            );
+            formData.append("visibility", "private");
+            formData.append("path", "/");
+
+            const response = await fetch("/api/creator/library", {
+              method: "POST",
+              body: formData,
+            });
+
+            const data = await response.json();
+            if (response.ok && data.success) {
+              setLibraryItems((prev) => [data.item, ...prev]);
+              console.log("Fichier uploadé avec succès:", data.item);
+            } else {
+              console.error("Erreur lors de l'upload:", data.error);
+            }
+          } catch (error) {
+            console.error("Erreur API:", error);
+          }
+        }
+      }
+    };
+    input.click();
   };
 
   const stats = {
@@ -288,7 +447,10 @@ export default function LibraryPage() {
               />
             </div>
 
-            <button className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
+            <button
+              onClick={uploadFile}
+              className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2"
+            >
               <Upload className="w-4 h-4" />
               Upload
             </button>
@@ -430,11 +592,17 @@ export default function LibraryPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="px-3 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 flex items-center gap-2">
+            <button
+              onClick={createFolder}
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 flex items-center gap-2"
+            >
               <FolderPlus className="w-4 h-4" />
               Nouveau dossier
             </button>
-            <button className="px-3 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 flex items-center gap-2">
+            <button
+              onClick={uploadFile}
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 flex items-center gap-2"
+            >
               <FilePlus className="w-4 h-4" />
               Nouveau fichier
             </button>
@@ -447,19 +615,31 @@ export default function LibraryPage() {
               {selectedItems.length} élément(s) sélectionné(s)
             </span>
             <div className="flex gap-2">
-              <button className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 flex items-center gap-1">
+              <button
+                onClick={moveItems}
+                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 flex items-center gap-1"
+              >
                 <Move className="w-3 h-3" />
                 Déplacer
               </button>
-              <button className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 flex items-center gap-1">
+              <button
+                onClick={copyItems}
+                className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 flex items-center gap-1"
+              >
                 <Copy className="w-3 h-3" />
                 Copier
               </button>
-              <button className="px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 flex items-center gap-1">
+              <button
+                onClick={archiveItems}
+                className="px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 flex items-center gap-1"
+              >
                 <Archive className="w-3 h-3" />
                 Archiver
               </button>
-              <button className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 flex items-center gap-1">
+              <button
+                onClick={deleteItems}
+                className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 flex items-center gap-1"
+              >
                 <Trash2 className="w-3 h-3" />
                 Supprimer
               </button>
@@ -658,7 +838,10 @@ export default function LibraryPage() {
                 ? "Essayez de modifier vos filtres de recherche"
                 : "Commencez par uploader vos premiers fichiers"}
             </p>
-            <button className="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 mx-auto">
+            <button
+              onClick={uploadFile}
+              className="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 mx-auto"
+            >
               <Upload className="w-5 h-5" />
               Upload des fichiers
             </button>

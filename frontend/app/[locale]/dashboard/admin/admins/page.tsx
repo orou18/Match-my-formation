@@ -493,13 +493,26 @@ export default function AdminAdmins() {
               <div className="flex items-center justify-between text-sm text-gray-600">
                 <span>
                   Dernière connexion:{" "}
-                  {new Date(admin.lastLogin).toLocaleDateString("fr-FR")}
+                  {admin.lastLogin
+                    ? new Date(admin.lastLogin).toLocaleDateString("fr-FR")
+                    : "Jamais"}
                 </span>
                 <div className="flex gap-2">
-                  <button className="text-blue-600 hover:text-blue-700">
+                  <button
+                    onClick={() =>
+                      handleUpdateAdmin(admin.id, {
+                        status:
+                          admin.status === "active" ? "inactive" : "active",
+                      })
+                    }
+                    className="text-blue-600 hover:text-blue-700"
+                  >
                     <Edit size={16} />
                   </button>
-                  <button className="text-red-600 hover:text-red-700">
+                  <button
+                    onClick={() => handleDeleteAdmin(admin.id)}
+                    className="text-red-600 hover:text-red-700"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>

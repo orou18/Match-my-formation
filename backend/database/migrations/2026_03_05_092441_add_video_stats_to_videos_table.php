@@ -24,9 +24,6 @@ return new class extends Migration
             if (!Schema::hasColumn('videos', 'shares')) {
                 $table->integer('shares')->default(0)->after('comments');
             }
-            if (!Schema::hasColumn('videos', 'duration')) {
-                $table->string('duration')->nullable()->after('shares');
-            }
         });
     }
 
@@ -36,7 +33,16 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('videos', function (Blueprint $table) {
-            $table->dropColumn(['views', 'likes', 'comments', 'shares', 'duration', 'thumbnail']);
+            $columns = array_filter([
+                Schema::hasColumn('videos', 'views') ? 'views' : null,
+                Schema::hasColumn('videos', 'likes') ? 'likes' : null,
+                Schema::hasColumn('videos', 'comments') ? 'comments' : null,
+                Schema::hasColumn('videos', 'shares') ? 'shares' : null,
+            ]);
+
+            if ($columns !== []) {
+                $table->dropColumn($columns);
+            }
         });
     }
 };

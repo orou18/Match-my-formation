@@ -4,12 +4,10 @@ import Image from "next/image";
 import { usePathname, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
   Menu,
   X,
   ChevronDown,
-  Home,
   Users,
   Shield,
   DollarSign,
@@ -32,7 +30,12 @@ export default function AdminSidebar() {
   const { locale } = useParams();
   const { data: session, status } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<string[]>(["users"]);
+  const [expandedSections, setExpandedSections] = useState<string[]>([
+    "Principal",
+    "Gestion",
+    "Contenu",
+    "Système",
+  ]);
 
   const currentLocale = locale || "fr";
 
@@ -43,15 +46,11 @@ export default function AdminSidebar() {
     };
   }, [isMobileMenuOpen]);
 
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [pathname]);
-
   // Éviter l'hydratation en attendant que la session soit chargée
   if (status === "loading") {
     return (
-      <aside className="fixed lg:static inset-y-0 left-0 z-40 w-80 bg-white border-r border-gray-200">
-        <div className="h-full flex flex-col">
+      <aside className="fixed lg:static inset-y-0 left-0 z-40 h-screen w-80 bg-white border-r border-gray-200">
+        <div className="flex h-full min-h-0 flex-col">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center gap-3 p-2">
               <div className="w-12 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
@@ -110,6 +109,20 @@ export default function AdminSidebar() {
     {
       title: "Contenu",
       items: [
+        {
+          name: "Créer une vidéo",
+          href: `/${currentLocale}/dashboard/admin/videos/create`,
+          icon: Plus,
+          badge: "NOUVEAU",
+          color: "from-green-500 to-green-600",
+        },
+        {
+          name: "Mes vidéos",
+          href: `/${currentLocale}/dashboard/admin/videos`,
+          icon: Video,
+          badge: null,
+          color: "from-blue-500 to-blue-600",
+        },
         {
           name: "Publicités",
           href: `/${currentLocale}/dashboard/admin/ads`,
@@ -184,12 +197,12 @@ export default function AdminSidebar() {
       {/* Sidebar */}
       <aside
         className={`
-        fixed lg:static inset-y-0 left-0 z-40 w-[min(20rem,calc(100vw-1.25rem))] lg:w-80 bg-white border-r border-gray-200 shadow-2xl lg:shadow-none
+        fixed lg:static inset-y-0 left-0 z-40 h-screen w-[min(20rem,calc(100vw-1.25rem))] lg:w-80 bg-white border-r border-gray-200 shadow-2xl lg:shadow-none
         transform transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}
       >
-        <div className="h-full flex flex-col">
+        <div className="flex h-full min-h-0 flex-col">
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
             <Link
@@ -235,12 +248,19 @@ export default function AdminSidebar() {
                   <Plus size={16} className="mx-auto mb-1" />
                   Créateur
                 </button>
+                <Link
+                  href={`/${currentLocale}/dashboard/admin/videos/create`}
+                  className="bg-white/20 backdrop-blur rounded-lg p-2 text-xs hover:bg-white/30 transition-colors col-span-2 text-center"
+                >
+                  <Video size={16} className="mx-auto mb-1" />
+                  Créer une vidéo
+                </Link>
               </div>
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-6 panel-scroll">
+          <nav className="min-h-0 flex-1 overflow-y-auto p-4 pb-8 space-y-6">
             {navSections.map((section) => (
               <div key={section.title}>
                 <button
@@ -273,6 +293,13 @@ export default function AdminSidebar() {
                             isActive(item.href)
                               ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600"
                               : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                          }
+                          ${
+                            section.title === "Contenu" &&
+                            (item.name === "Créer une vidéo" ||
+                              item.name === "Mes vidéos")
+                              ? "ring-1 ring-blue-100"
+                              : ""
                           }
                         `}
                       >

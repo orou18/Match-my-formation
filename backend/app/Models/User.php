@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
@@ -23,6 +24,20 @@ class User extends Authenticatable
         'password',
         'role',
         'company_id', // AJOUT : Pour lier un partenaire à son entreprise
+        'avatar',
+        'phone',
+        'bio',
+        'location',
+        'website',
+        'preferences',
+        'notification_settings',
+        'two_factor_enabled',
+        'two_factor_method',
+        'two_factor_secret',
+        'two_factor_temp_secret',
+        'two_factor_code_hash',
+        'two_factor_code_expires_at',
+        'last_password_change_at',
     ];
 
     /**
@@ -46,6 +61,11 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'preferences' => 'array',
+        'notification_settings' => 'array',
+        'two_factor_enabled' => 'boolean',
+        'two_factor_code_expires_at' => 'datetime',
+        'last_password_change_at' => 'datetime',
     ];
 
     // =========================================================================
@@ -68,12 +88,32 @@ class User extends Authenticatable
         return $this->hasMany(Video::class, 'uploader_id');
     }
 
+    public function createdPathways(): HasMany
+    {
+        return $this->hasMany(Pathway::class, 'creator_id');
+    }
+
     /**
      * Les inscriptions aux cours (si c'est un étudiant).
      */
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);
+    }
+
+    public function likedVideos(): BelongsToMany
+    {
+        return $this->belongsToMany(Video::class, 'video_likes')->withTimestamps();
+    }
+
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
     }
 
     // =========================================================================

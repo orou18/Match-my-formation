@@ -1,48 +1,54 @@
-import { readJsonStore, writeJsonStore } from "@/lib/server/json-store";
-
-const DEFAULT_USERS: any[] = [
-  {
-    id: 1,
-    name: "Student Test",
-    email: "student@match.com",
-    password: "Azerty123!",
-    role: "student",
-  },
-  {
-    id: 2,
-    name: "Creator Test",
-    email: "creator@match.com",
-    password: "Azerty123!",
-    role: "creator",
-  },
-  {
-    id: 3,
-    name: "Admin Test",
-    email: "admin@match.com",
-    password: "Azerty123!",
-    role: "admin",
-  },
-];
+import {
+  createStudentAccount,
+  findAccountByEmail,
+  findAccountById,
+  getAccounts,
+} from "@/lib/server/account-store";
 
 export class UserStore {
   static getUsers() {
-    return readJsonStore("users.json", DEFAULT_USERS);
+    return getAccounts().map((account) => ({
+      id: Number(account.id),
+      name: account.name,
+      email: account.email,
+      password: account.password,
+      role: account.role,
+      created_at: account.created_at,
+    }));
   }
 
-  static addUser(user: any) {
-    console.log("👤 UserStore - Ajout utilisateur:", user.email);
-    const users = this.getUsers();
-    users.push(user);
-    writeJsonStore("users.json", users);
-    console.log("👤 UserStore - Total utilisateurs:", users.length);
+  static addUser(user: { name: string; email: string; password: string }) {
+    return createStudentAccount({
+      name: String(user.name || ""),
+      email: String(user.email || ""),
+      password: String(user.password || ""),
+    });
   }
 
   static findUserByEmail(email: string) {
-    return this.getUsers().find((u) => u.email === email);
+    const account = findAccountByEmail(email);
+    if (!account) return undefined;
+    return {
+      id: Number(account.id),
+      name: account.name,
+      email: account.email,
+      password: account.password,
+      role: account.role,
+      created_at: account.created_at,
+    };
   }
 
   static findUserById(id: number) {
-    return this.getUsers().find((u) => u.id === id);
+    const account = findAccountById(String(id));
+    if (!account) return undefined;
+    return {
+      id: Number(account.id),
+      name: account.name,
+      email: account.email,
+      password: account.password,
+      role: account.role,
+      created_at: account.created_at,
+    };
   }
 
   static getNextId() {

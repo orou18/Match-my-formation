@@ -7,34 +7,8 @@ import { NextResponse } from "next/server";
  */
 export function getUserIdFromToken(request: NextRequest): string | null {
   try {
-    // Essayer de récupérer le token depuis l'en-tête Authorization
-    const authHeader = request.headers.get("authorization");
-
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const token = authHeader.substring(7);
-
-      // Pour les tokens mock, extraire l'ID depuis le token
-      if (token.includes("mock-")) {
-        // Format: mock-student-token-timestamp ou mock-creator-token-timestamp
-        if (token.includes("student")) return "3";
-        if (token.includes("creator")) return "2";
-        if (token.includes("admin")) return "1";
-      }
-
-      // Pour les tokens sociaux, extraire l'ID depuis localStorage côté client
-      if (token.includes("social-")) {
-        // L'ID sera géré côté client avec UserIdManager
-        return null; // Laisser le client gérer
-      }
-    }
-
-    // Essayer de récupérer depuis les cookies (alternative)
     const userId = request.cookies.get("userId")?.value;
-    if (userId) {
-      return userId;
-    }
-
-    return null;
+    return userId || null;
   } catch (error) {
     console.error("Erreur lors de l'extraction de l'ID utilisateur:", error);
     return null;
@@ -48,10 +22,21 @@ export function isAuthenticated(request: NextRequest): boolean {
   return getUserIdFromToken(request) !== null;
 }
 
+export function getRoleFromToken(request: NextRequest): string | null {
+  try {
+    return request.cookies.get("userRole")?.value || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Crée une réponse avec les cookies d'authentification
  */
-export function createAuthResponse(data: any, userId: string): NextResponse {
+export function createAuthResponse(
+  data: unknown,
+  userId: string
+): NextResponse {
   const response = NextResponse.json(data);
 
   // Ajouter les cookies pour la persistance

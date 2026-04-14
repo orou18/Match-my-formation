@@ -1,25 +1,28 @@
 services:
-  # Service API Backend Laravel
   - type: web
     name: match-my-formation-api
     runtime: docker
     plan: free
     rootDir: backend
     dockerfilePath: ./Dockerfile
-    buildCommand: "docker build -t laravel-app ."
-    startCommand: "php-fpm"
     healthCheckPath: /api/health
     envVars:
       - key: APP_NAME
         value: MatchMyFormation
       - key: APP_ENV
         value: production
-      - key: APP_KEY
-        generateValue: true
       - key: APP_DEBUG
-        value: false
+        value: "false"
+      - key: APP_KEY
+        sync: false
       - key: APP_URL
         value: https://match-my-formation-api.onrender.com
+      - key: FRONTEND_URL
+        value: https://match-my-formation.vercel.app
+      - key: SANCTUM_STATEFUL_DOMAINS
+        value: match-my-formation.vercel.app,localhost:3000
+      - key: SESSION_DOMAIN
+        value: .match-my-formation.vercel.app
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
@@ -27,7 +30,7 @@ services:
           name: match-my-formation-db
           property: host
       - key: DB_PORT
-        value: 5432
+        value: "5432"
       - key: DB_DATABASE
         fromDatabase:
           name: match-my-formation-db
@@ -44,37 +47,43 @@ services:
         value: redis
       - key: REDIS_HOST
         fromService:
-          type: redis
+          type: keyvalue
           name: match-my-formation-redis
           property: host
+      - key: REDIS_PASSWORD
+        fromService:
+          type: keyvalue
+          name: match-my-formation-redis
+          property: password
       - key: REDIS_PORT
         fromService:
-          type: redis
+          type: keyvalue
           name: match-my-formation-redis
           property: port
       - key: SESSION_DRIVER
-        value: database
+        value: cookie
       - key: SESSION_LIFETIME
-        value: 120
+        value: "120"
       - key: FILESYSTEM_DISK
         value: local
+      - key: BROADCAST_DRIVER
+        value: log
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: LOG_CHANNEL
+        value: stack
+      - key: LOG_LEVEL
+        value: error
 
-  # Base de données PostgreSQL
-  - type: pserv
-    name: match-my-formation-db
-    plan: free
-    ipAllowList: []
-    databaseName: match_my_formation
-
-  # Service Redis
-  - type: redis
+  - type: keyvalue
     name: match-my-formation-redis
     plan: free
     ipAllowList: []
 
-# Configuration du déploiement automatique
-version: "1.0"
-webhooks:
-  - type: github
-    event: push
-    branch: main
+databases:
+  - name: match-my-formation-db
+    plan: free
+    databaseName: match_my_formation
+    ipAllowList: []
+
+version: "1"

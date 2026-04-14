@@ -6,38 +6,66 @@ import StudentHero from "@/components/dashboard/StudentHero";
 import CategoryFilters from "@/components/dashboard/CategoryFilters";
 import FeaturedGrid from "@/components/dashboard/FeaturedGrid";
 import VideoCard from "@/components/video/VideoCard";
-import LoadMoreButton from "@/components/ui/LoadMoreButton";
 import PremiumBanner from "@/components/dashboard/PremiumBanner";
-import Image from "next/image";
+import { useRouter, useParams } from "next/navigation";
 import {
   Star,
-  Users,
+  User,
   ArrowLeft,
   ArrowRight,
-  Loader2,
   AlertCircle,
+  Video,
+  Play,
 } from "lucide-react";
-import { useRouter, useParams } from "next/navigation";
-import UserIdManager from "@/lib/user-id-manager";
-import { dashboardService } from "@/lib/services/dashboard-service";
 
-interface CreatorCourse {
+interface DashboardCourse {
   id: number;
   title: string;
-  image: string;
-  students: number;
-  rating: number;
-  creator: {
-    name: string;
-    logo: string;
-    specialty: string;
+  description?: string;
+  thumbnail?: string;
+  image?: string;
+  duration?: string;
+  students_count?: number;
+  creator?: {
+    name?: string;
+    avatar?: string;
   };
+  category?: string;
+  tags?: string[];
+  video_url?: string;
+  is_published?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  is_admin_video?: boolean; // Ajouter cette propriété pour les vidéos admin
 }
 
-interface StudentDashboardResponse {
-  courses?: CreatorCourse[];
-  user?: Record<string, unknown>;
+interface DashboardUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  created_at?: string;
 }
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: "spring", stiffness: 100 },
+  },
+};
 
 export default function StudentDashboard() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -45,261 +73,236 @@ export default function StudentDashboard() {
   const params = useParams();
   const locale = params.locale || "fr";
 
-  const [videos, setVideos] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
+  const [publicVideos, setPublicVideos] = useState<any[]>([]);
+  const [creatorVideos, setCreatorVideos] = useState<any[]>([]);
+  const [adminVideos, setAdminVideos] = useState<any[]>([]);
+  const [user, setUser] = useState<DashboardUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Récupérer dynamiquement les informations de l'utilisateur connecté
-  useEffect(() => {
-    try {
-      // Essayer de récupérer depuis UserIdManager
-      const storedUser = UserIdManager.getStoredUserData();
+  // Gérer les changements de filtres
+  const handleFilterChange = (filters: any) => {
+    // Appliquer les filtres aux cours
+    let filtered = [...courses];
 
-      if (storedUser) {
-        console.log(
-          "✅ Utilisateur récupéré depuis UserIdManager:",
-          storedUser
-        );
-        setUser(storedUser);
-      } else {
-        // Fallback sur les données de localStorage
-        const userBackup = localStorage.getItem("user_backup");
-        if (userBackup) {
-          const userData = JSON.parse(userBackup);
-          console.log("✅ Utilisateur récupéré depuis localStorage:", userData);
-          setUser(userData);
-        } else {
-          // Dernier fallback : utilisateur de test
-          console.log("⚠️ Utilisation de l utilisateur de test par défaut");
-          setUser({
-            id: UserIdManager.getCurrentUserId() || 3,
-            name: "Alice Élève",
-            email: "student@match.com",
-            role: "student",
-          });
-        }
-      }
-    } catch (error) {
-      console.error("❌ Erreur récupération utilisateur:", error);
-      // Fallback sur utilisateur de test
-      setUser({
-        id: 3,
-        name: "Alice Élève",
-        email: "student@match.com",
-        role: "student",
-      });
-    } finally {
-      setLoading(false);
+    // Filtre par recherche
+    if (filters.search) {
+      filtered = filtered.filter(
+        (course) =>
+          course.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
+          course.description
+            ?.toLowerCase()
+            .includes(filters.search.toLowerCase()) ||
+          course.category
+            ?.toLowerCase()
+            .includes(filters.search.toLowerCase()) ||
+          course.tags?.some((tag: string) =>
+            tag.toLowerCase().includes(filters.search.toLowerCase())
+          )
+      );
     }
-  }, []);
 
-  // Charger les données du dashboard et détecter les nouveaux utilisateurs
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        if (user) {
-          console.log("📊 Chargement dashboard pour:", user.email);
+    // Filtre par catégorie
+    if (filters.category !== "all") {
+      filtered = filtered.filter(
+        (course) => course.category === filters.category
+      );
+    }
 
-          // Vérifier si c'est un nouvel utilisateur (créé il y a moins de 5 minutes)
-          const userCreatedAt = new Date(user.created_at || Date.now());
-          const now = new Date();
-          const timeDiff = now.getTime() - userCreatedAt.getTime();
-          const minutesDiff = timeDiff / (1000 * 60);
+    // Filtre par difficulté
+    if (filters.difficulty !== "all") {
+      filtered = filtered.filter(
+        (course) => course.difficulty_level === filters.difficulty
+      );
+    }
 
-          if (minutesDiff < 5 || user.id > 3) {
-            console.log("🎉 Nouvel utilisateur détecté!");
-            setIsNewUser(true);
-          }
-
-          const data =
-            await dashboardService.getStudentDashboard<StudentDashboardResponse>();
-          setVideos(Array.isArray(data.courses) ? data.courses : []);
-          if (data.user) {
-            setUser((prev: Record<string, unknown> | null) => ({
-              ...(prev || {}),
-              ...data.user,
-            }));
-          }
+    // Filtre par durée
+    if (filters.duration !== "all") {
+      filtered = filtered.filter((course) => {
+        const durationInMinutes = parseDuration(course.duration);
+        switch (filters.duration) {
+          case "short":
+            return durationInMinutes < 30;
+          case "medium":
+            return durationInMinutes >= 30 && durationInMinutes <= 60;
+          case "long":
+            return durationInMinutes > 60;
+          default:
+            return true;
         }
-      } catch (error) {
-        console.error("❌ Erreur chargement dashboard:", error);
-      }
-    };
+      });
+    }
 
-    fetchDashboardData();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      // Vérifier l'authentification avec UserIdManager
-      if (!UserIdManager.isAuthenticated()) {
-        window.location.href = `/${locale}/login`;
-        return;
-      }
-
-      // Récupérer les données utilisateur stockées
-      const storedUserData = UserIdManager.getStoredUserData();
-
-      if (storedUserData && storedUserData.role === "student") {
-        setUser(storedUserData);
-      } else {
-        // Ne pas remplacer l'utilisateur s'il est déjà défini
-        if (!user) {
-          setUser({
-            id: UserIdManager.getCurrentUserId() || 3,
-            name: "Alice Élève",
-            email: "student@match.com",
-            role: "student",
-          });
+    // Filtre par note
+    if (filters.rating !== "all") {
+      filtered = filtered.filter((course) => {
+        const rating = course.rating || 0;
+        switch (filters.rating) {
+          case "4+":
+            return rating >= 4;
+          case "3+":
+            return rating >= 3;
+          case "2+":
+            return rating >= 2;
+          default:
+            return true;
         }
+      });
+    }
+
+    // Tri
+    filtered.sort((a, b) => {
+      switch (filters.sortBy) {
+        case "recent":
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+        case "popular":
+          return (b.views || 0) - (a.views || 0);
+        case "rating":
+          return (b.rating || 0) - (a.rating || 0);
+        case "duration":
+          return parseDuration(a.duration) - parseDuration(b.duration);
+        case "title":
+          return (a.title || "").localeCompare(b.title || "");
+        default:
+          return 0;
       }
+    });
 
-      setVideos([]);
-      setLoading(false);
+    setFilteredCourses(filtered);
+  };
 
-      /* Commenté temporairement pour éviter les erreurs de connexion
-      if (!token) {
-        // Redirection forcée si pas de token
-        window.location.href = `/${locale}/login`;
-        return;
-      }
-
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const baseUrl = apiBase.replace(/\/$/, "");
-
-      try {
-        // 1. Récupérer le profil utilisateur
-        const userRes = await fetch(`${baseUrl}/api/me`, {
-          method: 'GET',
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-          }
-        });
-
-        if (!userRes.ok) {
-          if (userRes.status === 401) {
-            localStorage.removeItem("token");
-            window.location.href = `/${locale}/login`;
-            return;
-          }
-          throw new Error("Impossible de charger votre profil.");
-        }
-        
-        const userData = await userRes.json();
-        setUser(userData);
-
-        // 2. Récupérer les cours
-        const videoRes = await fetch(`${baseUrl}/api/student/courses`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Accept": "application/json"
-          }
-        });
-        
-        if (videoRes.ok) {
-          const videoData = await videoRes.json();
-          // On s'assure que videoData est bien un tableau
-          setVideos(Array.isArray(videoData) ? videoData : []);
-        }
-      } catch (err) {
-        console.error("Dashboard Error:", err);
-        setError("Connexion au serveur perdue. Vérifiez que votre backend est lancé.");
-      } finally {
-        setLoading(false);
-      }
-      */
-    };
-
-    fetchData();
-  }, [locale]); // On ne dépend que du locale pour éviter les boucles infinies de useEffect
+  // Helper pour parser la durée
+  const parseDuration = (duration: string): number => {
+    if (!duration) return 0;
+    const parts = duration.split(":");
+    if (parts.length === 2) {
+      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    }
+    return 0;
+  };
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
-      const { scrollLeft, clientWidth } = scrollRef.current;
-      const scrollTo =
-        direction === "left"
-          ? scrollLeft - clientWidth
-          : scrollLeft + clientWidth;
-      scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
+      const scrollAmount = 300;
+      scrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
     }
   };
 
-  const creatorCourses: CreatorCourse[] = [
-    {
-      id: 101,
-      title: "Secrets du Management de Luxe",
-      image: "/guide1.jpg",
-      students: 1250,
-      rating: 4.9,
-      creator: {
-        name: "Sofitel Académie",
-        logo: "/sofitel-logo.png",
-        specialty: "Hôtellerie de Luxe",
-      },
-    },
-    {
-      id: 102,
-      title: "Art de la Table Panafricaine",
-      image: "/guide1.jpg",
-      students: 850,
-      rating: 4.8,
-      creator: {
-        name: "Chef Azuma",
-        logo: "/chef-logo.png",
-        specialty: "Gastronomie",
-      },
-    },
-    {
-      id: 103,
-      title: "Design d'Espaces Touristiques",
-      image: "/guide2.jpg",
-      students: 2100,
-      rating: 4.7,
-      creator: {
-        name: "ArchiDesign Studio",
-        logo: "/archi-logo.png",
-        specialty: "Architecture",
-      },
-    },
-    {
-      id: 104,
-      title: "Innovation & Spa Wellness",
-      image: "/guide1.jpg",
-      students: 540,
-      rating: 4.9,
-      creator: {
-        name: "Spa Academy",
-        logo: "/logo.png",
-        specialty: "Wellness",
-      },
-    },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-  };
+        // Récupérer l'utilisateur depuis la session
+        const userResponse = await fetch("/api/auth/me", {
+          cache: "no-store",
+        });
 
-  const itemVariants: Variants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { type: "spring", stiffness: 100 },
-    },
-  };
+        let user: DashboardUser = {
+          id: 0,
+          name: "Étudiant",
+          email: "student@example.com",
+          role: "student",
+        };
+
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          if (userData?.user) {
+            user = userData.user;
+          }
+        }
+
+        setUser(user);
+
+        // Utiliser l'API centralisée pour garantir la persistance des données
+        // Cette API retourne toutes les vidéos publiques (créateurs + admin) de manière persistante
+        const videosResponse = await fetch("/api/videos/all-public", {
+          cache: "no-store",
+        });
+
+        if (videosResponse.ok) {
+          const videosData = await videosResponse.json();
+
+          if (videosData.success && videosData.data) {
+            const { creatorVideos, adminVideos, allVideos } = videosData.data;
+
+            // Mettre à jour les états avec les données persistantes
+            setCreatorVideos(creatorVideos || []);
+            setAdminVideos(adminVideos || []);
+            setCourses(allVideos || []);
+            setFilteredCourses(allVideos || []);
+
+            // Log pour le débogage
+            console.log("Données vidéos chargées avec succès:", {
+              creatorVideos: creatorVideos?.length || 0,
+              adminVideos: adminVideos?.length || 0,
+              totalVideos: allVideos?.length || 0,
+              persistent: videosData.persistent,
+              timestamp: videosData.timestamp,
+            });
+          } else {
+            throw new Error("Format de réponse invalide");
+          }
+        } else {
+          throw new Error("Erreur lors de la récupération des vidéos");
+        }
+
+        // Vérifier si c'est un nouvel utilisateur (créé il y a moins de 24h)
+        const createdAt = user.created_at ? new Date(user.created_at) : new Date();
+        const now = new Date();
+        const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+        setIsNewUser(hoursDiff < 24);
+      } catch (error: unknown) {
+        console.error("Erreur dashboard étudiant:", error);
+        setError("Impossible de charger votre tableau de bord. Veuillez réessayer.");
+
+        // En cas d'erreur, utiliser des données par défaut pour éviter que le dashboard soit vide
+        const defaultData = {
+          creatorVideos: [],
+          adminVideos: [],
+          allVideos: [],
+        };
+
+        setCreatorVideos(defaultData.creatorVideos);
+        setAdminVideos(defaultData.adminVideos);
+        setCourses(defaultData.allVideos);
+        setFilteredCourses(defaultData.allVideos);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFB]">
-        <Loader2 className="animate-spin text-primary mb-4" size={40} />
-        <p className="text-gray-600 font-medium text-sm tracking-[0.1em]">
-          Accès à l'académie...
-        </p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFB] p-6 text-center">
+        <div className="bg-white p-8 rounded-[3rem] border border-gray-200 max-w-md shadow-2xl">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Video className="w-8 h-8 text-primary animate-pulse" />
+          </div>
+          <h2 className="text-xl font-bold text-[#002B24] mb-2">
+            Accès à l&apos;académie...
+          </h2>
+          <p className="text-gray-500 mb-8 text-sm leading-relaxed">
+            Chargement de votre espace d&apos;apprentissage personnalisé
+          </p>
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -326,182 +329,288 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFB] overflow-hidden font-sans">
-      <StudentHero user={user} />
+      {/* Contenu principal - plein écran sans padding */}
+      <div className="flex-1 overflow-y-auto">
+        <StudentHero user={user} />
 
-      {/* Message de bienvenue pour les nouveaux utilisateurs */}
-      {isNewUser && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="container mx-auto px-4 md:px-8 -mt-8 mb-8"
-        >
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-8 text-center">
-            <div className="max-w-2xl mx-auto">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white text-2xl">🎉</span>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                Bienvenue dans votre espace d'apprentissage !
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Nous sommes ravis de vous accueillir. Votre parcours commence
-                maintenant ! Explorez nos formations et commencez à développer
-                vos compétences.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={() => setIsNewUser(false)}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105"
-                >
-                  Commencer à explorer
-                </button>
-                <button
-                  onClick={() =>
-                    router.push(`/${locale}/dashboard/student/profile`)
-                  }
-                  className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-300"
-                >
-                  Compléter mon profil
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      <main className="container mx-auto px-4 md:px-8 py-10">
-        <FeaturedGrid />
-
-        <section className="mt-20">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-            <div>
-              <h2 className="text-2xl font-bold text-[#002B24] tracking-tight">
-                Catalogue des formations
-              </h2>
-              <p className="text-gray-500 mt-2 text-sm font-medium uppercase tracking-[0.15em]">
-                Explorez l'excellence académique
-              </p>
-            </div>
-            <CategoryFilters />
-          </div>
-
-          {videos.length > 0 ? (
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
-            >
-              {videos.map((video) => (
-                <motion.div variants={itemVariants} key={video.id}>
-                  <VideoCard video={video} />
-                </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            <div className="py-20 text-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200">
-              <span className="text-xs text-gray-500">
-                Aucune formation disponible pour le moment
-              </span>
-            </div>
-          )}
-
-          <div className="flex justify-center mt-12">
-            <LoadMoreButton />
-          </div>
-        </section>
-      </main>
-
-      {/* --- SECTION EXPERTS --- */}
-      <section className="mt-4 mb-16 bg-[#002B24] py-12 relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
-
-        <div className="max-w-[1440px] mx-auto px-4 md:px-8">
-          <div className="flex justify-between items-center mb-8 relative z-10">
-            <div className="max-w-xl">
-              <span className="text-primary text-[9px] font-black uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-                Elite Experts
-              </span>
-              <h2 className="text-xl font-bold text-white mt-3 leading-tight">
-                Pépites de nos{" "}
-                <span className="italic text-primary font-serif">experts</span>
-              </h2>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => scroll("left")}
-                className="p-3 rounded-full border border-white/10 text-white hover:bg-white hover:text-[#002B24] transition-all active:scale-90"
-              >
-                <ArrowLeft size={18} />
-              </button>
-              <button
-                onClick={() => scroll("right")}
-                className="p-3 rounded-full bg-primary text-[#002B24] hover:bg-white transition-all active:scale-90 shadow-lg shadow-primary/20"
-              >
-                <ArrowRight size={18} />
-              </button>
-            </div>
-          </div>
-
-          <div
-            ref={scrollRef}
-            className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-4 relative z-10"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        {/* Message de bienvenue pour les nouveaux utilisateurs */}
+        {isNewUser && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="w-full -mt-8 mb-8"
           >
-            {creatorCourses.map((item) => (
-              <motion.div
-                key={item.id}
-                whileHover={{ y: -5 }}
-                className="snap-start shrink-0 w-[80vw] md:w-[320px] bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-5 hover:bg-white/10 transition-all group"
-              >
-                <div className="relative h-44 w-full rounded-[1.8rem] overflow-hidden mb-5">
-                  <Image
-                    src={item.image}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                    alt={item.title}
-                  />
-                  <div className="absolute top-3 left-3 bg-white p-2 rounded-xl shadow-lg">
-                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center font-black text-[#002B24] text-[8px] uppercase">
-                      {item.creator.name.substring(0, 3)}
-                    </div>
-                  </div>
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-8 text-center">
+              <div className="max-w-2xl mx-auto">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white text-2xl">? </span>
                 </div>
-
-                <div className="space-y-3 text-white">
-                  <p className="text-primary text-[9px] font-black uppercase tracking-wider">
-                    {item.creator.name}
-                  </p>
-                  <h4 className="text-base font-semibold leading-tight min-h-[44px] line-clamp-2">
-                    {item.title}
-                  </h4>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                    <div className="flex items-center gap-2 text-white/60 text-xs">
-                      <Users size={14} className="text-primary" />
-                      <span>{item.students.toLocaleString()} élèves</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-orange-400 font-semibold text-xs bg-orange-400/5 px-2 py-0.5 rounded-md">
-                      <Star size={12} fill="currentColor" />
-                      <span>{item.rating}</span>
-                    </div>
-                  </div>
-                  <button className="w-full py-3.5 bg-white text-[#002B24] rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-primary hover:text-white transition-all active:scale-[0.97]">
-                    Découvrir
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  Bienvenue dans votre espace d&apos;apprentissage !
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Nous sommes ravis de vous accueillir. Votre parcours commence
+                  maintenant ! Explorez nos formations et commencez à développer
+                  vos compétences.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <button
+                    onClick={() => setIsNewUser(false)}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105"
+                  >
+                    Commencer à explorer
+                  </button>
+                  <button
+                    onClick={() =>
+                      router.push(`/${locale}/dashboard/student/profile`)
+                    }
+                    className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-300"
+                  >
+                    Compléter mon profil
                   </button>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+              </div>
+            </div>
+          </motion.div>
+        )}
+        <FeaturedGrid />
+        <div className="w-full py-2">
+          <CategoryFilters
+            courses={courses}
+            onFilterChange={handleFilterChange}
+          />
 
-      <main className="container mx-auto px-4 md:px-8 pb-20">
-        <PremiumBanner />
-      </main>
+          {/* --- SECTION PÉPITES DE NOS EXPERTS --- */}
+          <section className="mt-0 mb-4 bg-[#002B24] p-4 relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+
+            <div className="max-w-[1440px] p-6 mx-auto w-full">
+              <div className="flex justify-between items-center mb-4 relative z-10">
+                <div className="max-w-xl">
+                  <span className="text-primary text-[9px] font-black uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                    Elite Experts
+                  </span>
+                  <h2 className="text-xl font-bold text-white mt-3 leading-tight">
+                    Pépites de nos{" "}
+                    <span className="italic text-primary font-serif">
+                      experts
+                    </span>
+                  </h2>
+                  <p className="text-gray-400 text-sm mt-2">
+                    Découvrez les meilleures formations créées par nos experts certifiés
+                  </p>
+                </div>
+                <div className="hidden md:flex gap-2">
+                  <button
+                    onClick={() => scroll("left")}
+                    className="p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 transition-colors"
+                  >
+                    <ArrowLeft size={16} className="text-white" />
+                  </button>
+                  <button
+                    onClick={() => scroll("right")}
+                    className="p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 transition-colors"
+                  >
+                    <ArrowRight size={16} className="text-white" />
+                  </button>
+                </div>
+              </div>
+
+              <div
+                ref={scrollRef}
+                className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+              >
+                {creatorVideos.slice(0, 6).map((video: any, index: number) => (
+                  <motion.div
+                    key={video.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex-none w-[280px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden hover:bg-white/10 transition-colors cursor-pointer group"
+                    onClick={() => {
+                      // Naviguer vers la page de la vidéo
+                      router.push(`/${locale}/video/${video.id}`);
+                    }}
+                  >
+                    {/* Thumbnail */}
+                    <div className="relative aspect-video bg-gray-800">
+                      {video.thumbnail ? (
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
+                            <Play size={24} className="text-primary" />
+                          </div>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+                          <Play size={20} className="text-gray-900 ml-1" />
+                        </div>
+                      </div>
+                      {/* Badge Expert */}
+                      <div className="absolute top-2 left-2 z-20">
+                        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-current" />
+                          Expert
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-4">
+                      <h3 className="font-bold text-white text-sm mb-2 line-clamp-2">
+                        {video.title}
+                      </h3>
+                      <p className="text-gray-400 text-xs mb-3 line-clamp-2">
+                        {video.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          <Star
+                            size={12}
+                            className="text-yellow-400 fill-current"
+                          />
+                          <span className="text-white text-xs">
+                            {video.rating || 4.8}
+                          </span>
+                        </div>
+                        <div className="text-gray-400 text-xs">
+                          {video.views || 0} vues
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
+                          <User size={12} className="text-gray-300" />
+                        </div>
+                        <span className="text-gray-300 text-xs truncate">
+                          {video.creator?.name || "Expert"}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+          
+
+          {/* --- SECTION CATALOGUE DES FORMATIONS --- */}
+          <section className="mt-4 w-full">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4 px-2 md:px-4">
+              <div>
+                <h2 className="text-2xl font-bold text-[#002B24] tracking-tight">
+                  Catalogue des formations
+                </h2>
+                <p className="text-gray-500 mt-2 text-sm font-medium uppercase tracking-[0.15em]">
+                  Explorez l&apos;excellence académique
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full font-medium">
+                  {filteredCourses.length} {filteredCourses.length === 1 ? "formation" : "formations"}
+                </span>
+                <div className="flex gap-2">
+                  <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                    {creatorVideos.length} créateur{creatorVideos.length > 1 ? "s" : ""}
+                  </span>
+                  <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+                    {adminVideos.length} admin{adminVideos.length > 1 ? "s" : ""}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {filteredCourses.length > 0 ? (
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 px-2 md:px-4"
+              >
+                {filteredCourses.map((course) => (
+                  <motion.div
+                    variants={itemVariants}
+                    key={course.id}
+                    className="relative"
+                  >
+                    {/* Badge pour les vidéos admin */}
+                    {course.is_admin_video && (
+                      <div className="absolute -top-2 -right-2 z-20">
+                        <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1">
+                          <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                          Admin
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Badge pour les vidéos créateurs */}
+                    {!course.is_admin_video && creatorVideos.some(cv => cv.id === course.id) && (
+                      <div className="absolute -top-2 -right-2 z-20">
+                        <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-current" />
+                          Créateur
+                        </div>
+                      </div>
+                    )}
+
+                    <VideoCard
+                      video={{
+                        id: course.id,
+                        title: course.title,
+                        description: course.description || "",
+                        thumbnail:
+                          course.thumbnail || course.image || "/placeholder-course.jpg",
+                        video_url: course.video_url || "",
+                        duration: course.duration || '00:00',
+                        order: 0,
+                        creator_id: 0,
+                        views: course.students_count || 0,
+                        likes: Math.floor((course.students_count || 0) * 0.8),
+                        comments: [],
+                        tags: course.tags || [],
+                        is_published: course.is_published ?? true,
+                        visibility: "public",
+                        created_at: course.created_at || new Date().toISOString(),
+                        updated_at: course.updated_at || new Date().toISOString(),
+                        creator: {
+                          id: 0,
+                          name: course.creator?.name || (course.is_admin_video ? "Admin" : "Créateur"),
+                          email: course.is_admin_video ? "admin@matchmyformation.com" : "creator@example.com",
+                          avatar: course.creator?.avatar || (course.is_admin_video ? "/admin-avatar.png" : "/default-avatar.png"),
+                        },
+                        is_free: true,
+                        price: 0,
+                        rating: course.rating || 0,
+                      }}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              <div className="py-20 text-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200 mx-2 md:mx-4">
+                <div className="max-w-md mx-auto">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Aucune formation disponible
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    Les formations apparaîtront ici dès qu&apos;elles seront publiées par les créateurs et administrateurs.
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
     </div>
   );
 }

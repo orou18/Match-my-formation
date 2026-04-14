@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -43,6 +44,16 @@ class Employee extends Authenticatable
     }
 
     /**
+     * Relation avec les pathways assignés
+     */
+    public function pathways(): BelongsToMany
+    {
+        return $this->belongsToMany(Pathway::class, 'employee_pathways')
+            ->withPivot('assigned_at', 'completed_at', 'progress_percentage', 'is_active')
+            ->withTimestamps();
+    }
+
+    /**
      * Générer un ID de connexion unique
      */
     public static function generateLoginId(): string
@@ -50,7 +61,7 @@ class Employee extends Authenticatable
         do {
             $loginId = 'EMP_' . strtoupper(Str::random(8));
         } while (self::where('login_id', $loginId)->exists());
-        
+
         return $loginId;
     }
 

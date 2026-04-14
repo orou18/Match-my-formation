@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams } from "next/navigation";
-import { Loader2, Film, ArrowRight } from "lucide-react";
+import { Film, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 // Importations des composants UI de ta première version
@@ -117,7 +117,7 @@ export default function CoursesPage() {
 
               {loading ? (
                 <div className="flex justify-center py-20">
-                  <Loader2 className="animate-spin text-[#FFB74D]" size={40} />
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#FFB74D]"></div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">

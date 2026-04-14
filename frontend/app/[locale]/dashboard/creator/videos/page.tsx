@@ -20,33 +20,43 @@ import {
   FileText,
   X,
   Calendar,
+  Copy,
 } from "lucide-react";
 import { isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/video-utils";
+import { creatorDashboardApi } from "@/lib/services/creator-dashboard-api";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface VideoData {
   id: string;
   title: string;
   description: string;
-  thumbnail: string;
-  video_url: string;
+  thumbnail?: string | null;
+  video_url?: string | null;
   duration: string;
   views: number;
   students: number;
   revenue: number;
-  status: "published" | "draft" | "processing" | "archived";
-  createdAt: string;
-  updatedAt: string;
+  status: "published" | "draft" | "unlisted";
+  visibility?: "public" | "private" | "unlisted";
+  createdAt?: string;
+  updatedAt?: string;
+  created_at?: string;
+  updated_at?: string;
   category: string;
   price: number;
   language: string;
 }
 
 export default function VideosPage() {
+  const params = useParams();
+  const router = useRouter();
+  const locale = (params as any)?.locale || "fr";
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<
-    "all" | "published" | "draft" | "processing" | "archived"
+    "all" | "published" | "draft" | "unlisted"
   >("all");
   const [sortBy, setSortBy] = useState<"date" | "views" | "revenue" | "title">(
     "date"
@@ -56,15 +66,21 @@ export default function VideosPage() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
-    // Charger les vidéos depuis l'API
     const fetchVideos = async () => {
+      setLoading(true);
       try {
-        const response = await fetch("/api/creator/videos-simple");
+        const response = await fetch("/api/creator/videos", {
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+          credentials: "include",
+        });
+
         if (response.ok) {
           const data = await response.json();
-          setVideos(data.videos || []);
-        } else {
-          console.error("Erreur lors du chargement des vidéos");
+          const videosList = Array.isArray(data.videos) ? data.videos : [];
+          setVideos(videosList);
         }
       } catch (error) {
         console.error("Erreur fetch vidéos:", error);
@@ -72,9 +88,42 @@ export default function VideosPage() {
         setLoading(false);
       }
     };
-
     fetchVideos();
   }, []);
+
+  // Fonction pour recharger les vidéos (utilisée depuis d'autres pages)
+  const refreshVideos = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/creator/videos", {
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const videosList = Array.isArray(data.videos) ? data.videos : [];
+        setVideos(videosList);
+      }
+    } catch (error) {
+      console.error("Erreur lors du rechargement des vidéos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Exposer la fonction de rechargement globalement pour les autres pages
+  useEffect(() => {
+    // Stocker la fonction de rechargement pour y accéder depuis d'autres composants
+    (window as any).refreshCreatorVideos = refreshVideos;
+
+    return () => {
+      delete (window as any).refreshCreatorVideos;
+    };
+  }, [refreshVideos]);
 
   const getStatusColor = (status: VideoData["status"]) => {
     switch (status) {
@@ -82,9 +131,7 @@ export default function VideosPage() {
         return "bg-green-50 border-green-200 text-green-800";
       case "draft":
         return "bg-gray-50 border-gray-200 text-gray-800";
-      case "processing":
-        return "bg-yellow-50 border-yellow-200 text-yellow-800";
-      case "archived":
+      case "unlisted":
         return "bg-red-50 border-red-200 text-red-800";
       default:
         return "bg-gray-50 border-gray-200 text-gray-800";
@@ -97,9 +144,7 @@ export default function VideosPage() {
         return <Play className="w-4 h-4" />;
       case "draft":
         return <FileText className="w-4 h-4" />;
-      case "processing":
-        return <Clock className="w-4 h-4" />;
-      case "archived":
+      case "unlisted":
         return <Pause className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
@@ -112,10 +157,8 @@ export default function VideosPage() {
         return "Publié";
       case "draft":
         return "Brouillon";
-      case "processing":
-        return "En traitement";
-      case "archived":
-        return "Archivé";
+      case "unlisted":
+        return "Non listée";
       default:
         return status;
     }
@@ -143,27 +186,39 @@ export default function VideosPage() {
 
   const filteredVideos = videos
     .filter((video) => {
+      // Gestion du filtre par statut
       const matchesFilter = filter === "all" || video.status === filter;
 
+      // Gestion du filtre par recherche avec valeurs par défaut
+      const title = video.title || "";
+      const description = video.description || "";
+      const category = video.category || "";
+      const searchLower = searchTerm.toLowerCase();
+
       const matchesSearch =
-        video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        video.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        video.category.toLowerCase().includes(searchTerm.toLowerCase());
+        title.toLowerCase().includes(searchLower) ||
+        description.toLowerCase().includes(searchLower) ||
+        category.toLowerCase().includes(searchLower);
 
       return matchesFilter && matchesSearch;
     })
     .sort((a, b) => {
       switch (sortBy) {
         case "date":
-          return (
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          // Gestion des différentes propriétés de date possibles
+          const dateA = new Date(
+            a.updatedAt || a.updated_at || a.createdAt || a.created_at || 0
           );
+          const dateB = new Date(
+            b.updatedAt || b.updated_at || b.createdAt || b.created_at || 0
+          );
+          return dateB.getTime() - dateA.getTime();
         case "views":
-          return b.views - a.views;
+          return (b.views || 0) - (a.views || 0);
         case "revenue":
-          return b.revenue - a.revenue;
+          return (b.revenue || 0) - (a.revenue || 0);
         case "title":
-          return a.title.localeCompare(b.title);
+          return (a.title || "").localeCompare(b.title || "");
         default:
           return 0;
       }
@@ -193,15 +248,19 @@ export default function VideosPage() {
   const handleVideoPreview = (video: VideoData) => {
     setSelectedVideo(video);
     setIsPreviewOpen(true);
+    // Bloquer le scroll du body
+    document.body.style.overflow = "hidden";
   };
 
   const closePreview = () => {
     setIsPreviewOpen(false);
     setSelectedVideo(null);
+    // Restaurer le scroll du body
+    document.body.style.overflow = "";
   };
 
   const handleBulkAction = async (
-    action: "publish" | "draft" | "archive" | "delete"
+    action: "publish" | "draft" | "unlisted" | "delete"
   ) => {
     if (action === "delete") {
       if (
@@ -212,11 +271,25 @@ export default function VideosPage() {
         // Appeler l'API DELETE pour chaque vidéo sélectionnée
         try {
           await Promise.all(
-            selectedVideos.map((videoId) =>
-              fetch(`/api/creator/videos-simple?id=${videoId}`, {
-                method: "DELETE",
-              })
-            )
+            selectedVideos.map(async (videoId) => {
+              const response = await fetch(
+                `/api/creator/videos?id=${videoId}`,
+                {
+                  method: "DELETE",
+                  headers: {
+                    Accept: "application/json",
+                  },
+                  cache: "no-store",
+                  credentials: "include",
+                }
+              );
+
+              if (!response.ok) {
+                throw new Error(
+                  `Erreur lors de la suppression de la vidéo ${videoId}`
+                );
+              }
+            })
           );
 
           // Mettre à jour le state local
@@ -233,20 +306,50 @@ export default function VideosPage() {
       // Appeler l'API PUT pour chaque vidéo sélectionnée
       try {
         await Promise.all(
-          selectedVideos.map((videoId) =>
-            fetch("/api/creator/videos-simple", {
+          selectedVideos.map(async (videoId) => {
+            const response = await fetch(`/api/creator/videos`, {
               method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: videoId, status: action }),
-            })
-          )
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify({
+                id: videoId,
+                visibility:
+                  action === "publish"
+                    ? "public"
+                    : action === "unlisted"
+                      ? "unlisted"
+                      : "private",
+                is_published: action === "publish",
+              }),
+              cache: "no-store",
+              credentials: "include",
+            });
+
+            if (!response.ok) {
+              throw new Error(
+                `Erreur lors de la mise à jour de la vidéo ${videoId}`
+              );
+            }
+          })
         );
 
         // Mettre à jour le state local
         setVideos((prev) =>
           prev.map((v) =>
             selectedVideos.includes(v.id)
-              ? { ...v, status: action as VideoData["status"] }
+              ? {
+                  ...v,
+                  visibility:
+                    action === "publish"
+                      ? "public"
+                      : action === "unlisted"
+                        ? "unlisted"
+                        : "private",
+                  status: action === "publish" ? "published" : "draft",
+                  is_published: action === "publish",
+                }
               : v
           )
         );
@@ -259,31 +362,74 @@ export default function VideosPage() {
   };
 
   const handleEditVideo = (video: VideoData) => {
-    // Rediriger vers la page d'édition
-    window.location.href = `/fr/dashboard/creator/videos/${video.id}/edit`;
+    if (!video || !video.id) {
+      console.error("Video ID is missing:", video);
+      return;
+    }
+    router.push(`/${locale}/dashboard/creator/videos/${video.id}/edit`);
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedVideos.length === 0) return;
+
+    if (
+      !confirm(
+        `Êtes-vous sûr de vouloir supprimer ${selectedVideos.length} vidéo(s) ?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      // Utiliser le bon endpoint API
+      for (const videoId of selectedVideos) {
+        const response = await fetch(`/api/creator/videos?id=${videoId}`, {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Erreur lors de la suppression de la vidéo ${videoId}`
+          );
+        }
+      }
+
+      // Mettre à jour le state local
+      setVideos((prev) => prev.filter((v) => !selectedVideos.includes(v.id)));
+      setSelectedVideos([]);
+    } catch (error) {
+      console.error("Erreur suppression vidéo:", error);
+      alert("Erreur lors de la suppression des vidéos");
+    }
   };
 
   const handleDeleteVideo = async (video: VideoData) => {
-    if (
-      confirm(`Êtes-vous sûr de vouloir supprimer la vidéo "${video.title}" ?`)
-    ) {
-      try {
-        const response = await fetch(
-          `/api/creator/videos-simple?id=${video.id}`,
-          {
-            method: "DELETE",
-          }
-        );
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer "${video.title}" ?`)) {
+      return;
+    }
 
-        if (response.ok) {
-          setVideos((prev) => prev.filter((v) => v.id !== video.id));
-        } else {
-          alert("Erreur lors de la suppression de la vidéo");
-        }
-      } catch (error) {
-        console.error("Erreur suppression vidéo:", error);
-        alert("Erreur lors de la suppression de la vidéo");
+    try {
+      // Utiliser le bon endpoint API
+      const response = await fetch(`/api/creator/videos?id=${video.id}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      });
+
+      if (response.ok) {
+        setVideos((prev) => prev.filter((v) => v.id !== video.id));
+      } else {
+        throw new Error("Erreur lors de la suppression de la vidéo");
       }
+    } catch (error) {
+      console.error("Erreur suppression vidéo:", error);
+      alert("Erreur lors de la suppression de la vidéo");
     }
   };
 
@@ -329,13 +475,13 @@ export default function VideosPage() {
           </p>
         </div>
 
-        <a
-          href="/fr/dashboard/creator/videos/create"
+        <Link
+          href={`/${locale}/dashboard/creator/videos/create`}
           className="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 font-medium"
         >
           <Plus className="w-5 h-5" />
           Créer une vidéo
-        </a>
+        </Link>
       </div>
 
       {/* Stats Cards */}
@@ -436,12 +582,19 @@ export default function VideosPage() {
               { value: "all", label: "Toutes" },
               { value: "published", label: "Publiées" },
               { value: "draft", label: "Brouillons" },
-              { value: "processing", label: "En cours" },
-              { value: "archived", label: "Archivées" },
+              { value: "unlisted", label: "Non listées" },
             ].map((filterType) => (
               <button
                 key={filterType.value}
-                onClick={() => setFilter(filterType.value as any)}
+                onClick={() =>
+                  setFilter(
+                    filterType.value as
+                      | "all"
+                      | "published"
+                      | "draft"
+                      | "unlisted"
+                  )
+                }
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   filter === filterType.value
                     ? "bg-primary text-white"
@@ -455,7 +608,11 @@ export default function VideosPage() {
 
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={(e) =>
+              setSortBy(
+                e.target.value as "date" | "views" | "revenue" | "title"
+              )
+            }
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
           >
             <option value="date">Date de modification</option>
@@ -485,10 +642,10 @@ export default function VideosPage() {
                 Brouillon
               </button>
               <button
-                onClick={() => handleBulkAction("archive")}
+                onClick={() => handleBulkAction("unlisted")}
                 className="px-3 py-1 bg-yellow-600 text-white rounded-lg text-sm hover:bg-yellow-700"
               >
-                Archiver
+                Non listée
               </button>
               <button
                 onClick={() => handleBulkAction("delete")}
@@ -514,13 +671,13 @@ export default function VideosPage() {
                 ? "Essayez de modifier votre recherche ou vos filtres"
                 : "Commencez par créer votre première vidéo"}
             </p>
-            <a
-              href="/fr/dashboard/creator/videos/create"
+            <Link
+              href={`/${locale}/dashboard/creator/videos/create`}
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium"
             >
               <Plus className="w-5 h-5" />
               Créer une vidéo
-            </a>
+            </Link>
           </div>
         ) : (
           <div className="p-6">
@@ -565,7 +722,11 @@ export default function VideosPage() {
                     {video.thumbnail &&
                     video.thumbnail !== "/api/placeholder/320/180" ? (
                       <img
-                        src={video.thumbnail}
+                        src={
+                          typeof video.thumbnail === "string"
+                            ? video.thumbnail
+                            : (video.thumbnail as any)?.url || ""
+                        }
                         alt={video.title}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -617,7 +778,15 @@ export default function VideosPage() {
 
                     <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
                       <span>{video.category}</span>
-                      <span>{formatDate(video.updatedAt)}</span>
+                      <span>
+                        {formatDate(
+                          video.updatedAt ||
+                            video.updated_at ||
+                            video.createdAt ||
+                            video.created_at ||
+                            new Date().toISOString()
+                        )}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -674,8 +843,12 @@ export default function VideosPage() {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden"
             onClick={(e) => e.stopPropagation()}
+            style={{
+              scrollbarWidth: "thin",
+              scrollbarColor: "#93c5fd #f3f4f6",
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -711,10 +884,60 @@ export default function VideosPage() {
                 ) : (
                   <video
                     controls
+                    autoPlay
+                    muted
+                    preload="metadata"
                     className="w-full h-full"
-                    poster={selectedVideo.thumbnail}
+                    poster={selectedVideo.thumbnail || undefined}
+                    onError={(e) => {
+                      console.error("Erreur de chargement vidéo:", e);
+                      const videoElement = e.target as HTMLVideoElement;
+                      const parent = videoElement.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
+                            <div style="text-align: center;">
+                              <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+                              <p style="color: #6b7280; margin-bottom: 0.5rem;">Erreur de chargement vidéo</p>
+                              <p style="color: #9ca3af; font-size: 0.875rem; margin-top: 0.5rem;">
+                                URL: ${selectedVideo.video_url || "Non définie"}
+                              </p>
+                              <button 
+                                onclick="window.open('${selectedVideo.video_url || "#"}', '_blank')"
+                                style="margin-top: 1rem; padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 0.5rem; cursor: pointer;"
+                              >
+                                Ouvrir dans un nouvel onglet
+                              </button>
+                            </div>
+                          </div>
+                        `;
+                      }
+                    }}
+                    onLoadStart={() => {
+                      console.log(
+                        "Début du chargement vidéo:",
+                        selectedVideo.video_url
+                      );
+                    }}
+                    onCanPlay={() => {
+                      console.log(
+                        "Vidéo prête à jouer:",
+                        selectedVideo.video_url
+                      );
+                    }}
                   >
-                    <source src={selectedVideo.video_url} type="video/mp4" />
+                    <source
+                      src={selectedVideo.video_url || ""}
+                      type="video/mp4"
+                    />
+                    <source
+                      src={selectedVideo.video_url || ""}
+                      type="video/webm"
+                    />
+                    <source
+                      src={selectedVideo.video_url || ""}
+                      type="video/ogg"
+                    />
                     Votre navigateur ne supporte pas la lecture vidéo.
                   </video>
                 )
@@ -724,79 +947,112 @@ export default function VideosPage() {
                     <Video className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">Vidéo non disponible</p>
                     <p className="text-sm text-gray-400 mt-2">
-                      URL de la vidéo manquante
+                      Aucune URL de vidéo définie
                     </p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Video Info */}
-            <div className="p-6 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    Informations
+            {/* Video Details */}
+            <div className="flex-1 p-6">
+              <div className="space-y-6">
+                {/* Video Info */}
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Détails de la vidéo
                   </h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Durée:</span>
-                      <span className="font-medium">
-                        {selectedVideo.duration}
-                      </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Titre</p>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {selectedVideo.title}
+                      </p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Catégorie:</span>
-                      <span className="font-medium">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Catégorie
+                      </p>
+                      <p className="text-sm text-gray-900 mt-1">
                         {selectedVideo.category}
-                      </span>
+                      </p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Statut:</span>
-                      <span
-                        className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1 w-fit ${getStatusColor(selectedVideo.status)}`}
-                      >
-                        {getStatusIcon(selectedVideo.status)}
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Durée</p>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {selectedVideo.duration}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Statut
+                      </p>
+                      <p className="text-sm text-gray-900 mt-1">
                         {getStatusLabel(selectedVideo.status)}
-                      </span>
+                      </p>
                     </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    Statistiques
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Vues:</span>
-                      <span className="font-medium">
-                        {formatNumber(selectedVideo.views)}
-                      </span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Vues</p>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {selectedVideo.views.toLocaleString()}
+                      </p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Étudiants:</span>
-                      <span className="font-medium">
-                        {selectedVideo.students}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Revenus:</span>
-                      <span className="font-medium text-green-600">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Revenus
+                      </p>
+                      <p className="text-sm text-gray-900 mt-1">
                         {formatCurrency(selectedVideo.revenue)}
-                      </span>
+                      </p>
                     </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-sm font-medium text-gray-700">
+                      Description
+                    </p>
+                    <p className="text-sm text-gray-900 mt-1">
+                      {selectedVideo.description}
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Actions</h3>
-                  <div className="flex gap-2">
-                    <button className="px-3 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors">
+                {/* Action Buttons */}
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Actions
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={() => {
+                        handleEditVideo(selectedVideo);
+                        closePreview();
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
                       Modifier
                     </button>
-                    <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors">
+                    <button
+                      onClick={() => {
+                        // Dupliquer la vidéo
+                        closePreview();
+                        // TODO: Implémenter la duplication
+                        alert("Fonction de duplication à implémenter");
+                      }}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+                    >
+                      <Copy className="w-4 h-4" />
                       Dupliquer
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleDeleteVideo(selectedVideo);
+                        closePreview();
+                      }}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Supprimer
                     </button>
                   </div>
                 </div>

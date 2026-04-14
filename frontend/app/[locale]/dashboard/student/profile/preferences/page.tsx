@@ -2,14 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { Bell, Globe, Moon, Sun, Mail, Smartphone } from "lucide-react";
-import UserIdManager from "@/lib/user-id-manager";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useTranslation } from "@/components/providers/TranslationProvider";
+import {
+  studentProfileApi,
+  type StudentPreferences,
+} from "@/lib/services/student-profile-api";
 
 export default function PreferencesPage() {
   const { theme, setTheme } = useTheme();
-  const { language, setLanguage, t } = useTranslation();
-  const [preferences, setPreferences] = useState({
+  const { language, setLanguage } = useTranslation();
+  const [preferences, setPreferences] = useState<StudentPreferences>({
     emailNotifications: true,
     pushNotifications: false,
     newsletter: true,
@@ -20,25 +23,30 @@ export default function PreferencesPage() {
   const [messageType, setMessageType] = useState<"success" | "error">(
     "success"
   );
-
-  // Charger les préférences au démarrage
   useEffect(() => {
-    // Charger les autres préférences
-    const savedPreferences = localStorage.getItem("userPreferences");
-    if (savedPreferences) {
+    const loadPreferences = async () => {
       try {
-        const parsed = JSON.parse(savedPreferences);
+        const data = await studentProfileApi.getPreferences();
+        const loaded = data.preferences || data;
         setPreferences({
-          emailNotifications: parsed.emailNotifications ?? true,
-          pushNotifications: parsed.pushNotifications ?? false,
-          newsletter: parsed.newsletter ?? true,
-          timezone: parsed.timezone ?? "Europe/Paris",
+          emailNotifications: loaded.emailNotifications ?? true,
+          pushNotifications: loaded.pushNotifications ?? false,
+          newsletter: loaded.newsletter ?? true,
+          timezone: loaded.timezone ?? "Europe/Paris",
         });
+        if (loaded.theme && loaded.theme !== theme) {
+          setTheme(loaded.theme);
+        }
+        if (loaded.language && loaded.language !== language) {
+          setLanguage(loaded.language);
+        }
       } catch (error) {
         console.error("Erreur lors du chargement des préférences:", error);
       }
-    }
-  }, []);
+    };
+
+    loadPreferences();
+  }, [language, setLanguage, setTheme, theme]);
 
   const cardStyle =
     "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[2rem] p-8 shadow-sm hover:shadow-md transition-all";
@@ -97,23 +105,8 @@ export default function PreferencesPage() {
       );
 
       // Sauvegarder via l'API
-      const response = await fetch("/api/user/preferences", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          preferences: userPreferences,
-        }),
-      });
-
-      if (response.ok) {
-        console.log("Préférences sauvegardées avec succès");
-        showMessage("Préférences sauvegardées avec succès", "success");
-      } else {
-        console.error("Erreur lors de la sauvegarde:", response.statusText);
-        showMessage("Erreur lors de la sauvegarde", "error");
-      }
+      await studentProfileApi.updatePreferences(userPreferences);
+      showMessage("Préférences sauvegardées avec succès", "success");
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
       showMessage("Préférences sauvegardées localement", "success");
@@ -209,8 +202,8 @@ export default function PreferencesPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="w-full min-w-0 space-y-8">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <h1 className="text-3xl font-black text-primary dark:text-primary">
           {localT("preferences.title", "Préférences")}
         </h1>
@@ -474,7 +467,7 @@ export default function PreferencesPage() {
       </div>
 
       {/* Bouton de sauvegarde */}
-      <div className="flex justify-end">
+      <div className="flex justify-start lg:justify-end">
         <button
           onClick={handleSavePreferences}
           disabled={loading}

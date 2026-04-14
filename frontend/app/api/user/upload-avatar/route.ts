@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/auth-options";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
+import { getUserIdFromToken } from "@/lib/auth";
+import { updateProfile } from "@/lib/server/account-store";
+
+type SessionUser = {
+  id?: string | number;
+};
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const userId = getUserIdFromToken(request);
+    const session = userId ? null : await getServerSession(authOptions);
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
-    if (!session?.user) {
+    if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -43,14 +52,14 @@ export async function POST(request: NextRequest) {
     const uploadsDir = join(process.cwd(), "public", "uploads", "avatars");
     try {
       await mkdir(uploadsDir, { recursive: true });
-    } catch (error) {
+    } catch {
       // Le répertoire existe déjà
     }
 
     // Générer un nom de fichier unique
     const timestamp = Date.now();
     const fileExtension = file.name.split(".").pop();
-    const fileName = `${(session.user as any)?.id || "user"}_${timestamp}.${fileExtension}`;
+    const fileName = `${finalUserId || "user"}_${timestamp}.${fileExtension}`;
     const filePath = join(uploadsDir, fileName);
 
     // Sauvegarder le fichier
@@ -61,7 +70,7 @@ export async function POST(request: NextRequest) {
     // URL de l'avatar
     const avatarUrl = `/uploads/avatars/${fileName}`;
 
-    console.log("Avatar uploadé:", avatarUrl);
+    updateProfile(String(finalUserId), { avatar: avatarUrl });
 
     return NextResponse.json({
       message: "Avatar téléchargé avec succès",

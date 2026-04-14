@@ -16,35 +16,36 @@ return new class extends Migration
             $table->string('title');
             $table->string('slug')->nullable();
             $table->text('description')->nullable();
-            
-            // Stockage
-            $table->string('url'); // Chemin du fichier (ex: videos/nom_du_fichier.mp4)
-            $table->string('thumbnail')->nullable(); // Image d'aperçu
-            
+
+            // Stockage & source vidéo
+            $table->enum('source_type', ['upload', 'external'])->default('upload');
+            $table->string('url')->nullable(); // chemin local/S3 pour upload
+            $table->string('external_url')->nullable(); // YouTube/Vimeo/etc.
+            $table->string('provider')->nullable(); // youtube, vimeo, direct
+            $table->string('storage_disk')->nullable()->default('public');
+            $table->string('thumbnail')->nullable();
+
             // Organisation
-            $table->string('category')->nullable()->index(); // Tourisme, Hôtellerie, etc.
-            
-            // Système de droits & visibilité
-            // 'public' = visible par tous, 'private' = limité aux élèves du partenaire ou groupe spécifique
-            $table->enum('visibility', ['public', 'private'])->default('public');
-            
+            $table->string('category')->nullable()->index();
+
+            // Droits & visibilité
+            $table->enum('visibility', ['public', 'private', 'unlisted'])->default('public');
+            $table->boolean('allow_comments')->default(true);
+
             // Relations
-            // L'utilisateur qui a uploadé (Admin ou Employé du partenaire)
             $table->foreignId('uploader_id')->nullable()->constrained('users')->onDelete('cascade');
-            
-            // Si la vidéo appartient à un partenaire spécifique
             $table->foreignId('company_id')->nullable()->constrained('companies')->onDelete('cascade');
-            
-            // Si la vidéo fait partie d'un module/cours précis
             $table->foreignId('module_id')->nullable()->constrained('modules')->onDelete('set null');
-            
-            // Ordre d'affichage dans le module
             $table->integer('order')->default(0);
 
             // Métadonnées
-            $table->integer('duration')->nullable(); // Durée en secondes
+            $table->integer('duration')->nullable();
             $table->bigInteger('views')->default(0);
-            
+            $table->unsignedInteger('likes')->default(0);
+            $table->unsignedInteger('comments')->default(0);
+            $table->unsignedInteger('shares')->default(0);
+            $table->timestamp('published_at')->nullable();
+
             $table->timestamps();
         });
     }

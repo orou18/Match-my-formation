@@ -1,129 +1,172 @@
 import { NextRequest, NextResponse } from "next/server";
-
-// Base de données simple pour les vidéos publiques
-let publicVideos: any[] = [
-  {
-    id: "1",
-    title: "Introduction au Tourisme Durable",
-    description:
-      "Découvrez les fondamentaux du tourisme écologique et les pratiques durables pour un avenir responsable.",
-    thumbnail: "/videos/video1-thumb.jpg",
-    video_url: "/videos/video1.mp4",
-    duration: "12:34",
-    order: 1,
-    creator_id: 1,
-    views: 15420,
-    likes: 892,
-    comments: [
-      {
-        id: "1",
-        user_id: 2,
-        user_name: "Marie Laurent",
-        user_avatar: "/temoignage.png",
-        content: "Excellent contenu ! Très bien expliqué.",
-        created_at: "2024-03-15T10:30:00Z",
-        likes: 12,
-      },
-    ],
-    tags: ["tourisme", "durable", "ecologie"],
-    is_published: true,
-    visibility: "public",
-    learning_objectives: [
-      "Comprendre les principes du tourisme durable",
-      "Identifier les pratiques écologiques",
-      "Appliquer les normes de durabilité",
-    ],
-    resources: [
-      {
-        id: "1",
-        title: "Guide du Tourisme Durable",
-        type: "pdf",
-        url: "/resources/guide-tourisme-durable.pdf",
-        description: "Guide complet sur les pratiques durables",
-        file_size: 2048576,
-        created_at: "2024-03-15T09:00:00Z",
-      },
-    ],
-    created_at: "2024-03-15T08:00:00Z",
-    updated_at: "2024-03-15T08:00:00Z",
-  },
-  {
-    id: "2",
-    title: "Gestion Hôtelière Avancée",
-    description:
-      "Techniques avancées de gestion hôtelière pour les professionnels du secteur.",
-    thumbnail: "/videos/video2-thumb.jpg",
-    video_url: "/videos/video2.mp4",
-    duration: "45:20",
-    order: 2,
-    creator_id: 2,
-    views: 12350,
-    likes: 567,
-    comments: [],
-    tags: ["hotellerie", "management", "service"],
-    is_published: true,
-    visibility: "public",
-    learning_objectives: [
-      "Maîtriser la gestion opérationnelle",
-      "Optimiser les processus hôteliers",
-      "Gérer les équipes efficacement",
-    ],
-    resources: [],
-    created_at: "2024-03-10T10:00:00Z",
-    updated_at: "2024-03-10T10:00:00Z",
-  },
-];
+import { fetchPublicVideosPayload } from "@/lib/api/public-videos-proxy";
+import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
+import { videosStore } from "@/lib/store/videos-store";
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("STUDENT VIDEOS - Récupération des vidéos publiques");
+    // Essayer de récupérer les vidéos depuis le backend
+    let backendVideos = null;
+    let backendStatus = 200;
 
-    // Filtrer uniquement les vidéos publiques et publiées
-    const videos = publicVideos.filter(
-      (video) => video.visibility === "public" && video.is_published === true
-    );
+    try {
+      const response = await laravelFetch("/api/videos/public", { request });
+      const data = await parseLaravelJson(response);
 
-    console.log("STUDENT VIDEOS - Vidéos trouvées:", videos.length);
-    console.log(
-      "STUDENT VIDEOS - Titres:",
-      videos.map((v) => v.title)
-    );
+      if (response.ok && data?.success) {
+        backendVideos = data.videos || [];
+        backendStatus = response.status;
+      }
+    } catch (backendError) {
+      console.warn(
+        "Backend non accessible pour les vidéos publiques, utilisation du store local:",
+        backendError
+      );
+    }
 
-    return NextResponse.json({
-      videos,
-      total: videos.length,
-    });
+    // Si le backend a répondu avec succès, retourner sa réponse
+    if (backendVideos && backendVideos.length > 0) {
+      return NextResponse.json(
+        {
+          videos: backendVideos,
+          total: backendVideos.length,
+        },
+        { status: backendStatus }
+      );
+    }
+
+    // Sinon, utiliser le store local pour les vidéos publiques
+    try {
+      const publicVideos = await videosStore.getPublicVideos();
+
+      if (publicVideos && publicVideos.length > 0) {
+        return NextResponse.json(
+          {
+            videos: publicVideos,
+            total: publicVideos.length,
+          },
+          { status: 200 }
+        );
+      }
+    } catch (storeError) {
+      console.warn(
+        "Store local inaccessible, utilisation du fallback:",
+        storeError
+      );
+    }
+
+    // En dernier recours, utiliser le proxy existant avec fallback amélioré
+    const { response, body } = await fetchPublicVideosPayload();
+
+    // Ajouter des vidéos de fallback si aucune vidéo n'est trouvée
+    const videos = Array.isArray(body?.videos) ? body.videos : [];
+
+    if (videos.length === 0) {
+      // Vidéos de fallback pour la section pépites
+      const fallbackVideos = [
+        {
+          id: 1,
+          title: "Introduction au Marketing Digital",
+          description:
+            "Découvrez les bases du marketing digital et transformez votre stratégie",
+          thumbnail: "/videos/video1-thumb.jpg",
+          video_url: "/videos/video1.mp4",
+          duration: "15:30",
+          views: 1250,
+          likes: 89,
+          students_count: 3420,
+          rating: 4.8,
+          tags: ["marketing", "digital", "base"],
+          category: "marketing",
+          difficulty_level: "beginner",
+          language: "fr",
+          is_free: true,
+          price: 0,
+          created_at: "2024-01-15T10:30:00Z",
+          creator: {
+            id: 1,
+            name: "Expert Marketing",
+            avatar: "/avatars/default-creator.jpg",
+          },
+        },
+        {
+          id: 2,
+          title: "Techniques de Vente Avancées",
+          description:
+            "Maîtrisez les techniques de vente modernes pour augmenter vos conversions",
+          thumbnail: "/videos/video2-thumb.jpg",
+          video_url: "/videos/video2.mp4",
+          duration: "22:15",
+          views: 980,
+          likes: 67,
+          students_count: 2890,
+          rating: 4.6,
+          tags: ["vente", "techniques", "avancé"],
+          category: "sales",
+          difficulty_level: "intermediate",
+          language: "fr",
+          is_free: true,
+          price: 0,
+          created_at: "2024-01-14T14:20:00Z",
+          creator: {
+            id: 2,
+            name: "Expert Commercial",
+            avatar: "/avatars/default-creator.jpg",
+          },
+        },
+        {
+          id: 3,
+          title: "Gestion de la Relation Client",
+          description:
+            "Apprenez à fidéliser vos clients et à gérer efficacement la relation client",
+          thumbnail: "/videos/video1-thumb.jpg",
+          video_url: "/videos/video1.mp4",
+          duration: "18:45",
+          views: 756,
+          likes: 45,
+          students_count: 2156,
+          rating: 4.7,
+          tags: ["client", "relation", "fidélisation"],
+          category: "customer-service",
+          difficulty_level: "intermediate",
+          language: "fr",
+          is_free: true,
+          price: 0,
+          created_at: "2024-01-13T09:15:00Z",
+          creator: {
+            id: 3,
+            name: "Expert Service Client",
+            avatar: "/avatars/default-creator.jpg",
+          },
+        },
+      ];
+
+      return NextResponse.json(
+        {
+          videos: fallbackVideos,
+          total: fallbackVideos.length,
+        },
+        { status: 200 }
+      );
+    }
+
+    return NextResponse.json(body, { status: response.status });
   } catch (error) {
     console.error("STUDENT VIDEOS - Erreur:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Erreur serveur",
+        videos: [],
+        total: 0,
+      },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const { action, video } = await request.json();
-
-    if (action === "add") {
-      console.log("STUDENT VIDEOS - Ajout vidéo:", video.title);
-
-      // Ajouter la nouvelle vidéo si elle est publique
-      if (video.visibility === "public" && video.is_published === true) {
-        publicVideos.push(video);
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: "Vidéo ajoutée avec succès",
-        video: video,
-      });
-    }
-
-    return NextResponse.json(
-      { error: "Action non supportée" },
-      { status: 400 }
-    );
-  } catch (error) {
-    console.error("STUDENT VIDEOS - Erreur POST:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
+  return NextResponse.json(
+    { error: "Cette route legacy est en lecture seule." },
+    { status: 405 }
+  );
 }

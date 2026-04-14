@@ -1,27 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/auth-options";
+import { getUserIdFromToken } from "@/lib/auth";
+import {
+  getUserNotificationSettings,
+  updateUserNotificationSettings,
+} from "@/lib/server/account-store";
 
-// GET - Récupérer les paramètres de notification
+type SessionUser = {
+  id?: string | number;
+};
+
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const userId = getUserIdFromToken(request);
+    const session = userId ? null : await getServerSession(authOptions);
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
-    if (!session?.user) {
+    if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    // Mock settings - Remplacer par appel à votre base de données
-    const settings = {
-      courseAlerts: true,
-      marketingEmails: false,
-      directMessages: true,
-      systemAnnouncements: true,
-      achievementAlerts: true,
-      weeklyDigest: true,
-    };
-
-    return NextResponse.json(settings);
+    return NextResponse.json(getUserNotificationSettings(String(finalUserId)));
   } catch (error) {
     console.error(
       "Erreur lors de la récupération des paramètres de notification:",
@@ -31,12 +32,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PUT - Mettre à jour les paramètres de notification
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const userId = getUserIdFromToken(request);
+    const session = userId ? null : await getServerSession(authOptions);
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
-    if (!session?.user) {
+    if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -53,20 +56,22 @@ export async function PUT(request: NextRequest) {
     ];
     const filteredSettings = Object.keys(newSettings)
       .filter((key) => allowedFields.includes(key))
-      .reduce((obj, key) => {
-        obj[key] = newSettings[key];
-        return obj;
-      }, {} as any);
+      .reduce(
+        (obj, key) => {
+          obj[key] = newSettings[key] as boolean;
+          return obj;
+        },
+        {} as Record<string, boolean>
+      );
 
-    // Mock update - Remplacer par appel à votre base de données
-    console.log(
-      "Mise à jour des paramètres de notification:",
+    const nextSettings = updateUserNotificationSettings(
+      String(finalUserId),
       filteredSettings
     );
 
     return NextResponse.json({
       message: "Paramètres mis à jour avec succès",
-      ...filteredSettings,
+      ...nextSettings,
     });
   } catch (error) {
     console.error(

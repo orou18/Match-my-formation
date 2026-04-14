@@ -2,7 +2,17 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 
-export default function WelcomeHeader() {
+interface WelcomeHeaderProps {
+  userName: string;
+  streak: number;
+  rank: number;
+}
+
+export default function WelcomeHeader({
+  userName,
+  streak,
+  rank,
+}: WelcomeHeaderProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -13,8 +23,8 @@ export default function WelcomeHeader() {
         <div className="relative">
           <div className="w-24 h-24 rounded-full border-4 border-primary/20 p-1">
             <Image
-              src="/avatar-marie.jpg" // Assure-toi que le chemin est correct
-              alt="Marie Kouassi"
+              src="/avatars/creator1.jpg" // Avatar existant
+              alt={userName}
               width={96}
               height={96}
               className="rounded-full object-cover"
@@ -31,7 +41,7 @@ export default function WelcomeHeader() {
 
         <div className="text-center md:text-left">
           <h1 className="text-3xl font-black text-[#002B24] tracking-tight">
-            Bienvenue, Marie Kouassi
+            Bienvenue, {userName}
           </h1>
           <p className="text-gray-500 font-medium">
             Apprenant — Programme Guide Touristique Certifié
@@ -54,6 +64,34 @@ export default function WelcomeHeader() {
             transition={{ duration: 1.5, ease: "easeOut" }}
             className="h-full bg-gradient-to-r from-primary to-primary-light rounded-full shadow-[0_0_15px_rgba(0,128,128,0.3)]"
           />
+        </div>
+      </div>
+
+      {/* Statistiques additionnelles */}
+      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-primary">{streak}</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">
+            Jours d'affilée
+          </div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-green-600">#{rank}</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">
+            Classement
+          </div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-blue-600">12</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">
+            Cours
+          </div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-purple-600">8.5h</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">
+            Cette semaine
+          </div>
         </div>
       </div>
     </motion.div>

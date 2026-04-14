@@ -61,9 +61,27 @@ interface Employee {
   is_active: boolean;
 }
 
+interface CreatorVideoOption {
+  id: number;
+  title: string;
+  description: string;
+  duration: string;
+  thumbnail?: string | null;
+  visibility?: "public" | "private" | "unlisted";
+  category?: string;
+  tags?: string[];
+  is_published?: boolean;
+  views?: number;
+  likes?: number;
+  students_count?: number;
+  created_at?: string;
+}
+
 export default function PathwaysPage() {
   const [pathways, setPathways] = useState<Pathway[]>([]);
+  const [localPathways, setLocalPathways] = useState<Pathway[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [videos, setVideos] = useState<CreatorVideoOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -90,20 +108,39 @@ export default function PathwaysPage() {
   const { notifications, success, error, removeNotification } =
     useSimpleNotification();
 
+  // Charger les parcours locaux depuis localStorage au démarrage
+  useEffect(() => {
+    const savedLocalPathways = localStorage.getItem("localPathways");
+    if (savedLocalPathways) {
+      try {
+        const parsed = JSON.parse(savedLocalPathways);
+        setLocalPathways(parsed);
+      } catch (e) {
+        console.error("Erreur lors du chargement des parcours locaux:", e);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     loadPathways();
     loadEmployees();
+    loadVideos();
   }, []);
+
+  // Recharger les vidéos quand le modal de création s'ouvre
+  useEffect(() => {
+    if (showCreateModal) {
+      loadVideos();
+    }
+  }, [showCreateModal]);
 
   const loadPathways = async () => {
     try {
       const response = await fetch("/api/creator/pathways", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+        cache: "no-store",
+        credentials: "include", // Inclure les cookies NextAuth
       });
       const data = await response.json();
-
       if (data.success) {
         setPathways(data.data);
       } else {
@@ -119,36 +156,152 @@ export default function PathwaysPage() {
   const loadEmployees = async () => {
     try {
       const response = await fetch("/api/creator/employees", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+        cache: "no-store",
+        credentials: "include", // Inclure les cookies NextAuth
       });
       const data = await response.json();
 
       if (data.success) {
         setEmployees(data.data);
+      } else {
+        error("Erreur", "Impossible de charger les employes du createur");
       }
-    } catch (err) {
-      console.error("Erreur chargement employés:", err);
+    } catch {
+      error("Erreur", "Impossible de charger les employes du createur");
     }
   };
 
+  const loadVideos = async () => {
+    try {
+      console.log("Début du chargement des vidéos pour les parcours...");
+      const response = await fetch("/api/creator/videos-simple", {
+        cache: "no-store",
+        credentials: "include", // Inclure les cookies NextAuth
+      });
+      
+      console.log("Response status:", response.status);
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      // Gérer la structure de données de l'API qui retourne { videos: [...], total: X }
+      let videosList = [];
+      if (Array.isArray(data?.videos)) {
+        videosList = data.videos;
+        console.log("Vidéos trouvées dans data.videos:", videosList.length);
+      } else if (Array.isArray(data)) {
+        videosList = data;
+        console.log("Vidéos trouvées dans data (array direct):", videosList.length);
+      } else if (Array.isArray(data?.data)) {
+        videosList = data.data;
+        console.log("Vidéos trouvées dans data.data:", videosList.length);
+      } else {
+        console.warn("Format de données non reconnu:", data);
+      }
+
+      // Transformer les données pour correspondre au format CreatorVideoOption
+      const transformedVideos = videosList.map((video: any) => ({
+        id: video.id,
+        title: video.title,
+        description: video.description,
+        thumbnail: video.thumbnail,
+        duration: video.duration,
+        visibility: video.visibility,
+        category: video.category,
+        tags: video.tags || [],
+        is_published: video.is_published,
+        views: video.views || 0,
+        likes: video.likes || 0,
+        students_count: video.students_count || 0,
+        created_at: video.created_at,
+      }));
+
+      console.log("Vidéos transformées:", transformedVideos.length);
+      console.log("Vidéos transformées détaillées:", transformedVideos);
+      setVideos(transformedVideos);
+      console.log("Vidéos chargées pour parcours:", transformedVideos);
+      console.log("État videos après setVideos:", transformedVideos.length);
+    } catch (error: any) {
+      console.error("Erreur loadVideos:", error);
+      // En cas d'erreur, utiliser le fallback
+      const fallbackVideos: CreatorVideoOption[] = [
+        {
+          id: 1,
+          title: "Introduction au Marketing Digital",
+          description: "Découvrez les bases du marketing digital",
+          thumbnail: "/placeholder-video.jpg",
+          duration: "15:30",
+          visibility: "public",
+          category: "marketing",
+        },
+        {
+          id: 2,
+          title: "Techniques de Vente Avancées",
+          description: "Maîtrisez les techniques de vente modernes",
+          thumbnail: "/placeholder-video.jpg",
+          duration: "22:15",
+          visibility: "public",
+          category: "sales",
+        },
+      ];
+      setVideos(fallbackVideos);
+      console.log("Utilisation des vidéos de fallback:", fallbackVideos);
+      error("Erreur", "Utilisation des vidéos de démonstration");
+    }
+  };
+
+  const toggleVideoSelection = (videoId: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      video_ids: prev.video_ids.includes(videoId)
+        ? prev.video_ids.filter((id) => id !== videoId)
+        : [...prev.video_ids, videoId],
+    }));
+  };
+
   const createPathway = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Empêcher le rechargement de la page
 
     try {
       const response = await fetch("/api/creator/pathways", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(formData),
+        cache: "no-store",
+        credentials: "include", // Inclure les cookies NextAuth
       });
+
       const data = await response.json();
 
       if (data.success) {
-        success("Parcours créé", `${data.data.title} a été créé avec succès`);
+        // Ajouter le parcours créé au state local pour affichage immédiat
+        const newPathway: Pathway = {
+          id: data.data.id,
+          title: data.data.title,
+          description: data.data.description,
+          domain: data.data.domain,
+          duration_hours: data.data.duration_hours,
+          difficulty_level: data.data.difficulty_level,
+          created_at: data.data.created_at,
+          is_active: true,
+          videos_count: data.data.video_ids?.length || 0,
+          assigned_employees: 0,
+        };
+
+        // Mode démo : ajouter aux parcours locaux
+        console.log("Ajout du parcours aux locaux:", newPathway);
+        setLocalPathways((prev) => {
+          const updated = [...prev, newPathway];
+          console.log("Parcours locaux mis à jour:", updated);
+          // Sauvegarder dans localStorage pour la persistance
+          localStorage.setItem("localPathways", JSON.stringify(updated));
+          return updated;
+        });
+
+        success(
+          "Parcours créé avec succès! Il est maintenant visible dans la liste."
+        );
         setShowCreateModal(false);
         setFormData({
           title: "",
@@ -158,12 +311,15 @@ export default function PathwaysPage() {
           difficulty_level: "beginner",
           video_ids: [],
         });
-        loadPathways();
+
+        // Pas de rechargement automatique pour éviter la redirection
+        // Les parcours locaux sont déjà visibles grâce à localStorage
       } else {
         error("Erreur", data.message || "Impossible de créer le parcours");
       }
     } catch (err) {
-      error("Erreur", "Une erreur technique est survenue");
+      console.error("Create Pathway Error:", err);
+      error("Erreur", "Impossible de créer le parcours");
     }
   };
 
@@ -175,9 +331,10 @@ export default function PathwaysPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(assignData),
+        cache: "no-store",
+        credentials: "include", // Inclure les cookies NextAuth
       });
       const data = await response.json();
 
@@ -208,16 +365,16 @@ export default function PathwaysPage() {
     try {
       const response = await fetch(`/api/creator/pathways/${pathway.id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+        cache: "no-store",
+        credentials: "include", // Inclure les cookies NextAuth
       });
+      const data = await response.json();
 
-      if (response.ok) {
+      if (data.success) {
         success("Parcours supprimé", `Le parcours a été supprimé avec succès`);
         loadPathways();
       } else {
-        error("Erreur", "Impossible de supprimer le parcours");
+        error("Erreur", data.message || "Impossible de supprimer le parcours");
       }
     } catch (err) {
       error("Erreur", "Une erreur technique est survenue");
@@ -251,7 +408,16 @@ export default function PathwaysPage() {
   };
 
   const domains = [...new Set(pathways.map((p) => p.domain))];
-  const filteredPathways = pathways.filter((pathway) => {
+  const selectedVideos = formData.video_ids
+    .map((videoId) => videos.find((video) => video.id === videoId))
+    .filter((video): video is CreatorVideoOption => Boolean(video));
+  // Combiner les parcours backend et locaux pour l'affichage
+  const allPathways = [...localPathways, ...pathways];
+  console.log("Tous les parcours combinés:", allPathways);
+  console.log("Parcours backend:", pathways);
+  console.log("Parcours locaux:", localPathways);
+
+  const filteredPathways = allPathways.filter((pathway) => {
     const matchesSearch =
       pathway.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pathway.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -264,6 +430,8 @@ export default function PathwaysPage() {
 
     return matchesSearch && matchesDomain && matchesDifficulty;
   });
+
+  console.log("Parcours filtrés:", filteredPathways);
 
   if (loading) {
     return (
@@ -659,6 +827,7 @@ export default function PathwaysPage() {
                 onSubmit={createPathway}
                 className="p-6 overflow-y-auto max-h-[70vh]"
               >
+                {/* Champs du formulaire */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -689,12 +858,12 @@ export default function PathwaysPage() {
                       required
                     >
                       <option value="">Sélectionner un domaine</option>
-                      <option value="Hôtellerie">🏨 Hôtellerie</option>
-                      <option value="Restauration">🍽 Restauration</option>
-                      <option value="Tourisme">✈️ Tourisme</option>
-                      <option value="Commerce">🛍️ Commerce</option>
-                      <option value="Santé">🏥 Santé</option>
-                      <option value="Éducation">📚 Éducation</option>
+                      <option value="Hôtellerie">Hôtellerie</option>
+                      <option value="Restauration">Restauration</option>
+                      <option value="Tourisme">Tourisme</option>
+                      <option value="Commerce">Commerce</option>
+                      <option value="Santé">Santé</option>
+                      <option value="Éducation">Éducation</option>
                     </select>
                   </div>
                 </div>
@@ -744,19 +913,173 @@ export default function PathwaysPage() {
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          difficulty_level: e.target.value as any,
+                          difficulty_level: e.target.value as
+                            | "beginner"
+                            | "intermediate"
+                            | "advanced",
                         })
                       }
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       required
                     >
-                      <option value="beginner">🟢 Débutant</option>
-                      <option value="intermediate">🟡 Intermédiaire</option>
-                      <option value="advanced">🔴 Avancé</option>
+                      <option value="beginner">Débutant</option>
+                      <option value="intermediate">Intermédiaire</option>
+                      <option value="advanced">Avancé</option>
                     </select>
                   </div>
                 </div>
 
+                {/* Section des vidéos */}
+                <div className="mt-6">
+                  <div className="flex items-center justify-between gap-4 mb-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Videos du parcours *
+                      </label>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Choisissez l'ordre pedagogique des videos qui composent ce parcours.
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700">
+                      {formData.video_ids.length} selectionnee
+                      {formData.video_ids.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  {selectedVideos.length > 0 && (
+                    <div className="mb-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
+                      <p className="mb-3 text-sm font-medium text-purple-900">
+                        Ordre actuel du parcours
+                      </p>
+                      <div className="space-y-2">
+                        {selectedVideos.map((video, index) => (
+                          <div
+                            key={`selected-${video.id}`}
+                            className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm text-gray-700"
+                          >
+                            <div className="flex items-center gap-3">
+                              {/* Miniature de la vidéo sélectionnée */}
+                              <div className="flex-shrink-0">
+                                {video.thumbnail ? (
+                                  <img
+                                    src={video.thumbnail}
+                                    alt={video.title}
+                                    className="h-10 w-14 rounded object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.src =
+                                        "/placeholder-video.jpg";
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="h-10 w-14 rounded bg-gray-200 flex items-center justify-center">
+                                    <Play className="h-4 w-4 text-gray-400" />
+                                  </div>
+                                )}
+                              </div>
+                              <span>
+                                Module {index + 1}: {video.title}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {video.duration || "Durée non renseignée"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 max-h-72 overflow-y-auto">
+                    {videos.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-gray-500">
+                        <Play className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        Aucune video disponible pour construire un parcours.
+                        <p className="text-xs mt-2">
+                          Veuillez d'abord créer des vidéos depuis la page "Bibliothèque".
+                        </p>
+                      </div>
+                    ) : (
+                      videos.map((video) => {
+                        const isSelected = formData.video_ids.includes(
+                          video.id
+                        );
+                        console.log("Rendering video:", video.title, "isSelected:", isSelected);
+
+                        return (
+                          <button
+                            key={video.id}
+                            type="button"
+                            onClick={() => toggleVideoSelection(video.id)}
+                            className={`flex items-start gap-4 rounded-xl border px-4 py-3 text-left transition-all ${
+                              isSelected
+                                ? "border-purple-400 bg-purple-50 shadow-sm"
+                                : "border-gray-200 bg-white hover:border-purple-200 hover:bg-purple-50/40"
+                            }`}
+                          >
+                            {/* Miniature de la vidéo */}
+                            <div className="relative flex-shrink-0">
+                              {video.thumbnail && video.thumbnail !== "" ? (
+                                <img
+                                  src={video.thumbnail}
+                                  alt={video.title}
+                                  className="h-16 w-24 rounded-lg object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.src =
+                                      "/placeholder-video.jpg";
+                                  }}
+                                />
+                              ) : (
+                                <div className="h-16 w-24 rounded-lg bg-gray-200 flex items-center justify-center">
+                                  <Play className="h-6 w-6 text-gray-400" />
+                                </div>
+                              )}
+                              {isSelected && (
+                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
+                                  <CheckCircle className="w-3 h-3 text-white" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Informations de la vidéo */}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
+                                {video.title}
+                              </h4>
+                              <p className="text-xs text-gray-500 line-clamp-2 mb-2">
+                                {video.description || "Aucune description"}
+                              </p>
+                              <div className="flex items-center gap-3 text-xs text-gray-400">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {video.duration || "00:00"}
+                                </span>
+                                {video.category && (
+                                  <span className="px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+                                    {video.category}
+                                  </span>
+                                )}
+                                {video.visibility && (
+                                  <span className={`px-2 py-1 rounded-full text-xs ${
+                                    video.visibility === "public" 
+                                      ? "bg-green-100 text-green-700" 
+                                      : video.visibility === "private"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-yellow-100 text-yellow-700"
+                                  }`}>
+                                    {video.visibility === "public" ? "Public" : 
+                                     video.visibility === "private" ? "Privé" : "Non listé"}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Boutons */}
                 <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
                   <button
                     type="button"

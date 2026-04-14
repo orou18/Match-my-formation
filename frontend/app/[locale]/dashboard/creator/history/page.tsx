@@ -48,116 +48,28 @@ export default function HistoryPage() {
   );
 
   useEffect(() => {
-    // Simuler le chargement de l'historique
-    const mockHistory: HistoryItem[] = [
-      {
-        id: "1",
-        type: "enrollment",
-        title: "Nouvelle inscription",
-        description: "Jean Dupont s'est inscrit à 'Tourisme Durable'",
-        studentName: "Jean Dupont",
-        timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-        status: "completed",
-        metadata: {
-          studentId: "stu_123",
-          videoId: "vid_456",
-        },
-      },
-      {
-        id: "2",
-        type: "payment",
-        title: "Paiement reçu",
-        description: "Paiement de Marie Martin pour 'Gestion Hôtelière'",
-        amount: 89.99,
-        studentName: "Marie Martin",
-        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        status: "completed",
-        metadata: {
-          transactionId: "txn_789",
-          studentId: "stu_456",
-        },
-      },
-      {
-        id: "3",
-        type: "video_upload",
-        title: "Vidéo uploadée",
-        description: "Nouvelle vidéo 'Service Client Excellence' ajoutée",
-        videoTitle: "Service Client Excellence",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-        status: "completed",
-        metadata: {
-          videoId: "vid_789",
-        },
-      },
-      {
-        id: "4",
-        type: "enrollment",
-        title: "Inscription groupée",
-        description: "5 étudiants se sont inscrits à 'Marketing Touristique'",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-        status: "completed",
-        metadata: {
-          videoId: "vid_234",
-        },
-      },
-      {
-        id: "5",
-        type: "payment",
-        title: "Paiement en attente",
-        description: "Paiement en cours de validation pour Pierre Bernard",
-        amount: 67.5,
-        studentName: "Pierre Bernard",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-        status: "pending",
-        metadata: {
-          transactionId: "txn_456",
-          studentId: "stu_789",
-        },
-      },
-      {
-        id: "6",
-        type: "course_update",
-        title: "Mise à jour de formation",
-        description: "Mise à jour du contenu de 'Introduction au Tourisme'",
-        videoTitle: "Introduction au Tourisme",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-        status: "completed",
-        metadata: {
-          videoId: "vid_123",
-        },
-      },
-      {
-        id: "7",
-        type: "refund",
-        title: "Remboursement traité",
-        description: "Remboursement pour Sophie Lefebvre - 'Guide Touristique'",
-        amount: -45.0,
-        studentName: "Sophie Lefebvre",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-        status: "completed",
-        metadata: {
-          transactionId: "ref_123",
-          studentId: "stu_321",
-        },
-      },
-      {
-        id: "8",
-        type: "video_upload",
-        title: "Vidéo modifiée",
-        description: "Mise à jour de 'Réservation et Revenue Management'",
-        videoTitle: "Réservation et Revenue Management",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-        status: "completed",
-        metadata: {
-          videoId: "vid_567",
-        },
-      },
-    ];
+    const fetchHistory = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
 
-    setTimeout(() => {
-      setHistory(mockHistory);
-      setLoading(false);
-    }, 1200);
+      try {
+        const response = await fetch("/api/creator/history", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setHistory(data.history || []);
+        }
+      } catch (error) {
+        console.error("Erreur de chargement de l'historique créateur:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
   }, []);
 
   const getTypeIcon = (type: HistoryItem["type"]) => {
@@ -451,7 +363,16 @@ export default function HistoryPage() {
             ].map((filterType) => (
               <button
                 key={filterType.value}
-                onClick={() => setFilter(filterType.value as any)}
+                onClick={() =>
+                  setFilter(
+                    filterType.value as
+                      | "all"
+                      | "enrollment"
+                      | "payment"
+                      | "video"
+                      | "refund"
+                  )
+                }
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   filter === filterType.value
                     ? "bg-primary text-white"
@@ -465,7 +386,9 @@ export default function HistoryPage() {
 
           <select
             value={dateRange}
-            onChange={(e) => setDateRange(e.target.value as any)}
+            onChange={(e) =>
+              setDateRange(e.target.value as "7d" | "30d" | "90d" | "all")
+            }
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
           >
             <option value="7d">7 derniers jours</option>

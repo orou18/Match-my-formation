@@ -36,9 +36,11 @@ class HistoryController extends Controller
                         'created_at' => $video->created_at,
                         'updated_at' => $video->updated_at,
                         'performance' => [
-                            'views_change' => rand(-10, 25), // Simulé
-                            'likes_change' => rand(-5, 15), // Simulé
-                            'engagement_rate' => rand(2, 8), // Simulé
+                            'views_change' => 0,
+                            'likes_change' => 0,
+                            'engagement_rate' => ($video->views ?? 0) > 0
+                                ? round(((($video->likes ?? 0) + ($video->comments ?? 0)) / max($video->views, 1)) * 100, 2)
+                                : 0,
                         ],
                     ];
                 });

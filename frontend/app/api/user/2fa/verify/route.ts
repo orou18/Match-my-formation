@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/auth-options";
+import { getUserIdFromToken } from "@/lib/auth";
+import { updateUserSecurity } from "@/lib/server/account-store";
+
+type SessionUser = {
+  id?: string | number;
+};
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const userId = getUserIdFromToken(request);
+    const session = userId ? null : await getServerSession(authOptions);
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
-    if (!session?.user) {
+    if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -24,21 +34,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Code invalide" }, { status: 400 });
     }
 
-    // Mock verification - Remplacer par votre logique réelle
-    console.log("Vérification 2FA pour:", session.user?.email);
-    console.log("Code reçu:", code);
-    console.log("Méthode:", method);
+    const expectedMethod = request.cookies.get("twoFactorMethod")?.value;
+    const expectedHash = request.cookies.get("twoFactorCodeHash")?.value;
+    const providedHash = crypto.createHash("sha256").update(code).digest("hex");
 
-    // Pour les tests, accepter le code "123456"
-    if (code === "123456") {
-      // Simuler l'activation du 2FA
-      console.log("2FA activé avec succès");
+    if (
+      expectedMethod === method &&
+      expectedHash &&
+      providedHash === expectedHash
+    ) {
+      updateUserSecurity(String(finalUserId), {
+        twoFactorEnabled: true,
+        twoFactorMethod: method,
+      });
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         message: "2FA activé avec succès",
         twoFactorEnabled: true,
         twoFactorMethod: method,
       });
+
+      response.cookies.delete("twoFactorMethod");
+      response.cookies.delete("twoFactorCodeHash");
+
+      return response;
     }
 
     return NextResponse.json(

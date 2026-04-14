@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LogOut, Menu, X, Bell, User, Map, Compass } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import UserIdManager from "@/lib/user-id-manager";
 import ThemeLanguageSwitcher from "./ThemeLanguageSwitcher";
 
@@ -22,9 +23,26 @@ export default function DashboardNavbar() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
+    // Gérer le body overflow seulement si pas déjà géré par un autre composant
+    if (isOpen) {
+      const currentOverflow = document.body.style.overflow;
+      if (currentOverflow !== "hidden") {
+        document.body.style.overflow = "hidden";
+        // Stocker l'état précédent pour le restaurer proprement
+        (document.body as any).dashboardPreviousOverflow = currentOverflow;
+      }
+    } else {
+      // Restaurer seulement si on a été celui qui a mis hidden
+      const previousOverflow = (document.body as any).dashboardPreviousOverflow;
+      document.body.style.overflow = previousOverflow || "";
+      delete (document.body as any).dashboardPreviousOverflow;
+    }
+
     return () => {
-      document.body.style.overflow = "";
+      // Nettoyer en cas de démontage
+      const previousOverflow = (document.body as any).dashboardPreviousOverflow;
+      document.body.style.overflow = previousOverflow || "";
+      delete (document.body as any).dashboardPreviousOverflow;
     };
   }, [isOpen]);
 
@@ -54,9 +72,10 @@ export default function DashboardNavbar() {
     },
   ];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    await signOut({ redirect: false }).catch(() => {});
     UserIdManager.logout();
-    // Rediriger vers la landing page (page d'accueil)
     window.location.href = `/${locale}`;
   };
 

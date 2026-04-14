@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/auth-options";
 import { getUserIdFromToken } from "@/lib/auth";
+import { updateUserSecurity } from "@/lib/server/account-store";
+
+type SessionUser = {
+  id?: string | number;
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +16,8 @@ export async function POST(request: NextRequest) {
 
     // Fallback vers session NextAuth
     const session = userId ? null : await getServerSession(authOptions);
-    const finalUserId = userId || (session?.user as any)?.id;
+    const finalUserId =
+      userId || (session?.user as SessionUser | undefined)?.id;
 
     if (!finalUserId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -23,36 +30,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Méthode invalide" }, { status: 400 });
     }
 
-    // Mock 2FA setup - Remplacer par votre logique réelle
-    console.log("CONFIGURATION 2FA RÉELLE pour l'utilisateur:", finalUserId);
-    console.log(
-      "Email:",
-      session?.user?.email || `user-${finalUserId}@match.com`
-    );
-    console.log("Méthode:", method);
+    const verificationCode = crypto.randomInt(100000, 999999).toString();
+    const verificationHash = crypto
+      .createHash("sha256")
+      .update(verificationCode)
+      .digest("hex");
+    updateUserSecurity(String(finalUserId), {
+      twoFactorMethod: method,
+    });
 
-    // Simuler l'envoi d'un code (code de test fixe pour la démo)
-    const verificationCode = "123456"; // Code de test fixe
-    console.log("Code de vérification (démo):", verificationCode);
-
-    // Dans un vrai système, vous enverriez ce code par email ou SMS
-    if (method === "email") {
-      console.log(
-        `ENVOI EMAIL: Code ${verificationCode} envoyé à ${session?.user?.email || `user-${finalUserId}@match.com`}`
-      );
-      // Simuler un envoi d'email réussi
-    } else if (method === "sms") {
-      console.log(`ENVOI SMS: Code ${verificationCode} envoyé par SMS`);
-      // Simuler un envoi SMS réussi
-    }
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: `Code de vérification envoyé par ${method}`,
       success: true,
       method: method,
-      // En dev, retourner le code pour faciliter les tests
-      ...(process.env.NODE_ENV === "development" && { code: verificationCode }),
     });
+
+    response.cookies.set("twoFactorCodeHash", verificationHash, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 10,
+    });
+    response.cookies.set("twoFactorMethod", method, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 10,
+    });
+
+    if (process.env.NODE_ENV === "development") {
+      response.headers.set("x-dev-2fa-code", verificationCode);
+    }
+
+    return response;
   } catch (error) {
     console.error("Erreur lors de la configuration 2FA:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

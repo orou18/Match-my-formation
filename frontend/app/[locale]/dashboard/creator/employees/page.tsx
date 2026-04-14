@@ -24,6 +24,7 @@ import {
   useSimpleNotification,
   NotificationContainer,
 } from "@/components/ui/SimpleNotification";
+import { creatorDashboardApi } from "@/lib/services/creator-dashboard-api";
 
 interface Employee {
   id: number;
@@ -38,6 +39,20 @@ interface Employee {
   progress: number;
   avatar?: string;
 }
+
+type EmployeeApiModel = {
+  id: number | string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  domain?: string;
+  role?: string;
+  is_active?: boolean;
+  created_at?: string;
+  completion_rate?: number;
+  progress?: number;
+  avatar?: string;
+};
 
 export default function EmployeesPage() {
   const router = useRouter();
@@ -57,17 +72,25 @@ export default function EmployeesPage() {
     loadEmployees();
   }, []);
 
+  const mapEmployee = (employee: EmployeeApiModel): Employee => ({
+    id: Number(employee.id),
+    name: String(employee.name || "Employé"),
+    email: String(employee.email || ""),
+    phone: employee.phone ? String(employee.phone) : "",
+    department: String(employee.domain || "general"),
+    position: String(employee.role || "Employé"),
+    status: employee.is_active ? "active" : "inactive",
+    hire_date: String(employee.created_at || new Date().toISOString()),
+    completion_rate: Number(employee.completion_rate || 0),
+    progress: Number(employee.progress || employee.completion_rate || 0),
+    avatar: employee.avatar ? String(employee.avatar) : undefined,
+  });
+
   const loadEmployees = async () => {
     try {
-      const response = await fetch("/api/creator/employees", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      const data = await response.json();
-
+      const data = await creatorDashboardApi.getEmployees<EmployeeApiModel[]>();
       if (data.success) {
-        setEmployees(data.data || []);
+        setEmployees((data.data || []).map(mapEmployee));
       } else {
         error("Erreur", "Impossible de charger les employés");
       }
@@ -99,20 +122,24 @@ export default function EmployeesPage() {
     }
 
     try {
-      const response = await fetch(`/api/creator/employees/${employeeId}`, {
+      const response = await fetch(`/api/creator/employees?id=${employeeId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         success("Employé supprimé", "L'employé a été supprimé avec succès");
         loadEmployees();
       } else {
-        error("Erreur", "Impossible de supprimer l'employé");
+        error("Erreur", data.message || "Impossible de supprimer l'employé");
       }
     } catch (err) {
+      console.error("Delete employee error:", err);
       error("Erreur", "Une erreur technique est survenue");
     }
   };
@@ -388,10 +415,24 @@ export default function EmployeesPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <button className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/${locale}/dashboard/creator/employees/${employee.id}`
+                            )
+                          }
+                          className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/${locale}/dashboard/creator/employees/${employee.id}/edit`
+                            )
+                          }
+                          className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button

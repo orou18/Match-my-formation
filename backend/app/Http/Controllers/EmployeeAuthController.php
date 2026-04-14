@@ -16,21 +16,25 @@ class EmployeeAuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'login_id' => 'required|string',
+            'email' => 'nullable|string',
+            'login_id' => 'nullable|string',
             'password' => 'required|string',
         ]);
 
-        $employee = Employee::where('login_id', $request->login_id)->first();
+        $identifier = $request->string('email')->toString() ?: $request->string('login_id')->toString();
+        $employee = Employee::where('email', $identifier)
+            ->orWhere('login_id', $identifier)
+            ->first();
 
         if (!$employee || !Hash::check($request->password, $employee->password)) {
             throw ValidationException::withMessages([
-                'login_id' => ['Les identifiants fournis sont incorrects.'],
+                'email' => ['Les identifiants fournis sont incorrects.'],
             ]);
         }
 
         if (!$employee->is_active) {
             throw ValidationException::withMessages([
-                'login_id' => ['Ce compte est désactivé.'],
+                'email' => ['Ce compte est désactivé.'],
             ]);
         }
 

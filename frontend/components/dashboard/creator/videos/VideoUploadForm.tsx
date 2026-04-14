@@ -46,7 +46,8 @@ interface VideoUploadData {
 
 interface VideoUploadFormProps {
   onClose: () => void;
-  onSubmit: (data: VideoUploadData) => void;
+  // When upload completes backend returns created video object
+  onSubmit: (data: any) => void;
 }
 
 export default function VideoUploadForm({
@@ -174,7 +175,6 @@ export default function VideoUploadForm({
     setIsSubmitting(true);
 
     try {
-      // Simulation d'upload
       const uploadData = new FormData();
       uploadData.append("title", formData.title);
       uploadData.append("description", formData.description);
@@ -186,18 +186,54 @@ export default function VideoUploadForm({
       if (formData.thumbnail)
         uploadData.append("thumbnail", formData.thumbnail);
 
-      // Simuler progression
-      for (let i = 0; i <= 100; i += 10) {
-        setUploadProgress((prev) => ({ ...prev, video: i, thumbnail: i }));
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
+      // Use XMLHttpRequest to track upload progress
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const token =
+          typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        xhr.open("POST", "http://127.0.0.1:8000/api/creator/videos");
+        if (token) {
+          xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        }
 
-      // Simuler succès
-      console.log("Video uploaded:", formData);
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress((prev) => ({
+              ...prev,
+              video: percent,
+              thumbnail: percent,
+            }));
+          }
+        };
 
-      // Appeler le callback avec les données
-      onSubmit(formData);
-    } catch (error) {
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const res = JSON.parse(xhr.responseText);
+              // backend returns { message, video }
+              const created = res.video ?? res.data ?? null;
+              if (created) {
+                // Normaliser le retour pour le parent
+                onSubmit(created);
+                resolve();
+                return;
+              }
+              resolve();
+            } catch (err) {
+              console.error("Parse response error", err);
+              reject(err);
+            }
+          } else {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+
+        xhr.send(uploadData);
+      });
+    } catch (error: any) {
       console.error("Upload error:", error);
       setErrors({ video: "Erreur lors de l'upload de la vidéo" });
     } finally {
@@ -206,11 +242,11 @@ export default function VideoUploadForm({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50 p-4 overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-4xl mx-auto"
+        className="max-w-4xl mx-auto pb-8"
       >
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">

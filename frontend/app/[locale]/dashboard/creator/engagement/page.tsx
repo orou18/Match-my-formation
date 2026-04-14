@@ -1,179 +1,115 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Heart,
   MessageSquare,
-  Share2,
   Eye,
   Users,
   TrendingUp,
   TrendingDown,
-  Clock,
   ThumbsUp,
-  Award,
-  Zap,
-  Target,
   BarChart3,
   Filter,
-  Calendar,
   Star,
   Flame,
 } from "lucide-react";
 
+type EngagementMetric = {
+  metric: string;
+  value: number | string;
+  change: number;
+  color: string;
+  icon: typeof Heart;
+};
+
+type EngagementVideo = {
+  id: string;
+  title: string;
+  thumbnail: string;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  engagement: number;
+  duration: string;
+};
+
+type EngagementTimelineItem = {
+  date: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  engagement: number;
+};
+
+type AudienceSegment = {
+  segment: string;
+  percentage: number;
+  engagement: number;
+  color: string;
+};
+
+type RecentComment = {
+  id: string;
+  user: {
+    name: string;
+    avatar: string;
+    subscribers?: number;
+  };
+  content: string;
+  video: {
+    title: string;
+    thumbnail: string;
+    id: string;
+  };
+  timestamp: string;
+  likes: number;
+  replies: number;
+  status: "published" | "pending" | "spam" | "deleted";
+  sentiment: "positive" | "neutral" | "negative";
+  isPinned?: boolean;
+};
+
 export default function EngagementPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("week");
-  const [selectedMetric, setSelectedMetric] = useState("all");
+  const [selectedMetric, setSelectedMetric] = useState<
+    "likes" | "comments" | "shares"
+  >("likes");
+  const [engagementMetrics, setEngagementMetrics] = useState<
+    EngagementMetric[]
+  >([]);
+  const [topVideos, setTopVideos] = useState<EngagementVideo[]>([]);
+  const [engagementTimeline, setEngagementTimeline] = useState<
+    EngagementTimelineItem[]
+  >([]);
+  const [audienceSegments, setAudienceSegments] = useState<AudienceSegment[]>(
+    []
+  );
+  const [recentComments, setRecentComments] = useState<RecentComment[]>([]);
 
-  const engagementMetrics = [
-    {
-      metric: "Likes",
-      value: 12450,
-      change: 12.5,
-      icon: Heart,
-      color: "from-red-500 to-red-600",
-    },
-    {
-      metric: "Commentaires",
-      value: 3420,
-      change: 8.3,
-      icon: MessageSquare,
-      color: "from-blue-500 to-blue-600",
-    },
-    {
-      metric: "Partages",
-      value: 890,
-      change: -2.1,
-      icon: Share2,
-      color: "from-green-500 to-green-600",
-    },
-    {
-      metric: "Durée moyenne",
-      value: "4:32",
-      change: 15.7,
-      icon: Clock,
-      color: "from-purple-500 to-purple-600",
-    },
-  ];
+  useEffect(() => {
+    const loadData = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("token")
+          : null;
+      const response = await fetch("/api/creator/engagement", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const payload = await response.json();
+      if (response.ok && payload.data) {
+        setEngagementMetrics(payload.data.metrics || []);
+        setTopVideos(payload.data.topVideos || []);
+        setEngagementTimeline(payload.data.timeline || []);
+        setAudienceSegments(payload.data.audienceSegments || []);
+        setRecentComments(payload.data.recentComments || []);
+      }
+    };
 
-  const topVideos = [
-    {
-      id: 1,
-      title: "Introduction au Tourisme Durable",
-      thumbnail: "/videos/video1-thumb.jpg",
-      views: 15420,
-      likes: 892,
-      comments: 45,
-      shares: 78,
-      engagement: 6.4,
-      duration: "12:34",
-    },
-    {
-      id: 2,
-      title: "Marketing Digital pour le Tourisme",
-      thumbnail: "/videos/video2-thumb.jpg",
-      views: 12300,
-      likes: 756,
-      comments: 34,
-      shares: 56,
-      engagement: 6.8,
-      duration: "15:45",
-    },
-    {
-      id: 3,
-      title: "Service Client d'Excellence",
-      thumbnail: "/videos/video3-thumb.jpg",
-      views: 9870,
-      likes: 623,
-      comments: 28,
-      shares: 45,
-      engagement: 7.1,
-      duration: "22:10",
-    },
-    {
-      id: 4,
-      title: "Gestion Hôtelière Avancée",
-      thumbnail: "/videos/video4-thumb.jpg",
-      views: 8650,
-      likes: 545,
-      comments: 23,
-      shares: 34,
-      engagement: 6.9,
-      duration: "18:22",
-    },
-  ];
-
-  const engagementTimeline = [
-    { date: "Lun", likes: 120, comments: 45, shares: 12, engagement: 5.8 },
-    { date: "Mar", likes: 145, comments: 52, shares: 18, engagement: 6.2 },
-    { date: "Mer", likes: 168, comments: 48, shares: 15, engagement: 6.5 },
-    { date: "Jeu", likes: 189, comments: 61, shares: 22, engagement: 7.1 },
-    { date: "Ven", likes: 234, comments: 72, shares: 28, engagement: 7.8 },
-    { date: "Sam", likes: 198, comments: 58, shares: 20, engagement: 6.9 },
-    { date: "Dim", likes: 156, comments: 43, shares: 16, engagement: 6.1 },
-  ];
-
-  const audienceSegments = [
-    {
-      segment: "18-24 ans",
-      percentage: 35,
-      engagement: 8.2,
-      color: "from-purple-500 to-purple-600",
-    },
-    {
-      segment: "25-34 ans",
-      percentage: 42,
-      engagement: 7.5,
-      color: "from-blue-500 to-blue-600",
-    },
-    {
-      segment: "35-44 ans",
-      percentage: 18,
-      engagement: 6.8,
-      color: "from-green-500 to-green-600",
-    },
-    {
-      segment: "45+ ans",
-      percentage: 5,
-      engagement: 5.9,
-      color: "from-orange-500 to-orange-600",
-    },
-  ];
-
-  const recentComments = [
-    {
-      id: 1,
-      user: "Marie Dubois",
-      avatar: "/avatars/user1.jpg",
-      comment: "Excellent contenu ! Très bien expliqué et facile à suivre.",
-      video: "Introduction au Tourisme Durable",
-      timestamp: "Il y a 2 heures",
-      likes: 12,
-      sentiment: "positive",
-    },
-    {
-      id: 2,
-      user: "Jean Martin",
-      avatar: "/avatars/user2.jpg",
-      comment: "Pourriez-vous faire un tutoriel sur la réservation en ligne ?",
-      video: "Marketing Digital pour le Tourisme",
-      timestamp: "Il y a 4 heures",
-      likes: 8,
-      sentiment: "neutral",
-    },
-    {
-      id: 3,
-      user: "Sophie Laurent",
-      avatar: "/avatars/user3.jpg",
-      comment:
-        "Merci beaucoup pour ces précieux conseils ! J'ai pu améliorer mon service.",
-      video: "Service Client d'Excellence",
-      timestamp: "Il y a 6 heures",
-      likes: 24,
-      sentiment: "positive",
-    },
-  ];
+    loadData();
+  }, [selectedPeriod]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -189,7 +125,8 @@ export default function EngagementPage() {
               Engagement
             </h1>
             <p className="text-gray-600">
-              Analysez l'engagement de votre audience et optimisez votre contenu
+              Analysez l&apos;engagement de votre audience et optimisez votre
+              contenu
             </p>
           </div>
 
@@ -199,7 +136,7 @@ export default function EngagementPage() {
               onChange={(e) => setSelectedPeriod(e.target.value)}
               className="px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
-              <option value="day">Aujourd'hui</option>
+              <option value="day">Aujourd&apos;hui</option>
               <option value="week">Cette semaine</option>
               <option value="month">Ce mois</option>
               <option value="year">Cette année</option>
@@ -271,7 +208,7 @@ export default function EngagementPage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-primary" />
-              Évolution de l'engagement
+              Évolution de l&apos;engagement
             </h2>
             <div className="flex gap-2">
               <button
@@ -358,7 +295,7 @@ export default function EngagementPage() {
         >
           <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
-            Segments d'audience
+            Segments d&apos;audience
           </h2>
 
           <div className="space-y-4">
@@ -490,7 +427,7 @@ export default function EngagementPage() {
             >
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold text-sm">
-                  {comment.user.charAt(0)}
+                  {comment.user.name.charAt(0)}
                 </span>
               </div>
 
@@ -498,7 +435,7 @@ export default function EngagementPage() {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <span className="font-semibold text-gray-900">
-                      {comment.user}
+                      {comment.user.name}
                     </span>
                     <span className="text-sm text-gray-500 ml-2">
                       {comment.timestamp}
@@ -519,12 +456,12 @@ export default function EngagementPage() {
                   </div>
                 </div>
 
-                <p className="text-gray-700 text-sm mb-2">{comment.comment}</p>
+                <p className="text-gray-700 text-sm mb-2">{comment.content}</p>
 
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 text-xs text-gray-500">
                     <Eye className="w-3 h-3" />
-                    <span>{comment.video}</span>
+                    <span>{comment.video.title}</span>
                   </div>
                   <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-primary">
                     <ThumbsUp className="w-3 h-3" />

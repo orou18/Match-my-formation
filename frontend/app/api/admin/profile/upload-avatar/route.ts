@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth/auth-options";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { updateProfile } from "@/lib/server/account-store";
+
+type SessionUser = {
+  id?: string | number;
+  role?: string;
+};
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || (session.user as any)?.role !== "admin") {
+    const sessionUser = session?.user as SessionUser | undefined;
+    if (!sessionUser || sessionUser.role !== "admin") {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -42,13 +49,13 @@ export async function POST(request: NextRequest) {
     const uploadsDir = path.join(process.cwd(), "public", "uploads", "avatars");
     try {
       await mkdir(uploadsDir, { recursive: true });
-    } catch (error) {
+    } catch {
       // Le répertoire existe déjà
     }
 
     // Générer un nom de fichier unique
     const timestamp = Date.now();
-    const filename = `admin_${(session.user as any).id}_${timestamp}.${file.type.split("/")[1]}`;
+    const filename = `admin_${sessionUser.id}_${timestamp}.${file.type.split("/")[1]}`;
     const filepath = path.join(uploadsDir, filename);
 
     // Sauvegarder le fichier
@@ -58,11 +65,7 @@ export async function POST(request: NextRequest) {
 
     const avatarUrl = `/uploads/avatars/${filename}`;
 
-    console.log(
-      "ADMIN PROFILE - Avatar uploadé pour:",
-      (session.user as any).email,
-      avatarUrl
-    );
+    updateProfile(String(sessionUser.id), { avatar: avatarUrl });
 
     return NextResponse.json({
       message: "Avatar téléchargé avec succès",

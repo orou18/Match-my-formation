@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Video,
@@ -38,65 +37,52 @@ interface CreatorVideo {
 
 export default function VideoManager() {
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [videos, setVideos] = useState<CreatorVideo[]>([
-    {
-      id: "1",
-      title: "Introduction au Tourisme Durable",
-      description:
-        "Découvrez les fondamentaux du tourisme écologique et les pratiques durables.",
-      thumbnail: "/videos/video1-thumb.jpg",
-      duration: "12:34",
-      views: 15420,
-      likes: 892,
-      comments: 45,
-      publishedAt: "Il y a 2 jours",
-      visibility: "public",
-      status: "published",
-    },
-    {
-      id: "2",
-      title: "Gestion Hôtelière Avancée - Module 1",
-      description:
-        "Première partie de notre formation complète en gestion hôtelière.",
-      thumbnail: "/videos/video2-thumb.jpg",
-      duration: "18:22",
-      views: 8750,
-      likes: 567,
-      comments: 23,
-      publishedAt: "Il y a 5 jours",
-      visibility: "private",
-      pathway: "Certificat Hôtellerie",
-      status: "published",
-    },
-    {
-      id: "3",
-      title: "Marketing Digital pour le Tourisme",
-      description:
-        "Stratégies digitales et marketing pour les professionnels du secteur touristique.",
-      thumbnail: "/videos/video3-thumb.jpg",
-      duration: "15:45",
-      views: 6230,
-      likes: 445,
-      comments: 18,
-      publishedAt: "Il y a 1 semaine",
-      visibility: "public",
-      status: "published",
-    },
-    {
-      id: "4",
-      title: "Service Client d'Excellence",
-      description:
-        "Les meilleures pratiques du service client dans l'hôtellerie.",
-      thumbnail: "/videos/video4-thumb.jpg",
-      duration: "22:10",
-      views: 9870,
-      likes: 723,
-      comments: 31,
-      publishedAt: "Il y a 3 jours",
-      visibility: "private",
-      status: "draft",
-    },
-  ]);
+  const [videos, setVideos] = useState<CreatorVideo[]>([]);
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const token =
+          typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const res = await fetch("http://127.0.0.1:8000/api/creator/videos", {
+          headers: token
+            ? { Authorization: `Bearer ${token}`, Accept: "application/json" }
+            : { Accept: "application/json" },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Expect array of videos
+          const mapped = (data || []).map((v: any) => ({
+            id: String(v.id),
+            title: v.title,
+            description: v.description || "",
+            thumbnail:
+              v.thumbnail ??
+              v.thumbnail_url ??
+              v.thumbnail_url ??
+              v.thumbnail_url ??
+              v.thumbnail ??
+              "/videos/video1-thumb.jpg",
+            duration: v.duration
+              ? String(v.duration)
+              : (v.duration_display ?? ""),
+            views: Number(v.views ?? 0),
+            likes: Number(v.likes ?? 0),
+            comments: Number(v.comments ?? 0),
+            publishedAt: v.published_at ?? v.created_at ?? "",
+            visibility: v.visibility ?? "public",
+            pathway: v.pathway_title ?? undefined,
+            status: v.status ?? (v.published_at ? "published" : "processing"),
+          }));
+          setVideos(mapped);
+        }
+      } catch (err) {
+        console.error("Error fetching videos", err);
+      }
+    };
+
+    fetchVideos();
+  }, []);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -153,17 +139,52 @@ export default function VideoManager() {
   };
 
   const handleVideoUpload = (videoData: any) => {
+    // videoData expected from backend as created video object
     const newVideo: CreatorVideo = {
-      id: Date.now().toString(),
-      ...videoData,
-      views: 0,
-      likes: 0,
-      comments: 0,
-      publishedAt: "À l'instant",
-      status: "processing",
+      id: String(videoData.id ?? Date.now()),
+      title: videoData.title ?? "Nouvelle vidéo",
+      description: videoData.description ?? "",
+      thumbnail:
+        videoData.thumbnail ??
+        videoData.thumbnail_url ??
+        "/videos/video1-thumb.jpg",
+      duration: videoData.duration ? String(videoData.duration) : "",
+      views: Number(videoData.views ?? 0),
+      likes: Number(videoData.likes ?? 0),
+      comments: Number(videoData.comments ?? 0),
+      publishedAt:
+        videoData.published_at ?? videoData.created_at ?? "À l'instant",
+      visibility: videoData.visibility ?? "public",
+      pathway: videoData.pathway_title ?? undefined,
+      status:
+        videoData.status ??
+        (videoData.published_at ? "published" : "processing"),
     };
-    setVideos([newVideo, ...videos]);
+    setVideos((prev) => [newVideo, ...prev]);
     setShowUploadForm(false);
+  };
+
+  const deleteVideo = async (id: string) => {
+    try {
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/creator/videos/${id}`,
+        {
+          method: "DELETE",
+          headers: token
+            ? { Authorization: `Bearer ${token}`, Accept: "application/json" }
+            : { Accept: "application/json" },
+        }
+      );
+      if (res.ok) {
+        setVideos((prev) => prev.filter((v) => v.id !== id));
+      } else {
+        console.error("Failed to delete video", await res.text());
+      }
+    } catch (err) {
+      console.error("Error deleting video", err);
+    }
   };
 
   if (showUploadForm) {
@@ -422,7 +443,10 @@ export default function VideoManager() {
                   <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                     <Edit className="w-4 h-4" />
                   </button>
-                  <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                  <button
+                    onClick={() => deleteVideo(video.id)}
+                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>

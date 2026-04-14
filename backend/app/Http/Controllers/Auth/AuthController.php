@@ -15,14 +15,14 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
-            'password' => 'required|min:6|confirmed',
+            'password' => 'required|min:8|confirmed',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $request->role ?? 'student',
+            'role' => 'student',
         ]);
 
         $token = $user->createToken('api-token')->plainTextToken;
@@ -32,6 +32,7 @@ class AuthController extends Controller
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
+                'email' => $user->email,
                 'role' => $user->role,
             ],
             'token' => $token,
@@ -90,7 +91,11 @@ class AuthController extends Controller
     // LOGOUT
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()?->currentAccessToken();
+
+        if ($token) {
+            $token->delete();
+        }
 
         return response()->json([
             'message' => 'Logged out successfully',

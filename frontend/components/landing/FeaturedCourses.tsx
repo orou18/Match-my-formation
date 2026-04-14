@@ -21,38 +21,29 @@ export default function FeaturedCourses() {
 
     const fetchPublicVideos = async () => {
       try {
-        // On force l'URL si process.env est vide pour éviter de taper dans le vide
-        const rawUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        const baseUrl = rawUrl.replace(/\/$/, "");
-        const targetUrl = `${baseUrl}/api/public/videos`;
-
-        console.log("Fetching public videos from:", targetUrl);
-
-        const response = await fetch(targetUrl, {
+        const response = await fetch("/api/videos/public", {
           method: "GET",
           signal: controller.signal,
           headers: {
             Accept: "application/json",
           },
-          credentials: "omit",
+          cache: "no-store",
         });
 
         if (response.ok) {
           const data = await response.json();
-          setPublicVideos(Array.isArray(data) ? data.slice(0, 3) : []);
+          const videos = Array.isArray(data) ? data : data?.data || [];
+          setPublicVideos(Array.isArray(videos) ? videos.slice(0, 3) : []);
         } else {
           console.error(`Erreur HTTP: ${response.status}`);
-          setPublicVideos([]); // Évite de rester bloqué
+          setPublicVideos([]);
         }
       } catch (error: any) {
         if (error.name === "AbortError") return;
 
-        // Message d'erreur plus technique pour t'aider à debugger
-        console.error(
-          "Erreur de connexion au backend. Vérifie que Laravel tourne sur 127.0.0.1:8000"
-        );
+        console.error("Erreur de connexion aux vidéos publiques");
         console.log("Détails de l'erreur:", error.message);
+        setPublicVideos([]);
       } finally {
         setLoading(false);
       }

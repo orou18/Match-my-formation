@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Palette,
   Upload,
@@ -20,6 +20,8 @@ import {
   Target,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
+import type { BrandingSettings as ApiBrandingSettings } from "@/types/branding";
+import { useBrandingReload } from "@/hooks/useBrandingReload";
 
 interface BrandingSettings {
   primaryColor: string;
@@ -42,6 +44,9 @@ export default function BrandingPage() {
   const params = useParams();
   const locale = params.locale || "fr";
 
+  // Hook pour gérer le rechargement du branding
+  const { isReloading, countdown, applyBrandingStyles } = useBrandingReload();
+
   const [branding, setBranding] = useState<BrandingSettings>({
     primaryColor: "#007A7A",
     secondaryColor: "#004D40",
@@ -61,6 +66,7 @@ export default function BrandingPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState("colors");
+  const [message, setMessage] = useState<string | null>(null);
 
   const fontFamilies = [
     "Inter",
@@ -100,6 +106,75 @@ export default function BrandingPage() {
     },
   ];
 
+  const mapApiToLocal = (settings: ApiBrandingSettings): BrandingSettings => ({
+    primaryColor: settings.primary_color,
+    secondaryColor: settings.secondary_color,
+    accentColor: settings.accent_color,
+    fontFamily: settings.font_settings.body_font,
+    logo: null,
+    logoPreview: settings.logo_url || null,
+    companyName: settings.company_name,
+    tagline: settings.custom_footer_text || "",
+    customDomain: "",
+    favicon: null,
+    faviconPreview: settings.favicon_url || null,
+    customCSS: settings.custom_css || "",
+    removeBranding: !settings.show_branding,
+  });
+
+  const mapLocalToApi = (state: BrandingSettings) => {
+    const formData = new FormData();
+    formData.set("company_name", state.companyName);
+    formData.set("primary_color", state.primaryColor);
+    formData.set("secondary_color", state.secondaryColor);
+    formData.set("accent_color", state.accentColor);
+    formData.set("background_color", "#ffffff");
+    formData.set("surface_color", "#f8fafc");
+    formData.set("text_color", "#1f2937");
+    formData.set("text_secondary", "#6b7280");
+    formData.set("border_color", "#e5e7eb");
+    formData.set("title_font", state.fontFamily);
+    formData.set("subtitle_font", state.fontFamily);
+    formData.set("body_font", state.fontFamily);
+    formData.set("title_font_size", "2rem");
+    formData.set("subtitle_font_size", "1.25rem");
+    formData.set("body_font_size", "1rem");
+    formData.set("title_font_weight", "700");
+    formData.set("subtitle_font_weight", "600");
+    formData.set("body_font_weight", "400");
+    formData.set("title_color", "#111827");
+    formData.set("subtitle_color", "#374151");
+    formData.set("body_color", "#4b5563");
+    formData.set("title_letter_spacing", "-0.025em");
+    formData.set("subtitle_letter_spacing", "0em");
+    formData.set("body_letter_spacing", "0em");
+    formData.set("title_line_height", "1.2");
+    formData.set("subtitle_line_height", "1.4");
+    formData.set("body_line_height", "1.6");
+    formData.set("custom_css", state.customCSS);
+    formData.set("custom_footer_text", state.tagline);
+    formData.set("show_branding", String(!state.removeBranding));
+    if (state.logo) formData.set("logo_file", state.logo);
+    if (state.favicon) formData.set("favicon_file", state.favicon);
+    return formData;
+  };
+
+  useEffect(() => {
+    const loadBranding = async () => {
+      try {
+        const response = await fetch("/api/branding", { cache: "no-store" });
+        if (!response.ok) return;
+        const payload = await response.json();
+        const settings = payload.settings || payload;
+        setBranding(mapApiToLocal(settings));
+      } catch {
+        // Keep local defaults if branding load fails.
+      }
+    };
+
+    loadBranding();
+  }, []);
+
   const handleColorChange = (
     colorType: keyof BrandingSettings,
     value: string
@@ -132,17 +207,29 @@ export default function BrandingPage() {
 
   const saveBranding = async () => {
     setIsSaving(true);
+    setMessage(null);
 
-    // Simuler la sauvegarde
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const response = await fetch("/api/branding", {
+        method: "PUT",
+        body: mapLocalToApi(branding),
+      });
+      const payload = await response.json();
+      const settings = payload.settings || payload;
 
-    setIsSaving(false);
+      // Appliquer immédiatement les styles via le hook
+      applyBrandingStyles(settings);
 
-    // Appliquer les changements au layout
-    if (typeof window !== "undefined") {
+      // Émettre l'événement pour mettre à jour le branding (déclenche le rechargement)
       window.dispatchEvent(
-        new CustomEvent("brandingUpdated", { detail: branding })
+        new CustomEvent("brandingUpdated", { detail: settings })
       );
+
+      setMessage("Personnalisation sauvegardée ! Rechargement du dashboard...");
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      setMessage("Impossible de sauvegarder la personnalisation");
+      setIsSaving(false);
     }
   };
 
@@ -213,6 +300,40 @@ export default function BrandingPage() {
           </button>
         </div>
       </motion.div>
+
+      {message ? (
+        <div
+          className={`rounded-xl border px-4 py-3 text-sm ${
+            isReloading
+              ? "border-blue-200 bg-blue-50 text-blue-700"
+              : "border-gray-200 bg-white text-gray-700"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span>{message}</span>
+            {isReloading && countdown !== null && (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="font-mono text-xs bg-blue-100 px-2 py-1 rounded">
+                  {countdown}s
+                </span>
+              </div>
+            )}
+          </div>
+          {isReloading && (
+            <div className="mt-2">
+              <div className="w-full bg-blue-200 rounded-full h-1">
+                <div
+                  className="bg-blue-600 h-1 rounded-full transition-all duration-1000 ease-linear"
+                  style={{
+                    width: `${countdown !== null ? ((2 - countdown) / 2) * 100 : 0}%`,
+                  }}
+                ></div>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
 
       {/* Aperçu du dashboard */}
       {showPreview && (

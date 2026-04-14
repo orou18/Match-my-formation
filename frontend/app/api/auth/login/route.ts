@@ -1,79 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
-import { UserStore } from "@/lib/user-store";
+import { fetchBackend } from "@/lib/api/backend-fetch";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
-
-    // Validation des données
-    if (!email || !password) {
-      return NextResponse.json(
-        { message: "Email et mot de passe sont obligatoires" },
-        { status: 400 }
-      );
-    }
-
-    // Validation de l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { message: "Veuillez entrer une adresse email valide" },
-        { status: 400 }
-      );
-    }
-
-    console.log("🔑 API LOGIN - Tentative de connexion:", email);
-    console.log("👥 Utilisateurs disponibles:", UserStore.getUsers().length);
-
-    // Trouver l'utilisateur par email
-    const user = UserStore.findUserByEmail(email);
-
-    if (!user) {
-      console.log("❌ Utilisateur non trouvé:", email);
-      return NextResponse.json(
-        { message: "Email ou mot de passe incorrect" },
-        { status: 401 }
-      );
-    }
-
-    // Vérifier le mot de passe
-    if (user.password !== password) {
-      console.log("❌ Mot de passe incorrect pour:", email);
-      return NextResponse.json(
-        { message: "Email ou mot de passe incorrect" },
-        { status: 401 }
-      );
-    }
-
-    console.log(
-      "✅ Connexion réussie pour:",
-      email,
-      "ID:",
-      user.id,
-      "Rôle:",
-      user.role
-    );
-
-    // Générer un token JWT (simulation)
-    const token = `mock-jwt-token-${Date.now()}-${user.id}`;
-
-    // Retourner la réponse avec les données utilisateur et le token
-    return NextResponse.json({
-      message: "Connexion réussie",
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+    const response = await fetchBackend("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
-      token,
+      body: JSON.stringify(body),
     });
+
+    const payload = await response.json().catch(() => null);
+    const nextResponse = NextResponse.json(payload, {
+      status: response.status,
+    });
+
+    if (response.ok && payload?.user?.id) {
+      nextResponse.cookies.set("userId", String(payload.user.id), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    if (response.ok && payload?.user?.role) {
+      nextResponse.cookies.set("userRole", String(payload.user.role), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    if (response.ok && payload?.token) {
+      nextResponse.cookies.set("authToken", String(payload.token), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    return nextResponse;
   } catch (error) {
-    console.error("❌ Login error:", error);
+    console.error("Erreur proxy login:", error);
     return NextResponse.json(
-      { message: "Erreur serveur lors de la connexion" },
-      { status: 500 }
+      {
+        message:
+          "Impossible de joindre le backend d'authentification. Vérifie que Laravel tourne sur 127.0.0.1:8000, localhost:8000, 127.0.0.1:8001 ou localhost:8001.",
+      },
+      { status: 502 }
     );
   }
 }

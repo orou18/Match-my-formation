@@ -4,11 +4,8 @@ import {
   ShieldCheck,
   Lock,
   Smartphone,
-  ChevronRight,
   Mail,
-  Key,
   Check,
-  X,
   AlertCircle,
   Eye,
   EyeOff,
@@ -16,20 +13,15 @@ import {
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-
-interface SecuritySettings {
-  twoFactorEnabled: boolean;
-  twoFactorMethod: "email" | "sms" | "app";
-  email: string;
-  phone?: string;
-  lastPasswordChange: string;
-  activeSessions: number;
-}
+import {
+  studentProfileApi,
+  type StudentSecuritySettings,
+} from "@/lib/services/student-profile-api";
 
 export default function SecurityPage() {
   const { data: session } = useSession();
   const [securitySettings, setSecuritySettings] =
-    useState<SecuritySettings | null>(null);
+    useState<StudentSecuritySettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [show2FAModal, setShow2FAModal] = useState(false);
@@ -68,29 +60,8 @@ export default function SecurityPage() {
     try {
       setLoading(true);
 
-      if (session?.user) {
-        const response = await fetch("/api/user/security", {
-          headers: {
-            Authorization: `Bearer ${(session.user as any)?.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setSecuritySettings(data);
-        } else {
-          // Utiliser des données mockées
-          setSecuritySettings({
-            twoFactorEnabled: false,
-            twoFactorMethod: "email",
-            email: session.user.email || "",
-            phone: "+33 6 12 34 56 78",
-            lastPasswordChange: "2024-03-15",
-            activeSessions: 2,
-          });
-        }
-      }
+      const data = await studentProfileApi.getSecurity();
+      setSecuritySettings(data);
     } catch (error) {
       console.error("Error loading security settings:", error);
     } finally {
@@ -123,19 +94,12 @@ export default function SecurityPage() {
     try {
       setLoading(true);
 
-      const response = await fetch("/api/user/change-password", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword,
-        }),
+      const response = await studentProfileApi.changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
       });
 
-      if (response.ok) {
+      if (response.success) {
         showMessage("Mot de passe mis à jour avec succès");
         setPasswordForm({
           currentPassword: "",
@@ -145,11 +109,7 @@ export default function SecurityPage() {
         setShowPasswordForm(false);
         loadSecuritySettings(); // Recharger les paramètres
       } else {
-        const error = await response.json();
-        showMessage(
-          error.message || "Erreur lors de la mise à jour du mot de passe",
-          "error"
-        );
+        showMessage("Erreur lors de la mise à jour du mot de passe", "error");
       }
     } catch (error) {
       console.error("Error changing password:", error);
@@ -169,18 +129,11 @@ export default function SecurityPage() {
         // Activer 2FA - envoyer le code
         setShow2FAModal(true);
 
-        const response = await fetch("/api/user/2fa/setup", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            method: twoFactorForm.method,
-          }),
+        const response = await studentProfileApi.setupTwoFactor({
+          method: twoFactorForm.method,
         });
 
-        if (response.ok) {
+        if (response.success) {
           setShowVerificationCode(true);
           showMessage(
             `Un code de vérification a été envoyé par ${twoFactorForm.method === "email" ? "email" : "SMS"}`
@@ -190,15 +143,9 @@ export default function SecurityPage() {
         }
       } else {
         // Désactiver 2FA
-        const response = await fetch("/api/user/2fa/disable", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await studentProfileApi.disableTwoFactor();
 
-        if (response.ok) {
+        if (response.twoFactorEnabled === false) {
           showMessage("2FA désactivé avec succès");
           loadSecuritySettings();
         } else {
@@ -217,27 +164,19 @@ export default function SecurityPage() {
     try {
       setLoading(true);
 
-      const response = await fetch("/api/user/2fa/verify", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${(session?.user as any)?.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          code: twoFactorForm.verificationCode,
-          method: twoFactorForm.method,
-        }),
+      const response = await studentProfileApi.verifyTwoFactor({
+        code: twoFactorForm.verificationCode,
+        method: twoFactorForm.method,
       });
 
-      if (response.ok) {
+      if (response.twoFactorEnabled) {
         showMessage("2FA activé avec succès");
         setShow2FAModal(false);
         setShowVerificationCode(false);
         setTwoFactorForm({ ...twoFactorForm, verificationCode: "" });
         loadSecuritySettings();
       } else {
-        const error = await response.json();
-        showMessage(error.message || "Code de vérification invalide", "error");
+        showMessage("Code de vérification invalide", "error");
       }
     } catch (error) {
       console.error("Error verifying 2FA:", error);
@@ -262,8 +201,8 @@ export default function SecurityPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="w-full min-w-0 space-y-8">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <h1 className="text-3xl font-black text-[#002B24]">Sécurité</h1>
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <ShieldCheck className="w-4 h-4" />
@@ -520,7 +459,7 @@ export default function SecurityPage() {
                       name="method"
                       value="email"
                       checked={twoFactorForm.method === "email"}
-                      onChange={(e) =>
+                      onChange={() =>
                         setTwoFactorForm({ ...twoFactorForm, method: "email" })
                       }
                       className="text-primary"
@@ -540,7 +479,7 @@ export default function SecurityPage() {
                       name="method"
                       value="sms"
                       checked={twoFactorForm.method === "sms"}
-                      onChange={(e) =>
+                      onChange={() =>
                         setTwoFactorForm({ ...twoFactorForm, method: "sms" })
                       }
                       className="text-primary"

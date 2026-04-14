@@ -17,7 +17,7 @@ return [
 
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
         '%s%s',
-        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
+        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,127.0.0.1:8009,::1,match-my-formation.vercel.app',
         Sanctum::currentApplicationUrlWithPort()
     ))),
 
@@ -33,7 +33,9 @@ return [
     |
     */
 
-    'guard' => ['web', 'api'],
+    // Sanctum ne doit pas reboucler sur un guard "api" lui-meme pilote par Sanctum.
+    // On garde uniquement le guard de session "web", puis Sanctum bascule sur le bearer token si besoin.
+    'guard' => ['web'],
 
     /*
     |--------------------------------------------------------------------------

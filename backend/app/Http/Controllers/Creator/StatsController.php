@@ -26,9 +26,9 @@ class StatsController extends Controller
             $totalLikes = Video::where('uploader_id', $user->id)->sum('likes');
             $totalComments = Video::where('uploader_id', $user->id)->sum('comments');
             $totalShares = Video::where('uploader_id', $user->id)->sum('shares');
-            $totalRevenue = $totalViews * 0.01; // 0.01€ par vue
-            $totalSubscribers = rand(100, 1000); // Simulé
-            $avgWatchTime = rand(180, 600); // en secondes
+            $totalRevenue = round($totalViews * 0.01, 2);
+            $totalSubscribers = \App\Models\Employee::where('creator_id', $user->id)->count();
+            $avgWatchTime = 0;
 
             // Données de performance
             $views = [];
@@ -43,8 +43,10 @@ class StatsController extends Controller
                     ->sum('views');
                 
                 $views[] = $dayViews;
-                $likes[] = rand(10, 100);
-                $revenue[] = $dayViews * 0.01;
+                $likes[] = Video::where('uploader_id', $user->id)
+                    ->whereDate('created_at', $date)
+                    ->sum('likes');
+                $revenue[] = round($dayViews * 0.01, 2);
                 $dates[] = $date;
             }
 
@@ -63,7 +65,7 @@ class StatsController extends Controller
                     ];
                 });
 
-            // Démographie (données simulées)
+            // Démographie: placeholder structuré en attendant une vraie source analytique
             $demographics = [
                 'countries' => [
                     ['name' => 'France', 'value' => 45],

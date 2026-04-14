@@ -10,6 +10,8 @@ export interface UserData {
   role: "student" | "creator" | "admin";
   avatar?: string;
   provider?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AuthData {
@@ -27,22 +29,6 @@ export class UserIdManager {
     USER_AVATAR: "userAvatar",
     PROVIDER: "socialProvider",
   };
-
-  // IDs de base pour les comptes de test
-  private static readonly BASE_IDS = {
-    admin: 1,
-    creator: 2,
-    student: 3,
-  };
-
-  /**
-   * Génère un ID unique pour un nouvel utilisateur
-   */
-  static generateUserId(role: string): number {
-    const timestamp = Date.now();
-    const rolePrefix = this.BASE_IDS[role as keyof typeof this.BASE_IDS] || 999;
-    return parseInt(`${rolePrefix}${timestamp.toString().slice(-6)}`);
-  }
 
   /**
    * Stocke les données d'authentification de manière cohérente
@@ -69,6 +55,11 @@ export class UserIdManager {
    * Récupère les données utilisateur stockées
    */
   static getStoredUserData(): UserData | null {
+    // Vérifier si nous sommes côté serveur
+    if (typeof window === "undefined") {
+      return null;
+    }
+
     const id = localStorage.getItem(this.STORAGE_KEYS.USER_ID);
     const name = localStorage.getItem(this.STORAGE_KEYS.USER_NAME);
     const email = localStorage.getItem(this.STORAGE_KEYS.USER_EMAIL);
@@ -89,86 +80,6 @@ export class UserIdManager {
       role,
       avatar: avatar || undefined,
       provider: provider || undefined,
-    };
-  }
-
-  /**
-   * Crée les données de test pour la connexion
-   */
-  static createTestUser(email: string, password: string): AuthData | null {
-    const testUsers = {
-      "student@match.com": {
-        id: this.BASE_IDS.student,
-        name: "Alice Élève",
-        email: "student@match.com",
-        role: "student" as const,
-        avatar: "/avatars/student.jpg",
-      },
-      "creator@match.com": {
-        id: this.BASE_IDS.creator,
-        name: "Jean Formateur",
-        email: "creator@match.com",
-        role: "creator" as const,
-        avatar: "/avatars/creator.jpg",
-      },
-      "admin@match.com": {
-        id: this.BASE_IDS.admin,
-        name: "Direction Match Admin",
-        email: "admin@match.com",
-        role: "admin" as const,
-        avatar: "/avatars/admin.jpg",
-      },
-    };
-
-    const userData = testUsers[email as keyof typeof testUsers];
-    if (!userData) return null;
-
-    return {
-      token: `mock-${userData.role}-token-${Date.now()}`,
-      user: userData,
-    };
-  }
-
-  /**
-   * Crée un nouvel utilisateur pour l'inscription
-   */
-  static createNewUser(
-    name: string,
-    email: string,
-    role: string,
-    provider?: string
-  ): AuthData {
-    const userData: UserData = {
-      id: this.generateUserId(role),
-      name,
-      email,
-      role: role as UserData["role"],
-      avatar: `/avatars/${role}.jpg`,
-      provider,
-    };
-
-    return {
-      token: `mock-token-${Date.now()}`,
-      user: userData,
-    };
-  }
-
-  /**
-   * Crée un utilisateur de connexion sociale
-   */
-  static createSocialUser(provider: string): AuthData {
-    const userData: UserData = {
-      id: this.generateUserId("student"),
-      name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
-      email: `user.${provider}@match.com`,
-      role: "student",
-      avatar: `/${provider}-avatar.jpg`,
-      provider,
-    };
-
-    return {
-      token: `social-${provider}-token-${Date.now()}`,
-      user: userData,
     };
   }
 
@@ -203,6 +114,44 @@ export class UserIdManager {
   static getCurrentUserId(): number | null {
     const userId = localStorage.getItem(this.STORAGE_KEYS.USER_ID);
     return userId ? parseInt(userId) : null;
+  }
+
+  static getToken(): string | null {
+    return localStorage.getItem(this.STORAGE_KEYS.TOKEN);
+  }
+
+  /**
+   * Crée des données utilisateur de test (pour le développement)
+   */
+  static createTestUser(): void {
+    if (typeof window === "undefined") return;
+
+    const testUser: UserData = {
+      id: 1,
+      name: "Étudiant Test",
+      email: "student@example.com",
+      role: "student",
+      avatar: undefined,
+      provider: undefined,
+    };
+
+    const testToken = "test-token-" + Date.now();
+
+    this.storeAuthData({
+      token: testToken,
+      user: testUser,
+    });
+  }
+
+  /**
+   * Initialise un utilisateur de test si aucun utilisateur n'existe
+   */
+  static initializeTestUserIfNeeded(): void {
+    if (typeof window === "undefined") return;
+
+    if (!this.isAuthenticated()) {
+      this.createTestUser();
+    }
   }
 }
 

@@ -50,6 +50,7 @@ import {
   useSimpleNotification,
   NotificationContainer,
 } from "@/components/ui/SimpleNotification";
+import { creatorDashboardApi } from "@/lib/services/creator-dashboard-api";
 
 export default function CreateVideoPage() {
   const router = useRouter();
@@ -91,6 +92,8 @@ export default function CreateVideoPage() {
     tags: [],
     video_url: "",
     thumbnail_url: "",
+    video_file: undefined,
+    thumbnail: undefined,
   });
 
   const [newObjective, setNewObjective] = useState("");
@@ -116,12 +119,18 @@ export default function CreateVideoPage() {
 
   const loadVideos = async () => {
     try {
-      const response = await fetch("/api/creator/dashboard");
+      // Utiliser fetch direct pour éviter le problème d'import
+      const response = await fetch("/api/creator/videos-simple", {
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      });
+
       if (response.ok) {
         const data = await response.json();
-        setVideos(data.videos || []);
-      } else {
-        console.error("Erreur lors du chargement des vidéos");
+        const videosList = Array.isArray(data.videos) ? data.videos : [];
+        setVideos(videosList);
       }
     } catch (error) {
       console.error("Erreur lors du chargement des vidéos:", error);
@@ -132,17 +141,37 @@ export default function CreateVideoPage() {
 
   const loadStats = async () => {
     try {
-      const response = await fetch("/api/creator/dashboard");
+      // Utiliser fetch direct pour éviter le problème d'import
+      const response = await fetch("/api/creator/videos-simple", {
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      });
+
       if (response.ok) {
         const data = await response.json();
-        setStats(
-          data.stats || {
-            totalVideos: 0,
-            totalViews: 0,
-            engagement: 0,
-            revenue: 0,
-          }
-        );
+        const videosList = Array.isArray(data.videos) ? data.videos : [];
+        setStats({
+          totalVideos: videosList.length,
+          totalViews: videosList.reduce(
+            (sum: number, video: Video) => sum + (video.views || 0),
+            0
+          ),
+          engagement: videosList.length
+            ? Math.round(
+                videosList.reduce(
+                  (sum: number, video: Video) => sum + (video.likes || 0),
+                  0
+                ) / videosList.length
+              )
+            : 0,
+          revenue: videosList.reduce(
+            (sum: number, video: Video) =>
+              sum + ((video as Video & { revenue?: number }).revenue || 0),
+            0
+          ),
+        });
       }
     } catch (error) {
       console.error("Erreur lors du chargement des stats:", error);
@@ -179,7 +208,7 @@ export default function CreateVideoPage() {
       formDataToSend.append("duration", videoDuration);
 
       if (formData.video_file) {
-        formDataToSend.append("video_file", formData.video_file);
+        formDataToSend.append("video", formData.video_file);
       }
       if (formData.thumbnail) {
         formDataToSend.append("thumbnail", formData.thumbnail);
@@ -199,39 +228,53 @@ export default function CreateVideoPage() {
         });
       }, 200);
 
+      clearInterval(progressInterval);
+
+      // Utiliser fetch direct pour éviter le problème d'import
       const response = await fetch("/api/creator/videos-simple", {
         method: "POST",
         body: formDataToSend,
+        cache: "no-store",
       });
-
-      clearInterval(progressInterval);
-      setUploadProgress(100);
 
       if (response.ok) {
         const result = await response.json();
-        setVideos((prev) => [...prev, result.video]);
+        setUploadProgress(100);
+
+        setVideos((prev) => [...prev, result.data || result]);
         setShowCreateModal(false);
         resetForm();
         success(
           "Vidéo créée avec succès",
-          `"${result.video.title}" a été ajoutée à votre contenu`
+          `"${formData.title}" a été ajoutée à votre contenu`
         );
 
-        // Si la vidéo est publique, recharger les données
-        if (result.video.visibility === "public") {
+        const createdVideo = result.data || result;
+        if (createdVideo.visibility === "public") {
           loadStats();
+
+          // Recharger la section pépites du dashboard student
+          if (
+            typeof window !== "undefined" &&
+            (window as any).refreshStudentVideos
+          ) {
+            (window as any).refreshStudentVideos();
+          }
         }
 
-        // Redirection vers le dashboard
+        // Recharger la liste des vidéos dans le dashboard creator
+        if (
+          typeof window !== "undefined" &&
+          (window as any).refreshCreatorVideos
+        ) {
+          (window as any).refreshCreatorVideos();
+        }
+
         setTimeout(() => {
-          router.push(`/${locale}/dashboard/creator`);
+          router.push(`/${locale}/dashboard/creator/videos`);
         }, 1500);
       } else {
-        const errorData = await response.json();
-        error(
-          "Erreur lors de la création",
-          errorData.error || "Une erreur est survenue"
-        );
+        throw new Error("Erreur lors de la création de la vidéo");
       }
     } catch (err) {
       console.error("Erreur:", err);
@@ -280,8 +323,13 @@ export default function CreateVideoPage() {
       publishData.append("title", formData.title);
       publishData.append("description", formData.description);
       publishData.append("category", formData.category);
-      publishData.append("video_file", formData.video_file);
-      publishData.append("thumbnail", formData.thumbnail || "");
+      publishData.append("video", formData.video_file);
+      if (formData.thumbnail) {
+        publishData.append("thumbnail", formData.thumbnail);
+      }
+      if (selectedThumbnail) {
+        publishData.append("selected_thumbnail", selectedThumbnail);
+      }
       publishData.append("tags", JSON.stringify(formData.tags));
       publishData.append(
         "learning_objectives",
@@ -290,49 +338,65 @@ export default function CreateVideoPage() {
       publishData.append("resources", JSON.stringify(formData.resources));
       publishData.append("visibility", "public"); // Publication directe = publique
       publishData.append("allow_comments", "true");
-      publishData.append("published_immediately", "true"); // Flag pour publication immédiate
-
-      const response = await fetch("/api/creator/videos", {
-        method: "POST",
-        body: publishData,
-      });
+      publishData.append("publish_immediately", "true");
+      publishData.append("duration", videoDuration);
 
       clearInterval(progressInterval);
-      setUploadProgress(100);
+
+      // Utiliser fetch direct pour éviter le problème d'import
+      const response = await fetch("/api/creator/videos-simple", {
+        method: "POST",
+        body: publishData,
+        cache: "no-store",
+      });
 
       if (response.ok) {
-        const newVideo = await response.json();
-        success(
-          "Vidéo publiée avec succès!",
-          `"${formData.title}" est maintenant en ligne et visible par tous`
-        );
-
-        // Réinitialiser le formulaire
-        setFormData({
-          title: "",
-          description: "",
-          category: "",
-          tags: [],
-          learning_objectives: [],
-          resources: [],
-          video_file: undefined,
-          thumbnail: undefined,
-          visibility: "private",
-          allow_comments: true,
-          publish_immediately: false,
-        });
-
-        // Rediriger vers le dashboard après un court délai
-        setTimeout(() => {
-          router.push(`/${locale}/dashboard/creator`);
-        }, 1500);
+        const result = await response.json();
+        console.log("Vidéo créée avec succès:", result);
       } else {
-        const errorData = await response.json();
-        error(
-          "Erreur lors de la publication",
-          errorData.error || "Une erreur est survenue"
-        );
+        throw new Error("Erreur lors de la création de la vidéo");
       }
+
+      setUploadProgress(100);
+
+      success(
+        "Vidéo publiée avec succès!",
+        `"${formData.title}" est maintenant en ligne et visible par tous`
+      );
+
+      // Recharger la section pépites du dashboard student (vidéo publique)
+      if (
+        typeof window !== "undefined" &&
+        (window as any).refreshStudentVideos
+      ) {
+        (window as any).refreshStudentVideos();
+      }
+
+      // Recharger la liste des vidéos dans le dashboard creator
+      if (
+        typeof window !== "undefined" &&
+        (window as any).refreshCreatorVideos
+      ) {
+        (window as any).refreshCreatorVideos();
+      }
+
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        tags: [],
+        learning_objectives: [],
+        resources: [],
+        video_file: undefined,
+        thumbnail: undefined,
+        visibility: "private",
+        allow_comments: true,
+        publish_immediately: false,
+      });
+
+      setTimeout(() => {
+        router.push(`/${locale}/dashboard/creator/videos`);
+      }, 1500);
     } catch (err) {
       console.error("Erreur:", err);
       error(
@@ -355,28 +419,17 @@ export default function CreateVideoPage() {
     }
 
     try {
-      const response = await fetch(`/api/creator/videos?id=${videoId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        const deletedVideo = videos.find((v) => v.id === videoId);
-        setVideos(videos.filter((video) => video.id !== videoId));
-        if (previewVideo?.id === videoId) {
-          setPreviewVideo(null);
-        }
-        success(
-          "Vidéo supprimée",
-          `"${deletedVideo?.title}" a été supprimée avec succès`
-        );
-        loadStats();
-      } else {
-        const errorData = await response.json();
-        error(
-          "Erreur lors de la suppression",
-          errorData.error || "Une erreur est survenue"
-        );
+      await creatorDashboardApi.deleteVideo(videoId);
+      const deletedVideo = videos.find((v) => v.id === videoId);
+      setVideos(videos.filter((video) => video.id !== videoId));
+      if (previewVideo?.id === videoId) {
+        setPreviewVideo(null);
       }
+      success(
+        "Vidéo supprimée",
+        `"${deletedVideo?.title}" a été supprimée avec succès`
+      );
+      loadStats();
     } catch (err) {
       console.error("Erreur:", err);
       error(
@@ -699,13 +752,14 @@ export default function CreateVideoPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4"
+              className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-2 sm:p-4"
+              style={{ touchAction: "pan-y" }}
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-2xl w-full max-w-6xl h-[85vh] sm:h-[80vh] flex flex-col shadow-2xl border border-gray-200"
+                className="mx-auto my-2 flex min-h-[calc(100vh-1rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:my-4 sm:max-h-[calc(100vh-2rem)] sm:min-h-[calc(100vh-2rem)]"
               >
                 {/* Header */}
                 <div className="p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50">
@@ -759,13 +813,7 @@ export default function CreateVideoPage() {
                   )}
 
                   {/* Form Content */}
-                  <div
-                    className="flex-1 overflow-y-auto overflow-x-hidden"
-                    style={{
-                      scrollbarWidth: "thin",
-                      scrollbarColor: "#93c5fd #f3f4f6",
-                    }}
-                  >
+                  <div className="flex-1">
                     <style jsx>{`
                       div::-webkit-scrollbar {
                         width: 8px;
@@ -783,7 +831,7 @@ export default function CreateVideoPage() {
                         background: #60a5fa;
                       }
                     `}</style>
-                    <div className="p-2 sm:p-3 space-y-2 sm:space-y-3">
+                    <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
                       {/* Basic Information */}
                       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                         <button
@@ -818,7 +866,7 @@ export default function CreateVideoPage() {
                                 </label>
                                 <input
                                   type="text"
-                                  value={formData.title}
+                                  value={formData.title || ""}
                                   onChange={(e) =>
                                     setFormData((prev) => ({
                                       ...prev,
@@ -836,7 +884,7 @@ export default function CreateVideoPage() {
                                   Catégorie
                                 </label>
                                 <select
-                                  value={formData.category}
+                                  value={formData.category || ""}
                                   onChange={(e) =>
                                     setFormData((prev) => ({
                                       ...prev,
@@ -872,7 +920,7 @@ export default function CreateVideoPage() {
                                 Description *
                               </label>
                               <textarea
-                                value={formData.description}
+                                value={formData.description || ""}
                                 onChange={(e) =>
                                   setFormData((prev) => ({
                                     ...prev,
@@ -951,7 +999,7 @@ export default function CreateVideoPage() {
                               <Target className="w-4 h-4 text-green-600" />
                             </div>
                             <h3 className="font-medium text-sm text-gray-900">
-                              Objectifs d'apprentissage
+                              Objectifs d&apos;apprentissage
                             </h3>
                             <span className="text-xs text-gray-500">
                               {formData.learning_objectives.length} ajouté
@@ -1115,6 +1163,7 @@ export default function CreateVideoPage() {
                                         }
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         placeholder="Description (optionnel)"
+                                        defaultValue=""
                                       />
                                     </div>
 
@@ -1150,6 +1199,7 @@ export default function CreateVideoPage() {
                                           }
                                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                           placeholder="https://exemple.com"
+                                          defaultValue=""
                                         />
                                       </div>
                                     ) : (
@@ -1178,11 +1228,11 @@ export default function CreateVideoPage() {
                                           }
                                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         />
-                                        {(resource as any).file_data && (
+                                        {resource.file_data && (
                                           <div className="mt-2 text-sm text-green-600 flex items-center gap-2">
                                             <CheckCircle className="w-4 h-4" />
                                             Fichier sélectionné:{" "}
-                                            {(resource as any).file_data.name}
+                                            {resource.file_data.name}
                                           </div>
                                         )}
                                       </div>
@@ -1383,11 +1433,14 @@ export default function CreateVideoPage() {
                                   Visibilité
                                 </label>
                                 <select
-                                  value={formData.visibility}
+                                  value={formData.visibility || ""}
                                   onChange={(e) =>
                                     setFormData((prev) => ({
                                       ...prev,
-                                      visibility: e.target.value as any,
+                                      visibility: e.target.value as
+                                        | "private"
+                                        | "public"
+                                        | "unlisted",
                                     }))
                                   }
                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1448,8 +1501,8 @@ export default function CreateVideoPage() {
                                     <p className="text-sm text-blue-700">
                                       Cette vidéo sera visible par tous les
                                       utilisateurs sur les dashboards étudiants
-                                      et dans la section "pépites de nos
-                                      experts".
+                                      et dans la section &quot;pépites de nos
+                                      experts&quot;.
                                     </p>
                                   </div>
                                 </div>
