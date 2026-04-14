@@ -201,6 +201,9 @@ export default function StudentDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+        setError(null);
+
         // Récupérer l'utilisateur depuis la session
         const userResponse = await fetch("/api/auth/me", {
           cache: "no-store",
@@ -222,147 +225,59 @@ export default function StudentDashboard() {
 
         setUser(user);
 
-        // Charger les vidéos selon le rôle de l'utilisateur
-        let allCourses: any[] = [];
-        let creatorVideosData: any[] = [];
-        let adminVideosData: any[] = [];
+        // Utiliser l'API centralisée pour garantir la persistance des données
+        // Cette API retourne toutes les vidéos publiques (créateurs + admin) de manière persistante
+        const videosResponse = await fetch("/api/videos/all-public", {
+          cache: "no-store",
+        });
 
-        // Pour les employés, charger les vidéos créateurs (privées, publiques, non listées)
-        if (user.role === "employee") {
-          const creatorVideosResponse = await fetch("/api/creator/videos", {
-            cache: "no-store",
-            credentials: "include",
-          });
+        if (videosResponse.ok) {
+          const videosData = await videosResponse.json();
 
-          if (creatorVideosResponse.ok) {
-            const creatorVideosPayload = await creatorVideosResponse.json();
-            creatorVideosData = Array.isArray(creatorVideosPayload?.videos)
-              ? creatorVideosPayload.videos
-              : Array.isArray(creatorVideosPayload)
-                ? creatorVideosPayload
-                : [];
+          if (videosData.success && videosData.data) {
+            const { creatorVideos, adminVideos, allVideos } = videosData.data;
 
-            // Transformer les données pour le dashboard
-            allCourses = creatorVideosData.map((video: any) => ({
-              id: video.id,
-              title: video.title,
-              description: video.description,
-              thumbnail: video.thumbnail,
-              duration: video.duration,
-              creator: {
-                name: video.creator_name || "Créateur",
-                avatar: video.creator_avatar || null,
-              },
-              category: video.category,
-              tags: video.tags || [],
-              video_url: video.video_url,
-              is_published: video.is_published,
-              visibility: video.visibility, // private, public, unlisted
-              created_at: video.created_at,
-              is_creator_video: true,
-            }));
-          }
+            // Mettre à jour les états avec les données persistantes
+            setCreatorVideos(creatorVideos || []);
+            setAdminVideos(adminVideos || []);
+            setCourses(allVideos || []);
+            setFilteredCourses(allVideos || []);
 
-          // Charger les vidéos admin pour le catalogue de formations (TOUJOURS pour les employés)
-          const adminVideosResponse = await fetch("/api/admin/videos", {
-            cache: "no-store",
-          });
-
-          if (adminVideosResponse.ok) {
-            const adminVideosPayload = await adminVideosResponse.json();
-            adminVideosData = Array.isArray(adminVideosPayload?.videos)
-              ? adminVideosPayload.videos
-              : Array.isArray(adminVideosPayload?.data)
-                ? adminVideosPayload.data
-                : [];
+            // Log pour le débogage
+            console.log("Données vidéos chargées avec succès:", {
+              creatorVideos: creatorVideos?.length || 0,
+              adminVideos: adminVideos?.length || 0,
+              totalVideos: allVideos?.length || 0,
+              persistent: videosData.persistent,
+              timestamp: videosData.timestamp,
+            });
+          } else {
+            throw new Error("Format de réponse invalide");
           }
         } else {
-          // Pour les étudiants standards, charger les vidéos publiques
-          const publicVideosResponse = await fetch("/api/videos/public", {
-            cache: "no-store",
-          });
-
-          if (publicVideosResponse.ok) {
-            const publicVideosPayload = await publicVideosResponse.json();
-            allCourses = Array.isArray(publicVideosPayload?.data)
-              ? publicVideosPayload.data
-              : Array.isArray(publicVideosPayload)
-                ? publicVideosPayload
-                : [];
-          }
-
-          // Charger les vidéos créateurs publiques pour la section pépites de nos experts (ENDPOINT PUBLIC)
-          const creatorVideosResponse = await fetch(
-            "/api/creator/videos-public",
-            {
-              cache: "no-store",
-              // Pas besoin de credentials pour l'endpoint public
-            }
-          );
-
-          if (creatorVideosResponse.ok) {
-            const creatorVideosPayload = await creatorVideosResponse.json();
-            // L'endpoint public retourne déjà les vidéos publiques filtrées
-            creatorVideosData = Array.isArray(creatorVideosPayload?.data)
-              ? creatorVideosPayload.data
-              : Array.isArray(creatorVideosPayload?.videos)
-                ? creatorVideosPayload.videos
-                : [];
-          } else {
-            // En cas d'erreur, utiliser un tableau vide pour la section pépites
-            creatorVideosData = [];
-          }
-
-          // Charger les vidéos admin pour le catalogue de formations (ENDPOINT PUBLIC)
-          const adminVideosResponse = await fetch("/api/admin/videos-public", {
-            cache: "no-store",
-            // Pas besoin de credentials pour l'endpoint public
-          });
-
-          if (adminVideosResponse.ok) {
-            const adminVideosPayload = await adminVideosResponse.json();
-            // L'endpoint public retourne déjà les vidéos admin transformées
-            adminVideosData = Array.isArray(adminVideosPayload?.data)
-              ? adminVideosPayload.data
-              : Array.isArray(adminVideosPayload?.videos)
-                ? adminVideosPayload.videos
-                : [];
-          } else {
-            // En cas d'erreur, utiliser un tableau vide pour les vidéos admin
-            adminVideosData = [];
-          }
+          throw new Error("Erreur lors de la récupération des vidéos");
         }
 
-        // Catalogue des formations: combiner les vidéos admin et les vidéos publiques
-        const allAdminVideos = adminVideosData.filter(
-          (video) => video.is_admin_video
-        );
-        const allPublicVideos = allCourses.filter(
-          (video: any) => !video.is_admin_video
-        );
-
-        // Combiner toutes les vidéos pour le catalogue complet
-        const coursesData = [...allAdminVideos, ...allPublicVideos];
-        setCourses(coursesData); // Toutes les vidéos sont incluses ici
-        setFilteredCourses(coursesData); // Initialiser les cours filtrés
-        setPublicVideos(allPublicVideos.slice(0, 6)); // Exclure les vidéos admin des pépites publiques
-        setCreatorVideos(creatorVideosData); // Stocker les vidéos créateurs publiques
-        setAdminVideos(adminVideosData); // Stocker les vidéos admin
-        setTotalPages(1);
-
         // Vérifier si c'est un nouvel utilisateur (créé il y a moins de 24h)
-        const createdAt = user.created_at
-          ? new Date(user.created_at)
-          : new Date();
+        const createdAt = user.created_at ? new Date(user.created_at) : new Date();
         const now = new Date();
-        const hoursDiff =
-          (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+        const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
         setIsNewUser(hoursDiff < 24);
       } catch (error: unknown) {
         console.error("Erreur dashboard étudiant:", error);
-        setError(
-          "Impossible de charger votre tableau de bord. Veuillez réessayer."
-        );
+        setError("Impossible de charger votre tableau de bord. Veuillez réessayer.");
+
+        // En cas d'erreur, utiliser des données par défaut pour éviter que le dashboard soit vide
+        const defaultData = {
+          creatorVideos: [],
+          adminVideos: [],
+          allVideos: [],
+        };
+
+        setCreatorVideos(defaultData.creatorVideos);
+        setAdminVideos(defaultData.adminVideos);
+        setCourses(defaultData.allVideos);
+        setFilteredCourses(defaultData.allVideos);
       } finally {
         setLoading(false);
       }

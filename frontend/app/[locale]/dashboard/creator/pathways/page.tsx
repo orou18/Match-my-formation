@@ -68,6 +68,13 @@ interface CreatorVideoOption {
   duration: string;
   thumbnail?: string | null;
   visibility?: "public" | "private" | "unlisted";
+  category?: string;
+  tags?: string[];
+  is_published?: boolean;
+  views?: number;
+  likes?: number;
+  students_count?: number;
+  created_at?: string;
 }
 
 export default function PathwaysPage() {
@@ -166,20 +173,29 @@ export default function PathwaysPage() {
 
   const loadVideos = async () => {
     try {
+      console.log("Début du chargement des vidéos pour les parcours...");
       const response = await fetch("/api/creator/videos-simple", {
         cache: "no-store",
         credentials: "include", // Inclure les cookies NextAuth
       });
+      
+      console.log("Response status:", response.status);
       const data = await response.json();
+      console.log("Response data:", data);
 
       // Gérer la structure de données de l'API qui retourne { videos: [...], total: X }
       let videosList = [];
       if (Array.isArray(data?.videos)) {
         videosList = data.videos;
+        console.log("Vidéos trouvées dans data.videos:", videosList.length);
       } else if (Array.isArray(data)) {
         videosList = data;
+        console.log("Vidéos trouvées dans data (array direct):", videosList.length);
       } else if (Array.isArray(data?.data)) {
         videosList = data.data;
+        console.log("Vidéos trouvées dans data.data:", videosList.length);
+      } else {
+        console.warn("Format de données non reconnu:", data);
       }
 
       // Transformer les données pour correspondre au format CreatorVideoOption
@@ -199,8 +215,11 @@ export default function PathwaysPage() {
         created_at: video.created_at,
       }));
 
+      console.log("Vidéos transformées:", transformedVideos.length);
+      console.log("Vidéos transformées détaillées:", transformedVideos);
       setVideos(transformedVideos);
       console.log("Vidéos chargées pour parcours:", transformedVideos);
+      console.log("État videos après setVideos:", transformedVideos.length);
     } catch (error: any) {
       console.error("Erreur loadVideos:", error);
       // En cas d'erreur, utiliser le fallback
@@ -212,9 +231,20 @@ export default function PathwaysPage() {
           thumbnail: "/placeholder-video.jpg",
           duration: "15:30",
           visibility: "public",
+          category: "marketing",
+        },
+        {
+          id: 2,
+          title: "Techniques de Vente Avancées",
+          description: "Maîtrisez les techniques de vente modernes",
+          thumbnail: "/placeholder-video.jpg",
+          duration: "22:15",
+          visibility: "public",
+          category: "sales",
         },
       ];
       setVideos(fallbackVideos);
+      console.log("Utilisation des vidéos de fallback:", fallbackVideos);
       error("Erreur", "Utilisation des vidéos de démonstration");
     }
   };
@@ -797,6 +827,7 @@ export default function PathwaysPage() {
                 onSubmit={createPathway}
                 className="p-6 overflow-y-auto max-h-[70vh]"
               >
+                {/* Champs du formulaire */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -827,12 +858,12 @@ export default function PathwaysPage() {
                       required
                     >
                       <option value="">Sélectionner un domaine</option>
-                      <option value="Hôtellerie">🏨 Hôtellerie</option>
-                      <option value="Restauration">🍽 Restauration</option>
-                      <option value="Tourisme">✈️ Tourisme</option>
-                      <option value="Commerce">🛍️ Commerce</option>
-                      <option value="Santé">🏥 Santé</option>
-                      <option value="Éducation">📚 Éducation</option>
+                      <option value="Hôtellerie">Hôtellerie</option>
+                      <option value="Restauration">Restauration</option>
+                      <option value="Tourisme">Tourisme</option>
+                      <option value="Commerce">Commerce</option>
+                      <option value="Santé">Santé</option>
+                      <option value="Éducation">Éducation</option>
                     </select>
                   </div>
                 </div>
@@ -891,13 +922,14 @@ export default function PathwaysPage() {
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       required
                     >
-                      <option value="beginner">🟢 Débutant</option>
-                      <option value="intermediate">🟡 Intermédiaire</option>
-                      <option value="advanced">🔴 Avancé</option>
+                      <option value="beginner">Débutant</option>
+                      <option value="intermediate">Intermédiaire</option>
+                      <option value="advanced">Avancé</option>
                     </select>
                   </div>
                 </div>
 
+                {/* Section des vidéos */}
                 <div className="mt-6">
                   <div className="flex items-center justify-between gap-4 mb-3">
                     <div>
@@ -905,8 +937,7 @@ export default function PathwaysPage() {
                         Videos du parcours *
                       </label>
                       <p className="text-sm text-gray-500 mt-1">
-                        Choisissez l&apos;ordre pedagogique des videos qui
-                        composent ce parcours.
+                        Choisissez l'ordre pedagogique des videos qui composent ce parcours.
                       </p>
                     </div>
                     <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700">
@@ -961,13 +992,18 @@ export default function PathwaysPage() {
                   <div className="grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 max-h-72 overflow-y-auto">
                     {videos.length === 0 ? (
                       <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-gray-500">
+                        <Play className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                         Aucune video disponible pour construire un parcours.
+                        <p className="text-xs mt-2">
+                          Veuillez d'abord créer des vidéos depuis la page "Bibliothèque".
+                        </p>
                       </div>
                     ) : (
                       videos.map((video) => {
                         const isSelected = formData.video_ids.includes(
                           video.id
                         );
+                        console.log("Rendering video:", video.title, "isSelected:", isSelected);
 
                         return (
                           <button
@@ -982,7 +1018,7 @@ export default function PathwaysPage() {
                           >
                             {/* Miniature de la vidéo */}
                             <div className="relative flex-shrink-0">
-                              {video.thumbnail ? (
+                              {video.thumbnail && video.thumbnail !== "" ? (
                                 <img
                                   src={video.thumbnail}
                                   alt={video.title}
@@ -997,36 +1033,44 @@ export default function PathwaysPage() {
                                   <Play className="h-6 w-6 text-gray-400" />
                                 </div>
                               )}
+                              {isSelected && (
+                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
+                                  <CheckCircle className="w-3 h-3 text-white" />
+                                </div>
+                              )}
                             </div>
 
-                            <div className="mt-1">
-                              <div
-                                className={`flex h-5 w-5 items-center justify-center rounded border ${
-                                  isSelected
-                                    ? "border-purple-600 bg-purple-600 text-white"
-                                    : "border-gray-300 bg-white"
-                                }`}
-                              >
-                                {isSelected ? (
-                                  <CheckCircle className="h-4 w-4" />
-                                ) : null}
-                              </div>
-                            </div>
+                            {/* Informations de la vidéo */}
                             <div className="flex-1 min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-medium text-gray-900">
-                                  {video.title}
-                                </p>
-                                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                                  {video.duration || "Durée inconnue"}
-                                </span>
-                                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-                                  {video.visibility || "privé"}
-                                </span>
-                              </div>
-                              <p className="mt-1 line-clamp-2 text-sm text-gray-600">
-                                {video.description || "Sans description"}
+                              <h4 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
+                                {video.title}
+                              </h4>
+                              <p className="text-xs text-gray-500 line-clamp-2 mb-2">
+                                {video.description || "Aucune description"}
                               </p>
+                              <div className="flex items-center gap-3 text-xs text-gray-400">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {video.duration || "00:00"}
+                                </span>
+                                {video.category && (
+                                  <span className="px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+                                    {video.category}
+                                  </span>
+                                )}
+                                {video.visibility && (
+                                  <span className={`px-2 py-1 rounded-full text-xs ${
+                                    video.visibility === "public" 
+                                      ? "bg-green-100 text-green-700" 
+                                      : video.visibility === "private"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-yellow-100 text-yellow-700"
+                                  }`}>
+                                    {video.visibility === "public" ? "Public" : 
+                                     video.visibility === "private" ? "Privé" : "Non listé"}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </button>
                         );
@@ -1035,6 +1079,7 @@ export default function PathwaysPage() {
                   </div>
                 </div>
 
+                {/* Boutons */}
                 <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
                   <button
                     type="button"
