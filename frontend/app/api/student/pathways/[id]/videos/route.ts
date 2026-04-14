@@ -5,7 +5,7 @@ import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Récupérer la session de l'utilisateur
@@ -26,7 +26,8 @@ export async function GET(
       );
     }
 
-    const pathwayId = params.id;
+    const resolvedParams = await params;
+    const pathwayId = resolvedParams.id;
 
     // Appeler l'API Laravel pour récupérer les vidéos du parcours
     const response = await laravelFetch(
