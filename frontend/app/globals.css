@@ -89,7 +89,7 @@ body {
   color: var(--color-dark);
   background-color: var(--color-light);
   /* Optimisation du défilement */
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
   /* Amélioration du rendu */
   text-rendering: optimizeLegibility;
   -webkit-text-size-adjust: 100%;
@@ -340,6 +340,7 @@ video {
 /* Optimisation du contenu au-dessus de la ligne de flottaison */
 .above-the-fold {
   /* Pas de lazy loading pour le contenu critique */
+  content-visibility: auto;
 }
 
 /* Optimisation pour l'impression */

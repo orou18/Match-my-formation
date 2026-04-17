@@ -92,6 +92,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/creator/employees/{id}', [EmployeeController::class, 'destroy']);
     Route::post('/creator/employees/{id}/regenerate-credentials', [EmployeeController::class, 'regenerateCredentials']);
     Route::get('/creator/employees/stats', [EmployeeController::class, 'stats']);
+    
+    // --- 3.2 ACCÈS EMPLOYÉS ---
+    Route::post('/creator/employees/{id}/send-access', [App\Http\Controllers\EmployeeAccessController::class, 'sendAccess']);
+    Route::get('/creator/employees/{id}/qr-code', [App\Http\Controllers\EmployeeAccessController::class, 'generateQRCode']);
+    Route::post('/creator/employees/{id}/reset-password', [App\Http\Controllers\EmployeeAccessController::class, 'resetPassword']);
 
     // --- 3.2 SUIVI DE PROGRESSION DES EMPLOYÉS ---
     Route::get('/creator/employees/progress/global', [EmployeeProgressController::class, 'globalProgress']);
@@ -99,7 +104,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/creator/employees/{employeeId}/progress/courses', [EmployeeProgressController::class, 'courseProgress']);
 
     // --- 3.3 ANALYTICS DES EMPLOYÉS ---
-    Route::get('/creator/analytics/employees', [CreatorAnalyticsController::class, 'getEmployeeAnalytics']);
+    // Route::get('/creator/analytics/employees', [CreatorAnalyticsController::class, 'getEmployeeAnalytics']); // Commenté pour l'instant
 
     // --- 3.3 GESTION DES PARCOURS DE FORMATION ---
     Route::get('/creator/pathways', [PathwayManagementController::class, 'index']);
@@ -110,7 +115,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/creator/pathways/assignment/{assignmentId}/progress', [PathwayManagementController::class, 'updateProgress']);
     Route::delete('/creator/pathways/assignment/{assignmentId}', [PathwayManagementController::class, 'removeAssignment']);
 
-    // --- 3.4 LIVE / WEBINARS (simple JSON-backed persistence)
+    // --- 3.4 BRANDING PERSONNALISÉ ---
+    Route::get('/creator/{id}/branding', [App\Http\Controllers\Creator\CreatorBrandingController::class, 'getBranding']);
+    Route::put('/creator/{id}/branding', [App\Http\Controllers\Creator\CreatorBrandingController::class, 'updateBranding']);
+
+    // --- 3.5 LIVE / WEBINARS (simple JSON-backed persistence)
     Route::get('/creator/webinars', [WebinarController::class, 'index']);
     Route::post('/creator/webinars', [WebinarController::class, 'store']);
     Route::get('/creator/webinars/{id}', [WebinarController::class, 'show']);
@@ -123,6 +132,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/stats', [AnalyticsController::class, 'getDashboardStats']);
     Route::get('/admin/branding', [BrandingController::class, 'show']);
     Route::put('/admin/branding', [BrandingController::class, 'update']);
+    
+    // --- 4.1 ADMIN USERS MANAGEMENT ---
+    Route::get('/admin/users', [App\Http\Controllers\Admin\AdminUsersController::class, 'index']);
+    Route::post('/admin/users', [App\Http\Controllers\Admin\AdminUsersController::class, 'store']);
+    Route::get('/admin/users/{id}', [App\Http\Controllers\Admin\AdminUsersController::class, 'show']);
+    Route::put('/admin/users/{id}', [App\Http\Controllers\Admin\AdminUsersController::class, 'update']);
+    Route::delete('/admin/users/{id}', [App\Http\Controllers\Admin\AdminUsersController::class, 'destroy']);
+    Route::post('/admin/users/bulk-action', [App\Http\Controllers\Admin\AdminUsersController::class, 'bulkAction']);
+    Route::get('/admin/users/stats', [App\Http\Controllers\Admin\AdminUsersController::class, 'stats']);
+    
+    // --- 4.2 ADMIN VIDEOS MANAGEMENT ---
+    Route::get('/admin/videos', [App\Http\Controllers\Admin\AdminVideosController::class, 'index']);
+    Route::post('/admin/videos', [App\Http\Controllers\Admin\AdminVideosController::class, 'store']);
+    Route::get('/admin/videos/{id}', [App\Http\Controllers\Admin\AdminVideosController::class, 'show']);
+    Route::put('/admin/videos/{id}', [App\Http\Controllers\Admin\AdminVideosController::class, 'update']);
+    Route::delete('/admin/videos/{id}', [App\Http\Controllers\Admin\AdminVideosController::class, 'destroy']);
+    Route::post('/admin/videos/bulk-action', [App\Http\Controllers\Admin\AdminVideosController::class, 'bulkAction']);
+    Route::get('/admin/videos/stats', [App\Http\Controllers\Admin\AdminVideosController::class, 'stats']);
 
     // --- 5. DASHBOARD STUDENT ---
     Route::get('/student/courses', [CourseController::class, 'index']);
@@ -165,6 +192,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/videos/{id}/like', [CourseVideoController::class, 'like']);
     Route::delete('/videos/{id}/like', [CourseVideoController::class, 'unlike']);
     Route::post('/videos/{id}/comments', [CourseVideoController::class, 'comment']);
+
+    // --- 6.5 EMPLOYEE STUDENT VIEW ---
+    Route::get('/employee/student/dashboard', [App\Http\Controllers\EmployeeStudentController::class, 'dashboard']);
+    Route::get('/employee/student/videos', [App\Http\Controllers\EmployeeStudentController::class, 'videos']);
+    Route::get('/employee/student/pathways', [App\Http\Controllers\EmployeeStudentController::class, 'pathways']);
+    Route::get('/employee/student/pathways/{id}', [App\Http\Controllers\EmployeeStudentController::class, 'pathwayDetails']);
+    Route::post('/employee/student/videos/{id}/complete', [App\Http\Controllers\EmployeeStudentController::class, 'completeVideo']);
+    Route::get('/employee/student/progress', [App\Http\Controllers\EmployeeStudentController::class, 'getProgress']);
 
     // --- 7. CHAT MESSAGES (Disponible pour tous les utilisateurs authentifiés) ---
     Route::get('/videos/{videoId}/messages', [ChatMessageController::class, 'getVideoMessages']);

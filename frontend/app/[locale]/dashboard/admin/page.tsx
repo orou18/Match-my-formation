@@ -53,7 +53,7 @@ export default function AdminDashboard() {
       trend: (growth.users || 0) >= 0 ? "up" : "down",
     },
     {
-      title: "Créateurs / Vidéos",
+      title: "Créateurs",
       value: new Intl.NumberFormat("fr-FR").format(overview.totalCreators || 0),
       change: growth.creators || 0,
       icon: UserCheck,
@@ -88,12 +88,12 @@ export default function AdminDashboard() {
       trend: (growth.engagement || 0) >= 0 ? "up" : "down",
     },
     {
-      title: "Sessions Video",
-      value: new Intl.NumberFormat("fr-FR").format(overview.totalCreators || 0),
-      change: growth.creators || 0,
+      title: "Total Vidéos",
+      value: new Intl.NumberFormat("fr-FR").format(overview.totalVideos || 0),
+      change: growth.courses || 0,
       icon: Eye,
       color: "pink",
-      trend: (growth.creators || 0) >= 0 ? "up" : "down",
+      trend: (growth.courses || 0) >= 0 ? "up" : "down",
     },
   ];
 
@@ -223,16 +223,22 @@ export default function AdminDashboard() {
             <div className="text-center">
               <BarChart3 size={48} className="mx-auto text-gray-400 mb-3" />
               <p className="text-gray-500">
-                Graphique de croissance interactif
+                {analytics?.charts?.userGrowth ? 
+                  `+${analytics.monthlyGrowth?.users?.toFixed(1)}% ce mois` : 
+                  'Graphique de croissance interactif'
+                }
               </p>
               <p className="text-sm text-gray-400 mt-1">
-                Utilisateurs +28% ce mois
+                {analytics?.overview?.totalUsers ? 
+                  `${analytics.overview.totalUsers} utilisateurs au total` : 
+                  'Chargement...'
+                }
               </p>
             </div>
           </div>
         </motion.div>
 
-        {/* Creator Distribution */}
+        {/* Category Distribution */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -241,7 +247,7 @@ export default function AdminDashboard() {
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-gray-900">
-              Répartition Créateurs
+              Répartition des Catégories
             </h2>
             <button className="text-gray-400 hover:text-gray-600">
               <MoreVertical size={18} />
@@ -250,16 +256,18 @@ export default function AdminDashboard() {
           <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
             <div className="text-center">
               <PieChart size={48} className="mx-auto text-gray-400 mb-3" />
-              <p className="text-gray-500">Graphique de répartition</p>
-              <div className="mt-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Individuels:</span>
-                  <span className="font-bold">856 (69%)</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Entreprises:</span>
-                  <span className="font-bold">378 (31%)</span>
-                </div>
+              <p className="text-gray-500">Distribution par catégorie</p>
+              <div className="mt-4 space-y-2 max-h-32 overflow-y-auto">
+                {analytics?.charts?.categoryDistribution?.map((cat: any, index: number) => (
+                  <div key={index} className="flex justify-between text-sm">
+                    <span className="text-gray-600">{cat.category}:</span>
+                    <span className="font-bold">{cat.count} ({cat.percentage}%)</span>
+                  </div>
+                )) || (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Chargement...</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -284,32 +292,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         <div className="divide-y divide-gray-100">
-          {[
-            {
-              user: "Alice Martin",
-              action: "a créé un nouveau cours",
-              time: "il y a 2 min",
-              type: "course",
-            },
-            {
-              user: "Bob Dubois",
-              action: "s'est inscrit à Premium",
-              time: "il y a 15 min",
-              type: "subscription",
-            },
-            {
-              user: "Claire Durand",
-              action: "a complété 5 cours",
-              time: "il y a 1h",
-              type: "achievement",
-            },
-            {
-              user: "System",
-              action: "Nouveau créateur vérifié",
-              time: "il y a 2h",
-              type: "system",
-            },
-          ].map((activity, index) => (
+          {analytics?.recentActivity?.map((activity: any, index: number) => (
             <div key={index} className="p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-4">
                 <div
@@ -320,7 +303,9 @@ export default function AdminDashboard() {
                         ? "bg-green-100"
                         : activity.type === "achievement"
                           ? "bg-purple-100"
-                          : "bg-gray-100"
+                          : activity.type === "user"
+                            ? "bg-orange-100"
+                            : "bg-gray-100"
                   }`}
                 >
                   {activity.type === "course" ? (
@@ -329,6 +314,8 @@ export default function AdminDashboard() {
                     <DollarSign size={16} className="text-green-600" />
                   ) : activity.type === "achievement" ? (
                     <Award size={16} className="text-purple-600" />
+                  ) : activity.type === "user" ? (
+                    <Users size={16} className="text-orange-600" />
                   ) : (
                     <Activity size={16} className="text-gray-600" />
                   )}
@@ -338,7 +325,7 @@ export default function AdminDashboard() {
                     <span className="font-bold">{activity.user}</span>{" "}
                     {activity.action}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                  <p className="text-xs text-gray-500 mt-1">{activity.date}</p>
                 </div>
               </div>
             </div>

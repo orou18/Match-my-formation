@@ -17,12 +17,21 @@ return [
             'driver' => 'sanctum',
             'provider' => 'users',
         ],
+
+        'employee' => [
+            'driver' => 'sanctum',
+            'provider' => 'employees',
+        ],
     ],
 
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
+        ],
+        'employees' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Employee::class,
         ],
     ],
 

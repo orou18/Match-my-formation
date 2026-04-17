@@ -19,12 +19,16 @@ import {
   MoreVertical,
   Download,
   Upload,
+  Send,
+  QrCode,
+  Key,
 } from "lucide-react";
 import {
   useSimpleNotification,
   NotificationContainer,
 } from "@/components/ui/SimpleNotification";
 import { creatorDashboardApi } from "@/lib/services/creator-dashboard-api";
+import EmployeeAccessInfo from "./access-info";
 
 interface Employee {
   id: number;
@@ -116,30 +120,88 @@ export default function EmployeesPage() {
     return matchesSearch && matchesDepartment && matchesStatus;
   });
 
-  const deleteEmployee = async (employeeId: number) => {
+  const deleteEmployee = async (id: number) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer cet employé ?")) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/creator/employees?id=${employeeId}`, {
-        method: "DELETE",
+      await creatorDashboardApi.deleteEmployee(id);
+      setEmployees(employees.filter((e) => e.id !== id));
+      success("Employé supprimé", "L'employé a été supprimé avec succès");
+    } catch (error) {
+      error("Erreur", "Impossible de supprimer l'employé");
+    }
+  };
+
+  const handleSendAccess = async (employeeId: number) => {
+    try {
+      const response = await fetch(`/api/creator/employees/${employeeId}/send-access`, {
+        method: 'POST',
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        success("Employé supprimé", "L'employé a été supprimé avec succès");
-        loadEmployees();
+      if (response.ok) {
+        const result = await response.json();
+        success("Accès envoyé", "L'email d'accès a été envoyé avec succès");
+        console.log('Login URL:', result.data.login_url);
       } else {
-        error("Erreur", data.message || "Impossible de supprimer l'employé");
+        error("Erreur", "Impossible d'envoyer les accès");
       }
     } catch (err) {
-      console.error("Delete employee error:", err);
+      console.error("Send access error:", err);
+      error("Erreur", "Une erreur technique est survenue");
+    }
+  };
+
+  const handleGenerateQR = async (employeeId: number) => {
+    try {
+      const response = await fetch(`/api/creator/employees/${employeeId}/qr-code`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        success("QR Code généré", "Le QR code a été généré avec succès");
+        console.log('QR Code URL:', result.data.qr_data);
+      } else {
+        error("Erreur", "Impossible de générer le QR code");
+      }
+    } catch (err) {
+      console.error("Generate QR error:", err);
+      error("Erreur", "Une erreur technique est survenue");
+    }
+  };
+
+  const handleResetPassword = async (employeeId: number) => {
+    if (!confirm('Êtes-vous sûr de vouloir réinitialiser le mot de passe ?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/creator/employees/${employeeId}/reset-password`, {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        success("Mot de passe réinitialisé", "Le mot de passe a été réinitialisé avec succès");
+        console.log('New password:', result.data.new_password);
+      } else {
+        error("Erreur", "Impossible de réinitialiser le mot de passe");
+      }
+    } catch (err) {
+      console.error("Reset password error:", err);
       error("Erreur", "Une erreur technique est survenue");
     }
   };
@@ -288,6 +350,11 @@ export default function EmployeesPage() {
         </div>
       </div>
 
+      {/* Information sur les accès */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <EmployeeAccessInfo />
+      </div>
+
       {/* Filtres et recherche */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -416,12 +483,34 @@ export default function EmployeesPage() {
 
                       <div className="flex items-center gap-2">
                         <button
+                          onClick={() => handleSendAccess(employee.id)}
+                          className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                          title="Envoyer les accès par email"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleGenerateQR(employee.id)}
+                          className="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+                          title="Générer un QR code"
+                        >
+                          <QrCode className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleResetPassword(employee.id)}
+                          className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-colors"
+                          title="Réinitialiser le mot de passe"
+                        >
+                          <Key className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() =>
                             router.push(
                               `/${locale}/dashboard/creator/employees/${employee.id}`
                             )
                           }
                           className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Voir les détails"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -432,12 +521,14 @@ export default function EmployeesPage() {
                             )
                           }
                           className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Modifier"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => deleteEmployee(employee.id)}
                           className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Supprimer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
