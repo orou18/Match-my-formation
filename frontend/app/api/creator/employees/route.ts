@@ -1,67 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
 
-// Stockage en mémoire pour les employés (pour les tests)
-let employeesStore: any[] = [];
-
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.json();
 
     console.log("Création employé avec les données:", payload);
 
-    // Vérifier si l'email existe déjà
-    const existingEmployee = employeesStore.find(
-      (emp) => emp.email === payload.email
-    );
-    if (existingEmployee) {
+    // Appeler l'API Laravel pour créer l'employé
+    const response = await laravelFetch('/api/creator/employees', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    const result = await parseLaravelJson(response);
+
+    if (!response.ok) {
       return NextResponse.json(
         {
           success: false,
-          message: "Un employé avec cet email existe déjà",
+          message: result.message || "Erreur lors de la création de l'employé",
         },
-        { status: 400 }
+        { status: response.status }
       );
     }
 
-    // Créer un nouvel employé
-    const newEmployee = {
-      id: Date.now(),
-      name: payload.name,
-      email: payload.email,
-      department: payload.department || "Général",
-      position: payload.position || "Employé",
-      domain: payload.department || "general",
-      status: "active",
-      progress: 0,
-      completion_rate: 0,
-      enrolled_courses: 0,
-      completed_courses: 0,
-      last_login: null,
-      created_at: new Date().toISOString(),
-    };
+    console.log("Employé créé avec succès:", result.data);
+    return NextResponse.json(result, { status: 201 });
 
-    // Ajouter au stockage
-    employeesStore.push(newEmployee);
-
-    // Générer les identifiants de connexion
-    const loginCredentials = {
-      email: payload.email,
-      password: "password123",
-    };
-
-    console.log("Employé créé avec succès:", newEmployee);
-    console.log("Total employés dans le store:", employeesStore.length);
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Employé créé avec succès",
-        data: newEmployee,
-        login_credentials: loginCredentials,
-      },
-      { status: 201 }
-    );
   } catch (error) {
     console.error("Add employee error:", error);
     return NextResponse.json(
@@ -74,6 +40,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
+
 export async function PUT(request: NextRequest) {
   try {
     const payload = await request.json();
@@ -81,55 +48,34 @@ export async function PUT(request: NextRequest) {
 
     console.log("Modification employé ID:", id, "avec données:", updateData);
 
-    // Trouver l'employé dans le stockage
-    const employeeIndex = employeesStore.findIndex(
-      (emp) => emp.id === parseInt(id)
-    );
-    if (employeeIndex === -1) {
+    // Appeler l'API Laravel pour modifier l'employé
+    const response = await laravelFetch(`/api/creator/employees/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData),
+    });
+
+    const result = await parseLaravelJson(response);
+
+    if (!response.ok) {
       return NextResponse.json(
         {
           success: false,
-          message: "Employé non trouvé",
+          message: result.message || "Erreur lors de la modification de l'employé",
         },
-        { status: 404 }
+        { status: response.status }
       );
     }
 
-    // Vérifier si l'email est déjà utilisé par un autre employé
-    if (updateData.email) {
-      const existingEmployee = employeesStore.find(
-        (emp) => emp.email === updateData.email && emp.id !== parseInt(id)
-      );
-      if (existingEmployee) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Un autre employé utilise déjà cet email",
-          },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Mettre à jour l'employé
-    const updatedEmployee = {
-      ...employeesStore[employeeIndex],
-      ...updateData,
-      updated_at: new Date().toISOString(),
-    };
-
-    employeesStore[employeeIndex] = updatedEmployee;
-
-    console.log("Employé modifié avec succès:", updatedEmployee);
-
+    console.log("Employé modifié avec succès:", result.data);
     return NextResponse.json(
       {
         success: true,
         message: "Employé modifié avec succès",
-        data: updatedEmployee,
+        data: result.data,
       },
       { status: 200 }
     );
+
   } catch (error) {
     console.error("Update employee error:", error);
     return NextResponse.json(
@@ -159,35 +105,33 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Trouver l'employé dans le stockage
-    const employeeIndex = employeesStore.findIndex(
-      (emp) => emp.id === parseInt(id)
-    );
-    if (employeeIndex === -1) {
+    // Appeler l'API Laravel pour supprimer l'employé
+    const response = await laravelFetch(`/api/creator/employees/${id}`, {
+      method: 'DELETE',
+    });
+
+    const result = await parseLaravelJson(response);
+
+    if (!response.ok) {
       return NextResponse.json(
         {
           success: false,
-          message: "Employé non trouvé",
+          message: result.message || "Erreur lors de la suppression de l'employé",
         },
-        { status: 404 }
+        { status: response.status }
       );
     }
 
-    // Supprimer l'employé
-    const deletedEmployee = employeesStore[employeeIndex];
-    employeesStore.splice(employeeIndex, 1);
-
-    console.log("Employé supprimé avec succès:", deletedEmployee);
-    console.log("Total employés restants:", employeesStore.length);
-
+    console.log("Employé supprimé avec succès:", result.data);
     return NextResponse.json(
       {
         success: true,
         message: "Employé supprimé avec succès",
-        data: deletedEmployee,
+        data: result.data,
       },
       { status: 200 }
     );
+
   } catch (error) {
     console.error("Delete employee error:", error);
     return NextResponse.json(
@@ -202,75 +146,56 @@ export async function DELETE(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("Récupération de la liste des employés...");
-    console.log("Nombre d'employés dans le store:", employeesStore.length);
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const id = pathSegments[pathSegments.length - 1];
 
-    // Utiliser les employés du stockage en mémoire
-    if (employeesStore.length > 0) {
-      return NextResponse.json(
-        {
-          success: true,
-          data: employeesStore,
-          total: employeesStore.length,
-        },
-        { status: 200 }
-      );
+    // Vérifier si c'est une demande pour un employé spécifique ou la liste
+    const isSpecificEmployee = id && id !== 'employees' && !isNaN(parseInt(id));
+
+    if (isSpecificEmployee) {
+      console.log("Récupération détails employé ID:", id);
+
+      // Appeler l'API Laravel pour récupérer les détails de l'employé
+      const response = await laravelFetch(`/api/creator/employees/${id}`, {
+        method: 'GET',
+      });
+
+      const result = await parseLaravelJson(response);
+
+      if (!response.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: result.message || "Erreur lors de la récupération des détails de l'employé",
+          },
+          { status: response.status }
+        );
+      }
+
+      console.log("Détails employé récupérés:", result.data);
+      return NextResponse.json(result, { status: 200 });
+    } else {
+      console.log("Récupération de la liste des employés...");
+
+      // Appeler l'API Laravel pour récupérer les employés
+      const response = await laravelFetch('/api/creator/employees');
+      const result = await parseLaravelJson(response);
+
+      if (!response.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: result.message || "Erreur lors de la récupération des employés",
+          },
+          { status: response.status }
+        );
+      }
+
+      console.log("Employés récupérés:", result.data);
+      return NextResponse.json(result, { status: 200 });
     }
 
-    // Données fallback si aucun employé n'a été créé
-    const fallbackEmployees = [
-      {
-        id: 1,
-        name: "Marie Kouassi",
-        email: "marie@example.com",
-        department: "Marketing",
-        position: "Chef de projet",
-        status: "active",
-        progress: 85,
-        completion_rate: 85,
-        enrolled_courses: 3,
-        completed_courses: 2,
-        last_login: "2024-01-15T10:30:00Z",
-        created_at: "2024-01-01T00:00:00Z",
-      },
-      {
-        id: 2,
-        name: "Jean Dupont",
-        email: "jean@example.com",
-        department: "Ventes",
-        position: "Commercial",
-        status: "active",
-        progress: 72,
-        completion_rate: 72,
-        enrolled_courses: 2,
-        completed_courses: 1,
-        last_login: "2024-01-14T15:20:00Z",
-        created_at: "2024-01-02T00:00:00Z",
-      },
-      {
-        id: 3,
-        name: "Sophie Martin",
-        email: "sophie@example.com",
-        department: "RH",
-        position: "Responsable formation",
-        status: "active",
-        progress: 90,
-        completion_rate: 90,
-        enrolled_courses: 4,
-        completed_courses: 3,
-        last_login: "2024-01-15T09:15:00Z",
-        created_at: "2024-01-03T00:00:00Z",
-      },
-    ];
-
-    return NextResponse.json(
-      {
-        success: true,
-        data: fallbackEmployees,
-        total: fallbackEmployees.length,
-      },
-      { status: 200 }
-    );
   } catch (error) {
     console.error("Get employees error:", error);
     return NextResponse.json(

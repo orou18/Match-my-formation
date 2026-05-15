@@ -23,6 +23,10 @@ export default function DashboardNavbar() {
   }, []);
 
   useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
     // Gérer le body overflow seulement si pas déjà géré par un autre composant
     if (isOpen) {
       const currentOverflow = document.body.style.overflow;

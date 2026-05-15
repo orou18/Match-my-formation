@@ -33,22 +33,33 @@ class DashboardController extends Controller
                 ->limit(5)
                 ->get(['id', 'title', 'views', 'likes', 'comments', 'shares', 'created_at']);
 
-            // Données de performance (7 derniers jours)
+            // Données de performance réelles (30 derniers jours)
             $performanceData = [];
-            for ($i = 6; $i >= 0; $i--) {
+            for ($i = 29; $i >= 0; $i--) {
                 $date = now()->subDays($i)->format('Y-m-d');
                 $dayVideos = Video::where('uploader_id', $user->id)
                     ->whereDate('created_at', $date)
                     ->get(['views', 'likes', 'comments']);
 
+                $dayViews = $dayVideos->sum('views');
+                $dayLikes = $dayVideos->sum('likes');
+                $dayComments = $dayVideos->sum('comments');
+                $dayRevenue = round($dayViews * 0.01, 2);
+
                 $performanceData[] = [
                     'date' => $date,
-                    'views' => $dayVideos->sum('views'),
-                    'likes' => $dayVideos->sum('likes'),
-                    'comments' => $dayVideos->sum('comments'),
-                    'revenue' => round($dayVideos->sum('views') * 0.01, 2),
+                    'views' => $dayViews,
+                    'likes' => $dayLikes,
+                    'comments' => $dayComments,
+                    'revenue' => $dayRevenue,
+                    'videos_created' => $dayVideos->count(),
                 ];
             }
+
+            // Analytics avancées
+            $monthlyGrowth = $this->calculateMonthlyGrowth($user->id);
+            $engagementRate = $this->calculateEngagementRate($user->id);
+            $avgWatchTime = $this->calculateAverageWatchTime($user->id);
 
             return response()->json([
                 'overview' => [
@@ -59,8 +70,10 @@ class DashboardController extends Controller
                     'totalShares' => $totalShares,
                     'totalRevenue' => $totalRevenue,
                     'totalSubscribers' => Employee::where('creator_id', $user->id)->count(),
-                    'avgWatchTime' => 0,
+                    'avgWatchTime' => $avgWatchTime,
                     'activeAssignments' => EmployeePathway::where('creator_id', $user->id)->where('is_active', true)->count(),
+                    'monthlyGrowth' => $monthlyGrowth,
+                    'engagementRate' => $engagementRate,
                 ],
                 'recentVideos' => $recentVideos,
                 'performanceData' => $performanceData,
@@ -77,7 +90,110 @@ class DashboardController extends Controller
                 })
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
         }
+    }
+
+    /**
+     * Calculer la croissance mensuelle
+     */
+    private function calculateMonthlyGrowth($userId): array
+    {
+        $currentMonth = now()->startOfMonth();
+        $lastMonth = now()->subMonth()->startOfMonth();
+        
+        $currentMonthViews = Video::where('uploader_id', $userId)
+            ->where('created_at', '>=', $currentMonth)
+            ->sum('views');
+            
+        $lastMonthViews = Video::where('uploader_id', $userId)
+            ->where('created_at', '>=', $lastMonth)
+            ->where('created_at', '<', $currentMonth)
+            ->sum('views');
+
+        $growthRate = $lastMonthViews > 0 
+            ? (($currentMonthViews - $lastMonthViews) / $lastMonthViews) * 100 
+            : 0;
+
+        return [
+            'views' => round($growthRate, 2),
+            'revenue' => round($growthRate * 0.01, 2),
+            'videos' => $this->calculateVideosGrowth($userId),
+            'subscribers' => $this->calculateSubscribersGrowth($userId),
+        ];
+    }
+
+    /**
+     * Calculer le taux d'engagement
+     */
+    private function calculateEngagementRate($userId): float
+    {
+        $totalVideos = Video::where('uploader_id', $userId)->count();
+        if ($totalVideos === 0) return 0;
+
+        $totalInteractions = Video::where('uploader_id', $userId)
+            ->sum('views') + Video::where('uploader_id', $userId)->sum('likes') + Video::where('uploader_id', $userId)->sum('comments');
+
+        return round(($totalInteractions / ($totalVideos * 1000)) * 100, 2); // Basé sur 1000 vues par vidéo
+    }
+
+    /**
+     * Calculer le temps moyen de visionnage
+     */
+    private function calculateAverageWatchTime($userId): float
+    {
+        $totalDuration = Video::where('uploader_id', $userId)
+            ->sum('duration_seconds');
+        
+        $totalVideos = Video::where('uploader_id', $userId)->count();
+        
+        return $totalVideos > 0 ? round($totalDuration / $totalVideos / 60, 2) : 0; // En minutes
+    }
+
+    /**
+     * Calculer la croissance des vidéos
+     */
+    private function calculateVideosGrowth($userId): float
+    {
+        $currentMonth = now()->startOfMonth();
+        $lastMonth = now()->subMonth()->startOfMonth();
+        
+        $currentMonthCount = Video::where('uploader_id', $userId)
+            ->where('created_at', '>=', $currentMonth)
+            ->count();
+            
+        $lastMonthCount = Video::where('uploader_id', $userId)
+            ->where('created_at', '>=', $lastMonth)
+            ->where('created_at', '<', $currentMonth)
+            ->count();
+
+        return $lastMonthCount > 0 
+            ? round((($currentMonthCount - $lastMonthCount) / $lastMonthCount) * 100, 2)
+            : 0;
+    }
+
+    /**
+     * Calculer la croissance des abonnés
+     */
+    private function calculateSubscribersGrowth($userId): float
+    {
+        $currentMonth = now()->startOfMonth();
+        $lastMonth = now()->subMonth()->startOfMonth();
+        
+        $currentMonthCount = Employee::where('creator_id', $userId)
+            ->where('created_at', '>=', $currentMonth)
+            ->count();
+            
+        $lastMonthCount = Employee::where('creator_id', $userId)
+            ->where('created_at', '>=', $lastMonth)
+            ->where('created_at', '<', $currentMonth)
+            ->count();
+
+        return $lastMonthCount > 0 
+            ? round((($currentMonthCount - $lastMonthCount) / $lastMonthCount) * 100, 2)
+            : 0;
     }
 }

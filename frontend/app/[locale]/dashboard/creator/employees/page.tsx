@@ -129,7 +129,8 @@ export default function EmployeesPage() {
       await creatorDashboardApi.deleteEmployee(id);
       setEmployees(employees.filter((e) => e.id !== id));
       success("Employé supprimé", "L'employé a été supprimé avec succès");
-    } catch (error) {
+    } catch (err) {
+      console.error("Delete employee error:", err);
       error("Erreur", "Impossible de supprimer l'employé");
     }
   };

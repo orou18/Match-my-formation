@@ -9,20 +9,32 @@ use App\Http\Controllers\EmployeeProgressController;
 use App\Http\Controllers\PathwayManagementController;
 use App\Http\Controllers\Analytics\AnalyticsController;
 use App\Http\Controllers\Admin\BrandingController;
+use App\Http\Controllers\Admin\AdminNotificationController;
+use App\Http\Controllers\Admin\AdminCreatorController;
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Course\CourseController;
 use App\Http\Controllers\Course\ModuleController;
 use App\Http\Controllers\Course\VideoController as CourseVideoController;
+use App\Http\Controllers\Video\PublicVideoController;
+use App\Http\Controllers\Video\StudentVideoController;
 use App\Http\Controllers\Pathway\PathwayController;
 use App\Http\Controllers\Company\CompanyController;
+use App\Http\Controllers\Student\StudentProgressController;
+use App\Http\Controllers\Employee\EmployeeDashboardController;
+use App\Http\Controllers\Employee\EmployeePathwayController;
 use App\Http\Controllers\Creator\DashboardController;
 use App\Http\Controllers\Creator\WebinarController;
 use App\Http\Controllers\Creator\WebinarMessageController;
 use App\Http\Controllers\Creator\VideoController;
 use App\Http\Controllers\Creator\StatsController;
+use App\Http\Controllers\Creator\CreatorRevenueController;
+use App\Http\Controllers\Creator\CreatorEngagementController;
+use App\Http\Controllers\Creator\CreatorNotificationController;
 use App\Http\Controllers\Creator\HistoryController;
 use App\Http\Controllers\Creator\NotificationController;
 use App\Http\Controllers\Creator\ProfileController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\Employee\EmployeeStatsController;
 use App\Http\Controllers\Chat\ChatMessageController;
 use App\Http\Controllers\User\AccountController;
 
@@ -45,9 +57,9 @@ Route::get('/health', function () {
 
 // --- 0. ROUTES PUBLIQUES (PAS D'AUTHENTIFICATION REQUISE) ---
 Route::get('/public/videos', [CourseController::class, 'publicVideos']);
-Route::get('/videos/public', [VideoController::class, 'publicVideos']);
-Route::get('/videos/public/{id}', [VideoController::class, 'showPublic']);
-Route::get('/videos/public/search', [VideoController::class, 'searchPublic']);
+Route::get('/videos/public', [PublicVideoController::class, 'index']);
+Route::get('/videos/public/search', [PublicVideoController::class, 'search']);
+Route::get('/videos/public/{id}', [PublicVideoController::class, 'show']);
 Route::get('/videos/{id}', [CourseVideoController::class, 'show']);
 
 // --- 1. AUTHENTIFICATION ---
@@ -66,24 +78,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
     // --- 3. CREATOR DASHBOARD ---
-    Route::get('/creator/dashboard', [DashboardController::class, 'index']);
-    Route::get('/creator/videos', [VideoController::class, 'index']);
-    Route::post('/creator/videos', [VideoController::class, 'store']);
-    Route::get('/creator/videos/{id}', [VideoController::class, 'show']);
-    Route::put('/creator/videos/{id}', [VideoController::class, 'update']);
-    Route::delete('/creator/videos/{id}', [VideoController::class, 'destroy']);
-    Route::get('/creator/videos/public', [VideoController::class, 'publicVideos']);
-    Route::get('/creator/stats', [StatsController::class, 'index']);
-    Route::get('/creator/history', [HistoryController::class, 'index']);
-    Route::get('/creator/notifications', [NotificationController::class, 'index']);
-    Route::post('/creator/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-    Route::post('/creator/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
-    Route::delete('/creator/notifications/{id}', [NotificationController::class, 'destroy']);
-    Route::post('/creator/notifications/{id}/archive', [NotificationController::class, 'archive']);
-    Route::get('/creator/profile', [ProfileController::class, 'index']);
-    Route::put('/creator/profile', [ProfileController::class, 'update']);
-    Route::put('/creator/profile/password', [ProfileController::class, 'updatePassword']);
-
     // --- 3.1 GESTION DES EMPLOYÉS ---
     Route::get('/creator/employees', [EmployeeController::class, 'index']);
     Route::post('/creator/employees', [EmployeeController::class, 'store']);
@@ -115,7 +109,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/creator/pathways/assignment/{assignmentId}/progress', [PathwayManagementController::class, 'updateProgress']);
     Route::delete('/creator/pathways/assignment/{assignmentId}', [PathwayManagementController::class, 'removeAssignment']);
 
-    // --- 3.4 BRANDING PERSONNALISÉ ---
+    // --- 3.4 GESTION DES VIDÉOS ---
+    Route::get('/creator/videos', [VideoController::class, 'index']);
+    Route::post('/creator/videos', [VideoController::class, 'store']);
+    Route::put('/creator/videos/{id}', [VideoController::class, 'update']);
+    Route::delete('/creator/videos/{id}', [VideoController::class, 'destroy']);
+
+    // --- 3.5 HISTORIQUE ACTIVITÉS ---
+    Route::get('/creator/history', [HistoryController::class, 'index']);
+    Route::get('/creator/history/stats', [HistoryController::class, 'getStats']);
+
+    // --- 3.6 BRANDING PERSONNALISÉ ---
     Route::get('/creator/{id}/branding', [App\Http\Controllers\Creator\CreatorBrandingController::class, 'getBranding']);
     Route::put('/creator/{id}/branding', [App\Http\Controllers\Creator\CreatorBrandingController::class, 'updateBranding']);
 
@@ -128,58 +132,168 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/creator/webinars/{id}/messages', [WebinarMessageController::class, 'index']);
     Route::post('/creator/webinars/{id}/messages', [WebinarMessageController::class, 'store']);
 
+    // --- 3. DASHBOARD CREATOR ---
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/creator/dashboard', [DashboardController::class, 'index']);
+        Route::get('/creator/stats', [StatsController::class, 'index']);
+        Route::get('/creator/profile', [ProfileController::class, 'index']);
+        Route::put('/creator/profile', [ProfileController::class, 'update']);
+        Route::get('/creator/notifications', [NotificationController::class, 'index']);
+        Route::put('/creator/notifications', [NotificationController::class, 'markAsRead']);
+        Route::delete('/creator/notifications', [NotificationController::class, 'delete']);
+        Route::get('/creator/history', [HistoryController::class, 'index']);
+        Route::get('/creator/employees', [EmployeeController::class, 'index']);
+        Route::post('/creator/employees', [EmployeeController::class, 'store']);
+        Route::get('/creator/employees/{id}', [EmployeeController::class, 'show']);
+        Route::put('/creator/employees/{id}', [EmployeeController::class, 'update']);
+        Route::delete('/creator/employees/{id}', [EmployeeController::class, 'destroy']);
+        Route::get('/creator/videos', [VideoController::class, 'index']);
+        Route::post('/creator/videos', [VideoController::class, 'store']);
+        Route::get('/creator/videos/{id}', [VideoController::class, 'show']);
+        Route::put('/creator/videos/{id}', [VideoController::class, 'update']);
+        Route::delete('/creator/videos/{id}', [VideoController::class, 'destroy']);
+        Route::post('/creator/videos/{id}/publish', [VideoController::class, 'publish']);
+        Route::post('/creator/videos/{id}/unpublish', [VideoController::class, 'unpublish']);
+        Route::get('/creator/webinars', [WebinarController::class, 'index']);
+        Route::post('/creator/webinars', [WebinarController::class, 'store']);
+        Route::get('/creator/webinars/{id}', [WebinarController::class, 'show']);
+        Route::put('/creator/webinars/{id}', [WebinarController::class, 'update']);
+        Route::delete('/creator/webinars/{id}', [WebinarController::class, 'destroy']);
+        Route::post('/creator/webinars/{id}/start', [WebinarController::class, 'start']);
+        Route::post('/creator/webinars/{id}/end', [WebinarController::class, 'end']);
+        Route::get('/creator/webinars/{id}/messages', [WebinarMessageController::class, 'index']);
+        Route::post('/creator/webinars/{id}/messages', [WebinarMessageController::class, 'store']);
+
+        // --- 3.1 REVENUS CREATOR ---
+        Route::get('/creator/revenue', [CreatorRevenueController::class, 'getRevenue']);
+        Route::get('/creator/revenue/details', [CreatorRevenueController::class, 'getRevenueDetails']);
+        
+        // --- 3.2 ENGAGEMENT CREATOR ---
+        Route::get('/creator/engagement', [CreatorEngagementController::class, 'getEngagement']);
+        
+        // --- 3.3 NOTIFICATIONS CREATOR ---
+        Route::get('/creator/notifications', [CreatorNotificationController::class, 'getNotifications']);
+        Route::put('/creator/notifications', [CreatorNotificationController::class, 'markAsRead']);
+        Route::put('/creator/notifications/mark-all-read', [CreatorNotificationController::class, 'markAllAsRead']);
+        Route::delete('/creator/notifications', [CreatorNotificationController::class, 'deleteNotification']);
+        Route::get('/creator/notifications/unread-count', [CreatorNotificationController::class, 'getUnreadCount']);
+    });
+
     // --- 4. DASHBOARD ADMIN & ANALYTICS ---
-    Route::get('/admin/stats', [AnalyticsController::class, 'getDashboardStats']);
-    Route::get('/admin/branding', [BrandingController::class, 'show']);
-    Route::put('/admin/branding', [BrandingController::class, 'update']);
-    
-    // --- 4.1 ADMIN USERS MANAGEMENT ---
-    Route::get('/admin/users', [App\Http\Controllers\Admin\AdminUsersController::class, 'index']);
-    Route::post('/admin/users', [App\Http\Controllers\Admin\AdminUsersController::class, 'store']);
-    Route::get('/admin/users/{id}', [App\Http\Controllers\Admin\AdminUsersController::class, 'show']);
-    Route::put('/admin/users/{id}', [App\Http\Controllers\Admin\AdminUsersController::class, 'update']);
-    Route::delete('/admin/users/{id}', [App\Http\Controllers\Admin\AdminUsersController::class, 'destroy']);
-    Route::post('/admin/users/bulk-action', [App\Http\Controllers\Admin\AdminUsersController::class, 'bulkAction']);
-    Route::get('/admin/users/stats', [App\Http\Controllers\Admin\AdminUsersController::class, 'stats']);
-    
-    // --- 4.2 ADMIN VIDEOS MANAGEMENT ---
-    Route::get('/admin/videos', [App\Http\Controllers\Admin\AdminVideosController::class, 'index']);
-    Route::post('/admin/videos', [App\Http\Controllers\Admin\AdminVideosController::class, 'store']);
-    Route::get('/admin/videos/{id}', [App\Http\Controllers\Admin\AdminVideosController::class, 'show']);
-    Route::put('/admin/videos/{id}', [App\Http\Controllers\Admin\AdminVideosController::class, 'update']);
-    Route::delete('/admin/videos/{id}', [App\Http\Controllers\Admin\AdminVideosController::class, 'destroy']);
-    Route::post('/admin/videos/bulk-action', [App\Http\Controllers\Admin\AdminVideosController::class, 'bulkAction']);
-    Route::get('/admin/videos/stats', [App\Http\Controllers\Admin\AdminVideosController::class, 'stats']);
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/admin/stats', [AnalyticsController::class, 'getDashboardStats']);
+        Route::get('/admin/branding', [BrandingController::class, 'show']);
+        Route::put('/admin/branding', [BrandingController::class, 'update']);
+        
+        // --- 4.1 NOTIFICATIONS ADMIN ---
+        Route::get('/admin/notifications', [AdminNotificationController::class, 'index']);
+        Route::post('/admin/notifications', [AdminNotificationController::class, 'store']);
+        Route::get('/admin/notifications/{id}', [AdminNotificationController::class, 'show']);
+        Route::put('/admin/notifications/{id}', [AdminNotificationController::class, 'update']);
+        Route::delete('/admin/notifications/{id}', [AdminNotificationController::class, 'destroy']);
+        Route::post('/admin/notifications/{id}/send', [AdminNotificationController::class, 'send']);
+        Route::get('/admin/notifications/stats', [AdminNotificationController::class, 'stats']);
+        
+        // --- 4.2 CRÉATEURS ADMIN ---
+        Route::get('/admin/creators', [AdminCreatorController::class, 'index']);
+        Route::post('/admin/creators', [AdminCreatorController::class, 'store']);
+        Route::get('/admin/creators/{id}', [AdminCreatorController::class, 'show']);
+        Route::put('/admin/creators/{id}', [AdminCreatorController::class, 'update']);
+        Route::delete('/admin/creators/{id}', [AdminCreatorController::class, 'destroy']);
+        Route::post('/admin/creators/{id}/toggle-status', [AdminCreatorController::class, 'toggleStatus']);
+        Route::get('/admin/creators/stats', [AdminCreatorController::class, 'stats']);
+        
+        // --- 4.3 UTILISATEURS ADMIN ---
+        Route::get('/admin/users', [AdminUserController::class, 'index']);
+        Route::post('/admin/users', [AdminUserController::class, 'store']);
+        Route::get('/admin/users/{id}', [AdminUserController::class, 'show']);
+        Route::put('/admin/users/{id}', [AdminUserController::class, 'update']);
+        Route::delete('/admin/users/{id}', [AdminUserController::class, 'destroy']);
+        Route::post('/admin/users/{id}/toggle-status', [AdminUserController::class, 'toggleStatus']);
+        Route::get('/admin/users/stats', [AdminUserController::class, 'stats']);
+        Route::get('/admin/users/export', [AdminUserController::class, 'export']);
+        
+        // --- 4.4 VIDEOS ADMIN ---
+        Route::get('/admin/videos', [App\Http\Controllers\Admin\AdminVideosController::class, 'index']);
+        Route::post('/admin/videos', [App\Http\Controllers\Admin\AdminVideosController::class, 'store']);
+        Route::get('/admin/videos/{id}', [App\Http\Controllers\Admin\AdminVideosController::class, 'show']);
+        Route::put('/admin/videos/{id}', [App\Http\Controllers\Admin\AdminVideosController::class, 'update']);
+        Route::delete('/admin/videos/{id}', [App\Http\Controllers\Admin\AdminVideosController::class, 'destroy']);
+        
+        Route::get('/admin/videos/stats', [App\Http\Controllers\Admin\AdminVideosController::class, 'stats']);
+        Route::post('/admin/videos/{id}/approve', [App\Http\Controllers\Admin\AdminVideosController::class, 'approve']);
+        Route::post('/admin/videos/{id}/reject', [App\Http\Controllers\Admin\AdminVideosController::class, 'reject']);
+    });
 
     // --- 5. DASHBOARD STUDENT ---
-    Route::get('/student/courses', [CourseController::class, 'index']);
-    Route::get('/student/pathways', [PathwayController::class, 'index']);
-    Route::get('/student/parcours', [PathwayController::class, 'studentProgressDetails']);
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/student/courses', [CourseController::class, 'index']);
+        Route::get('/student/pathways', [PathwayController::class, 'index']);
+        Route::get('/student/parcours', [PathwayController::class, 'studentProgressDetails']);
+
+        // --- 5.1 PROGRESSION STUDENT ---
+        Route::get('/student/progress', [StudentProgressController::class, 'getGlobalProgress']);
+        Route::get('/student/progress/course/{courseId}', [StudentProgressController::class, 'getCourseProgress']);
+        Route::put('/student/progress/video/{videoId}', [StudentProgressController::class, 'updateVideoProgress']);
+        Route::post('/student/progress/video/{videoId}/complete', [StudentProgressController::class, 'completeVideo']);
+
+        // --- 5.2 VIDÉOS PUBLIQUES ---
+        Route::get('/videos/all-public', [StudentVideoController::class, 'getAllPublicVideos']);
+        Route::get('/videos/{id}', [StudentVideoController::class, 'getVideoDetails']);
+        Route::post('/videos/{id}/add-url', [StudentVideoController::class, 'addVideoUrl']);
+        Route::post('/videos/{id}/publish', [StudentVideoController::class, 'publishVideo']);
+        Route::post('/videos/{id}/increment-views', [StudentVideoController::class, 'incrementViews']);
+        Route::post('/videos/{id}/like', [StudentVideoController::class, 'likeVideo']);
+        Route::get('/videos/categories', [StudentVideoController::class, 'getCategories']);
+
+        // --- 5.1 COMPTE UTILISATEUR ---
+        Route::get('/creator/profile', [ProfileController::class, 'index']);
+        Route::put('/creator/profile', [ProfileController::class, 'update']);
+        Route::put('/creator/profile/password', [ProfileController::class, 'updatePassword']);
+    });
 
     // --- 5.1 COMPTE UTILISATEUR ---
-    Route::get('/user/profile', [AccountController::class, 'profile']);
-    Route::put('/user/profile', [AccountController::class, 'updateProfile']);
-    Route::post('/user/change-password', [AccountController::class, 'changePassword']);
-    Route::post('/user/upload-avatar', [AccountController::class, 'uploadAvatar']);
-    Route::get('/user/preferences', [AccountController::class, 'preferences']);
-    Route::put('/user/preferences', [AccountController::class, 'updatePreferences']);
-    Route::get('/user/security', [AccountController::class, 'security']);
-    Route::get('/user/notification-settings', [AccountController::class, 'notificationSettings']);
-    Route::put('/user/notification-settings', [AccountController::class, 'updateNotificationSettings']);
-    Route::get('/user/notifications', [AccountController::class, 'notifications']);
-    Route::put('/user/notifications', [AccountController::class, 'updateNotifications']);
-    Route::delete('/user/notifications', [AccountController::class, 'deleteNotifications']);
-    Route::get('/user/notifications/unread-count', [AccountController::class, 'unreadNotificationsCount']);
-    Route::post('/user/2fa/setup', [AccountController::class, 'setupTwoFactor']);
-    Route::post('/user/2fa/verify', [AccountController::class, 'verifyTwoFactor']);
-    Route::post('/user/2fa/disable', [AccountController::class, 'disableTwoFactor']);
-});
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/user/upload-avatar', [AccountController::class, 'uploadAvatar']);
+        Route::get('/user/preferences', [AccountController::class, 'preferences']);
+        Route::put('/user/preferences', [AccountController::class, 'updatePreferences']);
+        Route::get('/user/security', [AccountController::class, 'security']);
+        Route::get('/user/notification-settings', [AccountController::class, 'notificationSettings']);
+        Route::put('/user/notification-settings', [AccountController::class, 'updateNotificationSettings']);
+        Route::get('/user/notifications', [AccountController::class, 'notifications']);
+        Route::put('/user/notifications', [AccountController::class, 'updateNotifications']);
+        Route::delete('/user/notifications', [AccountController::class, 'deleteNotifications']);
+        Route::get('/user/notifications/unread-count', [AccountController::class, 'unreadNotificationsCount']);
+        Route::post('/user/2fa/setup', [AccountController::class, 'setupTwoFactor']);
+        Route::post('/user/2fa/verify', [AccountController::class, 'verifyTwoFactor']);
+        Route::post('/user/2fa/disable', [AccountController::class, 'disableTwoFactor']);
+    });
 
 // --- 6. EMPLOYÉ DASHBOARD ---
 Route::middleware('auth:sanctum')->group(function () {
     // --- 6.1 AUTHENTIFICATION EMPLOYÉ ---
     Route::post('/employee/logout', [EmployeeAuthController::class, 'logout']);
     Route::get('/employee/me', [EmployeeAuthController::class, 'me']);
+    
+    // --- 6.2 DASHBOARD EMPLOYÉ ---
+    Route::get('/employee/me', [EmployeeDashboardController::class, 'getMe']);
+    Route::get('/employee/courses', [EmployeeDashboardController::class, 'getCourses']);
+    Route::get('/employee/stats', [EmployeeDashboardController::class, 'getStats']);
+    Route::get('/employee/activity', [EmployeeDashboardController::class, 'getRecentActivity']);
+    Route::put('/employee/progress/video/{videoId}', [EmployeeDashboardController::class, 'updateProgress']);
+    Route::post('/employee/progress/video/{videoId}/complete', [EmployeeDashboardController::class, 'completeVideo']);
+    
+    // --- 6.3 PATHWAYS EMPLOYÉ ---
+    Route::get('/employee/pathways', [EmployeePathwayController::class, 'getPathways']);
+    Route::get('/employee/pathways/{pathwayId}', [EmployeePathwayController::class, 'getPathwayDetails']);
+    Route::post('/employee/pathways/{pathwayId}/start', [EmployeePathwayController::class, 'startPathway']);
+    Route::put('/employee/pathways/{pathwayId}/progress', [EmployeePathwayController::class, 'updatePathwayProgress']);
+    Route::get('/employee/pathways/available', [EmployeePathwayController::class, 'getAvailablePathways']);
+    
+    // --- 6.4 STATISTIQUES EMPLOYÉ ---
+    Route::get('/employee/stats/dashboard', [EmployeeStatsController::class, 'dashboard']);
+    Route::post('/employee/stats/progress', [EmployeeStatsController::class, 'updateProgress']);
+    Route::get('/employee/stats/detailed', [EmployeeStatsController::class, 'getDetailedStats']);
 
     // --- 6.2 EMPLOYÉ COURSES ---
     Route::get('/employee/courses', [CourseController::class, 'employeeCourses']);
@@ -212,4 +326,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/creator/chat/notifications', [ChatMessageController::class, 'getCreatorChatNotifications']);
     Route::post('/creator/chat/messages/{messageId}/reply', [ChatMessageController::class, 'replyToMessage']);
     Route::post('/creator/chat/messages/{messageId}/mark-resolved', [ChatMessageController::class, 'markAsResolved']);
+});
 });

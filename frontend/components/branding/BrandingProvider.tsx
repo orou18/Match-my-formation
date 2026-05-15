@@ -29,13 +29,19 @@ export const BrandingProvider = ({
     const checkIfCreatorDashboard = () => {
       if (typeof window !== "undefined") {
         const pathname = window.location.pathname;
-        // Appliquer le branding UNIQUEMENT sur les pages exactes du dashboard creator/admin
+        // Appliquer le branding sur les pages creator/admin ET les pages employés
         const isCreator =
           pathname.includes("/dashboard/creator/") ||
           pathname.includes("/dashboard/admin/") ||
           pathname === "/dashboard/creator" ||
           pathname === "/dashboard/admin";
-        setIsCreatorDashboard(isCreator);
+        
+        const isEmployee =
+          pathname.includes("/dashboard/employee/") ||
+          pathname === "/dashboard/employee";
+        
+        const shouldApplyBranding = isCreator || isEmployee;
+        setIsCreatorDashboard(shouldApplyBranding);
       }
     };
 

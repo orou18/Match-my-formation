@@ -475,7 +475,9 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
                   className={`group relative flex items-center justify-between overflow-hidden rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ${
-                    active ? "text-white shadow-lg" : ""
+                    active 
+                      ? "text-white shadow-lg" 
+                      : "hover:bg-gray-100/80 hover:shadow-md hover:scale-[1.02]"
                   }`}
                   style={{
                     color: active ? "white" : branding?.text_color || "#1f2937",
@@ -503,7 +505,11 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
                   {/* Contenu : On utilise z-20 pour être SUR que le texte est devant le fond */}
                   <div className="relative z-20 flex items-center gap-3 flex-1 min-w-0">
                     <div
-                      className="flex-shrink-0 p-1.5 rounded-lg transition-colors"
+                      className={`flex-shrink-0 p-1.5 rounded-lg transition-all duration-200 ${
+                        active 
+                          ? "" 
+                          : "group-hover:bg-white/50 group-hover:shadow-sm"
+                      }`}
                       style={{
                         backgroundColor: active
                           ? "rgba(255, 255, 255, 0.2)"
@@ -512,7 +518,9 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
                     >
                       <item.icon
                         size={16}
-                        className="transition-colors"
+                        className={`transition-colors ${
+                          active ? "" : "group-hover:text-blue-600"
+                        }`}
                         style={{
                           color: active
                             ? "white"
@@ -521,7 +529,9 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
                       />
                     </div>
                     <span
-                      className="font-medium truncate transition-colors"
+                      className={`font-medium truncate transition-colors ${
+                        active ? "" : "group-hover:text-gray-900"
+                      }`}
                       style={{
                         color: active
                           ? "white"
@@ -535,7 +545,11 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
                   {/* Badge */}
                   {item.badge && (
                     <span
-                      className="relative z-20 px-2 py-0.5 text-[10px] font-bold rounded-full transition-all"
+                      className={`relative z-20 px-2 py-0.5 text-[10px] font-bold rounded-full transition-all ${
+                        active 
+                          ? "" 
+                          : "group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:shadow-sm"
+                      }`}
                       style={{
                         backgroundColor: active
                           ? "rgba(255, 255, 255, 0.2)"
@@ -564,19 +578,20 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
         >
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-all duration-200 group"
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-all duration-200 group hover:bg-red-50 hover:shadow-md hover:scale-[1.02]"
             style={{ color: branding?.accent_color || "#D97706" }}
           >
             <div
-              className="p-1.5 rounded-lg group-hover:bg-red-100/80"
+              className="p-1.5 rounded-lg transition-all duration-200 group-hover:bg-red-100 group-hover:shadow-sm"
               style={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}
             >
               <LogOut
                 size={16}
+                className="transition-colors group-hover:text-red-600"
                 style={{ color: branding?.accent_color || "#D97706" }}
               />
             </div>
-            <span className="font-medium">Déconnexion</span>
+            <span className="font-medium transition-colors group-hover:text-red-700">Déconnexion</span>
           </button>
         </div>
       </aside>
@@ -588,10 +603,10 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2.5 text-gray-500 hover:bg-gray-100 rounded-xl transition-colors active:scale-95"
+              className="lg:hidden p-2.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:shadow-sm hover:scale-[1.02] rounded-xl transition-all duration-200 active:scale-95"
               aria-label="Ouvrir le menu createur"
             >
-              <Menu size={20} />
+              <Menu size={20} className="transition-colors" />
             </button>
             <div className="relative hidden md:block">
               <Search
@@ -608,12 +623,12 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
             </div>
           </div>
           <div className="flex items-center gap-2 lg:gap-3">
-            <button className="relative p-2.5 text-gray-500 hover:bg-gray-100 rounded-xl transition-colors">
-              <Bell size={18} />
+            <button className="relative p-2.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:shadow-sm hover:scale-[1.02] rounded-xl transition-all duration-200">
+              <Bell size={18} className="transition-colors" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             </button>
-            <button className="relative p-2.5 text-gray-500 hover:bg-gray-100 rounded-xl transition-colors">
-              <Mail size={18} />
+            <button className="relative p-2.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 hover:shadow-sm hover:scale-[1.02] rounded-xl transition-all duration-200">
+              <Mail size={18} className="transition-colors" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full"></span>
             </button>
             <div className="flex items-center gap-2 lg:gap-3 pl-2 lg:pl-3 border-l border-gray-200/50">

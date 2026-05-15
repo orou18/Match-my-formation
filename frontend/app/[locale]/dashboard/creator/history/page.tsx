@@ -38,6 +38,7 @@ interface HistoryItem {
 
 export default function HistoryPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<
     "all" | "enrollment" | "payment" | "video" | "refund"
@@ -48,29 +49,47 @@ export default function HistoryPage() {
   );
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      const token =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("token")
-          : null;
+    fetchData();
+  }, [dateRange]);
 
-      try {
-        const response = await fetch("/api/creator/history", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        const data = await response.json();
-        if (response.ok) {
-          setHistory(data.history || []);
-        }
-      } catch (error) {
-        console.error("Erreur de chargement de l'historique créateur:", error);
-      } finally {
-        setLoading(false);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Récupérer l'historique
+      const historyResponse = await fetch(`/api/creator/history?date_range=${dateRange}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      });
+      const historyData = await historyResponse.json();
+      
+      if (historyData.success) {
+        setHistory(historyData.history || []);
       }
-    };
 
-    fetchHistory();
-  }, []);
+      // Récupérer les statistiques
+      const statsResponse = await fetch('/api/creator/history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ date_range: dateRange }),
+      });
+      const statsData = await statsResponse.json();
+      
+      if (statsData.success) {
+        setStats(statsData.stats);
+      }
+    } catch (error) {
+      console.error("Erreur de chargement de l'historique créateur:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getTypeIcon = (type: HistoryItem["type"]) => {
     switch (type) {
@@ -280,64 +299,97 @@ export default function HistoryPage() {
       </div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-blue-50 rounded-xl">
-              <Users className="w-6 h-6 text-blue-600" />
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-purple-50 rounded-xl">
+                <Video className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  {stats.videos?.total || 0}
+                </h3>
+                <p className="text-sm text-gray-600">Vidéos créées</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">
-                {totalEnrollments}
-              </h3>
-              <p className="text-sm text-gray-600">Inscriptions</p>
+            <div className="text-xs text-gray-500">
+              {stats.videos?.total_views || 0} vues totales
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-green-50 rounded-xl">
-              <DollarSign className="w-6 h-6 text-green-600" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-blue-50 rounded-xl">
+                <FileText className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  {stats.pathways?.total || 0}
+                </h3>
+                <p className="text-sm text-gray-600">Parcours créés</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">
-                {formatCurrency(totalRevenue)}
-              </h3>
-              <p className="text-sm text-gray-600">Revenus générés</p>
+            <div className="text-xs text-gray-500">
+              {stats.pathways?.total_duration || 0}h total
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-red-50 rounded-xl">
-              <X className="w-6 h-6 text-red-600" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-green-50 rounded-xl">
+                <Users className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  {stats.employees?.active || 0}
+                </h3>
+                <p className="text-sm text-gray-600">Employés actifs</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">
-                {formatCurrency(totalRefunds)}
-              </h3>
-              <p className="text-sm text-gray-600">Remboursements</p>
+            <div className="text-xs text-gray-500">
+              {stats.employees?.total || 0} total
             </div>
-          </div>
-        </motion.div>
-      </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-orange-50 rounded-xl">
+                <CheckCircle className="w-6 h-6 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  {stats.employees?.assignments || 0}
+                </h3>
+                <p className="text-sm text-gray-600">Assignations</p>
+              </div>
+            </div>
+            <div className="text-xs text-gray-500">
+              Parcours assignés
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
+
     // Récupérer le token depuis les headers ou cookies
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -18,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     
     // Construire l'URL de l'API backend
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    const apiUrl = `${backendUrl}/api/employee/student/videos/${params.id}/complete`;
+    const apiUrl = `${backendUrl}/api/employee/student/videos/${id}/complete`;
     
     const response = await fetch(apiUrl, {
       method: "POST",

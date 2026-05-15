@@ -147,33 +147,43 @@ export default function EmployeeDashboard() {
     return 0;
   };
 
-  const loadStats = (courseList: Course[]) => {
-    const completedCourses = courseList.filter(
-      (course) =>
-        course.completed === true ||
-        (typeof course.progress === "number" && course.progress >= 100)
-    ).length;
+  const loadStats = async (courses: Course[]) => {
+    try {
+      const token = localStorage.getItem("employee_token");
+      if (!token) return;
 
-    const inProgressCourses = courseList.filter(
-      (course) =>
-        course.completed !== true &&
-        (typeof course.progress !== "number" || course.progress < 100)
-    ).length;
+      const response = await fetch("/api/employee/stats", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    const totalWatchTime = Math.round(
-      courseList.reduce(
-        (sum, course) => sum + parseDurationToMinutes(course.duration),
-        0
-      )
-    );
+      const data = await response.json();
+      
+      if (data.success) {
+        setStats(data.data);
+      } else {
+        // Fallback avec calcul local si l'API échoue
+        const totalCourses = courses.length;
+        const completedCourses = courses.filter(course => course.completed).length;
+        const inProgressCourses = courses.filter(course => !course.completed && course.progress && course.progress > 0).length;
+        const totalWatchTime = courses.reduce((total, course) => {
+          const duration = parseDurationToMinutes(course.duration);
+          return total + (duration * (course.progress || 0) / 100);
+        }, 0);
+        const certificatesEarned = completedCourses;
 
-    setStats({
-      total_courses: courseList.length,
-      completed_courses: completedCourses,
-      in_progress_courses: inProgressCourses,
-      total_watch_time: totalWatchTime,
-      certificates_earned: completedCourses,
-    });
+        setStats({
+          total_courses: totalCourses,
+          completed_courses: completedCourses,
+          in_progress_courses: inProgressCourses,
+          total_watch_time: Math.round(totalWatchTime),
+          certificates_earned: certificatesEarned,
+        });
+      }
+    } catch (err) {
+      console.error("Erreur lors du chargement des statistiques:", err);
+    }
   };
 
   const handleLogout = async () => {

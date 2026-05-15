@@ -101,6 +101,15 @@ export default function CreateVideoPage() {
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
+  
+  // Media source selection states
+  const [mediaSource, setMediaSource] = useState<'upload' | 'library' | 'media'>('upload');
+  const [showLibraryModal, setShowLibraryModal] = useState(false);
+  const [showMediaModal, setShowMediaModal] = useState(false);
+  const [selectedLibraryVideo, setSelectedLibraryVideo] = useState<any>(null);
+  const [selectedMediaVideo, setSelectedMediaVideo] = useState<any>(null);
+  const [libraryItems, setLibraryItems] = useState<any[]>([]);
+  const [mediaItems, setMediaItems] = useState<any[]>([]);
   const [expandedSections, setExpandedSections] = useState({
     basic: true,
     objectives: false,
@@ -112,10 +121,74 @@ export default function CreateVideoPage() {
   const { notifications, success, error, removeNotification } =
     useSimpleNotification();
 
+  // Charger les données existantes au démarrage
   useEffect(() => {
     loadVideos();
+    loadLibraryItems();
+    loadMediaItems();
     loadStats();
   }, []);
+
+  const loadLibraryItems = async () => {
+    try {
+      // Simuler des données de bibliothèque pour l'instant
+      const mockLibraryItems = [
+        {
+          id: 1,
+          title: "Introduction au Marketing Digital",
+          description: "Découvrez les bases du marketing digital",
+          duration: "15:30",
+          thumbnail: "/videos/video1-thumb.jpg",
+          type: "video"
+        },
+        {
+          id: 2,
+          title: "Techniques de Vente Avancées",
+          description: "Maîtrisez les techniques de vente modernes",
+          duration: "22:15",
+          thumbnail: "/videos/video2-thumb.jpg",
+          type: "video"
+        }
+      ];
+      setLibraryItems(mockLibraryItems);
+    } catch (err) {
+      console.error("Erreur lors du chargement de la bibliothèque:", err);
+    }
+  };
+
+  const loadMediaItems = async () => {
+    try {
+      // Simuler des données de médias pour l'instant
+      const mockMediaItems = [
+        {
+          id: 1,
+          name: "Video_Presentation.mp4",
+          type: "video",
+          size: "125 MB",
+          url: "/media/video1.mp4",
+          thumbnail: "/media/video1-thumb.jpg"
+        },
+        {
+          id: 2,
+          name: "Tutorial_Complet.mp4",
+          type: "video",
+          size: "89 MB",
+          url: "/media/video2.mp4",
+          thumbnail: "/media/video2-thumb.jpg"
+        },
+        {
+          id: 3,
+          name: "Image_Banner.jpg",
+          type: "image",
+          size: "2.5 MB",
+          url: "/media/banner.jpg"
+        }
+      ];
+      setMediaItems(mockMediaItems);
+    } catch (err) {
+      console.error("Erreur lors du chargement des médias:", err);
+    }
+  };
 
   const loadVideos = async () => {
     try {
@@ -813,7 +886,7 @@ export default function CreateVideoPage() {
                   )}
 
                   {/* Form Content */}
-                  <div className="flex-1">
+                  <div className="flex-1 overflow-y-auto">
                     <style jsx>{`
                       div::-webkit-scrollbar {
                         width: 8px;
@@ -1280,65 +1353,193 @@ export default function CreateVideoPage() {
 
                         {expandedSections.files && (
                           <div className="px-4 sm:px-6 pb-6 space-y-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  <Film className="w-4 h-4 inline mr-2" />
-                                  Vidéo
-                                </label>
-                                <input
-                                  ref={fileInputRef}
-                                  type="file"
-                                  accept="video/*"
-                                  onChange={handleVideoUpload}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                                {videoPreview && (
-                                  <div className="mt-4 space-y-3">
-                                    <video
-                                      ref={videoRef}
-                                      src={videoPreview}
-                                      className="w-full h-32 rounded-lg object-cover bg-black shadow-lg"
-                                      controls
-                                    />
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                      <p className="text-sm text-blue-700 flex items-center gap-2">
-                                        <Film className="w-4 h-4" />
-                                        Durée: {videoDuration}
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {/* Source Selection */}
+                            <div className="bg-gray-50 rounded-lg p-4">
+                              <label className="block text-sm font-medium text-gray-700 mb-3">
+                                Source des fichiers
+                              </label>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setMediaSource('upload')}
+                                  className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+                                    mediaSource === 'upload'
+                                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                  }`}
+                                >
+                                  <Upload className="w-4 h-4 inline mr-2" />
+                                  Upload PC
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setMediaSource('library')}
+                                  className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+                                    mediaSource === 'library'
+                                      ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                  }`}
+                                >
+                                  <FolderOpen className="w-4 h-4 inline mr-2" />
+                                  Bibliothèque
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setMediaSource('media')}
+                                  className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+                                    mediaSource === 'media'
+                                      ? 'border-green-500 bg-green-50 text-green-700'
+                                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                  }`}
+                                >
                                   <Image className="w-4 h-4 inline mr-2" />
-                                  Miniature
-                                </label>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={handleThumbnailUpload}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                                {thumbnailPreview && (
-                                  <div className="mt-4 space-y-3">
-                                    <img
-                                      src={thumbnailPreview}
-                                      className="w-full h-32 rounded-lg object-cover shadow-lg"
-                                      alt="Aperçu de la miniature"
-                                    />
-                                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                                      <p className="text-sm text-green-700 flex items-center gap-2">
-                                        <CheckCircle className="w-4 h-4" />
-                                        Miniature sélectionnée
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
+                                  Médias
+                                </button>
                               </div>
                             </div>
+
+                            {/* Upload PC Section */}
+                            {mediaSource === 'upload' && (
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <Film className="w-4 h-4 inline mr-2" />
+                                    Vidéo
+                                  </label>
+                                  <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="video/*"
+                                    onChange={handleVideoUpload}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  {videoPreview && (
+                                    <div className="mt-4 space-y-3">
+                                      <video
+                                        ref={videoRef}
+                                        src={videoPreview}
+                                        className="w-full h-32 rounded-lg object-cover bg-black shadow-lg"
+                                        controls
+                                      />
+                                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                        <p className="text-sm text-blue-700 flex items-center gap-2">
+                                          <Film className="w-4 h-4" />
+                                          Durée: {videoDuration}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <Image className="w-4 h-4 inline mr-2" />
+                                    Miniature
+                                  </label>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleThumbnailUpload}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  />
+                                  {thumbnailPreview && (
+                                    <div className="mt-4 space-y-3">
+                                      <img
+                                        src={thumbnailPreview}
+                                        className="w-full h-32 rounded-lg object-cover shadow-lg"
+                                        alt="Aperçu de la miniature"
+                                      />
+                                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                        <p className="text-sm text-green-700 flex items-center gap-2">
+                                          <CheckCircle className="w-4 h-4" />
+                                          Miniature sélectionnée
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Library Section */}
+                            {mediaSource === 'library' && (
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-medium text-gray-700">
+                                    <FolderOpen className="w-4 h-4 inline mr-2" />
+                                    Sélectionner depuis la bibliothèque
+                                  </h4>
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowLibraryModal(true)}
+                                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                                  >
+                                    Parcourir la bibliothèque
+                                  </button>
+                                </div>
+                                {selectedLibraryVideo && (
+                                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                    <div className="flex items-center gap-4">
+                                      <div className="w-16 h-12 bg-purple-100 rounded flex items-center justify-center">
+                                        <Film className="w-6 h-6 text-purple-600" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <h5 className="font-medium text-gray-900">{selectedLibraryVideo.title}</h5>
+                                        <p className="text-sm text-gray-600">{selectedLibraryVideo.description}</p>
+                                        <p className="text-xs text-gray-500">Durée: {selectedLibraryVideo.duration}</p>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedLibraryVideo(null)}
+                                        className="text-red-500 hover:text-red-700"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Media Section */}
+                            {mediaSource === 'media' && (
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-medium text-gray-700">
+                                    <Image className="w-4 h-4 inline mr-2" />
+                                    Sélectionner depuis les médias
+                                  </h4>
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowMediaModal(true)}
+                                    className="text-green-600 hover:text-green-700 text-sm font-medium"
+                                  >
+                                    Parcourir les médias
+                                  </button>
+                                </div>
+                                {selectedMediaVideo && (
+                                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                    <div className="flex items-center gap-4">
+                                      <div className="w-16 h-12 bg-green-100 rounded flex items-center justify-center">
+                                        <Film className="w-6 h-6 text-green-600" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <h5 className="font-medium text-gray-900">{selectedMediaVideo.name}</h5>
+                                        <p className="text-sm text-gray-600">Type: {selectedMediaVideo.type}</p>
+                                        <p className="text-xs text-gray-500">Taille: {selectedMediaVideo.size}</p>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedMediaVideo(null)}
+                                        className="text-red-500 hover:text-red-700"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
                             {videoPreview && (
                               <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
@@ -1564,6 +1765,168 @@ export default function CreateVideoPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+      {/* Library Modal */}
+      <AnimatePresence>
+        {showLibraryModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowLibraryModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 sm:p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                    <FolderOpen className="w-6 h-6 text-purple-600" />
+                    Bibliothèque de vidéos
+                  </h2>
+                  <button
+                    onClick={() => setShowLibraryModal(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6 overflow-y-auto max-h-[70vh]">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {libraryItems.length === 0 ? (
+                    <div className="col-span-full text-center py-12">
+                      <FolderOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Aucune vidéo dans la bibliothèque
+                      </h3>
+                      <p className="text-gray-600">
+                        Commencez par uploader des vidéos dans votre bibliothèque
+                      </p>
+                    </div>
+                  ) : (
+                    libraryItems.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedLibraryVideo(item);
+                          setShowLibraryModal(false);
+                          success("Vidéo sélectionnée", `${item.title} a été sélectionnée depuis la bibliothèque`);
+                        }}
+                        className="bg-white border border-gray-200 rounded-lg p-4 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 text-left"
+                      >
+                        <div className="aspect-video bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                          <Film className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <h4 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
+                          {item.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 line-clamp-2">
+                          {item.description}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+                          <Clock className="w-3 h-3" />
+                          {item.duration}
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Media Modal */}
+      <AnimatePresence>
+        {showMediaModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowMediaModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 sm:p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                    <Image className="w-6 h-6 text-green-600" />
+                    Médias disponibles
+                  </h2>
+                  <button
+                    onClick={() => setShowMediaModal(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6 overflow-y-auto max-h-[70vh]">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {mediaItems.length === 0 ? (
+                    <div className="col-span-full text-center py-12">
+                      <Image className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Aucun média disponible
+                      </h3>
+                      <p className="text-gray-600">
+                        Commencez par uploader des fichiers dans votre médiathèque
+                      </p>
+                    </div>
+                  ) : (
+                    mediaItems
+                      .filter((item) => item.type === 'video')
+                      .map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedMediaVideo(item);
+                            setShowMediaModal(false);
+                            success("Média sélectionné", `${item.name} a été sélectionné depuis les médias`);
+                          }}
+                          className="bg-white border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:bg-green-50 transition-all duration-200 text-left"
+                        >
+                          <div className="aspect-video bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                            <Film className="w-8 h-8 text-gray-400" />
+                          </div>
+                          <h4 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
+                            {item.name}
+                          </h4>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <Film className="w-3 h-3" />
+                            {item.type}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-gray-400">
+                            <Clock className="w-3 h-3" />
+                            {item.size}
+                          </div>
+                        </button>
+                      ))
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       </div>
 
       {/* Notification Container */}

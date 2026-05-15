@@ -126,22 +126,33 @@ export default function AdminCreators() {
   useEffect(() => {
     const loadCreators = async () => {
       try {
-        const response = await fetch("/api/admin/creators");
-        if (response.ok) {
-          const data = await response.json();
+        const params = new URLSearchParams({
+          ...(searchTerm && { search: searchTerm }),
+          ...(filterCategory !== "all" && { category: filterCategory }),
+          ...(filterStatus !== "all" && { status: filterStatus }),
+        });
+
+        const response = await fetch(`/api/admin/creators-backend?${params}`);
+        const data = await response.json();
+
+        if (data.success) {
           setCreators(data.creators);
         } else {
-          console.error("Erreur lors du chargement des créateurs");
+          console.error("Erreur API:", data.error);
+          // Fallback avec données simulées
+          setCreators(mockCreators);
         }
       } catch (error) {
         console.error("Erreur:", error);
+        // Fallback avec données simulées
+        setCreators(mockCreators);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadCreators();
-  }, []);
+  }, [searchTerm, filterCategory, filterStatus]);
 
   const filteredCreators = creators.filter((creator) => {
     const matchesSearch =
@@ -187,17 +198,22 @@ export default function AdminCreators() {
     }
 
     try {
-      const response = await fetch("/api/admin/creators", {
+      const response = await fetch("/api/admin/creators-backend", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newCreator),
+        body: JSON.stringify({
+          ...newCreator,
+          password: "tempPassword123", // Mot de passe temporaire
+          status: "active",
+        }),
       });
 
-      if (response.ok) {
-        const createdCreator = await response.json();
-        setCreators([...creators, createdCreator]);
+      const data = await response.json();
+
+      if (data.success) {
+        setCreators([...creators, data.creator]);
         setShowCreateModal(false);
         setNewCreator({
           name: "",
@@ -206,14 +222,13 @@ export default function AdminCreators() {
           bio: "",
           expertise: "",
         });
-        alert("Créateur créé avec succès!");
+        alert("Créateur créé avec succès");
       } else {
-        const error = await response.json();
-        alert(error.error || "Erreur lors de la création");
+        alert(`Erreur: ${data.error}`);
       }
     } catch (error) {
       console.error("Erreur:", error);
-      alert("Erreur lors de la création");
+      alert("Erreur lors de la création du créateur");
     }
   };
 

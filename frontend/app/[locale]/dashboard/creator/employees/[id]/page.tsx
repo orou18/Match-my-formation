@@ -22,6 +22,15 @@ import {
   Trash2,
   Users,
   Clock,
+  Key,
+  Copy,
+  CheckCircle,
+  Eye,
+  EyeOff,
+  Send,
+  RefreshCw,
+  QrCode,
+  AlertCircle,
 } from "lucide-react";
 
 interface Employee {
@@ -40,10 +49,22 @@ interface Employee {
   created_at: string;
 }
 
+interface LoginCredentials {
+  email: string;
+  login_id: string;
+  password: string;
+}
+
 export default function EmployeeDetailPage() {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [credentials, setCredentials] = useState<LoginCredentials | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
+  const [sendingAccess, setSendingAccess] = useState(false);
+  const [qrCode, setQrCode] = useState<string | null>(null);
 
   const router = useRouter();
   const params = useParams<{ id: string; locale?: string }>();
@@ -64,21 +85,18 @@ export default function EmployeeDetailPage() {
 
   const loadEmployee = async () => {
     try {
-      const response = await fetch("/api/creator/employees");
+      // Récupérer les détails de l'employé avec les identifiants
+      const response = await fetch(`/api/creator/employees/${employeeId}`);
       const data = await response.json();
 
       if (response.ok && data.success) {
-        const employeeData = data.data.find(
-          (emp: Employee) => emp.id === parseInt(employeeId!)
-        );
-        if (employeeData) {
-          setEmployee(employeeData);
-        } else {
-          error("Erreur", "Employé non trouvé");
-          router.push(withLocale("/dashboard/creator/employees"));
+        setEmployee(data.data);
+        // Si les identifiants sont inclus dans la réponse
+        if (data.login_credentials) {
+          setCredentials(data.login_credentials);
         }
       } else {
-        error("Erreur", "Impossible de charger l'employé");
+        error("Erreur", data.message || "Impossible de charger l'employé");
         router.push(withLocale("/dashboard/creator/employees"));
       }
     } catch (err) {
@@ -86,6 +104,79 @@ export default function EmployeeDetailPage() {
       error("Erreur", "Une erreur technique est survenue");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const copyToClipboard = async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(type);
+      setTimeout(() => setCopied(null), 2000);
+    } catch (err) {
+      console.error("Erreur lors de la copie:", err);
+    }
+  };
+
+  const regenerateCredentials = async () => {
+    try {
+      setRegenerating(true);
+      
+      const response = await fetch(`/api/creator/employees/${employeeId}/regenerate-credentials`, {
+        method: 'POST',
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setCredentials(result.login_credentials);
+        success("Identifiants régénérés", "Nouveaux identifiants générés avec succès");
+      } else {
+        error("Erreur", result.message || "Erreur lors de la régénération");
+      }
+    } catch (err) {
+      console.error("Erreur de régénération:", err);
+      error("Erreur", "Une erreur technique est survenue");
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
+  const sendAccessByEmail = async () => {
+    try {
+      setSendingAccess(true);
+      
+      const response = await fetch(`/api/creator/employees/${employeeId}/send-access`, {
+        method: 'POST',
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        success("Email envoyé", "Identifiants envoyés par email avec succès !");
+      } else {
+        error("Erreur", result.message || "Erreur lors de l'envoi");
+      }
+    } catch (err) {
+      console.error("Erreur d'envoi:", err);
+      error("Erreur", "Une erreur technique est survenue");
+    } finally {
+      setSendingAccess(false);
+    }
+  };
+
+  const generateQRCode = async () => {
+    try {
+      const response = await fetch(`/api/creator/employees/${employeeId}/qr-code`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setQrCode(result.qr_code);
+      } else {
+        error("Erreur", result.message || "Erreur lors de la génération du QR code");
+      }
+    } catch (err) {
+      console.error("Erreur de génération QR code:", err);
+      error("Erreur", "Une erreur technique est survenue");
     }
   };
 
@@ -286,6 +377,116 @@ export default function EmployeeDetailPage() {
               </div>
             </div>
 
+            {/* Identifiants de connexion */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Key className="w-5 h-5 mr-2 text-purple-600" />
+                  Identifiants de connexion
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={regenerateCredentials}
+                    disabled={regenerating}
+                    className="flex items-center px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-1 ${regenerating ? 'animate-spin' : ''}`} />
+                    Régénérer
+                  </button>
+                  <button
+                    onClick={sendAccessByEmail}
+                    disabled={sendingAccess}
+                    className="flex items-center px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  >
+                    <Send className="w-4 h-4 mr-1" />
+                    Envoyer
+                  </button>
+                  <button
+                    onClick={generateQRCode}
+                    className="flex items-center px-3 py-1 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <QrCode className="w-4 h-4 mr-1" />
+                    QR Code
+                  </button>
+                </div>
+              </div>
+
+              {credentials ? (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email de connexion</label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={credentials.email}
+                        readOnly
+                        className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900"
+                      />
+                      <button
+                        onClick={() => copyToClipboard(credentials.email, 'email')}
+                        className="p-2 text-gray-600 hover:text-purple-600 transition-colors"
+                      >
+                        {copied === 'email' ? <CheckCircle className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ID de connexion</label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={credentials.login_id}
+                        readOnly
+                        className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900"
+                      />
+                      <button
+                        onClick={() => copyToClipboard(credentials.login_id, 'login_id')}
+                        className="p-2 text-gray-600 hover:text-purple-600 transition-colors"
+                      >
+                        {copied === 'login_id' ? <CheckCircle className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={credentials.password}
+                        readOnly
+                        className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900"
+                      />
+                      <button
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="p-2 text-gray-600 hover:text-purple-600 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                      <button
+                        onClick={() => copyToClipboard(credentials.password, 'password')}
+                        className="p-2 text-gray-600 hover:text-purple-600 transition-colors"
+                      >
+                        {copied === 'password' ? <CheckCircle className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">Les identifiants de connexion ne sont pas disponibles</p>
+                  <button
+                    onClick={regenerateCredentials}
+                    className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Générer de nouveaux identifiants
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Statistiques */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -438,6 +639,29 @@ export default function EmployeeDetailPage() {
           </motion.div>
         </div>
       </div>
+
+      {/* QR Code Modal */}
+      {qrCode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">QR Code de connexion</h3>
+            <div className="flex justify-center mb-4">
+              <img src={qrCode} alt="QR Code" className="w-48 h-48" />
+            </div>
+            <p className="text-sm text-gray-600 text-center mb-4">
+              Scannez ce QR code pour vous connecter rapidement
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setQrCode(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

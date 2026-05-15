@@ -34,21 +34,29 @@ class EmployeeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:employees,email,NULL,NULL,creator_id,' . Auth::id(),
-            'domain' => 'required|string|max:255',
+            'password' => 'required|string|min:6',
+            'department' => 'nullable|string|max:255',
+            'position' => 'nullable|string|max:255',
+            'role' => 'nullable|string|max:255',
+            'hire_date' => 'nullable|date',
+            'status' => 'nullable|string|max:255',
         ]);
 
-        // Générer automatiquement login_id et mot de passe
+        // Générer automatiquement login_id
         $loginId = Employee::generateLoginId();
-        $password = Employee::generatePassword();
+        $password = $validated['password'];
 
         $employee = Employee::create([
             'creator_id' => Auth::id(),
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'domain' => $validated['domain'],
             'login_id' => $loginId,
             'password' => Hash::make($password),
-            'is_active' => true,
+            'department' => $validated['department'] ?? null,
+            'position' => $validated['position'] ?? null,
+            'role' => $validated['role'] ?? 'employee',
+            'hire_date' => $validated['hire_date'] ?? now(),
+            'is_active' => ($validated['status'] ?? 'active') === 'active',
         ]);
 
         return response()->json([

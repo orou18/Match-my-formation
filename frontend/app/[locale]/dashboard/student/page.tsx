@@ -328,9 +328,9 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFB] overflow-hidden font-sans">
-      {/* Contenu principal - plein écran sans padding */}
-      <div className="flex-1 overflow-y-auto">
+    <div className="min-h-screen bg-[#F8FAFB] font-sans">
+      {/* Contenu principal - le scroll vertical appartient au navigateur */}
+      <div className="w-full">
         <StudentHero user={user} />
 
         {/* Message de bienvenue pour les nouveaux utilisateurs */}

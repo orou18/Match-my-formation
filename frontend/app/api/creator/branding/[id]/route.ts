@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Récupérer le token depuis les headers
     const authHeader = request.headers.get("authorization");
@@ -13,9 +13,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const token = authHeader.substring(7); // Enlever "Bearer "
     
+    // Récupérer les params
+    const { id } = await params;
+    
     // Appeler l'API backend Laravel pour récupérer le branding du créateur
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    const apiUrl = `${backendUrl}/api/creator/${params.id}/branding`;
+    const apiUrl = `${backendUrl}/api/creator/${id}/branding`;
     
     const response = await fetch(apiUrl, {
       method: "GET",

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Appeler l'API Laravel pour récupérer le profil de l'employé
-    const response = await laravelFetch("/api/employee/profile", {
+    const response = await laravelFetch("/api/employee/me", {
       request,
       method: "GET",
       headers: {
@@ -29,33 +29,9 @@ export async function GET(request: NextRequest) {
     if (response.ok && data.success) {
       return NextResponse.json({
         success: true,
-        user: data.user || {
-          id: 1,
-          name: "Marie Kouassi",
-          email: "marie@example.com",
-          department: "Marketing",
-          position: "Chef de projet",
-          role: "employee",
-          creator_id: 1,
-        },
+        user: data.user || data.employee || data.data,
       });
     } else {
-      // Fallback pour les tests
-      if (token === "test-token-employee-1") {
-        return NextResponse.json({
-          success: true,
-          user: {
-            id: 1,
-            name: "Marie Kouassi",
-            email: "marie@example.com",
-            department: "Marketing",
-            position: "Chef de projet",
-            role: "employee",
-            creator_id: 1,
-          },
-        });
-      }
-
       return NextResponse.json(
         {
           success: false,
