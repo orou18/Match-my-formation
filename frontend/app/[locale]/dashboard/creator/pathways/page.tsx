@@ -79,7 +79,6 @@ interface CreatorVideoOption {
 
 export default function PathwaysPage() {
   const [pathways, setPathways] = useState<Pathway[]>([]);
-  const [localPathways, setLocalPathways] = useState<Pathway[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [videos, setVideos] = useState<CreatorVideoOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,19 +106,6 @@ export default function PathwaysPage() {
 
   const { notifications, success, error, removeNotification } =
     useSimpleNotification();
-
-  // Charger les parcours locaux depuis localStorage au démarrage
-  useEffect(() => {
-    const savedLocalPathways = localStorage.getItem("localPathways");
-    if (savedLocalPathways) {
-      try {
-        const parsed = JSON.parse(savedLocalPathways);
-        setLocalPathways(parsed);
-      } catch (e) {
-        console.error("Erreur lors du chargement des parcours locaux:", e);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     loadPathways();
@@ -173,34 +159,29 @@ export default function PathwaysPage() {
 
   const loadVideos = async () => {
     try {
-      console.log("Début du chargement des vidéos pour les parcours...");
-      const response = await fetch("/api/creator/videos-simple", {
+      const response = await fetch("/api/creator/videos", {
+        headers: { Accept: "application/json" },
         cache: "no-store",
-        credentials: "include", // Inclure les cookies NextAuth
+        credentials: "include",
       });
-      
-      console.log("Response status:", response.status);
-      const data = await response.json();
-      console.log("Response data:", data);
 
-      // Gérer la structure de données de l'API qui retourne { videos: [...], total: X }
+      if (!response.ok) {
+        throw new Error("Impossible de charger les vidéos");
+      }
+
+      const data = await response.json();
+
       let videosList = [];
       if (Array.isArray(data?.videos)) {
         videosList = data.videos;
-        console.log("Vidéos trouvées dans data.videos:", videosList.length);
       } else if (Array.isArray(data)) {
         videosList = data;
-        console.log("Vidéos trouvées dans data (array direct):", videosList.length);
       } else if (Array.isArray(data?.data)) {
         videosList = data.data;
-        console.log("Vidéos trouvées dans data.data:", videosList.length);
-      } else {
-        console.warn("Format de données non reconnu:", data);
       }
 
-      // Transformer les données pour correspondre au format CreatorVideoOption
       const transformedVideos = videosList.map((video: any) => ({
-        id: video.id,
+        id: Number(video.id),
         title: video.title,
         description: video.description,
         thumbnail: video.thumbnail,
@@ -215,37 +196,11 @@ export default function PathwaysPage() {
         created_at: video.created_at,
       }));
 
-      console.log("Vidéos transformées:", transformedVideos.length);
-      console.log("Vidéos transformées détaillées:", transformedVideos);
       setVideos(transformedVideos);
-      console.log("Vidéos chargées pour parcours:", transformedVideos);
-      console.log("État videos après setVideos:", transformedVideos.length);
     } catch (error: any) {
       console.error("Erreur loadVideos:", error);
-      // En cas d'erreur, utiliser le fallback
-      const fallbackVideos: CreatorVideoOption[] = [
-        {
-          id: 1,
-          title: "Introduction au Marketing Digital",
-          description: "Découvrez les bases du marketing digital",
-          thumbnail: "/placeholder-video.jpg",
-          duration: "15:30",
-          visibility: "public",
-          category: "marketing",
-        },
-        {
-          id: 2,
-          title: "Techniques de Vente Avancées",
-          description: "Maîtrisez les techniques de vente modernes",
-          thumbnail: "/placeholder-video.jpg",
-          duration: "22:15",
-          visibility: "public",
-          category: "sales",
-        },
-      ];
-      setVideos(fallbackVideos);
-      console.log("Utilisation des vidéos de fallback:", fallbackVideos);
-      error("Erreur", "Utilisation des vidéos de démonstration");
+      setVideos([]);
+      error("Erreur", "Impossible de charger les vidéos du créateur");
     }
   };
 
@@ -275,30 +230,6 @@ export default function PathwaysPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Ajouter le parcours créé au state local pour affichage immédiat
-        const newPathway: Pathway = {
-          id: data.data.id,
-          title: data.data.title,
-          description: data.data.description,
-          domain: data.data.domain,
-          duration_hours: data.data.duration_hours,
-          difficulty_level: data.data.difficulty_level,
-          created_at: data.data.created_at,
-          is_active: true,
-          videos_count: data.data.video_ids?.length || 0,
-          assigned_employees: 0,
-        };
-
-        // Mode démo : ajouter aux parcours locaux
-        console.log("Ajout du parcours aux locaux:", newPathway);
-        setLocalPathways((prev) => {
-          const updated = [...prev, newPathway];
-          console.log("Parcours locaux mis à jour:", updated);
-          // Sauvegarder dans localStorage pour la persistance
-          localStorage.setItem("localPathways", JSON.stringify(updated));
-          return updated;
-        });
-
         success(
           "Parcours créé avec succès! Il est maintenant visible dans la liste."
         );
@@ -311,9 +242,7 @@ export default function PathwaysPage() {
           difficulty_level: "beginner",
           video_ids: [],
         });
-
-        // Pas de rechargement automatique pour éviter la redirection
-        // Les parcours locaux sont déjà visibles grâce à localStorage
+        loadPathways();
       } else {
         error("Erreur", data.message || "Impossible de créer le parcours");
       }
@@ -411,13 +340,7 @@ export default function PathwaysPage() {
   const selectedVideos = formData.video_ids
     .map((videoId) => videos.find((video) => video.id === videoId))
     .filter((video): video is CreatorVideoOption => Boolean(video));
-  // Combiner les parcours backend et locaux pour l'affichage
-  const allPathways = [...localPathways, ...pathways];
-  console.log("Tous les parcours combinés:", allPathways);
-  console.log("Parcours backend:", pathways);
-  console.log("Parcours locaux:", localPathways);
-
-  const filteredPathways = allPathways.filter((pathway) => {
+  const filteredPathways = pathways.filter((pathway) => {
     const matchesSearch =
       pathway.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pathway.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -430,8 +353,6 @@ export default function PathwaysPage() {
 
     return matchesSearch && matchesDomain && matchesDifficulty;
   });
-
-  console.log("Parcours filtrés:", filteredPathways);
 
   if (loading) {
     return (
@@ -798,14 +719,14 @@ export default function PathwaysPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/50 p-4"
             onClick={() => setShowCreateModal(false)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200"
+              className="my-4 flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 border-b border-gray-200">
@@ -825,7 +746,7 @@ export default function PathwaysPage() {
 
               <form
                 onSubmit={createPathway}
-                className="p-6 overflow-y-auto max-h-[70vh]"
+                className="min-h-0 flex-1 overflow-y-auto p-6"
               >
                 {/* Champs du formulaire */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1108,14 +1029,14 @@ export default function PathwaysPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/50 p-4"
             onClick={() => setShowAssignModal(false)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-gray-200"
+              className="my-4 w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 border-b border-gray-200">

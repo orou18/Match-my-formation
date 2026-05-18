@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -51,6 +52,16 @@ class Employee extends Authenticatable
         return $this->belongsToMany(Pathway::class, 'employee_pathways')
             ->withPivot('assigned_at', 'completed_at', 'progress_percentage', 'is_active')
             ->withTimestamps();
+    }
+
+    public function progress(): HasMany
+    {
+        return $this->hasMany(EmployeeProgress::class);
+    }
+
+    public function employeePathways(): HasMany
+    {
+        return $this->hasMany(EmployeePathway::class);
     }
 
     /**

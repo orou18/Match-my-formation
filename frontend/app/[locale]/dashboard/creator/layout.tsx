@@ -290,7 +290,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex overflow-x-hidden">
+    <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex overflow-hidden">
       {/* Overlay mobile */}
       {sidebarOpen && (
         <motion.div
@@ -304,7 +304,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 w-[min(18rem,calc(100vw-1rem))] lg:w-72 backdrop-blur-md border-r transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static shadow-2xl lg:shadow-none ${
+        className={`fixed top-0 left-0 z-50 flex h-screen w-[min(18rem,calc(100vw-1rem))] flex-col backdrop-blur-md border-r transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:w-72 shadow-2xl lg:shadow-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         style={{
@@ -597,7 +597,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
         {/* Navbar */}
         <nav className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/50 flex items-center justify-between px-3 sm:px-4 lg:px-6 sticky top-0 z-30">
           <div className="flex items-center gap-4">
@@ -649,7 +649,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
         </nav>
 
         {/* Page Content */}
-        <main className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100">
+        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100">
           <div className="p-4 lg:p-6">{children}</div>
         </main>
       </div>

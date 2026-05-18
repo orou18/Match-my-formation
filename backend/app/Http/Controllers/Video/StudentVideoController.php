@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Video;
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class StudentVideoController extends Controller
@@ -24,7 +25,7 @@ class StudentVideoController extends Controller
             $sortBy = $request->get('sort', 'recent');
 
             $query = Video::with(['creator:id,name,email,avatar,role'])
-                ->where('is_published', true)
+                ->whereNotNull('published_at')
                 ->where('visibility', 'public');
 
             if ($category !== 'all') {
@@ -34,8 +35,7 @@ class StudentVideoController extends Controller
             if (!empty($search)) {
                 $query->where(function($q) use ($search) {
                     $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhere('tags', 'like', "%{$search}%");
+                      ->orWhere('description', 'like', "%{$search}%");
                 });
             }
 
@@ -43,11 +43,8 @@ class StudentVideoController extends Controller
                 case 'popular':
                     $query->orderBy('views', 'desc');
                     break;
-                case 'rating':
-                    $query->orderBy('rating', 'desc');
-                    break;
                 case 'duration':
-                    $query->orderByRaw('TIME_TO_SEC(duration) asc');
+                    $query->orderBy('duration', 'asc');
                     break;
                 case 'title':
                     $query->orderBy('title', 'asc');
@@ -67,7 +64,7 @@ class StudentVideoController extends Controller
                 return $video->creator && $video->creator->role === 'admin';
             })->values();
 
-            $allVideos = $videos->getCollection();
+            $allVideos = $videos->getCollection()->map(fn (Video $video) => $this->serializeVideo($video));
 
             $stats = [
                 'totalVideos' => $allVideos->count(),
@@ -189,5 +186,50 @@ class StudentVideoController extends Controller
         }
 
         return false;
+    }
+
+    private function serializeVideo(Video $video): array
+    {
+        return [
+            'id' => $video->id,
+            'title' => $video->title,
+            'description' => $video->description,
+            'thumbnail' => $video->thumbnail_url,
+            'video_url' => $video->video_url,
+            'duration' => $this->formatDuration($video->duration),
+            'views' => (int) ($video->views ?? 0),
+            'likes' => (int) ($video->likes ?? 0),
+            'students_count' => (int) ($video->views ?? 0),
+            'rating' => 0,
+            'tags' => [],
+            'category' => $video->category ?? 'general',
+            'difficulty_level' => 'beginner',
+            'language' => 'fr',
+            'created_at' => $video->created_at?->toISOString(),
+            'updated_at' => $video->updated_at?->toISOString(),
+            'creator' => $video->creator ? [
+                'id' => $video->creator->id,
+                'name' => $video->creator->name,
+                'email' => $video->creator->email,
+                'avatar' => $video->creator->avatar,
+            ] : null,
+            'is_free' => true,
+            'price' => 0,
+        ];
+    }
+
+    private function formatDuration(?int $duration): string
+    {
+        if (!$duration || $duration < 1) {
+            return '00:00';
+        }
+
+        $hours = intdiv($duration, 3600);
+        $minutes = intdiv($duration % 3600, 60);
+        $seconds = $duration % 60;
+
+        return $hours > 0
+            ? sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds)
+            : sprintf('%02d:%02d', $minutes, $seconds);
     }
 }

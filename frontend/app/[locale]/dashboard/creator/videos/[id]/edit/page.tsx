@@ -130,17 +130,20 @@ export default function EditVideoPage() {
 
   const loadVideo = async () => {
     try {
-      const response = await fetch(`/api/creator/videos-simple`, {
+      const response = await fetch(`/api/creator/videos`, {
         headers: {
           Accept: "application/json",
         },
         cache: "no-store",
+        credentials: "include",
       });
 
       if (response.ok) {
         const data = await response.json();
         const videosList = Array.isArray(data.videos) ? data.videos : [];
-        const currentVideo = videosList.find((v: any) => v.id === videoId);
+        const currentVideo = videosList.find(
+          (v: any) => String(v.id) === String(videoId)
+        );
 
         if (currentVideo) {
           setVideo(currentVideo);
@@ -321,38 +324,6 @@ export default function EditVideoPage() {
     setUploadProgress(0);
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("title", formData.title);
-      formDataToSend.append("description", formData.description);
-      formDataToSend.append("category", formData.category);
-      formDataToSend.append("tags", JSON.stringify(formData.tags));
-      formDataToSend.append(
-        "learning_objectives",
-        JSON.stringify(formData.learning_objectives)
-      );
-      formDataToSend.append("resources", JSON.stringify(formData.resources));
-      formDataToSend.append("visibility", formData.visibility);
-      formDataToSend.append(
-        "allow_comments",
-        formData.allow_comments.toString()
-      );
-      formDataToSend.append(
-        "publish_immediately",
-        formData.publish_immediately.toString()
-      );
-      formDataToSend.append("duration", videoDuration);
-
-      if (formData.video_file) {
-        formDataToSend.append("video", formData.video_file);
-      }
-      if (formData.thumbnail) {
-        formDataToSend.append("thumbnail", formData.thumbnail);
-      }
-      if (selectedThumbnail) {
-        formDataToSend.append("selected_thumbnail", selectedThumbnail);
-      }
-
-      // Simuler la progression de l'upload
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev >= 90) {
@@ -363,11 +334,30 @@ export default function EditVideoPage() {
         });
       }, 200);
 
-      // Utiliser fetch direct pour éviter le problème d'import
-      const response = await fetch(`/api/creator/videos-simple?id=${videoId}`, {
+      const response = await fetch(`/api/creator/videos`, {
         method: "PUT",
-        body: formDataToSend,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          id: videoId,
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          tags: formData.tags,
+          learning_objectives: formData.learning_objectives,
+          resources: formData.resources,
+          visibility: formData.visibility,
+          allow_comments: formData.allow_comments,
+          publish_immediately: formData.publish_immediately,
+          duration: videoDuration,
+          selected_thumbnail: selectedThumbnail?.startsWith("data:image/")
+            ? selectedThumbnail
+            : undefined,
+        }),
         cache: "no-store",
+        credentials: "include",
       });
 
       if (response.ok) {

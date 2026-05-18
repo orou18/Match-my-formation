@@ -131,26 +131,25 @@ export default function CreateVideoPage() {
 
   const loadLibraryItems = async () => {
     try {
-      // Simuler des données de bibliothèque pour l'instant
-      const mockLibraryItems = [
-        {
-          id: 1,
-          title: "Introduction au Marketing Digital",
-          description: "Découvrez les bases du marketing digital",
-          duration: "15:30",
-          thumbnail: "/videos/video1-thumb.jpg",
-          type: "video"
-        },
-        {
-          id: 2,
-          title: "Techniques de Vente Avancées",
-          description: "Maîtrisez les techniques de vente modernes",
-          duration: "22:15",
-          thumbnail: "/videos/video2-thumb.jpg",
-          type: "video"
-        }
-      ];
-      setLibraryItems(mockLibraryItems);
+      const response = await fetch("/api/creator/library", {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Impossible de charger la bibliothèque");
+      }
+      const data = await response.json();
+      const items = Array.isArray(data.items) ? data.items : [];
+      setLibraryItems(
+        items
+          .filter((item: any) => item.type === "video")
+          .map((item: any) => ({
+            ...item,
+            title: item.title || item.name,
+            description: item.description || "",
+          }))
+      );
     } catch (err) {
       console.error("Erreur lors du chargement de la bibliothèque:", err);
     }
@@ -158,33 +157,16 @@ export default function CreateVideoPage() {
 
   const loadMediaItems = async () => {
     try {
-      // Simuler des données de médias pour l'instant
-      const mockMediaItems = [
-        {
-          id: 1,
-          name: "Video_Presentation.mp4",
-          type: "video",
-          size: "125 MB",
-          url: "/media/video1.mp4",
-          thumbnail: "/media/video1-thumb.jpg"
-        },
-        {
-          id: 2,
-          name: "Tutorial_Complet.mp4",
-          type: "video",
-          size: "89 MB",
-          url: "/media/video2.mp4",
-          thumbnail: "/media/video2-thumb.jpg"
-        },
-        {
-          id: 3,
-          name: "Image_Banner.jpg",
-          type: "image",
-          size: "2.5 MB",
-          url: "/media/banner.jpg"
-        }
-      ];
-      setMediaItems(mockMediaItems);
+      const response = await fetch("/api/creator/media", {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Impossible de charger les médias");
+      }
+      const data = await response.json();
+      setMediaItems(Array.isArray(data.items) ? data.items : []);
     } catch (err) {
       console.error("Erreur lors du chargement des médias:", err);
     }
@@ -193,7 +175,7 @@ export default function CreateVideoPage() {
   const loadVideos = async () => {
     try {
       // Utiliser fetch direct pour éviter le problème d'import
-      const response = await fetch("/api/creator/videos-simple", {
+      const response = await fetch("/api/creator/videos", {
         headers: {
           Accept: "application/json",
         },
@@ -215,7 +197,7 @@ export default function CreateVideoPage() {
   const loadStats = async () => {
     try {
       // Utiliser fetch direct pour éviter le problème d'import
-      const response = await fetch("/api/creator/videos-simple", {
+      const response = await fetch("/api/creator/videos", {
         headers: {
           Accept: "application/json",
         },
@@ -282,6 +264,12 @@ export default function CreateVideoPage() {
 
       if (formData.video_file) {
         formDataToSend.append("video", formData.video_file);
+      } else if (mediaSource === "library" && selectedLibraryVideo?.video_url) {
+        formDataToSend.append("external_url", selectedLibraryVideo.video_url);
+      } else if (mediaSource === "library" && selectedLibraryVideo?.url) {
+        formDataToSend.append("external_url", selectedLibraryVideo.url);
+      } else if (mediaSource === "media" && selectedMediaVideo?.url) {
+        formDataToSend.append("external_url", selectedMediaVideo.url);
       }
       if (formData.thumbnail) {
         formDataToSend.append("thumbnail", formData.thumbnail);
@@ -290,7 +278,6 @@ export default function CreateVideoPage() {
         formDataToSend.append("selected_thumbnail", selectedThumbnail);
       }
 
-      // Simuler la progression de l'upload
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev >= 90) {
@@ -303,18 +290,19 @@ export default function CreateVideoPage() {
 
       clearInterval(progressInterval);
 
-      // Utiliser fetch direct pour éviter le problème d'import
-      const response = await fetch("/api/creator/videos-simple", {
+      const response = await fetch("/api/creator/videos", {
         method: "POST",
         body: formDataToSend,
         cache: "no-store",
+        credentials: "include",
       });
 
       if (response.ok) {
         const result = await response.json();
+        const createdVideo = result.video || result.data || result;
         setUploadProgress(100);
 
-        setVideos((prev) => [...prev, result.data || result]);
+        setVideos((prev) => [...prev, createdVideo]);
         setShowCreateModal(false);
         resetForm();
         success(
@@ -322,7 +310,6 @@ export default function CreateVideoPage() {
           `"${formData.title}" a été ajoutée à votre contenu`
         );
 
-        const createdVideo = result.data || result;
         if (createdVideo.visibility === "public") {
           loadStats();
 
@@ -371,7 +358,12 @@ export default function CreateVideoPage() {
       );
       return;
     }
-    if (!formData.video_file) {
+    const hasSelectedExistingVideo =
+      (mediaSource === "library" &&
+        (selectedLibraryVideo?.video_url || selectedLibraryVideo?.url)) ||
+      (mediaSource === "media" && selectedMediaVideo?.url);
+
+    if (!formData.video_file && !hasSelectedExistingVideo) {
       error("Vidéo requise", "Veuillez sélectionner un fichier vidéo");
       return;
     }
@@ -380,7 +372,6 @@ export default function CreateVideoPage() {
     setUploadProgress(10);
 
     try {
-      // Simuler l'upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev >= 90) {
@@ -396,7 +387,15 @@ export default function CreateVideoPage() {
       publishData.append("title", formData.title);
       publishData.append("description", formData.description);
       publishData.append("category", formData.category);
-      publishData.append("video", formData.video_file);
+      if (formData.video_file) {
+        publishData.append("video", formData.video_file);
+      } else if (mediaSource === "library" && selectedLibraryVideo?.video_url) {
+        publishData.append("external_url", selectedLibraryVideo.video_url);
+      } else if (mediaSource === "library" && selectedLibraryVideo?.url) {
+        publishData.append("external_url", selectedLibraryVideo.url);
+      } else if (mediaSource === "media" && selectedMediaVideo?.url) {
+        publishData.append("external_url", selectedMediaVideo.url);
+      }
       if (formData.thumbnail) {
         publishData.append("thumbnail", formData.thumbnail);
       }
@@ -416,11 +415,11 @@ export default function CreateVideoPage() {
 
       clearInterval(progressInterval);
 
-      // Utiliser fetch direct pour éviter le problème d'import
-      const response = await fetch("/api/creator/videos-simple", {
+      const response = await fetch("/api/creator/videos", {
         method: "POST",
         body: publishData,
         cache: "no-store",
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -825,14 +824,14 @@ export default function CreateVideoPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-2 sm:p-4"
+              className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/60 p-2 backdrop-blur-md sm:p-4"
               style={{ touchAction: "pan-y" }}
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="mx-auto my-2 flex min-h-[calc(100vh-1rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:my-4 sm:max-h-[calc(100vh-2rem)] sm:min-h-[calc(100vh-2rem)]"
+                className="mx-auto my-2 flex h-[calc(100dvh-1rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:my-4 sm:h-[calc(100dvh-2rem)]"
               >
                 {/* Header */}
                 <div className="p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50">
@@ -861,7 +860,7 @@ export default function CreateVideoPage() {
 
                 <form
                   onSubmit={handleCreateVideo}
-                  className="flex flex-col h-full"
+                  className="flex min-h-0 flex-1 flex-col"
                 >
                   {/* Progress Bar */}
                   {uploadProgress > 0 && (
@@ -886,7 +885,7 @@ export default function CreateVideoPage() {
                   )}
 
                   {/* Form Content */}
-                  <div className="flex-1 overflow-y-auto">
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
                     <style jsx>{`
                       div::-webkit-scrollbar {
                         width: 8px;
@@ -1773,14 +1772,14 @@ export default function CreateVideoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/50 p-4"
             onClick={() => setShowLibraryModal(false)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200"
+              className="my-4 flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 sm:p-6 border-b border-gray-200">
@@ -1798,7 +1797,7 @@ export default function CreateVideoPage() {
                 </div>
               </div>
 
-              <div className="p-4 sm:p-6 overflow-y-auto max-h-[70vh]">
+              <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {libraryItems.length === 0 ? (
                     <div className="col-span-full text-center py-12">
@@ -1852,14 +1851,14 @@ export default function CreateVideoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/50 p-4"
             onClick={() => setShowMediaModal(false)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200"
+              className="my-4 flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 sm:p-6 border-b border-gray-200">
@@ -1877,7 +1876,7 @@ export default function CreateVideoPage() {
                 </div>
               </div>
 
-              <div className="p-4 sm:p-6 overflow-y-auto max-h-[70vh]">
+              <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {mediaItems.length === 0 ? (
                     <div className="col-span-full text-center py-12">

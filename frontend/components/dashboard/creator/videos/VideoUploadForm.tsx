@@ -191,7 +191,7 @@ export default function VideoUploadForm({
         const xhr = new XMLHttpRequest();
         const token =
           typeof window !== "undefined" ? localStorage.getItem("token") : null;
-        xhr.open("POST", "http://127.0.0.1:8000/api/creator/videos");
+        xhr.open("POST", "/api/creator/videos");
         if (token) {
           xhr.setRequestHeader("Authorization", `Bearer ${token}`);
         }
@@ -242,7 +242,7 @@ export default function VideoUploadForm({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 overflow-y-auto">
+    <div className="min-h-full overflow-y-auto bg-gray-50 p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

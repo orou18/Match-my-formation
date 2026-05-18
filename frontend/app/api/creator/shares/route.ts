@@ -1,25 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/auth-options";
-import { getUserIdFromToken } from "@/lib/auth";
-import { getCreatorSharesAnalytics } from "@/lib/server/creator-experience-store";
-
-type SessionUser = { id?: string | number; role?: string };
-
-async function resolveCreatorId(request: NextRequest) {
-  const tokenId = getUserIdFromToken(request);
-  if (tokenId) return String(tokenId);
-  const session = await getServerSession(authOptions);
-  const user = (session?.user as SessionUser | undefined) || {};
-  return user.id ? String(user.id) : "2";
-}
+import { laravelFetch, parseLaravelJson } from "@/lib/api/laravel-proxy";
 
 export async function GET(request: NextRequest) {
   try {
-    const creatorId = await resolveCreatorId(request);
-    return NextResponse.json({ data: getCreatorSharesAnalytics(creatorId) });
+    const response = await laravelFetch("/api/creator/engagement", { request });
+    const data = await parseLaravelJson(response);
+    const topVideos = data?.data?.topVideos || [];
+    return NextResponse.json(
+      {
+        data: {
+          totalShares: topVideos.reduce((sum: number, video: any) => sum + Number(video.shares || 0), 0),
+          topSharedVideos: topVideos,
+        },
+      },
+      { status: response.status }
+    );
   } catch (error) {
     console.error("Creator shares API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Backend indisponible" }, { status: 502 });
   }
 }

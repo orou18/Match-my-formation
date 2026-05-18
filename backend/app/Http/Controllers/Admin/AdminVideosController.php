@@ -30,7 +30,7 @@ class AdminVideosController extends Controller
     {
         $this->ensureAdmin();
 
-        $query = Video::with(['creator', 'likes', 'comments']);
+        $query = Video::with(['creator', 'likes']);
 
         // Filtres
         if ($request->filled('search')) {
@@ -52,7 +52,9 @@ class AdminVideosController extends Controller
 
         if ($request->filled('published') && $request->input('published') !== 'all') {
             $isPublished = $request->input('published') === 'published';
-            $query->where('is_published', $isPublished);
+            $isPublished
+                ? $query->whereNotNull('published_at')
+                : $query->whereNull('published_at');
         }
 
         if ($request->filled('creator_id')) {
@@ -75,14 +77,14 @@ class AdminVideosController extends Controller
                 'title' => $video->title,
                 'description' => $video->description,
                 'category' => $video->category,
-                'tags' => $video->tags ?? [],
+                'tags' => [],
                 'learning_objectives' => $video->learning_objectives ?? [],
                 'visibility' => $video->visibility,
-                'duration' => $video->duration,
+                'duration' => $this->formatDuration($video->duration),
                 'allow_comments' => $video->allow_comments,
-                'publish_immediately' => $video->publish_immediately,
-                'is_admin_video' => $video->is_admin_video ?? false,
-                'is_published' => $video->is_published,
+                'publish_immediately' => $video->published_at !== null,
+                'is_admin_video' => $video->creator?->role === 'admin',
+                'is_published' => $video->published_at !== null,
                 'creator' => [
                     'id' => $video->creator->id ?? null,
                     'name' => $video->creator->name ?? 'Admin',
@@ -94,7 +96,7 @@ class AdminVideosController extends Controller
                 'students_count' => $video->students_count ?? 0,
                 'views' => $video->views ?? 0,
                 'likes' => $video->likes->count() ?? 0,
-                'comments' => $video->comments ?? [],
+                'comments' => (int) ($video->comments ?? 0),
                 'created_at' => $video->created_at,
                 'updated_at' => $video->updated_at,
             ];
@@ -122,48 +124,52 @@ class AdminVideosController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:2000',
             'category' => 'required|string|max:100',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
-            'learning_objectives' => 'nullable|array',
-            'learning_objectives.*' => 'string|max:255',
             'visibility' => 'required|in:private,public,unlisted',
-            'duration' => 'required|string|max:20',
+            'duration' => 'nullable',
             'allow_comments' => 'boolean',
             'publish_immediately' => 'boolean',
-            'video_file' => 'required|file|mimes:mp4,avi,mov,wmv|max:102400', // 100MB max
-            'thumbnail_file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+            'video' => 'nullable|file|max:512000',
+            'video_file' => 'nullable|file|max:512000',
+            'thumbnail' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
+            'thumbnail_file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
+            'external_url' => 'nullable|string|max:2048',
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Gérer l'upload de la vidéo
-            if ($request->hasFile('video_file')) {
-                $videoPath = $request->file('video_file')->store('videos/admin', 'public');
-                $validated['video_url'] = Storage::url($videoPath);
+            $upload = $request->file('video') ?? $request->file('video_file');
+            $hasUpload = $upload !== null;
+            $hasExternalUrl = filled($request->external_url);
+
+            if ($hasUpload === $hasExternalUrl) {
+                return response()->json(['message' => 'Fournissez soit un fichier, soit une URL externe.'], 422);
             }
+
+            $videoPath = $hasUpload ? $upload->store('videos/admin', 'public') : null;
 
             // Gérer l'upload de la miniature
-            if ($request->hasFile('thumbnail_file')) {
-                $thumbnailPath = $request->file('thumbnail_file')->store('thumbnails/admin', 'public');
-                $validated['thumbnail'] = Storage::url($thumbnailPath);
-            } else {
-                // Générer une miniature par défaut
-                $validated['thumbnail'] = '/placeholder-video.jpg';
-            }
+            $thumbnailUpload = $request->file('thumbnail') ?? $request->file('thumbnail_file');
+            $thumbnailPath = $thumbnailUpload ? $thumbnailUpload->store('thumbnails/admin', 'public') : null;
 
-            // Ajouter les champs spécifiques admin
-            $validated['uploader_id'] = auth()->id();
-            $validated['is_admin_video'] = true;
-            $validated['is_published'] = $validated['publish_immediately'] ?? false;
-            $validated['views'] = 0;
-            $validated['students_count'] = 0;
+            $video = Video::create([
+                'title' => $validated['title'],
+                'slug' => \Illuminate\Support\Str::slug($validated['title']) . '-' . uniqid(),
+                'description' => $validated['description'],
+                'category' => $validated['category'],
+                'visibility' => $validated['visibility'],
+                'allow_comments' => (bool) ($validated['allow_comments'] ?? true),
+                'duration' => $this->normalizeDuration($validated['duration'] ?? null),
+                'uploader_id' => auth()->id(),
+                'source_type' => $hasUpload ? 'upload' : 'external',
+                'url' => $videoPath,
+                'external_url' => $hasExternalUrl ? $request->string('external_url')->toString() : null,
+                'provider' => $hasUpload ? 'direct' : 'external',
+                'thumbnail' => $thumbnailPath,
+                'published_at' => ($validated['publish_immediately'] ?? $validated['visibility'] !== 'private') ? now() : null,
+            ]);
 
-            // Créer la vidéo
-            $video = Video::create($validated);
-
-            // Charger les relations
-            $video->load(['creator', 'likes', 'comments']);
+            $video->load(['creator', 'likes']);
 
             DB::commit();
 
@@ -188,7 +194,7 @@ class AdminVideosController extends Controller
     {
         $this->ensureAdmin();
 
-        $video = Video::with(['creator', 'likes', 'comments', 'tags'])
+        $video = Video::with(['creator', 'likes'])
                    ->findOrFail($id);
 
         return response()->json($video);
@@ -207,54 +213,60 @@ class AdminVideosController extends Controller
             'title' => 'sometimes|required|string|max:255',
             'description' => 'sometimes|required|string|max:2000',
             'category' => 'sometimes|required|string|max:100',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
-            'learning_objectives' => 'nullable|array',
-            'learning_objectives.*' => 'string|max:255',
             'visibility' => 'sometimes|required|in:private,public,unlisted',
-            'duration' => 'sometimes|required|string|max:20',
+            'duration' => 'sometimes|nullable',
             'allow_comments' => 'sometimes|boolean',
             'publish_immediately' => 'sometimes|boolean',
-            'video_file' => 'nullable|file|mimes:mp4,avi,mov,wmv|max:102400',
+            'video' => 'nullable|file|max:512000',
+            'video_file' => 'nullable|file|max:512000',
+            'thumbnail' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
             'thumbnail_file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:5120',
+            'external_url' => 'sometimes|nullable|string|max:2048',
         ]);
 
         try {
             DB::beginTransaction();
 
             // Gérer l'upload de la nouvelle vidéo si présente
-            if ($request->hasFile('video_file')) {
+            $upload = $request->file('video') ?? $request->file('video_file');
+            if ($upload) {
                 // Supprimer l'ancienne vidéo
-                if ($video->video_url && str_contains($video->video_url, 'videos/')) {
-                    $oldVideoPath = str_replace(Storage::url(''), '', $video->video_url);
-                    Storage::disk('public')->delete($oldVideoPath);
+                if ($video->source_type === 'upload' && $video->url) {
+                    Storage::disk($video->storage_disk ?: 'public')->delete($video->url);
                 }
 
-                $videoPath = $request->file('video_file')->store('videos/admin', 'public');
-                $validated['video_url'] = Storage::url($videoPath);
+                $validated['url'] = $upload->store('videos/admin', 'public');
+                $validated['source_type'] = 'upload';
+                $validated['external_url'] = null;
             }
 
             // Gérer l'upload de la nouvelle miniature si présente
-            if ($request->hasFile('thumbnail_file')) {
+            $thumbnailUpload = $request->file('thumbnail') ?? $request->file('thumbnail_file');
+            if ($thumbnailUpload) {
                 // Supprimer l'ancienne miniature
                 if ($video->thumbnail && str_contains($video->thumbnail, 'thumbnails/')) {
                     $oldThumbnailPath = str_replace(Storage::url(''), '', $video->thumbnail);
                     Storage::disk('public')->delete($oldThumbnailPath);
                 }
 
-                $thumbnailPath = $request->file('thumbnail_file')->store('thumbnails/admin', 'public');
-                $validated['thumbnail'] = Storage::url($thumbnailPath);
+                $thumbnailPath = $thumbnailUpload->store('thumbnails/admin', 'public');
+                $validated['thumbnail'] = $thumbnailPath;
             }
 
-            // Gérer la publication immédiate
-            if (isset($validated['publish_immediately'])) {
-                $validated['is_published'] = $validated['publish_immediately'];
+            if (array_key_exists('duration', $validated)) {
+                $validated['duration'] = $this->normalizeDuration($validated['duration']);
             }
+
+            if (isset($validated['publish_immediately'])) {
+                $validated['published_at'] = $validated['publish_immediately'] ? now() : null;
+                unset($validated['publish_immediately']);
+            }
+            unset($validated['video'], $validated['video_file'], $validated['thumbnail_file']);
 
             $video->update($validated);
 
             // Recharger les relations
-            $video->load(['creator', 'likes', 'comments']);
+            $video->load(['creator', 'likes']);
 
             DB::commit();
 
@@ -297,7 +309,6 @@ class AdminVideosController extends Controller
 
             // Supprimer les relations
             $video->likes()->delete();
-            $video->comments()->delete();
 
             // Supprimer la vidéo
             $video->delete();
@@ -338,12 +349,12 @@ class AdminVideosController extends Controller
 
             switch ($action) {
                 case 'publish':
-                    Video::whereIn('id', $videoIds)->update(['is_published' => true]);
+                    Video::whereIn('id', $videoIds)->update(['published_at' => now(), 'visibility' => 'public']);
                     $message = 'Vidéos publiées avec succès';
                     break;
 
                 case 'unpublish':
-                    Video::whereIn('id', $videoIds)->update(['is_published' => false]);
+                    Video::whereIn('id', $videoIds)->update(['published_at' => null, 'visibility' => 'private']);
                     $message = 'Vidéos dépubliées avec succès';
                     break;
 
@@ -361,7 +372,6 @@ class AdminVideosController extends Controller
                             Storage::disk('public')->delete($thumbnailPath);
                         }
                         $video->likes()->delete();
-                        $video->comments()->delete();
                     }
                     
                     Video::whereIn('id', $videoIds)->delete();
@@ -394,10 +404,10 @@ class AdminVideosController extends Controller
 
         $stats = [
             'total_videos' => Video::count(),
-            'published_videos' => Video::where('is_published', true)->count(),
-            'draft_videos' => Video::where('is_published', false)->count(),
-            'admin_videos' => Video::where('is_admin_video', true)->count(),
-            'creator_videos' => Video::where('is_admin_video', false)->count(),
+            'published_videos' => Video::whereNotNull('published_at')->count(),
+            'draft_videos' => Video::whereNull('published_at')->count(),
+            'admin_videos' => Video::whereHas('creator', fn ($query) => $query->where('role', 'admin'))->count(),
+            'creator_videos' => Video::whereHas('creator', fn ($query) => $query->where('role', 'creator'))->count(),
             'by_category' => Video::selectRaw('category, COUNT(*) as count')
                                ->groupBy('category')
                                ->orderByDesc('count')
@@ -431,5 +441,45 @@ class AdminVideosController extends Controller
             'last_month' => $lastMonth,
             'growth_percentage' => round($growth, 2)
         ];
+    }
+
+    private function normalizeDuration(mixed $duration): ?int
+    {
+        if ($duration === null || $duration === '') {
+            return null;
+        }
+
+        if (is_numeric($duration)) {
+            return (int) $duration;
+        }
+
+        if (!is_string($duration)) {
+            return null;
+        }
+
+        $parts = array_map('intval', explode(':', $duration));
+        if (count($parts) === 2) {
+            return ($parts[0] * 60) + $parts[1];
+        }
+        if (count($parts) === 3) {
+            return ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
+        }
+
+        return null;
+    }
+
+    private function formatDuration(?int $duration): string
+    {
+        if (!$duration || $duration < 1) {
+            return '00:00';
+        }
+
+        $hours = intdiv($duration, 3600);
+        $minutes = intdiv($duration % 3600, 60);
+        $seconds = $duration % 60;
+
+        return $hours > 0
+            ? sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds)
+            : sprintf('%02d:%02d', $minutes, $seconds);
     }
 }

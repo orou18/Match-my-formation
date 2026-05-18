@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Creator;
 
 use App\Http\Controllers\Controller;
 use App\Models\Video;
+use App\Services\Video\VideoPublishService;
+use App\Services\Video\VideoUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +13,12 @@ use Illuminate\Support\Str;
 
 class VideoController extends Controller
 {
+    public function __construct(
+        private readonly VideoUploadService $videoUploadService,
+        private readonly VideoPublishService $videoPublishService
+    ) {
+    }
+
     public function index()
     {
         try {
@@ -46,7 +54,7 @@ class VideoController extends Controller
                 'description' => 'nullable|string',
                 'video' => 'nullable|file|max:512000',
                 'video_file' => 'nullable|file|max:512000',
-                'external_url' => 'nullable|url',
+                'external_url' => 'nullable|string|max:2048',
                 'visibility' => 'required|in:public,private,unlisted',
             ]);
 
@@ -58,7 +66,7 @@ class VideoController extends Controller
                 return response()->json(['message' => 'Fournissez soit un fichier, soit une URL externe.'], 422);
             }
 
-            $path = $hasUpload ? $upload->store('videos', 'public') : null;
+            $path = $hasUpload ? $this->videoUploadService->storeVideo($upload) : null;
             $externalUrl = $hasExternalUrl ? $request->string('external_url')->toString() : null;
             $thumbnail = $this->resolveThumbnail($request);
 
@@ -76,7 +84,7 @@ class VideoController extends Controller
                 'thumbnail' => $thumbnail,
                 'duration' => $this->normalizeDuration($request->input('duration')),
                 'allow_comments' => filter_var($request->input('allow_comments', true), FILTER_VALIDATE_BOOLEAN),
-                'published_at' => in_array($request->visibility, ['public', 'unlisted'], true) ? now() : null,
+                'published_at' => $this->videoPublishService->publishedAtForVisibility($request->visibility),
             ]);
 
             return response()->json([
@@ -123,12 +131,20 @@ class VideoController extends Controller
             $request->validate([
                 'title' => 'sometimes|string|max:255',
                 'description' => 'sometimes|nullable|string',
+                'category' => 'sometimes|nullable|string|max:255',
                 'visibility' => 'sometimes|in:public,private,unlisted',
                 'status' => 'sometimes|in:published,draft,processing,archived,unlisted',
-                'external_url' => 'sometimes|nullable|url',
+                'external_url' => 'sometimes|nullable|string|max:2048',
+                'allow_comments' => 'sometimes|boolean',
+                'duration' => 'sometimes|nullable',
+                'selected_thumbnail' => 'sometimes|nullable|string',
             ]);
 
-            $payload = $request->only(['title', 'description', 'visibility', 'external_url', 'thumbnail']);
+            $payload = $request->only(['title', 'description', 'category', 'visibility', 'external_url', 'thumbnail', 'allow_comments']);
+
+            if ($request->has('duration')) {
+                $payload['duration'] = $this->normalizeDuration($request->input('duration'));
+            }
 
             if ($request->filled('status') && !array_key_exists('visibility', $payload)) {
                 $payload['visibility'] = match ($request->input('status')) {
@@ -147,7 +163,7 @@ class VideoController extends Controller
                 $payload['provider'] = filled($payload['external_url']) ? $this->detectProvider($payload['external_url']) : 'direct';
             }
             if (array_key_exists('visibility', $payload) && in_array($payload['visibility'], ['public', 'unlisted'], true) && !$video->published_at) {
-                $payload['published_at'] = now();
+                $payload['published_at'] = $this->videoPublishService->publishedAtForVisibility($payload['visibility'], $video->published_at);
             }
             if (array_key_exists('visibility', $payload) && $payload['visibility'] === 'private') {
                 $payload['published_at'] = null;
@@ -349,35 +365,15 @@ class VideoController extends Controller
     private function resolveThumbnail(Request $request): ?string
     {
         if ($request->hasFile('thumbnail')) {
-            return $request->file('thumbnail')->store('thumbnails', 'public');
+            return $this->videoUploadService->storeThumbnail($request->file('thumbnail'));
         }
 
         $selectedThumbnail = $request->input('selected_thumbnail');
         if (is_string($selectedThumbnail) && str_starts_with($selectedThumbnail, 'data:image/')) {
-            return $this->storeBase64Thumbnail($selectedThumbnail);
+            return $this->videoUploadService->storeBase64Image($selectedThumbnail);
         }
 
         $thumbnail = $request->input('thumbnail');
         return is_string($thumbnail) && $thumbnail !== '' ? $thumbnail : null;
-    }
-
-    private function storeBase64Thumbnail(string $value): ?string
-    {
-        if (!preg_match('/^data:image\/(\w+);base64,/', $value, $matches)) {
-            return null;
-        }
-
-        $extension = strtolower($matches[1]);
-        $data = substr($value, strpos($value, ',') + 1);
-        $binary = base64_decode($data, true);
-
-        if ($binary === false) {
-            return null;
-        }
-
-        $path = 'thumbnails/' . Str::uuid() . '.' . $extension;
-        Storage::disk('public')->put($path, $binary);
-
-        return $path;
     }
 }

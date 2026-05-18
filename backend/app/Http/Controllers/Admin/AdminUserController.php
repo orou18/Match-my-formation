@@ -30,10 +30,6 @@ class AdminUserController extends Controller
             }
 
             // Filtrage par statut
-            if ($request->has('status') && $request->status !== 'all') {
-                $query->where('status', $request->status);
-            }
-
             // Recherche
             if ($request->has('search')) {
                 $search = $request->search;
@@ -67,7 +63,7 @@ class AdminUserController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role,
-                    'status' => $user->status ?? 'active',
+                    'status' => 'active',
                     'join_date' => $user->created_at->format('Y-m-d'),
                     'last_active' => $lastActivity ? $lastActivity->format('Y-m-d') : $user->updated_at->format('Y-m-d'),
                     'subscription' => $subscription,
@@ -114,8 +110,6 @@ class AdminUserController extends Controller
                 'password' => 'required|string|min:8',
                 'role' => 'required|in:student,creator,admin',
                 'bio' => 'nullable|string|max:1000',
-                'expertise' => 'nullable|string|max:500',
-                'status' => 'required|in:active,inactive,suspended',
             ]);
 
             $newUser = User::create([
@@ -124,8 +118,6 @@ class AdminUserController extends Controller
                 'password' => Hash::make($validated['password']),
                 'role' => $validated['role'],
                 'bio' => $validated['bio'] ?? '',
-                'expertise' => $validated['expertise'] ?? '',
-                'status' => $validated['status'],
                 'email_verified_at' => now(),
             ]);
 
@@ -137,7 +129,7 @@ class AdminUserController extends Controller
                     'name' => $newUser->name,
                     'email' => $newUser->email,
                     'role' => $newUser->role,
-                    'status' => $newUser->status,
+                    'status' => 'active',
                     'join_date' => $newUser->created_at->format('Y-m-d'),
                     'subscription' => $newUser->role === 'admin' ? 'Admin' : 'Free',
                     'courses_completed' => 0,
@@ -185,9 +177,9 @@ class AdminUserController extends Controller
                 'name' => $targetUser->name,
                 'email' => $targetUser->email,
                 'role' => $targetUser->role,
-                'status' => $targetUser->status ?? 'active',
+                'status' => 'active',
                 'bio' => $targetUser->bio ?? '',
-                'expertise' => $targetUser->expertise ?? '',
+                'expertise' => '',
                 'join_date' => $targetUser->created_at->format('Y-m-d'),
                 'last_active' => $lastActivity ? $lastActivity->format('Y-m-d') : $targetUser->updated_at->format('Y-m-d'),
                 'subscription' => $subscription,
@@ -228,8 +220,6 @@ class AdminUserController extends Controller
                 'email' => 'sometimes|email|unique:users,email,' . $id,
                 'role' => 'sometimes|in:student,creator,admin',
                 'bio' => 'sometimes|string|max:1000',
-                'expertise' => 'sometimes|string|max:500',
-                'status' => 'sometimes|in:active,inactive,suspended',
                 'password' => 'sometimes|string|min:8',
             ]);
 
@@ -247,9 +237,9 @@ class AdminUserController extends Controller
                     'name' => $targetUser->name,
                     'email' => $targetUser->email,
                     'role' => $targetUser->role,
-                    'status' => $targetUser->status,
+                    'status' => 'active',
                     'bio' => $targetUser->bio,
-                    'expertise' => $targetUser->expertise,
+                    'expertise' => '',
                 ]
             ]);
 
@@ -348,13 +338,10 @@ class AdminUserController extends Controller
                 ], 400);
             }
             
-            $newStatus = $targetUser->status === 'active' ? 'suspended' : 'active';
-            $targetUser->update(['status' => $newStatus]);
-
             return response()->json([
                 'success' => true,
-                'message' => "Utilisateur {$newStatus} avec succès",
-                'status' => $newStatus
+                'message' => 'Le statut utilisateur nécessite une colonne dédiée avant activation.',
+                'status' => 'active'
             ]);
 
         } catch (\Exception $e) {
@@ -378,18 +365,16 @@ class AdminUserController extends Controller
 
             $stats = [
                 'total' => User::count(),
-                'active' => User::where('status', 'active')->count(),
-                'inactive' => User::where('status', 'inactive')->count(),
-                'suspended' => User::where('status', 'suspended')->count(),
+                'active' => User::count(),
+                'inactive' => 0,
+                'suspended' => 0,
                 'by_role' => User::selectRaw('role, COUNT(*) as count')
                     ->groupBy('role')
                     ->pluck('count', 'role')
                     ->toArray(),
                 'recent_registrations' => User::where('created_at', '>=', now()->subDays(30))
                     ->count(),
-                'active_today' => User::whereHas('employeeProgress', function($q) {
-                    $q->where('last_watched_at', '>=', now()->subDay());
-                })->count(),
+                'active_today' => User::where('updated_at', '>=', now()->subDay())->count(),
             ];
 
             return response()->json([
@@ -422,9 +407,6 @@ class AdminUserController extends Controller
             if ($request->has('role') && $request->role !== 'all') {
                 $query->where('role', $request->role);
             }
-            if ($request->has('status') && $request->status !== 'all') {
-                $query->where('status', $request->status);
-            }
 
             $users = $query->get();
 
@@ -437,7 +419,7 @@ class AdminUserController extends Controller
                     $user->name,
                     $user->email,
                     $user->role,
-                    $user->status ?? 'active',
+                    'active',
                     $user->created_at->format('Y-m-d'),
                     $user->courses_completed
                 ];

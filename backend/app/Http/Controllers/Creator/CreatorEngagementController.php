@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Video;
 use App\Models\Employee;
 use App\Models\EmployeeProgress;
+use App\Models\ChatMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -99,7 +100,6 @@ class CreatorEngagementController extends Controller
             // Segments d'audience (basés sur la progression des employés)
             $audienceSegments = $this->calculateAudienceSegments($user->id);
 
-            // Commentaires récents (simulés pour l'instant, à implémenter avec une table comments)
             $recentComments = $this->getRecentComments($user->id, $startDate);
 
             // Métriques d'engagement
@@ -191,7 +191,7 @@ class CreatorEngagementController extends Controller
         // Engagés : plus de 50% de progression moyenne
         $engagedEmployees = Employee::where('creator_id', $creatorId)
             ->whereHas('progress', function($query) {
-                $query->havingRaw('AVG(progress) > 50');
+                $query->where('progress_percentage', '>', 50);
             })
             ->count();
 
@@ -202,7 +202,7 @@ class CreatorEngagementController extends Controller
             [
                 'segment' => 'Nouveaux',
                 'percentage' => round(($newEmployees / $totalEmployees) * 100, 1),
-                'engagement' => 75, // Engagement moyen simulé
+                'engagement' => 75,
                 'color' => '#3B82F6',
             ],
             [
@@ -227,53 +227,37 @@ class CreatorEngagementController extends Controller
     }
 
     /**
-     * Obtenir les commentaires récents (simulé pour l'instant)
+     * Obtenir les commentaires récents depuis la table chat_messages.
      */
     private function getRecentComments($creatorId, $startDate)
     {
-        // Simuler des commentaires récents
-        // En production, cela viendrait d'une table comments
-        return [
-            [
-                'id' => '1',
+        return ChatMessage::with(['user:id,name,avatar', 'video:id,title,thumbnail,uploader_id'])
+            ->whereHas('video', fn ($query) => $query->where('uploader_id', $creatorId))
+            ->where('created_at', '>=', $startDate)
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn (ChatMessage $message) => [
+                'id' => (string) $message->id,
                 'user' => [
-                    'name' => 'Alice Martin',
-                    'avatar' => '/temoignage.png',
-                    'subscribers' => 1250,
+                    'name' => $message->user?->name ?? 'Utilisateur',
+                    'avatar' => $message->user?->avatar,
                 ],
-                'content' => 'Excellent contenu ! Très clair et bien expliqué.',
+                'content' => $message->message,
                 'video' => [
-                    'title' => 'Introduction au Marketing Digital',
-                    'thumbnail' => '/placeholder.jpg',
-                    'id' => '1',
+                    'title' => $message->video?->title,
+                    'thumbnail' => $message->video?->thumbnail_url,
+                    'id' => (string) $message->video_id,
                 ],
-                'timestamp' => now()->subHours(2)->toISOString(),
-                'likes' => 12,
-                'replies' => 3,
-                'status' => 'published',
-                'sentiment' => 'positive',
+                'timestamp' => $message->created_at?->toISOString(),
+                'likes' => (int) $message->likes_count,
+                'replies' => $message->replies()->count(),
+                'status' => $message->status,
+                'sentiment' => 'neutral',
                 'isPinned' => false,
-            ],
-            [
-                'id' => '2',
-                'user' => [
-                    'name' => 'Bob Dubois',
-                    'avatar' => '/temoignage.png',
-                ],
-                'content' => 'Merci pour cette vidéo, j\'ai beaucoup appris !',
-                'video' => [
-                    'title' => 'Techniques de Vente Avancées',
-                    'thumbnail' => '/placeholder.jpg',
-                    'id' => '2',
-                ],
-                'timestamp' => now()->subHours(5)->toISOString(),
-                'likes' => 8,
-                'replies' => 1,
-                'status' => 'published',
-                'sentiment' => 'positive',
-                'isPinned' => false,
-            ],
-        ];
+            ])
+            ->values()
+            ->all();
     }
 
     /**

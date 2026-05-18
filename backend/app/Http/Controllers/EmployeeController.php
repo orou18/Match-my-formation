@@ -35,6 +35,7 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:employees,email,NULL,NULL,creator_id,' . Auth::id(),
             'password' => 'required|string|min:6',
+            'domain' => 'nullable|string|max:255',
             'department' => 'nullable|string|max:255',
             'position' => 'nullable|string|max:255',
             'role' => 'nullable|string|max:255',
@@ -52,10 +53,7 @@ class EmployeeController extends Controller
             'email' => $validated['email'],
             'login_id' => $loginId,
             'password' => Hash::make($password),
-            'department' => $validated['department'] ?? null,
-            'position' => $validated['position'] ?? null,
-            'role' => $validated['role'] ?? 'employee',
-            'hire_date' => $validated['hire_date'] ?? now(),
+            'domain' => $validated['domain'] ?? $validated['department'] ?? 'general',
             'is_active' => ($validated['status'] ?? 'active') === 'active',
         ]);
 

@@ -159,19 +159,13 @@ class PublicVideoController extends Controller
             if (!empty($query)) {
                 $videosQuery->where(function ($q) use ($query) {
                     $q->where('title', 'LIKE', "%{$query}%")
-                      ->orWhere('description', 'LIKE', "%{$query}%")
-                      ->orWhere('tags', 'LIKE', "%{$query}%");
+                      ->orWhere('description', 'LIKE', "%{$query}%");
                 });
             }
 
             // Filtrer par catégorie
             if ($category !== 'all') {
                 $videosQuery->where('category', $category);
-            }
-
-            // Filtrer par difficulté
-            if ($difficulty !== 'all') {
-                $videosQuery->where('difficulty_level', $difficulty);
             }
 
             $videos = $videosQuery->orderBy('created_at', 'desc')

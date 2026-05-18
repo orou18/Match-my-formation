@@ -54,7 +54,7 @@ function normalizeAdminVideo(video: BackendVideo) {
 
 export async function GET(request: NextRequest) {
   try {
-    const response = await laravelFetch("/api/creator/videos", { request });
+    const response = await laravelFetch("/api/admin/videos", { request });
     const data = await parseLaravelJson(response);
     const videos = Array.isArray(data) ? data : data?.videos || [];
 
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       payload.append("thumbnail", thumbnail);
     }
 
-    const response = await laravelFetch("/api/creator/videos", {
+    const response = await laravelFetch("/api/admin/videos", {
       request,
       method: "POST",
       body: payload,

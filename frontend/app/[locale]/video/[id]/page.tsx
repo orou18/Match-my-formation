@@ -36,112 +36,24 @@ export default function VideoPreviewPage() {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Données mockées pour la vidéo
-  const mockVideo: Video = {
-    id: parseInt(videoId),
-    title: "Introduction au Tourisme Durable",
-    description:
-      "Découvrez les fondamentaux du tourisme écologique et les pratiques durables qui transforment l'industrie. Cette formation complète vous donnera les clés pour comprendre et mettre en œuvre des stratégies de tourisme responsable.",
-    thumbnail: "/videos/video1-thumb.jpg",
-    video_url: "https://www.youtube.com/watch?v=ysz5S6PUM-U",
-    duration: "12:34",
-    order: 1,
-    creator_id: 1,
-    views: 15420,
-    likes: 892,
-    comments: [],
-    tags: ["tourisme", "durable", "ecologie", "environnement"],
-    is_published: true,
-    visibility: "public" as const,
-    created_at: "2024-01-15",
-    updated_at: "2024-01-15",
-    creator: {
-      id: 1,
-      name: "Dr. Marie Laurent",
-      email: "marie.laurent@example.com",
-      avatar: "/avatars/creator1.jpg",
-      specialty: "Tourisme Durable & Environnement",
-    },
-    learning_objectives: [
-      {
-        id: 1,
-        video_id: parseInt(videoId),
-        title: "Comprendre les principes du tourisme durable",
-        description:
-          "Maîtriser les concepts fondamentaux et les 3 piliers du développement durable appliqués au tourisme",
-        order: 1,
-      },
-      {
-        id: 2,
-        video_id: parseInt(videoId),
-        title: "Analyser l'impact environnemental",
-        description:
-          "Évaluer et mesurer l'empreinte écologique des activités touristiques",
-        order: 2,
-      },
-      {
-        id: 3,
-        video_id: parseInt(videoId),
-        title: "Mettre en œuvre des pratiques éco-responsables",
-        description:
-          "Appliquer concrètement des solutions durables dans le secteur touristique",
-        order: 3,
-      },
-    ],
-    resources: [
-      {
-        id: 1,
-        video_id: parseInt(videoId),
-        name: "Guide pratique du tourisme durable",
-        file_path: "/resources/guide-tourisme-durable.pdf",
-        file_size: 2048000,
-        file_type: "application/pdf",
-        description:
-          "Un guide complet avec les meilleures pratiques et check-lists",
-        created_at: "2024-01-15",
-      },
-      {
-        id: 2,
-        video_id: parseInt(videoId),
-        name: "Template d'audit environnemental",
-        file_path: "/resources/audit-environnemental.xlsx",
-        file_size: 512000,
-        file_type:
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        description: "Feuille de calcul pour évaluer l'impact de vos activités",
-        created_at: "2024-01-15",
-      },
-      {
-        id: 3,
-        video_id: parseInt(videoId),
-        name: "Études de cas - Hôtellerie verte",
-        file_path: "/resources/etudes-cas-hotellerie.pdf",
-        file_size: 3072000,
-        file_type: "application/pdf",
-        description:
-          "5 exemples concrets d'hôtels ayant réussi leur transition écologique",
-        created_at: "2024-01-15",
-      },
-    ],
-    is_free: true,
-  };
-
   useEffect(() => {
     // Vérifier si l'utilisateur est connecté
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
 
-    // Simuler le chargement de la vidéo
     const loadVideo = async () => {
       try {
-        const response = await fetch("/api/final-videos");
+        const response = await fetch(`/api/videos/${videoId}`, {
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          throw new Error(`Erreur ${response.status}`);
+        }
         const data = await response.json();
-        const storedVideo = (data.videos || []).find(
-          (entry: any) => String(entry.id) === videoId
-        );
-        setVideo((storedVideo as Video) || mockVideo);
+        setVideo((data.video || data) as Video);
       } catch {
-        setVideo(mockVideo);
+        setVideo(null);
       } finally {
         setLoading(false);
       }

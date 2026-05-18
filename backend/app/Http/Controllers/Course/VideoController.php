@@ -106,9 +106,16 @@ class VideoController extends Controller
         }
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $video = Video::with(['uploader:id,name,avatar', 'chatMessages'])->findOrFail($id);
+        $video = Video::with(['uploader:id,name,avatar', 'chatMessages.user:id,name,email,avatar', 'pathways.employeePathways'])
+            ->findOrFail($id);
+
+        if (!$this->canAccessVideo($request, $video)) {
+            return response()->json(['message' => 'Vidéo non trouvée ou non accessible'], 404);
+        }
+
+        $video->increment('views');
 
         return response()->json($this->serializeVideo($video));
     }
@@ -250,13 +257,71 @@ class VideoController extends Controller
             'category' => $video->category,
             'visibility' => $video->visibility,
             'allow_comments' => $video->allow_comments,
-            'duration' => $video->duration,
+            'duration' => $this->formatDuration($video->duration),
+            'duration_seconds' => (int) ($video->duration ?? 0),
             'views' => $video->views,
             'likes' => $video->likes,
             'comments' => $video->comments,
             'shares' => $video->shares,
+            'is_published' => in_array($video->visibility, ['public', 'unlisted'], true) && $video->published_at !== null,
+            'creator' => $video->uploader ? [
+                'id' => $video->uploader->id,
+                'name' => $video->uploader->name,
+                'avatar' => $video->uploader->avatar,
+            ] : null,
+            'resources' => [],
+            'learning_objectives' => [],
+            'chat_messages' => $video->chatMessages->map(fn (ChatMessage $message) => [
+                'id' => $message->id,
+                'message' => $message->message,
+                'created_at' => $message->created_at?->toISOString(),
+                'user' => $message->user ? [
+                    'id' => $message->user->id,
+                    'name' => $message->user->name,
+                    'avatar' => $message->user->avatar,
+                ] : null,
+            ])->values(),
             'created_at' => $video->created_at,
             'updated_at' => $video->updated_at,
         ];
+    }
+
+    private function canAccessVideo(Request $request, Video $video): bool
+    {
+        if ($video->visibility === 'public' && $video->published_at !== null) {
+            return true;
+        }
+
+        $user = $request->user();
+        if (!$user) {
+            return false;
+        }
+
+        if (!$user instanceof Employee && in_array($user->role, ['admin', 'creator'], true)) {
+            return $user->role === 'admin' || (int) $video->uploader_id === (int) $user->id;
+        }
+
+        if ($user instanceof Employee) {
+            return $video->pathways
+                ->flatMap(fn ($pathway) => $pathway->employeePathways)
+                ->contains(fn ($assignment) => (int) $assignment->employee_id === (int) $user->id && $assignment->is_active);
+        }
+
+        return false;
+    }
+
+    private function formatDuration(?int $duration): string
+    {
+        if (!$duration || $duration < 1) {
+            return '00:00';
+        }
+
+        $hours = intdiv($duration, 3600);
+        $minutes = intdiv($duration % 3600, 60);
+        $seconds = $duration % 60;
+
+        return $hours > 0
+            ? sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds)
+            : sprintf('%02d:%02d', $minutes, $seconds);
     }
 }

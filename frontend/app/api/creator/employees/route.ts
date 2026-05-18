@@ -9,7 +9,9 @@ export async function POST(request: NextRequest) {
 
     // Appeler l'API Laravel pour créer l'employé
     const response = await laravelFetch('/api/creator/employees', {
+      request,
       method: 'POST',
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
@@ -50,7 +52,9 @@ export async function PUT(request: NextRequest) {
 
     // Appeler l'API Laravel pour modifier l'employé
     const response = await laravelFetch(`/api/creator/employees/${id}`, {
+      request,
       method: 'PUT',
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updateData),
     });
 
@@ -107,6 +111,7 @@ export async function DELETE(request: NextRequest) {
 
     // Appeler l'API Laravel pour supprimer l'employé
     const response = await laravelFetch(`/api/creator/employees/${id}`, {
+      request,
       method: 'DELETE',
     });
 
@@ -158,6 +163,7 @@ export async function GET(request: NextRequest) {
 
       // Appeler l'API Laravel pour récupérer les détails de l'employé
       const response = await laravelFetch(`/api/creator/employees/${id}`, {
+        request,
         method: 'GET',
       });
 
@@ -179,7 +185,7 @@ export async function GET(request: NextRequest) {
       console.log("Récupération de la liste des employés...");
 
       // Appeler l'API Laravel pour récupérer les employés
-      const response = await laravelFetch('/api/creator/employees');
+      const response = await laravelFetch('/api/creator/employees', { request });
       const result = await parseLaravelJson(response);
 
       if (!response.ok) {
