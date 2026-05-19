@@ -25,24 +25,38 @@ class AnalyticsController extends Controller
             $totalVideos = class_exists(Video::class) ? Video::count() : 0;
             $totalCourses = class_exists(Course::class) ? Course::count() : 0;
 
+            $recentUsers = User::latest()
+                ->limit(5)
+                ->get(['id', 'name', 'created_at'])
+                ->map(fn (User $user) => [
+                    'id' => 'user_' . $user->id,
+                    'user' => $user->name,
+                    'action' => 'a rejoint la plateforme',
+                    'date' => $user->created_at?->diffForHumans(),
+                    'type' => 'user',
+                ]);
+
+            $recentVideos = Video::with('creator')
+                ->latest()
+                ->limit(5)
+                ->get()
+                ->map(fn (Video $video) => [
+                    'id' => 'video_' . $video->id,
+                    'user' => $video->creator?->name ?? 'Plateforme',
+                    'action' => 'a ajouté la vidéo: ' . $video->title,
+                    'date' => $video->created_at?->diffForHumans(),
+                    'type' => 'video',
+                ]);
+
             return response()->json([
                 'totalUsers' => $totalUsers,
                 'totalVideos' => $totalVideos,
                 'totalCourses' => $totalCourses,
-                'recentActivity' => [
-                    [
-                        'id' => 1,
-                        'user' => 'Système',
-                        'action' => 'Console d\'administration initialisée',
-                        'date' => 'À l\'instant'
-                    ],
-                    [
-                        'id' => 2,
-                        'user' => 'Admin Match',
-                        'action' => 'Dernière synchronisation réussie',
-                        'date' => now()->diffForHumans()
-                    ],
-                ]
+                'recentActivity' => $recentUsers
+                    ->merge($recentVideos)
+                    ->sortByDesc('date')
+                    ->values()
+                    ->take(8)
             ], 200);
 
         } catch (\Exception $e) {

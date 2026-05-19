@@ -12,6 +12,9 @@ use App\Http\Controllers\Admin\BrandingController;
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\AdminCreatorController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminAdsController;
+use App\Http\Controllers\Admin\AdminBlogController;
+use App\Http\Controllers\Admin\AdminWebinarController;
 use App\Http\Controllers\Course\CourseController;
 use App\Http\Controllers\Course\ModuleController;
 use App\Http\Controllers\Course\VideoController as CourseVideoController;
@@ -27,6 +30,11 @@ use App\Http\Controllers\Creator\WebinarController;
 use App\Http\Controllers\Creator\WebinarMessageController;
 use App\Http\Controllers\Creator\VideoController;
 use App\Http\Controllers\Creator\StatsController;
+use App\Http\Controllers\Creator\CreatorAnalyticsController;
+use App\Http\Controllers\Creator\CreatorBrandingController;
+use App\Http\Controllers\Creator\CreatorMediaController;
+use App\Http\Controllers\Creator\CreatorScheduleController;
+use App\Http\Controllers\Creator\CreatorVideoAssignmentController;
 use App\Http\Controllers\Creator\CreatorRevenueController;
 use App\Http\Controllers\Creator\CreatorEngagementController;
 use App\Http\Controllers\Creator\CreatorNotificationController;
@@ -37,6 +45,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\Employee\EmployeeStatsController;
 use App\Http\Controllers\Chat\ChatMessageController;
 use App\Http\Controllers\User\AccountController;
+use App\Http\Controllers\FinanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -98,7 +107,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/creator/employees/{employeeId}/progress/courses', [EmployeeProgressController::class, 'courseProgress']);
 
     // --- 3.3 ANALYTICS DES EMPLOYÉS ---
-    // Route::get('/creator/analytics/employees', [CreatorAnalyticsController::class, 'getEmployeeAnalytics']); // Commenté pour l'instant
+    Route::get('/creator/analytics/employees', [CreatorAnalyticsController::class, 'getEmployeeAnalytics']);
 
     // --- 3.3 GESTION DES PARCOURS DE FORMATION ---
     Route::get('/creator/pathways', [PathwayManagementController::class, 'index']);
@@ -114,14 +123,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/creator/videos', [VideoController::class, 'store']);
     Route::put('/creator/videos/{id}', [VideoController::class, 'update']);
     Route::delete('/creator/videos/{id}', [VideoController::class, 'destroy']);
+    Route::post('/creator/videos/{id}/assign-employees', [CreatorVideoAssignmentController::class, 'assign']);
+    Route::delete('/creator/videos/{id}/assign-employees', [CreatorVideoAssignmentController::class, 'unassign']);
 
     // --- 3.5 HISTORIQUE ACTIVITÉS ---
     Route::get('/creator/history', [HistoryController::class, 'index']);
     Route::get('/creator/history/stats', [HistoryController::class, 'getStats']);
 
     // --- 3.6 BRANDING PERSONNALISÉ ---
-    Route::get('/creator/{id}/branding', [App\Http\Controllers\Creator\CreatorBrandingController::class, 'getBranding']);
-    Route::put('/creator/{id}/branding', [App\Http\Controllers\Creator\CreatorBrandingController::class, 'updateBranding']);
+    Route::get('/creator/branding', [CreatorBrandingController::class, 'current']);
+    Route::put('/creator/branding', [CreatorBrandingController::class, 'updateCurrent']);
+    Route::get('/creator/{id}/branding', [CreatorBrandingController::class, 'getBranding']);
+    Route::put('/creator/{id}/branding', [CreatorBrandingController::class, 'updateBranding']);
+    Route::post('/creator/media/batch', [CreatorMediaController::class, 'batch']);
+    Route::put('/creator/media/batch', [CreatorMediaController::class, 'batch']);
+    Route::delete('/creator/media/batch', [CreatorMediaController::class, 'batch']);
+    Route::get('/creator/schedule', [CreatorScheduleController::class, 'index']);
+    Route::post('/creator/schedule', [CreatorScheduleController::class, 'store']);
+    Route::put('/creator/schedule/{id}', [CreatorScheduleController::class, 'update']);
+    Route::delete('/creator/schedule/{id}', [CreatorScheduleController::class, 'destroy']);
 
     // --- 3.5 LIVE / WEBINARS (simple JSON-backed persistence)
     Route::get('/creator/webinars', [WebinarController::class, 'index']);
@@ -193,6 +213,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/admin/notifications/{id}', [AdminNotificationController::class, 'destroy']);
         Route::post('/admin/notifications/{id}/send', [AdminNotificationController::class, 'send']);
         Route::get('/admin/notifications/stats', [AdminNotificationController::class, 'stats']);
+        Route::apiResource('/admin/blog', AdminBlogController::class)->except(['show']);
+        Route::apiResource('/admin/ads', AdminAdsController::class)->except(['show']);
+        Route::apiResource('/admin/webinars', AdminWebinarController::class)->except(['show']);
         
         // --- 4.2 CRÉATEURS ADMIN ---
         Route::get('/admin/creators', [AdminCreatorController::class, 'index']);
@@ -242,6 +265,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/videos/{id}', [StudentVideoController::class, 'getVideoDetails']);
         Route::post('/videos/{id}/add-url', [StudentVideoController::class, 'addVideoUrl']);
         Route::post('/videos/{id}/publish', [StudentVideoController::class, 'publishVideo']);
+        Route::get('/user/balance', [FinanceController::class, 'balance']);
+        Route::post('/user/balance', [FinanceController::class, 'process']);
+        Route::get('/payment/process', [FinanceController::class, 'paymentMethods']);
+        Route::post('/payment/process', [FinanceController::class, 'process']);
         Route::post('/videos/{id}/increment-views', [StudentVideoController::class, 'incrementViews']);
         Route::post('/videos/{id}/like', [StudentVideoController::class, 'likeVideo']);
         Route::get('/videos/categories', [StudentVideoController::class, 'getCategories']);

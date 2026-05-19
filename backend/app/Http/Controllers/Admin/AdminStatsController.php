@@ -42,7 +42,7 @@ class AdminStatsController extends Controller
                 'totalUsers' => User::count(),
                 'totalCreators' => User::where('role', 'creator')->count(),
                 'totalVideos' => Video::count(),
-                'totalCourses' => Video::where('is_published', true)->count(),
+                'totalCourses' => Video::whereNotNull('published_at')->count(),
                 'totalRevenue' => $this->calculateRevenue($startDate, $endDate),
                 'engagementRate' => $this->calculateEngagementRate(),
             ],
@@ -101,19 +101,14 @@ class AdminStatsController extends Controller
         }
     }
 
-    /**
-     * Calculer les revenus (simulation basée sur les abonnements)
-     */
     private function calculateRevenue($startDate, $endDate): float
     {
-        // Simulation : compter les utilisateurs actifs et multiplier par un prix moyen
         $activeUsers = User::whereNotNull('email_verified_at')
                            ->where('created_at', '>=', $startDate)
                            ->where('created_at', '<=', $endDate)
                            ->count();
 
-        // Prix moyen par abonnement (simulation)
-        $averagePrice = 29.99; // EUR
+        $averagePrice = (float) config('billing.average_subscription_price', 0);
         
         return $activeUsers * $averagePrice;
     }
@@ -192,10 +187,10 @@ class AdminStatsController extends Controller
      */
     private function calculateCourseGrowth($startDate, $endDate): float
     {
-        $currentPeriod = Video::where('is_published', true)
+        $currentPeriod = Video::whereNotNull('published_at')
                            ->whereBetween('created_at', [$startDate, $endDate])
                            ->count();
-        $previousPeriod = Video::where('is_published', true)
+        $previousPeriod = Video::whereNotNull('published_at')
                            ->whereBetween('created_at', [
                                $startDate->copy()->subDays($endDate->diffInDays($startDate)),
                                $startDate
@@ -212,7 +207,6 @@ class AdminStatsController extends Controller
      */
     private function calculateEngagementGrowth($startDate, $endDate): float
     {
-        // Simulation : basée sur l'augmentation des likes
         $currentLikes = VideoLike::whereBetween('created_at', [$startDate, $endDate])->count();
         $previousLikes = VideoLike::whereBetween('created_at', [
             $startDate->copy()->subDays($endDate->diffInDays($startDate)),
@@ -248,7 +242,7 @@ class AdminStatsController extends Controller
         }
 
         // Récupérer les dernières vidéos publiées
-        $recentVideos = Video::where('is_published', true)
+        $recentVideos = Video::whereNotNull('published_at')
                             ->orderBy('created_at', 'desc')
                             ->take(3)
                             ->with('creator')
@@ -331,8 +325,8 @@ class AdminStatsController extends Controller
     {
         return [
             'total' => Video::count(),
-            'published' => Video::where('is_published', true)->count(),
-            'draft' => Video::where('is_published', false)->count(),
+            'published' => Video::whereNotNull('published_at')->count(),
+            'draft' => Video::whereNull('published_at')->count(),
             'totalViews' => Video::sum('views') ?? 0,
             'totalLikes' => Video::withCount('likes')->get()->sum('likes_count'),
             'averageViews' => Video::avg('views') ?? 0,
@@ -352,7 +346,7 @@ class AdminStatsController extends Controller
                        return [
                            'category' => $item->category,
                            'count' => $item->count,
-                           'percentage' => round(($item->count / Video::count()) * 100, 2)
+                           'percentage' => Video::count() > 0 ? round(($item->count / Video::count()) * 100, 2) : 0
                        ];
                    })
                    ->toArray();

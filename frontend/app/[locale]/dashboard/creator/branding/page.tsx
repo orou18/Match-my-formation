@@ -162,10 +162,14 @@ export default function BrandingPage() {
   useEffect(() => {
     const loadBranding = async () => {
       try {
-        const response = await fetch("/api/branding", { cache: "no-store" });
+        const response = await fetch("/api/creator/branding", {
+          cache: "no-store",
+          credentials: "include",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
         if (!response.ok) return;
         const payload = await response.json();
-        const settings = payload.settings || payload;
+        const settings = payload.data || payload.settings || payload;
         setBranding(mapApiToLocal(settings));
       } catch {
         // Keep local defaults if branding load fails.
@@ -211,11 +215,13 @@ export default function BrandingPage() {
 
     try {
       const response = await fetch("/api/branding", {
+        credentials: "include",
         method: "PUT",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
         body: mapLocalToApi(branding),
       });
       const payload = await response.json();
-      const settings = payload.settings || payload;
+      const settings = payload.data || payload.settings || payload;
 
       // Appliquer immédiatement les styles via le hook
       applyBrandingStyles(settings);

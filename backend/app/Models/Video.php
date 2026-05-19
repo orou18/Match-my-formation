@@ -85,6 +85,13 @@ class Video extends Model
         return $this->hasMany(VideoLike::class);
     }
 
+    public function assignedEmployees(): BelongsToMany
+    {
+        return $this->belongsToMany(Employee::class, 'employee_video')
+            ->withPivot(['creator_id', 'assigned_at', 'is_active'])
+            ->withTimestamps();
+    }
+
     public function getVideoUrlAttribute(): ?string
     {
         if ($this->source_type === 'external') {

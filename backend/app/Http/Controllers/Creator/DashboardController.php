@@ -146,7 +146,7 @@ class DashboardController extends Controller
     private function calculateAverageWatchTime($userId): float
     {
         $totalDuration = Video::where('uploader_id', $userId)
-            ->sum('duration_seconds');
+            ->sum('duration');
         
         $totalVideos = Video::where('uploader_id', $userId)->count();
         

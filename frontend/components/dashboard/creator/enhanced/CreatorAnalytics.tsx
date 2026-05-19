@@ -54,52 +54,58 @@ export default function CreatorAnalytics() {
       try {
         setLoading(true);
 
-        // Simuler des données pour le moment
-        const mockData: AnalyticsData = {
-          totalRevenue: 12500,
-          totalEmployees: 156,
-          totalCourses: 24,
-          revenueGrowth: 23.5,
-          employeeProgress: [
-            {
-              employeeName: "Alice Martin",
-              progress: 85,
-              completedCourses: 3,
-              totalCourses: 4,
-              lastActivity: "2 heures ago",
-            },
-            {
-              employeeName: "Bob Dubois",
-              progress: 60,
-              completedCourses: 2,
-              totalCourses: 4,
-              lastActivity: "1 jour ago",
-            },
-          ],
-          pathwayPerformance: [
-            {
-              pathwayName: "Formation Vente",
-              enrolledEmployees: 45,
-              averageProgress: 72,
-              completionRate: 85,
-            },
-            {
-              pathwayName: "Formation Marketing",
-              enrolledEmployees: 38,
-              averageProgress: 68,
-              completionRate: 79,
-            },
-          ],
-          revenueData: [
-            { month: "Jan", revenue: 2100 },
-            { month: "Fév", revenue: 2400 },
-            { month: "Mar", revenue: 2800 },
-            { month: "Avr", revenue: 3200 },
-            { month: "Mai", revenue: 2000 },
-          ],
-        };
+        const [dashboardResponse, employeesResponse, pathwaysResponse] =
+          await Promise.all([
+            fetch("/api/creator/dashboard", { cache: "no-store" }),
+            fetch("/api/creator/employees", { cache: "no-store" }),
+            fetch("/api/creator/pathways", { cache: "no-store" }),
+          ]);
 
-        setAnalytics(mockData);
+        if (!dashboardResponse.ok || !employeesResponse.ok) {
+          throw new Error("Impossible de charger les analytics creator");
+        }
+
+        const dashboard = await dashboardResponse.json();
+        const employeesPayload = await employeesResponse.json();
+        const pathwaysPayload = pathwaysResponse.ok
+          ? await pathwaysResponse.json()
+          : {};
+        const employees = Array.isArray(employeesPayload.data)
+          ? employeesPayload.data
+          : [];
+        const pathways = Array.isArray(pathwaysPayload.data)
+          ? pathwaysPayload.data
+          : Array.isArray(pathwaysPayload.pathways)
+            ? pathwaysPayload.pathways
+            : [];
+        const overview = dashboard.overview || dashboard.data || {};
+
+        setAnalytics({
+          totalRevenue: Number(overview.totalRevenue || 0),
+          totalEmployees: employees.length,
+          totalCourses: Number(overview.totalVideos || 0),
+          revenueGrowth: Number(overview.monthlyGrowth?.revenue || 0),
+          employeeProgress: employees.map((employee: any) => ({
+            employeeName: employee.name || employee.email,
+            progress: Number(employee.progress || employee.completion_rate || 0),
+            completedCourses: Number(employee.completed_courses || 0),
+            totalCourses: Number(employee.total_courses || pathways.length || 0),
+            lastActivity:
+              employee.last_activity || employee.updated_at || employee.created_at,
+          })),
+          pathwayPerformance: pathways.map((pathway: any) => ({
+            pathwayName: pathway.title || pathway.name,
+            enrolledEmployees: Number(pathway.employees_count || 0),
+            averageProgress: Number(pathway.average_progress || 0),
+            completionRate: Number(pathway.completion_rate || 0),
+          })),
+          revenueData: Array.isArray(dashboard.performanceData)
+            ? dashboard.performanceData.map((item: any) => ({
+                month: item.date,
+                revenue: Number(item.revenue || 0),
+              }))
+            : [],
+        });
       } catch (error) {
         console.error("Error loading analytics:", error);
       } finally {

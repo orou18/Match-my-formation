@@ -102,10 +102,22 @@ export default function AdminBlog() {
   ];
 
   useEffect(() => {
-    setTimeout(() => {
-      setPosts(mockPosts);
-      setIsLoading(false);
-    }, 1000);
+    const loadPosts = async () => {
+      try {
+        const response = await fetch("/api/admin/blog", {
+          credentials: "include",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const data = await response.json();
+        setPosts(response.ok && Array.isArray(data.posts) ? data.posts : []);
+      } catch (error) {
+        console.error("Erreur chargement blog admin:", error);
+        setPosts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadPosts();
   }, []);
 
   const filteredPosts = posts.filter((post) => {

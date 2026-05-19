@@ -50,76 +50,18 @@ export default function AdminUsers() {
     expertise: "",
   });
 
-  const mockUsers: User[] = [
-    {
-      id: "1",
-      name: "Alice Martin",
-      email: "alice.martin@email.com",
-      role: "student",
-      status: "active",
-      joinDate: "2024-01-15",
-      lastActive: "2024-03-18",
-      subscription: "Premium",
-      coursesCompleted: 12,
-      avatar: "/temoignage.png",
-    },
-    {
-      id: "2",
-      name: "Bob Dubois",
-      email: "bob.dubois@email.com",
-      role: "creator",
-      status: "active",
-      joinDate: "2024-02-20",
-      lastActive: "2024-03-17",
-      subscription: "Pro",
-      coursesCompleted: 8,
-      avatar: "/temoignage.png",
-    },
-    {
-      id: "3",
-      name: "Claire Durand",
-      email: "claire.durand@email.com",
-      role: "student",
-      status: "suspended",
-      joinDate: "2023-12-10",
-      lastActive: "2024-03-10",
-      subscription: "Free",
-      coursesCompleted: 3,
-      avatar: "/temoignage.png",
-    },
-    {
-      id: "4",
-      name: "David Lefebvre",
-      email: "david.lefebvre@email.com",
-      role: "admin",
-      status: "active",
-      joinDate: "2023-06-01",
-      lastActive: "2024-03-18",
-      subscription: "Admin",
-      coursesCompleted: 0,
-      avatar: "/temoignage.png",
-    },
-    {
-      id: "5",
-      name: "Emma Bernard",
-      email: "emma.bernard@email.com",
-      role: "student",
-      status: "inactive",
-      joinDate: "2024-03-01",
-      lastActive: "2024-03-05",
-      subscription: "Free",
-      coursesCompleted: 0,
-      avatar: "/temoignage.png",
-    },
-  ];
-
   useEffect(() => {
     const loadUsers = async () => {
       try {
         const response = await fetch("/api/admin/users");
         if (response.ok) {
           const data = await response.json();
-          setUsers(data.users);
+          const records = Array.isArray(data.users)
+            ? data.users
+            : Array.isArray(data.data)
+              ? data.data
+              : [];
+          setUsers(records);
         } else {
           console.error("Erreur lors du chargement des utilisateurs");
         }

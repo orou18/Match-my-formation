@@ -50,79 +50,6 @@ export default function AdminCreators() {
     expertise: "",
   });
 
-  const mockCreators: Creator[] = [
-    {
-      id: "1",
-      name: "Sophie Laurent",
-      email: "sophie.laurent@email.com",
-      status: "active",
-      joinDate: "2023-06-15",
-      courses: 12,
-      students: 2847,
-      revenue: 45678,
-      rating: 4.8,
-      totalViews: 125000,
-      category: "Marketing",
-      avatar: "/temoignage.png",
-    },
-    {
-      id: "2",
-      name: "Marc Bernard",
-      email: "marc.bernard@email.com",
-      status: "active",
-      joinDate: "2023-08-20",
-      courses: 8,
-      students: 1523,
-      revenue: 28900,
-      rating: 4.6,
-      totalViews: 89000,
-      category: "Développement",
-      avatar: "/temoignage.png",
-    },
-    {
-      id: "3",
-      name: "Julie Martin",
-      email: "julie.martin@email.com",
-      status: "pending",
-      joinDate: "2024-01-10",
-      courses: 3,
-      students: 456,
-      revenue: 5400,
-      rating: 4.9,
-      totalViews: 23000,
-      category: "Design",
-      avatar: "/temoignage.png",
-    },
-    {
-      id: "4",
-      name: "Thomas Dubois",
-      email: "thomas.dubois@email.com",
-      status: "active",
-      joinDate: "2023-03-25",
-      courses: 15,
-      students: 3421,
-      revenue: 67800,
-      rating: 4.7,
-      totalViews: 198000,
-      category: "Business",
-      avatar: "/temoignage.png",
-    },
-    {
-      id: "5",
-      name: "Emma Durand",
-      email: "emma.durand@email.com",
-      status: "suspended",
-      joinDate: "2023-11-08",
-      courses: 5,
-      students: 892,
-      revenue: 12300,
-      rating: 4.2,
-      totalViews: 45000,
-      category: "Photographie",
-      avatar: "/temoignage.png",
-    },
-  ];
-
   useEffect(() => {
     const loadCreators = async () => {
       try {
@@ -135,17 +62,21 @@ export default function AdminCreators() {
         const response = await fetch(`/api/admin/creators-backend?${params}`);
         const data = await response.json();
 
-        if (data.success) {
-          setCreators(data.creators);
+        if (response.ok && data.success) {
+          setCreators(
+            Array.isArray(data.creators)
+              ? data.creators
+              : Array.isArray(data.data)
+                ? data.data
+                : []
+          );
         } else {
           console.error("Erreur API:", data.error);
-          // Fallback avec données simulées
-          setCreators(mockCreators);
+          setCreators([]);
         }
       } catch (error) {
         console.error("Erreur:", error);
-        // Fallback avec données simulées
-        setCreators(mockCreators);
+        setCreators([]);
       } finally {
         setIsLoading(false);
       }

@@ -99,6 +99,9 @@ export async function laravelFetch(
   if (!finalHeaders.has("Accept")) {
     finalHeaders.set("Accept", "application/json");
   }
+  if (!finalHeaders.has("X-Requested-With")) {
+    finalHeaders.set("X-Requested-With", "XMLHttpRequest");
+  }
 
   // Forward incoming cookies from the NextRequest to the backend so session-based
   // auth (Sanctum) works when proxying server-side requests.
@@ -136,6 +139,7 @@ export async function laravelFetch(
 
   return fetchBackend(url.toString().replace(getLaravelBaseUrl(), ""), {
     ...init,
+    credentials: init.credentials ?? "include",
     headers: finalHeaders,
   });
 }

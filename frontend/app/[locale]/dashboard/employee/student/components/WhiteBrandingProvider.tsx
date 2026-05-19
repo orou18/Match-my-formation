@@ -43,16 +43,26 @@ export function BrandingProvider({ children, creatorId }: BrandingProviderProps)
         if (!token) return;
 
         const response = await fetch(`/api/creator/branding/${creatorId}`, {
+          credentials: "include",
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
           },
         });
 
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
-            setBranding(data.data);
+            const settings = data.data;
+            setBranding({
+              primaryColor: settings.primary_color,
+              secondaryColor: settings.secondary_color,
+              accentColor: settings.accent_color,
+              logo: settings.logo_url || settings.logo || "",
+              companyName: settings.company_name,
+              customCSS: settings.custom_css,
+            });
           }
         }
       } catch (error) {

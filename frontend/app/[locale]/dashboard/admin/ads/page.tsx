@@ -109,10 +109,42 @@ export default function AdminAds() {
   ];
 
   useEffect(() => {
-    setTimeout(() => {
-      setAds(mockAds);
-      setIsLoading(false);
-    }, 1000);
+    const loadAds = async () => {
+      try {
+        const response = await fetch("/api/admin/ads", {
+          credentials: "include",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const data = await response.json();
+        const records = response.ok && Array.isArray(data.ads) ? data.ads : [];
+        setAds(
+          records.map((ad: any) => ({
+            id: String(ad.id),
+            title: ad.title,
+            type: ad.type,
+            status: ad.status,
+            startDate: ad.starts_at,
+            endDate: ad.ends_at,
+            budget: Number(ad.budget || 0),
+            spent: 0,
+            impressions: Number(ad.impressions || 0),
+            clicks: Number(ad.clicks || 0),
+            ctr:
+              Number(ad.impressions || 0) > 0
+                ? Number(((Number(ad.clicks || 0) / Number(ad.impressions)) * 100).toFixed(2))
+                : 0,
+            image: ad.image,
+            targetAudience: ad.target_audience || "",
+          }))
+        );
+      } catch (error) {
+        console.error("Erreur chargement publicités admin:", error);
+        setAds([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadAds();
   }, []);
 
   const filteredAds = ads.filter((ad) => {

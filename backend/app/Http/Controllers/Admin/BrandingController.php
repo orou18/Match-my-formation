@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\PlatformSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 class BrandingController extends Controller
 {
-    private string $storagePath = 'branding/settings.json';
+    private string $settingsKey = 'admin_branding';
 
     private function ensureAdmin(): void
     {
@@ -64,18 +65,17 @@ class BrandingController extends Controller
 
     private function readSettings(): array
     {
-        if (!Storage::disk('local')->exists($this->storagePath)) {
-            return $this->defaults();
-        }
-
-        $stored = json_decode(Storage::disk('local')->get($this->storagePath), true);
+        $stored = PlatformSetting::where('key', $this->settingsKey)->value('value');
 
         return is_array($stored) ? array_replace_recursive($this->defaults(), $stored) : $this->defaults();
     }
 
     private function writeSettings(array $settings): array
     {
-        Storage::disk('local')->put($this->storagePath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        PlatformSetting::updateOrCreate(
+            ['key' => $this->settingsKey],
+            ['value' => $settings]
+        );
 
         return $settings;
     }

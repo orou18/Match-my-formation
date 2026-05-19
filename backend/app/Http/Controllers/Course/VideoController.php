@@ -108,7 +108,7 @@ class VideoController extends Controller
 
     public function show(Request $request, $id)
     {
-        $video = Video::with(['uploader:id,name,avatar', 'chatMessages.user:id,name,email,avatar', 'pathways.employeePathways'])
+        $video = Video::with(['uploader:id,name,avatar', 'chatMessages.user:id,name,email,avatar', 'pathways.employeePathways', 'assignedEmployees'])
             ->findOrFail($id);
 
         if (!$this->canAccessVideo($request, $video)) {
@@ -302,9 +302,14 @@ class VideoController extends Controller
         }
 
         if ($user instanceof Employee) {
-            return $video->pathways
+            $assignedByPathway = $video->pathways
                 ->flatMap(fn ($pathway) => $pathway->employeePathways)
                 ->contains(fn ($assignment) => (int) $assignment->employee_id === (int) $user->id && $assignment->is_active);
+
+            $assignedDirectly = $video->assignedEmployees
+                ->contains(fn ($employee) => (int) $employee->id === (int) $user->id && (bool) $employee->pivot->is_active);
+
+            return $assignedByPathway || $assignedDirectly;
         }
 
         return false;

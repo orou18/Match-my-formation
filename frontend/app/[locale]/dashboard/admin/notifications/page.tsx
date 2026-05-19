@@ -80,67 +80,6 @@ export default function AdminNotifications() {
     loadNotifications();
   }, []);
 
-  const mockNotifications: Notification[] = [
-    {
-      id: "1",
-      title: "Nouveau cours disponible",
-      message:
-        "Découvrez notre nouveau cours sur le marketing digital pour les créateurs",
-      type: "info",
-      target: "all",
-      status: "sent",
-      sentAt: "2024-03-15T10:00:00Z",
-      recipients: 2847,
-      openedCount: 1256,
-      clickedCount: 423,
-      createdBy: "Jean Dupont",
-      createdAt: "2024-03-15T09:30:00Z",
-    },
-    {
-      id: "2",
-      title: "Maintenance système",
-      message: "Une maintenance est prévue ce soir de 22h à 23h",
-      type: "warning",
-      target: "all",
-      status: "scheduled",
-      scheduledAt: "2024-03-20T22:00:00Z",
-      recipients: 2847,
-      openedCount: 0,
-      clickedCount: 0,
-      createdBy: "Marie Dubois",
-      createdAt: "2024-03-18T14:00:00Z",
-    },
-    {
-      id: "3",
-      title: "Félicitations créateurs!",
-      message:
-        "Les créateurs ont généré 23% de revenus supplémentaires ce mois",
-      type: "success",
-      target: "creators",
-      status: "sent",
-      sentAt: "2024-03-10T16:00:00Z",
-      recipients: 156,
-      openedCount: 89,
-      clickedCount: 34,
-      createdBy: "Sophie Martin",
-      createdAt: "2024-03-10T15:45:00Z",
-    },
-    {
-      id: "4",
-      title: "Mise à jour importante",
-      message:
-        "Veuillez mettre à jour votre profil pour bénéficier des nouvelles fonctionnalités",
-      type: "error",
-      target: "users",
-      status: "draft",
-      recipients: 2691,
-      openedCount: 0,
-      clickedCount: 0,
-      createdBy: "Pierre Bernard",
-      createdAt: "2024-03-18T10:00:00Z",
-    },
-  ];
-
   const handleCreateNotification = async () => {
     if (
       !newNotification.title ||

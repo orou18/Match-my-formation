@@ -36,6 +36,7 @@ export async function fetchBackend(
     try {
       const response = await fetch(`${baseUrl}${requestPath}`, {
         ...init,
+        credentials: init.credentials ?? "include",
         signal: init.signal ?? controller.signal,
         cache: "no-store",
       });

@@ -46,43 +46,29 @@ export default function EmployeeManagement() {
       try {
         setLoading(true);
 
-        // Simuler des données pour le moment
-        const mockEmployees: Employee[] = [
-          {
-            id: 1,
-            name: "Alice Martin",
-            email: "alice@entreprise.com",
-            role: "employee",
-            assignedPathway: "Formation Vente",
-            progress: 75,
-            status: "active",
-            joinDate: "2024-01-15",
-            lastLogin: "2024-03-20",
-          },
-          {
-            id: 2,
-            name: "Bob Dubois",
-            email: "bob@entreprise.com",
-            role: "employee",
-            assignedCourse: "Communication Efficace",
-            progress: 45,
-            status: "active",
-            joinDate: "2024-01-20",
-            lastLogin: "2024-03-19",
-          },
-          {
-            id: 3,
-            name: "Carole Petit",
-            email: "carole@entreprise.com",
-            role: "manager",
-            progress: 90,
-            status: "inactive",
-            joinDate: "2023-12-10",
-            lastLogin: "2024-02-15",
-          },
-        ];
+        const response = await fetch("/api/creator/employees", {
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          throw new Error("Impossible de charger les employés");
+        }
 
-        setEmployees(mockEmployees);
+        const payload = await response.json();
+        const records = Array.isArray(payload.data) ? payload.data : [];
+        setEmployees(
+          records.map((employee: any) => ({
+            id: Number(employee.id),
+            name: employee.name || employee.email,
+            email: employee.email,
+            role: employee.role || "employee",
+            assignedPathway: employee.assigned_pathway,
+            assignedCourse: employee.assigned_course,
+            progress: Number(employee.progress || employee.completion_rate || 0),
+            status: employee.status || "active",
+            joinDate: employee.created_at || employee.joinDate,
+            lastLogin: employee.last_login || employee.updated_at,
+          }))
+        );
       } catch (error) {
         console.error("Error loading employees:", error);
       } finally {

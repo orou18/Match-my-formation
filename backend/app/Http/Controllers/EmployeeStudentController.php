@@ -7,6 +7,7 @@ use App\Models\Video;
 use App\Models\Pathway;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\EmployeePathway;
 use App\Models\EmployeeProgress;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -565,31 +566,51 @@ class EmployeeStudentController extends Controller
                 ], 404);
             }
 
-            $period = $request->get('period', 'daily');
-            
-            // Données de progression mockées (à remplacer avec de vraies données)
+            $progressRows = EmployeeProgress::where('employee_id', $employee->id)->get();
+            $pathwayRows = EmployeePathway::where('employee_id', $employee->id)->get();
+
+            $daily = collect(range(6, 0))->map(function (int $daysAgo) use ($progressRows, $pathwayRows) {
+                $date = now()->subDays($daysAgo)->toDateString();
+
+                return [
+                    'date' => $date,
+                    'videos' => $progressRows
+                        ->filter(fn ($progress) => optional($progress->last_watched_at)->toDateString() === $date)
+                        ->count(),
+                    'pathways' => $pathwayRows
+                        ->filter(fn ($pathway) => optional($pathway->updated_at)->toDateString() === $date)
+                        ->count(),
+                ];
+            })->values();
+
+            $weekly = collect(range(3, 0))->map(function (int $weeksAgo) use ($progressRows) {
+                $start = now()->subWeeks($weeksAgo)->startOfWeek();
+                $end = (clone $start)->endOfWeek();
+                $rows = $progressRows->filter(fn ($progress) => $progress->last_watched_at && $progress->last_watched_at->between($start, $end));
+
+                return [
+                    'week' => 'Semaine ' . $start->format('W'),
+                    'completion' => round($rows->avg('progress_percentage') ?? 0, 2),
+                ];
+            })->values();
+
+            $monthly = collect(range(3, 0))->map(function (int $monthsAgo) use ($progressRows) {
+                $start = now()->subMonths($monthsAgo)->startOfMonth();
+                $end = (clone $start)->endOfMonth();
+                $seconds = $progressRows
+                    ->filter(fn ($progress) => $progress->last_watched_at && $progress->last_watched_at->between($start, $end))
+                    ->sum('watch_time_seconds');
+
+                return [
+                    'month' => $start->locale('fr')->translatedFormat('F'),
+                    'hours' => round($seconds / 3600, 2),
+                ];
+            })->values();
+
             $progressData = [
-                'daily' => [
-                    ['date' => now()->subDays(6)->format('Y-m-d'), 'videos' => 2, 'pathways' => 1],
-                    ['date' => now()->subDays(5)->format('Y-m-d'), 'videos' => 3, 'pathways' => 0],
-                    ['date' => now()->subDays(4)->format('Y-m-d'), 'videos' => 1, 'pathways' => 2],
-                    ['date' => now()->subDays(3)->format('Y-m-d'), 'videos' => 4, 'pathways' => 1],
-                    ['date' => now()->subDays(2)->format('Y-m-d'), 'videos' => 2, 'pathways' => 0],
-                    ['date' => now()->subDays(1)->format('Y-m-d'), 'videos' => 5, 'pathways' => 3],
-                    ['date' => now()->format('Y-m-d'), 'videos' => 3, 'pathways' => 1],
-                ],
-                'weekly' => [
-                    ['week' => 'Semaine 1', 'completion' => 65],
-                    ['week' => 'Semaine 2', 'completion' => 72],
-                    ['week' => 'Semaine 3', 'completion' => 78],
-                    ['week' => 'Semaine 4', 'completion' => 85],
-                ],
-                'monthly' => [
-                    ['month' => 'Janvier', 'hours' => 12],
-                    ['month' => 'Février', 'hours' => 18],
-                    ['month' => 'Mars', 'hours' => 24],
-                    ['month' => 'Avril', 'hours' => 15],
-                ],
+                'daily' => $daily,
+                'weekly' => $weekly,
+                'monthly' => $monthly,
             ];
 
             return response()->json([

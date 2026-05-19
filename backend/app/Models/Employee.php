@@ -64,6 +64,13 @@ class Employee extends Authenticatable
         return $this->hasMany(EmployeePathway::class);
     }
 
+    public function assignedVideos(): BelongsToMany
+    {
+        return $this->belongsToMany(Video::class, 'employee_video')
+            ->withPivot(['creator_id', 'assigned_at', 'is_active'])
+            ->withTimestamps();
+    }
+
     /**
      * Générer un ID de connexion unique
      */

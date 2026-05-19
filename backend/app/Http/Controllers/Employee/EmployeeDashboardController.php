@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\EmployeeProgress;
 use App\Models\Video;
+use App\Models\VideoViewEvent;
 use Illuminate\Http\Request;
 
 class EmployeeDashboardController extends Controller
@@ -112,6 +113,16 @@ class EmployeeDashboardController extends Controller
         }
 
         $progress = EmployeeProgress::updateProgress($employee->id, (int) $videoId, $watch, $total);
+        VideoViewEvent::create([
+            'video_id' => (int) $videoId,
+            'employee_id' => $employee->id,
+            'watch_time_seconds' => $watch,
+            'duration_seconds' => $total,
+            'progress_percentage' => $total > 0 ? min(round(($watch / $total) * 100, 2), 100) : 0,
+            'event_type' => 'progress',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
         $video->increment('views');
 
         return response()->json([
@@ -153,7 +164,7 @@ class EmployeeDashboardController extends Controller
 
     private function accessibleVideos(Employee $employee)
     {
-        return Video::with(['creator:id,name,email,avatar', 'pathways.employeePathways', 'pathways'])
+        return Video::with(['creator:id,name,email,avatar', 'pathways.employeePathways', 'pathways', 'assignedEmployees'])
             ->where(function ($query) use ($employee) {
                 $query
                     ->where(function ($public) {
@@ -161,6 +172,10 @@ class EmployeeDashboardController extends Controller
                     })
                     ->orWhereHas('pathways.employeePathways', function ($assignment) use ($employee) {
                         $assignment->where('employee_id', $employee->id)->where('is_active', true);
+                    })
+                    ->orWhereHas('assignedEmployees', function ($assignment) use ($employee) {
+                        $assignment->where('employees.id', $employee->id)
+                            ->where('employee_video.is_active', true);
                     });
             })
             ->latest()

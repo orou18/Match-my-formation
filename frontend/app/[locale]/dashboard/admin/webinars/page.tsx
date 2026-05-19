@@ -121,10 +121,42 @@ export default function AdminWebinars() {
   ];
 
   useEffect(() => {
-    setTimeout(() => {
-      setWebinars(mockWebinars);
-      setIsLoading(false);
-    }, 1000);
+    const loadWebinars = async () => {
+      try {
+        const response = await fetch("/api/admin/webinars", {
+          credentials: "include",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const data = await response.json();
+        const records =
+          response.ok && Array.isArray(data.webinars) ? data.webinars : [];
+        setWebinars(
+          records.map((webinar: any) => {
+            const startsAt = webinar.starts_at ? new Date(webinar.starts_at) : null;
+            return {
+              id: String(webinar.id),
+              title: webinar.title,
+              description: webinar.description || "",
+              speaker: webinar.speaker || "",
+              date: startsAt ? startsAt.toISOString().slice(0, 10) : "",
+              time: startsAt ? startsAt.toTimeString().slice(0, 5) : "",
+              duration: Number(webinar.duration_minutes || 0),
+              status: webinar.status,
+              registeredUsers: Number(webinar.registered_users || 0),
+              maxParticipants: Number(webinar.max_participants || 0),
+              category: webinar.category || "",
+              thumbnail: webinar.thumbnail,
+            };
+          })
+        );
+      } catch (error) {
+        console.error("Erreur chargement webinars admin:", error);
+        setWebinars([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadWebinars();
   }, []);
 
   const filteredWebinars = webinars.filter((webinar) => {

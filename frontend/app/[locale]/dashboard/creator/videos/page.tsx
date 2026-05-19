@@ -72,6 +72,7 @@ export default function VideosPage() {
         const response = await fetch("/api/creator/videos", {
           headers: {
             Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest",
           },
           cache: "no-store",
           credentials: "include",
@@ -98,6 +99,7 @@ export default function VideosPage() {
       const response = await fetch("/api/creator/videos", {
         headers: {
           Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
         },
         cache: "no-store",
         credentials: "include",
@@ -226,8 +228,8 @@ export default function VideosPage() {
 
   const totalVideos = videos.length;
   const publishedVideos = videos.filter((v) => v.status === "published").length;
-  const totalViews = videos.reduce((sum, v) => sum + v.views, 0);
-  const totalRevenue = videos.reduce((sum, v) => sum + v.revenue, 0);
+  const totalViews = videos.reduce((sum, v) => sum + (v.views || 0), 0);
+  const totalRevenue = videos.reduce((sum, v) => sum + (v.revenue || 0), 0);
 
   const handleSelectVideo = (videoId: string) => {
     setSelectedVideos((prev) =>
@@ -698,7 +700,7 @@ export default function VideosPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredVideos.map((video, index) => (
                 <motion.div
-                  key={video.id}
+                  key={`${video.id}-${video.updated_at || video.updatedAt || index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}

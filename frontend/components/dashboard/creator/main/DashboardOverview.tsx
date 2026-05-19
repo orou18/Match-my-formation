@@ -55,45 +55,24 @@ export default function DashboardOverview() {
       try {
         setLoading(true);
 
-        // Simuler des données pour le moment
-        const mockStats: DashboardStats = {
-          total_videos: 24,
-          total_views: 15420,
-          total_likes: 892,
-          total_comments: 234,
-          total_shares: 156,
-          total_revenue: 3250,
-          recent_videos: [
-            {
-              id: 1,
-              title: "Introduction au Marketing Digital",
-              description: "Découvrez les bases du marketing digital",
-              thumbnail: "/thumbnail1.jpg",
-              video_url: "/video1.mp4",
-              duration: "15:30",
-              views: 1234,
-              likes: 89,
-              comments: 12,
-              tags: ["marketing", "digital", "base"],
-              created_at: "2024-01-15",
-            },
-            {
-              id: 2,
-              title: "Techniques de Vente Avancées",
-              description: "Apprenez les techniques de vente modernes",
-              thumbnail: "/thumbnail2.jpg",
-              video_url: "/video2.mp4",
-              duration: "22:15",
-              views: 892,
-              likes: 67,
-              comments: 8,
-              tags: ["vente", "techniques", "avancé"],
-              created_at: "2024-01-12",
-            },
-          ],
-        };
+        const response = await fetch("/api/creator/dashboard", {
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          throw new Error("Impossible de charger le dashboard creator");
+        }
 
-        setStats(mockStats);
+        const data = await response.json();
+        const overview = data.overview || {};
+        setStats({
+          total_videos: overview.totalVideos || 0,
+          total_views: overview.totalViews || 0,
+          total_likes: overview.totalLikes || 0,
+          total_comments: overview.totalComments || 0,
+          total_shares: overview.totalShares || 0,
+          total_revenue: overview.totalRevenue || 0,
+          recent_videos: data.recentVideos || [],
+        });
       } catch (error) {
         console.error("Error fetching dashboard:", error);
       } finally {

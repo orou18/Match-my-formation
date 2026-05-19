@@ -119,13 +119,13 @@ class AdminNotification extends Model
     {
         switch ($this->target) {
             case 'all':
-                return User::where('status', 'active')->get();
+                return User::query()->get();
             case 'users':
-                return User::where('role', 'student')->where('status', 'active')->get();
+                return User::where('role', 'student')->get();
             case 'creators':
-                return User::where('role', 'creator')->where('status', 'active')->get();
+                return User::where('role', 'creator')->get();
             case 'admins':
-                return User::where('role', 'admin')->where('status', 'active')->get();
+                return User::where('role', 'admin')->get();
             default:
                 return collect();
         }
