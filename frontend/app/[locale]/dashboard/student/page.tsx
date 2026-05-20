@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, Variants } from "framer-motion";
+import { useSession } from "next-auth/react";
 import StudentHero from "@/components/dashboard/StudentHero";
 import CategoryFilters from "@/components/dashboard/CategoryFilters";
 import FeaturedGrid from "@/components/dashboard/FeaturedGrid";
@@ -72,6 +73,7 @@ export default function StudentDashboard() {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
+  const { data: session, status } = useSession();
 
   const [courses, setCourses] = useState<any[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
@@ -84,6 +86,26 @@ export default function StudentDashboard() {
   const [isNewUser, setIsNewUser] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Vérification du rôle via NextAuth (source de vérité)
+  useEffect(() => {
+    if (status === "loading") return;
+    
+    if (status === "unauthenticated") {
+      console.log("[StudentDashboard] User not authenticated, redirecting to login");
+      router.push(`/${locale}/login`);
+      return;
+    }
+    
+    // Vérifier que l'utilisateur a le rôle student
+    if (session?.user?.role && session.user.role !== "student") {
+      console.log(`[StudentDashboard] User has role '${session.user.role}', redirecting to correct dashboard`);
+      router.push(`/${locale}/dashboard/${session.user.role}`);
+      return;
+    }
+    
+    console.log("[StudentDashboard] Access granted for student role");
+  }, [status, session?.user?.role, router, locale]);
 
   // Gérer les changements de filtres
   const handleFilterChange = (filters: any) => {
@@ -199,28 +221,38 @@ export default function StudentDashboard() {
   };
 
   useEffect(() => {
+    // Ne pas charger les données si la session n'est pas prête ou si l'utilisateur n'est pas student
+    if (status === "loading" || status === "unauthenticated") return;
+    if (session?.user?.role !== "student") return;
+
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Récupérer l'utilisateur depuis la session
-        const userResponse = await fetch("/api/auth/me", {
-          cache: "no-store",
-        });
-
+        // Récupérer l'utilisateur depuis la session NextAuth (source de vérité)
+        // On utilise à la fois la session NextAuth et l'API /api/auth/me pour plus de robustesse
         let user: DashboardUser = {
-          id: 0,
-          name: "Étudiant",
-          email: "student@example.com",
-          role: "student",
+          id: session?.user?.id as number || 0,
+          name: session?.user?.name || "Étudiant",
+          email: session?.user?.email || "student@example.com",
+          role: session?.user?.role || "student",
         };
 
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          if (userData?.user) {
-            user = userData.user;
+        // Tentative de récupération depuis l'API pour avoir les données complètes
+        try {
+          const userResponse = await fetch("/api/auth/me", {
+            cache: "no-store",
+          });
+
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            if (userData?.user) {
+              user = userData.user;
+            }
           }
+        } catch (apiError) {
+          console.warn("[StudentDashboard] API /api/auth/me failed, using session data:", apiError);
         }
 
         setUser(user);
