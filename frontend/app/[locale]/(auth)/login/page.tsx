@@ -20,8 +20,6 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import UserIdManager, { AuthData } from "@/lib/user-id-manager";
-import { authService } from "@/lib/services/auth-service-v2";
 import BackendStatus from "@/components/BackendStatus";
 
 export default function AuthPage() {
@@ -43,16 +41,8 @@ export default function AuthPage() {
     remember: false,
   });
 
-  // PAS de vérification automatique - l'utilisateur doit pouvoir s'authentifier manuellement
-  // useEffect(() => {
-  //   if (UserIdManager.isAuthenticated()) {
-  //     const userData = UserIdManager.getStoredUserData();
-  //     if (userData) {
-  //       const redirectPath = `/${locale}/dashboard/${userData.role}`;
-  //       window.location.href = redirectPath;
-  //     }
-  //   }
-  // }, [locale]);
+  // Vérification automatique - si l'utilisateur est déjà connecté via NextAuth
+  // le middleware le redirigera automatiquement vers son dashboard
 
   useEffect(() => {
     if (successMessage) {
@@ -78,39 +68,29 @@ export default function AuthPage() {
 
     if (isLogin) {
       try {
-        const loginResponse = await authService.login(
-          formData.email,
-          formData.password
-        );
+        // Étape 1: Authentification avec NextAuth (qui appelle le backend Laravel)
+        const result = await signIn("credentials", {
+          email: formData.email,
+          password: formData.password,
+          redirect: false,
+        });
 
-        const authData: AuthData = {
-          token: loginResponse.token!,
-          user: {
-            id: loginResponse.user!.id,
-            name: loginResponse.user!.name,
-            email: loginResponse.user!.email,
-            role: loginResponse.user!.role as "student" | "creator" | "admin",
-          },
-        };
-
-        UserIdManager.storeAuthData(authData);
-
-        // Signin avec NextAuth (optionnel, pour la session)
-        try {
-          await signIn("credentials", {
-            email: formData.email,
-            password: formData.password,
-            redirect: false,
-          });
-        } catch (nextAuthError) {
-          console.warn(
-            "NextAuth signin failed, mais continuation avec UserIdManager:",
-            nextAuthError
-          );
+        if (result?.error) {
+          throw new Error(result.error);
         }
 
-        // Redirection directe
-        window.location.href = `/${locale}/dashboard/${loginResponse.user!.role}`;
+        console.log("[Login] NextAuth signin successful, fetching session...");
+
+        // Étape 2: Récupérer la session pour obtenir le rôle
+        // NextAuth a stocké le rôle dans le JWT via les callbacks
+        // Le middleware va gérer la redirection basée sur session.user.role
+        
+        // Étape 3: Redirection vers le dashboard approprié
+        // On utilise window.location.href pour forcer un rechargement complet
+        // et s'assurer que le middleware s'exécute correctement
+        window.location.href = `/${locale}/dashboard/student`;
+        // Note: Le middleware va rediriger vers le bon dashboard selon le rôle
+        // Même si on redirige vers /student, le middleware corrigera si le rôle est différent
       } catch (error: any) {
         setError(
           error.message ||
@@ -143,71 +123,60 @@ export default function AuthPage() {
       }
 
       try {
-        const response = await authService.register(
-          formData.name,
-          formData.email,
-          formData.password,
-          formData.password_confirmation
-        );
+        // Étape 1: Inscription via NextAuth (qui appelle le backend Laravel)
+        // Note: NextAuth ne gère pas nativement l'inscription, on utilise signIn pour la connexion
+        // Pour l'inscription, on doit d'abord appeler le backend directement
+        
+        // Appel direct au backend pour l'inscription
+        const registerResponse = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            password_confirmation: formData.password_confirmation,
+          }),
+        });
 
-        if (response.success && response.user) {
-          try {
-            const userData = {
-              id: response.user.id,
-              name: response.user.name,
-              email: response.user.email,
-              role: response.user.role,
-              createdAt: new Date().toISOString(),
-            };
+        const registerData = await registerResponse.json();
 
-            UserIdManager.storeAuthData({
-              token: response.token || "",
-              user: {
-                id: response.user.id,
-                name: response.user.name,
-                email: response.user.email,
-                role: response.user.role as "student" | "creator" | "admin",
-              },
-            });
-
-            localStorage.setItem("user_backup", JSON.stringify(userData));
-          } catch (saveError) {
-            console.error("Erreur sauvegarde locale:", saveError);
-          }
-
-          try {
-            await signIn("credentials", {
-              email: formData.email,
-              password: formData.password,
-              redirect: false,
-            });
-          } catch (nextAuthError) {
-            console.warn(
-              "NextAuth signin failed après inscription, poursuite avec token local:",
-              nextAuthError
-            );
-          }
-
-          setSuccessMessage(
-            "Compte créé avec succès ! Redirection vers votre dashboard..."
-          );
-          setTimeout(() => {
-            const redirectPath = `/${locale}/dashboard/student`;
-            console.log("🔄 Redirection vers:", redirectPath);
-            window.location.href = redirectPath;
-          }, 1500);
-        } else {
-          setError(
-            response.message ||
-              "L'inscription a échoué. Cet email est peut-être déjà utilisé."
-          );
+        if (!registerResponse.ok || !registerData.success) {
+          throw new Error(registerData.message || "L'inscription a échoué");
         }
+
+        console.log("[Register] Backend registration successful");
+
+        // Étape 2: Connexion automatique avec NextAuth
+        const result = await signIn("credentials", {
+          email: formData.email,
+          password: formData.password,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          console.warn("[Register] NextAuth signin failed after registration:", result.error);
+          // On continue quand même, le backend a créé l'utilisateur
+        }
+
+        setSuccessMessage(
+          "Compte créé avec succès ! Redirection vers votre dashboard..."
+        );
+        setTimeout(() => {
+          // Redirection vers le dashboard student (rôle par défaut)
+          // Le middleware corrigera si nécessaire
+          const redirectPath = `/${locale}/dashboard/student`;
+          console.log("[Register] Redirecting to:", redirectPath);
+          window.location.href = redirectPath;
+        }, 1500);
       } catch (error: any) {
         setError(
           error?.message ||
             "Erreur lors de l'inscription. Vérifiez vos informations et réessayez."
         );
-      } finally {
         setLoading(false);
       }
     }
@@ -219,7 +188,11 @@ export default function AuthPage() {
     setError("");
 
     try {
+      // Le backend Laravel retournera le rôle de l'utilisateur
+      // NextAuth stockera le rôle dans le JWT via le callback
+      // Le middleware redirigera vers le bon dashboard selon le rôle
       const result = await signIn(provider, {
+        // On redirige vers une URL générique, le middleware gérera la redirection finale
         callbackUrl: `/${locale}/dashboard/student`,
       });
 
@@ -228,6 +201,7 @@ export default function AuthPage() {
           `Connexion ${provider} indisponible. Vérifiez la configuration OAuth.`
         );
       }
+      // Si succès, le middleware va rediriger vers le bon dashboard
     } catch (error) {
       console.error("Social login error:", error);
       setError(`Erreur lors de la connexion avec ${provider}`);
