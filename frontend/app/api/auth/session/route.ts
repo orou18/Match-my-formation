@@ -1,28 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
-import UserIdManager from "@/lib/user-id-manager";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/auth-options";
 
+/**
+ * API Route /api/auth/session
+ * 
+ * Retourne la session NextAuth courante.
+ * SOURCE DE VÉRITÉ : session NextAuth (et non localStorage)
+ */
 export async function GET(request: NextRequest) {
   try {
-    // Vérifier l'authentification avec UserIdManager
-    const userData = UserIdManager.getStoredUserData();
+    const session = await getServerSession(authOptions);
 
-    if (!userData || !userData.id) {
-      // Retourner une session par défaut
+    if (!session || !session.user) {
       return NextResponse.json({
         user: null,
         expires: null,
       });
     }
 
-    // Retourner la session utilisateur
+    // Vérifier que l'ID est présent
+    if (!session.user.id) {
+      console.warn("[/api/auth/session] User ID missing in session");
+      return NextResponse.json({
+        user: null,
+        expires: null,
+      });
+    }
+
     return NextResponse.json({
-      user: userData,
-      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24h
+      user: session.user,
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });
   } catch (error) {
     console.error("Erreur /api/auth/session:", error);
-
-    // En cas d'erreur, retourner une session vide
     return NextResponse.json({
       user: null,
       expires: null,

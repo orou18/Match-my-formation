@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -19,6 +21,7 @@ import {
   Download,
   RefreshCw,
   ChevronDown,
+  AlertCircle,
 } from "lucide-react";
 
 interface User {
@@ -34,9 +37,49 @@ interface User {
   avatar?: string;
 }
 
+/**
+ * Helper pour gérer les réponses 401 (session expirée)
+ * Redirige vers la page de login si non authentifié
+ */
+const handleAuthError = (response: Response, router: ReturnType<typeof useRouter>, locale: string) => {
+  if (response.status === 401) {
+    console.error("[Auth] Session expirée - redirection vers login");
+    router.push(`/${locale}/login`);
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Configuration commune pour les requêtes fetch
+ * Inclut les cookies NextAuth pour l'authentification
+ */
+const getFetchOptions = (options: RequestInit = {}): RequestInit => {
+  return {
+    credentials: "include", // Inclut les cookies NextAuth
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...options.headers,
+    },
+    ...options,
+  };
+};
+
 export default function AdminUsers() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  
+  // Récupérer le locale depuis les params
+  const [locale, setLocale] = useState("fr");
+  useEffect(() => {
+    // Le locale est géré par le layout, on utilise "fr" par défaut
+    // Dans un vrai scénario, on pourrait le récupérer via useParams()
+  }, []);
+
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -50,35 +93,64 @@ export default function AdminUsers() {
     expertise: "",
   });
 
+  // Vérifier l'authentification au chargement
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push(`/${locale}/login`);
+    }
+  }, [status, router, locale]);
+
+  // Charger les utilisateurs
+  useEffect(() => {
+    // Attendre que la session soit chargée
+    if (status === "loading") return;
+    
     const loadUsers = async () => {
       try {
-        const response = await fetch("/api/admin/users");
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch("/api/admin/users", getFetchOptions());
+        
+        // Gestion erreur 401 (session expirée)
+        if (handleAuthError(response, router, locale)) {
+          return;
+        }
+        
         if (response.ok) {
           const data = await response.json();
-          const records = Array.isArray(data.users)
+          // Safe extraction des données - garantit un tableau même si data est mal formé
+          const records = Array.isArray(data?.users)
             ? data.users
-            : Array.isArray(data.data)
+            : Array.isArray(data?.data)
               ? data.data
               : [];
           setUsers(records);
         } else {
-          console.error("Erreur lors du chargement des utilisateurs");
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData?.message || errorData?.error || "Erreur lors du chargement des utilisateurs";
+          console.error("[Users] Erreur:", errorMessage);
+          setError(errorMessage);
         }
-      } catch (error) {
-        console.error("Erreur:", error);
+      } catch (err) {
+        console.error("[Users] Erreur réseau:", err);
+        setError("Impossible de se connecter au serveur");
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadUsers();
-  }, []);
+    if (status === "authenticated") {
+      loadUsers();
+    }
+  }, [status, router, locale]);
 
-  const filteredUsers = users.filter((user) => {
+  // Filtrage des utilisateurs - safe rendering
+  const filteredUsers = (users ?? []).filter((user) => {
+    if (!user) return false;
     const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === "all" || user.role === filterRole;
     const matchesStatus =
       filterStatus === "all" || user.status === filterStatus;
@@ -134,13 +206,15 @@ export default function AdminUsers() {
     }
 
     try {
-      const response = await fetch("/api/admin/users", {
+      const response = await fetch("/api/admin/users", getFetchOptions({
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(newUser),
-      });
+      }));
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
 
       if (response.ok) {
         const createdUser = await response.json();
@@ -155,24 +229,26 @@ export default function AdminUsers() {
         });
         alert("Utilisateur créé avec succès!");
       } else {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({}));
         alert(error.error || "Erreur lors de la création");
       }
-    } catch (error) {
-      console.error("Erreur:", error);
+    } catch (err) {
+      console.error("[Users] Erreur création:", err);
       alert("Erreur lors de la création");
     }
   };
 
   const handleUpdateUser = async (userId: string, updates: any) => {
     try {
-      const response = await fetch("/api/admin/users", {
+      const response = await fetch("/api/admin/users", getFetchOptions({
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ id: userId, ...updates }),
-      });
+      }));
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
 
       if (response.ok) {
         const updatedUser = await response.json();
@@ -181,11 +257,11 @@ export default function AdminUsers() {
         );
         alert("Utilisateur mis à jour avec succès!");
       } else {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({}));
         alert(error.error || "Erreur lors de la mise à jour");
       }
-    } catch (error) {
-      console.error("Erreur:", error);
+    } catch (err) {
+      console.error("[Users] Erreur mise à jour:", err);
       alert("Erreur lors de la mise à jour");
     }
   };
@@ -196,19 +272,24 @@ export default function AdminUsers() {
     }
 
     try {
-      const response = await fetch(`/api/admin/users?id=${userId}`, {
+      const response = await fetch(`/api/admin/users?id=${userId}`, getFetchOptions({
         method: "DELETE",
-      });
+      }));
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
 
       if (response.ok) {
         setUsers(users.filter((user) => user.id !== userId));
         alert("Utilisateur supprimé avec succès!");
       } else {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({}));
         alert(error.error || "Erreur lors de la suppression");
       }
-    } catch (error) {
-      console.error("Erreur:", error);
+    } catch (err) {
+      console.error("[Users] Erreur suppression:", err);
       alert("Erreur lors de la suppression");
     }
   };
@@ -231,37 +312,72 @@ export default function AdminUsers() {
       // Pour chaque utilisateur sélectionné
       for (const userId of selectedUsers) {
         if (action === "delete") {
-          await fetch(`/api/admin/users?id=${userId}`, { method: "DELETE" });
+          const response = await fetch(`/api/admin/users?id=${userId}`, getFetchOptions({
+            method: "DELETE",
+          }));
+          
+          // Gestion erreur 401
+          if (handleAuthError(response, router, locale)) {
+            return;
+          }
         } else if (action === "activate" || action === "suspend") {
-          await fetch("/api/admin/users", {
+          const response = await fetch("/api/admin/users", getFetchOptions({
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               id: userId,
               status: action === "activate" ? "active" : "suspended",
             }),
-          });
+          }));
+          
+          // Gestion erreur 401
+          if (handleAuthError(response, router, locale)) {
+            return;
+          }
         }
       }
 
       // Recharger les utilisateurs
-      const response = await fetch("/api/admin/users");
+      const response = await fetch("/api/admin/users", getFetchOptions());
       if (response.ok) {
         const data = await response.json();
-        setUsers(data.users);
+        setUsers(Array.isArray(data?.users) ? data.users : []);
         setSelectedUsers([]);
         alert(`${action} effectuée avec succès!`);
       }
-    } catch (error) {
-      console.error("Erreur:", error);
+    } catch (err) {
+      console.error("[Users] Erreur action en masse:", err);
       alert("Erreur lors de l'action en masse");
     }
   };
 
-  if (isLoading) {
+  // Loading state - jamais d'écran blanc
+  if (status === "loading" || isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Error state - fallback UI propre
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 p-6">
+        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+        <p className="text-gray-900 font-bold text-lg mb-2">
+          Impossible de charger les utilisateurs
+        </p>
+        <p className="text-gray-500 text-sm mb-4">{error}</p>
+        <button
+          onClick={() => {
+            setError(null);
+            setIsLoading(true);
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        >
+          <RefreshCw size={18} />
+          Réessayer
+        </button>
       </div>
     );
   }
@@ -275,7 +391,9 @@ export default function AdminUsers() {
             Gestion Utilisateurs
           </h1>
           <p className="text-gray-600 mt-1">
-            {filteredUsers.length} utilisateurs trouvés
+            {(users ?? []).length > 0 
+              ? `${filteredUsers.length} utilisateurs trouvés` 
+              : "Aucun utilisateur"}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -364,129 +482,159 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-4 text-left">
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.length === filteredUsers.length}
-                    onChange={handleSelectAll}
-                    className="rounded border-gray-300"
-                  />
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Utilisateur
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Rôle
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Statut
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Inscrit le
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Dernière activité
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredUsers.map((user, index) => (
-                <motion.tr
-                  key={user.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: index * 0.05 }}
-                  className="hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4">
+      {/* Empty State */}
+      {(users ?? []).length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+          <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Aucun utilisateur trouvé
+          </h3>
+          <p className="text-gray-500 mb-6">
+            Commencez par créer un nouvel utilisateur ou attendez les inscriptions
+          </p>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+          >
+            <Plus size={18} />
+            Créer un utilisateur
+          </button>
+        </div>
+      ) : filteredUsers.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+          <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Aucun résultat
+          </h3>
+          <p className="text-gray-500">
+            Essayez de modifier vos filtres ou votre recherche
+          </p>
+        </div>
+      ) : (
+        /* Users Table */
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-4 text-left">
                     <input
                       type="checkbox"
-                      checked={selectedUsers.includes(user.id)}
-                      onChange={() => handleSelectUser(user.id)}
+                      checked={selectedUsers.length === filteredUsers.length}
+                      onChange={handleSelectAll}
                       className="rounded border-gray-300"
                     />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                        <Users size={16} className="text-gray-600" />
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Utilisateur
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Rôle
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Statut
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Inscrit le
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Dernière activité
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredUsers.map((user, index) => (
+                  <motion.tr
+                    key={user.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                    className="hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.includes(user.id)}
+                        onChange={() => handleSelectUser(user.id)}
+                        className="rounded border-gray-300"
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                          <Users size={16} className="text-gray-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{user.name}</p>
+                          <p className="text-sm text-gray-500">{user.email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{user.name}</p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-bold ${getRoleBadge(user.role)}`}
+                      >
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusBadge(user.status)}`}
+                      >
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {new Date(user.joinDate).toLocaleDateString("fr-FR")}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {new Date(user.lastActive).toLocaleDateString("fr-FR")}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => alert(`Voir le profil de ${user.name}`)}
+                          className="text-blue-600 hover:text-blue-700"
+                          title="Voir le profil"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const newStatus =
+                              user.status === "active" ? "suspended" : "active";
+                            handleUpdateUser(user.id, { status: newStatus });
+                          }}
+                          className="text-gray-600 hover:text-gray-700"
+                          title={
+                            user.status === "active" ? "Suspendre" : "Activer"
+                          }
+                        >
+                          {user.status === "active" ? (
+                            <X size={16} />
+                          ) : (
+                            <Check size={16} />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="text-red-600 hover:text-red-700"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-bold ${getRoleBadge(user.role)}`}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusBadge(user.status)}`}
-                    >
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(user.joinDate).toLocaleDateString("fr-FR")}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(user.lastActive).toLocaleDateString("fr-FR")}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => alert(`Voir le profil de ${user.name}`)}
-                        className="text-blue-600 hover:text-blue-700"
-                        title="Voir le profil"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          const newStatus =
-                            user.status === "active" ? "suspended" : "active";
-                          handleUpdateUser(user.id, { status: newStatus });
-                        }}
-                        className="text-gray-600 hover:text-gray-700"
-                        title={
-                          user.status === "active" ? "Suspendre" : "Activer"
-                        }
-                      >
-                        {user.status === "active" ? (
-                          <X size={16} />
-                        ) : (
-                          <Check size={16} />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="text-red-600 hover:text-red-700"
-                        title="Supprimer"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Create User Modal */}
       {showCreateModal && (

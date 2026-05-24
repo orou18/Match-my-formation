@@ -28,7 +28,9 @@ class AdminCreatorController extends Controller
                 ->with(['videos' => function($q) {
                     $q->select('uploader_id', 'views', 'likes', 'comments', 'created_at');
                 }])
-                ->withCount(['videos', 'employees']);
+                ->withCount(['videos'])
+                // Remplacement de employees() par un comptage direct depuis la table employees
+                ->addSelect(DB::raw('(SELECT COUNT(*) FROM employees WHERE employees.creator_id = users.id) as employees_count'));
 
             // Filtrage par statut
             if ($request->has('status') && $request->status !== 'all') {
@@ -161,7 +163,7 @@ class AdminCreatorController extends Controller
     /**
      * Affiche un créateur spécifique
      */
-    public function show($id)
+    public function show(int $id)
     {
         try {
             $user = Auth::user();
@@ -173,7 +175,8 @@ class AdminCreatorController extends Controller
                 ->with(['videos' => function($q) {
                     $q->select('id', 'title', 'views', 'likes', 'comments', 'created_at');
                 }])
-                ->withCount(['videos', 'employees'])
+                ->withCount(['videos'])
+                ->addSelect(DB::raw('(SELECT COUNT(*) FROM employees WHERE employees.creator_id = users.id) as employees_count'))
                 ->findOrFail($id);
 
             $totalViews = $creator->videos->sum('views');
@@ -226,7 +229,7 @@ class AdminCreatorController extends Controller
     /**
      * Met à jour un créateur
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
         try {
             $user = Auth::user();
@@ -277,7 +280,7 @@ class AdminCreatorController extends Controller
     /**
      * Supprime un créateur
      */
-    public function destroy($id)
+    public function destroy(int $id)
     {
         try {
             $user = Auth::user();
@@ -318,7 +321,7 @@ class AdminCreatorController extends Controller
     /**
      * Suspendre ou activer un créateur
      */
-    public function toggleStatus($id)
+    public function toggleStatus(int $id)
     {
         try {
             $user = Auth::user();

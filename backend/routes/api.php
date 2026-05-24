@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminAdsController;
 use App\Http\Controllers\Admin\AdminBlogController;
 use App\Http\Controllers\Admin\AdminWebinarController;
+use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Course\CourseController;
 use App\Http\Controllers\Course\ModuleController;
 use App\Http\Controllers\Course\VideoController as CourseVideoController;
@@ -246,6 +247,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/admin/videos/stats', [App\Http\Controllers\Admin\AdminVideosController::class, 'stats']);
         Route::post('/admin/videos/{id}/approve', [App\Http\Controllers\Admin\AdminVideosController::class, 'approve']);
         Route::post('/admin/videos/{id}/reject', [App\Http\Controllers\Admin\AdminVideosController::class, 'reject']);
+        
+        // --- 4.5 PROFILE ADMIN ---
+        Route::get('/admin/profile', [AdminProfileController::class, 'show']);
+        Route::put('/admin/profile', [AdminProfileController::class, 'update']);
+        Route::post('/admin/profile/change-password', [AdminProfileController::class, 'changePassword']);
+        Route::post('/admin/profile/upload-avatar', [AdminProfileController::class, 'uploadAvatar']);
     });
 
     // --- 5. DASHBOARD STUDENT ---

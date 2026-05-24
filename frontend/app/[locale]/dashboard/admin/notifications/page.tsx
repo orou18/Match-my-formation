@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   Plus,
@@ -26,6 +28,9 @@ import {
   Star,
   Shield,
   Edit,
+  CheckCircle,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 
 interface Notification {
@@ -44,7 +49,49 @@ interface Notification {
   createdAt: string;
 }
 
+interface NotificationItem {
+  id: string;
+  type: "success" | "warning" | "error" | "info";
+  message: string;
+}
+
+/**
+ * Helper pour gérer les réponses 401 (session expirée)
+ */
+const handleAuthError = (response: Response, router: ReturnType<typeof useRouter>, locale: string) => {
+  if (response.status === 401) {
+    console.error("[Auth] Session expirée - redirection vers login");
+    router.push(`/${locale}/login`);
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Configuration commune pour les requêtes fetch
+ */
+const getFetchOptions = (options: RequestInit = {}): RequestInit => {
+  return {
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...options.headers,
+    },
+    ...options,
+  };
+};
+
 export default function AdminNotifications() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  
+  // Récupérer le locale depuis les params
+  const [locale, setLocale] = useState("fr");
+  useEffect(() => {
+    // Le locale est géré par le layout
+  }, []);
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -54,139 +101,91 @@ export default function AdminNotifications() {
   const [newNotification, setNewNotification] = useState({
     title: "",
     message: "",
-    type: "info",
-    target: "all",
-    status: "draft",
+    type: "info" as Notification["type"],
+    target: "all" as Notification["target"],
+    status: "draft" as Notification["status"],
     scheduledAt: "",
   });
+  const [toastNotifications, setToastNotifications] = useState<NotificationItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
+  // Vérifier l'authentification au chargement
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push(`/${locale}/login`);
+    }
+  }, [status, router, locale]);
+
+  // Ajouter une notification toast
+  const addToast = (type: NotificationItem["type"], message: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setToastNotifications(prev => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setToastNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  // DEBUG: Session NextAuth
+  useEffect(() => {
+    console.log("[NOTIFICATIONS DEBUG] === Début debug session ===");
+    console.log("[NOTIFICATIONS DEBUG] status:", status);
+    console.log("[NOTIFICATIONS DEBUG] hasSession:", !!session);
+    console.log("[NOTIFICATIONS DEBUG] userId:", session?.user?.id);
+    console.log("[NOTIFICATIONS DEBUG] role:", session?.user?.role);
+    console.log("[NOTIFICATIONS DEBUG] === Fin debug session ===");
+  }, [session, status]);
+
+  // Charger les notifications depuis l'API
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") return;
+
     const loadNotifications = async () => {
+      console.log("[NOTIFICATIONS DEBUG] === Début appel API notifications ===");
+      console.log("[NOTIFICATIONS DEBUG] endpoint:", "/api/admin/notifications");
+
       try {
-        const response = await fetch("/api/admin/notifications");
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch("/api/admin/notifications", getFetchOptions());
+        
+        // Gestion erreur 401
+        if (handleAuthError(response, router, locale)) {
+          return;
+        }
+
+        console.log("[NOTIFICATIONS DEBUG] Response status:", response.status);
+
         if (response.ok) {
           const data = await response.json();
-          setNotifications(data.notifications);
+          // Safe extraction - garantit un tableau
+          const notificationsData = Array.isArray(data.notifications) ? data.notifications : [];
+          setNotifications(notificationsData);
+          console.log("[NOTIFICATIONS DEBUG] Notifications chargées:", notificationsData.length);
         } else {
-          console.error("Erreur lors du chargement des notifications");
+          const error = await response.json().catch(() => ({}));
+          console.error("[NOTIFICATIONS DEBUG] Erreur:", error);
+          addToast("warning", "Impossible de charger les notifications");
+          setNotifications([]);
         }
-      } catch (error) {
-        console.error("Erreur:", error);
+      } catch (err) {
+        console.error("[NOTIFICATIONS DEBUG] Erreur réseau:", err);
+        addToast("error", "Erreur de connexion");
+        setError("Impossible de charger les notifications");
+        setNotifications([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadNotifications();
-  }, []);
+  }, [status, router, locale]);
 
-  const handleCreateNotification = async () => {
-    if (
-      !newNotification.title ||
-      !newNotification.message ||
-      !newNotification.type ||
-      !newNotification.target
-    ) {
-      alert("Veuillez remplir tous les champs obligatoires");
-      return;
-    }
+  // Safe rendering - protection contre undefined
+  const safeNotifications = Array.isArray(notifications) ? notifications : [];
 
-    try {
-      const response = await fetch("/api/admin/notifications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newNotification),
-      });
-
-      if (response.ok) {
-        const createdNotification = await response.json();
-        setNotifications([...notifications, createdNotification]);
-        setShowCreateModal(false);
-        setNewNotification({
-          title: "",
-          message: "",
-          type: "info",
-          target: "all",
-          status: "draft",
-          scheduledAt: "",
-        });
-        alert("Notification créée avec succès!");
-      } else {
-        const error = await response.json();
-        alert(error.error || "Erreur lors de la création");
-      }
-    } catch (error) {
-      console.error("Erreur:", error);
-      alert("Erreur lors de la création");
-    }
-  };
-
-  const handleUpdateNotification = async (
-    notificationId: string,
-    updates: any
-  ) => {
-    try {
-      const response = await fetch("/api/admin/notifications", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ id: notificationId, ...updates }),
-      });
-
-      if (response.ok) {
-        const updatedNotification = await response.json();
-        setNotifications(
-          notifications.map((notification) =>
-            notification.id === notificationId
-              ? updatedNotification
-              : notification
-          )
-        );
-        alert("Notification mise à jour avec succès!");
-      } else {
-        const error = await response.json();
-        alert(error.error || "Erreur lors de la mise à jour");
-      }
-    } catch (error) {
-      console.error("Erreur:", error);
-      alert("Erreur lors de la mise à jour");
-    }
-  };
-
-  const handleDeleteNotification = async (notificationId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette notification?")) {
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `/api/admin/notifications?id=${notificationId}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (response.ok) {
-        setNotifications(
-          notifications.filter(
-            (notification) => notification.id !== notificationId
-          )
-        );
-        alert("Notification supprimée avec succès!");
-      } else {
-        const error = await response.json();
-        alert(error.error || "Erreur lors de la suppression");
-      }
-    } catch (error) {
-      console.error("Erreur:", error);
-      alert("Erreur lors de la suppression");
-    }
-  };
-
-  const filteredNotifications = notifications.filter((notification) => {
+  const filteredNotifications = safeNotifications.filter((notification) => {
     const matchesSearch =
       notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       notification.message.toLowerCase().includes(searchTerm.toLowerCase());
@@ -196,6 +195,122 @@ export default function AdminNotifications() {
       filterStatus === "all" || notification.status === filterStatus;
     return matchesSearch && matchesType && matchesStatus;
   });
+
+  const handleCreateNotification = async () => {
+    if (
+      !newNotification.title ||
+      !newNotification.message ||
+      !newNotification.type ||
+      !newNotification.target
+    ) {
+      addToast("warning", "Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/notifications", getFetchOptions({
+        method: "POST",
+        body: JSON.stringify(newNotification),
+      }));
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
+
+      if (response.ok) {
+        const createdNotification = await response.json();
+        setNotifications([...safeNotifications, createdNotification]);
+        setShowCreateModal(false);
+        setNewNotification({
+          title: "",
+          message: "",
+          type: "info",
+          target: "all",
+          status: "draft",
+          scheduledAt: "",
+        });
+        addToast("success", "Notification créée avec succès");
+      } else {
+        const error = await response.json().catch(() => ({}));
+        addToast("error", error.error || "Erreur lors de la création");
+      }
+    } catch (err) {
+      console.error("[NOTIFICATIONS DEBUG] Erreur création:", err);
+      addToast("error", "Erreur lors de la création");
+    }
+  };
+
+  const handleUpdateNotification = async (
+    notificationId: string,
+    updates: any
+  ) => {
+    try {
+      const response = await fetch("/api/admin/notifications", getFetchOptions({
+        method: "PUT",
+        body: JSON.stringify({ id: notificationId, ...updates }),
+      }));
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
+
+      if (response.ok) {
+        const updatedNotification = await response.json();
+        setNotifications(
+          safeNotifications.map((notification) =>
+            notification.id === notificationId
+              ? updatedNotification
+              : notification
+          )
+        );
+        addToast("success", "Notification mise à jour avec succès");
+      } else {
+        const error = await response.json().catch(() => ({}));
+        addToast("error", error.error || "Erreur lors de la mise à jour");
+      }
+    } catch (err) {
+      console.error("[NOTIFICATIONS DEBUG] Erreur mise à jour:", err);
+      addToast("error", "Erreur lors de la mise à jour");
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId: string) => {
+    // Confirmation dialog stylée via modal (pas de confirm())
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette notification?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/admin/notifications?id=${notificationId}`,
+        getFetchOptions({
+          method: "DELETE",
+        })
+      );
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
+
+      if (response.ok) {
+        setNotifications(
+          safeNotifications.filter(
+            (notification) => notification.id !== notificationId
+          )
+        );
+        addToast("success", "Notification supprimée avec succès");
+      } else {
+        const error = await response.json().catch(() => ({}));
+        addToast("error", error.error || "Erreur lors de la suppression");
+      }
+    } catch (err) {
+      console.error("[NOTIFICATIONS DEBUG] Erreur suppression:", err);
+      addToast("error", "Erreur lors de la suppression");
+    }
+  };
 
   const getTypeBadge = (type: string) => {
     switch (type) {
@@ -284,16 +399,120 @@ export default function AdminNotifications() {
     );
   };
 
-  if (isLoading) {
+  // Loading state - Skeleton cards
+  if (status === "loading" || isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="p-6 space-y-6">
+        {/* Header skeleton */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="flex gap-3">
+            <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Stats skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-gray-200 rounded-lg animate-pulse"></div>
+                <div className="space-y-2">
+                  <div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state - UI stylée
+  if (error) {
+    return (
+      <div className="p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-sm border border-red-200 p-8 text-center max-w-md mx-auto"
+        >
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 mb-2">
+            Impossible de charger les notifications
+          </h3>
+          <p className="text-gray-500 mb-6">{error}</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+                fetch("/api/admin/notifications", getFetchOptions())
+                  .then(res => res.json())
+                  .then(data => {
+                    setNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+                    setIsLoading(false);
+                  })
+                  .catch(() => setIsLoading(false));
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <RefreshCw size={18} />
+              Réessayer
+            </button>
+            <button
+              onClick={() => router.push(`/${locale}/dashboard/admin`)}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Retour dashboard
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="p-6">
+      {/* Notifications Toast */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        <AnimatePresence>
+          {toastNotifications.map((notification) => (
+            <motion.div
+              key={notification.id}
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${
+                notification.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-800"
+                  : notification.type === "error"
+                  ? "bg-red-50 border border-red-200 text-red-800"
+                  : notification.type === "warning"
+                  ? "bg-yellow-50 border border-yellow-200 text-yellow-800"
+                  : "bg-blue-50 border border-blue-200 text-blue-800"
+              }`}
+            >
+              {notification.type === "success" ? (
+                <CheckCircle size={18} />
+              ) : notification.type === "error" ? (
+                <AlertCircle size={18} />
+              ) : (
+                <AlertTriangle size={18} />
+              )}
+              <span className="text-sm font-medium">{notification.message}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div>
@@ -324,7 +543,7 @@ export default function AdminNotifications() {
         {[
           {
             label: "Total Envoyées",
-            value: notifications.filter((n) => n.status === "sent").length,
+            value: safeNotifications.filter((n) => n.status === "sent").length,
             icon: Send,
             color: "green",
             change: "+12%",
@@ -345,7 +564,7 @@ export default function AdminNotifications() {
           },
           {
             label: "Programmées",
-            value: notifications.filter((n) => n.status === "scheduled").length,
+            value: safeNotifications.filter((n) => n.status === "scheduled").length,
             icon: Clock,
             color: "orange",
             change: "+2",
@@ -416,6 +635,28 @@ export default function AdminNotifications() {
         </div>
       </div>
 
+      {/* Empty State */}
+      {filteredNotifications.length === 0 && !isLoading && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+          <Bell size={48} className="mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Aucune notification trouvée
+          </h3>
+          <p className="text-gray-500 mb-6">
+            {searchTerm ? "Essayez de modifier votre recherche" : "Commencez par créer votre première notification"}
+          </p>
+          {!searchTerm && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Créer une notification
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Notifications List */}
       <div className="space-y-4">
         {filteredNotifications.map((notification, index) => {
@@ -479,7 +720,10 @@ export default function AdminNotifications() {
                     <button className="text-blue-600 hover:text-blue-700">
                       <Edit size={16} />
                     </button>
-                    <button className="text-red-600 hover:text-red-700">
+                    <button
+                      onClick={() => handleDeleteNotification(notification.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -570,6 +814,8 @@ export default function AdminNotifications() {
                 <input
                   type="text"
                   placeholder="Titre de la notification"
+                  value={newNotification.title}
+                  onChange={(e) => setNewNotification({ ...newNotification, title: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -581,6 +827,8 @@ export default function AdminNotifications() {
                 <textarea
                   placeholder="Contenu de la notification"
                   rows={4}
+                  value={newNotification.message}
+                  onChange={(e) => setNewNotification({ ...newNotification, message: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -590,7 +838,11 @@ export default function AdminNotifications() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Type
                   </label>
-                  <select className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    value={newNotification.type}
+                    onChange={(e) => setNewNotification({ ...newNotification, type: e.target.value as Notification["type"] })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option value="info">Information</option>
                     <option value="success">Succès</option>
                     <option value="warning">Avertissement</option>
@@ -601,7 +853,11 @@ export default function AdminNotifications() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Cible
                   </label>
-                  <select className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    value={newNotification.target}
+                    onChange={(e) => setNewNotification({ ...newNotification, target: e.target.value as Notification["target"] })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option value="all">Tous les utilisateurs</option>
                     <option value="users">Utilisateurs uniquement</option>
                     <option value="creators">Créateurs uniquement</option>
@@ -615,7 +871,11 @@ export default function AdminNotifications() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Statut
                   </label>
-                  <select className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    value={newNotification.status}
+                    onChange={(e) => setNewNotification({ ...newNotification, status: e.target.value as Notification["status"] })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option value="draft">Brouillon</option>
                     <option value="scheduled">Programmer</option>
                     <option value="sent">Envoyer immédiatement</option>
@@ -627,6 +887,8 @@ export default function AdminNotifications() {
                   </label>
                   <input
                     type="datetime-local"
+                    value={newNotification.scheduledAt}
+                    onChange={(e) => setNewNotification({ ...newNotification, scheduledAt: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -640,7 +902,10 @@ export default function AdminNotifications() {
               >
                 Annuler
               </button>
-              <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button
+                onClick={handleCreateNotification}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 Créer la Notification
               </button>
             </div>

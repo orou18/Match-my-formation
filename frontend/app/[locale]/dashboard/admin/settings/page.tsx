@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Settings,
   Save,
@@ -18,6 +20,8 @@ import {
   X,
   AlertCircle,
   Info,
+  CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 
 interface SystemSettings {
@@ -33,8 +37,125 @@ interface SystemSettings {
   sessionTimeout: number;
 }
 
+interface Notification {
+  id: string;
+  type: "success" | "warning" | "error" | "info";
+  message: string;
+}
+
+/**
+ * Helper pour gérer les réponses 401 (session expirée)
+ */
+const handleAuthError = (response: Response, router: ReturnType<typeof useRouter>, locale: string) => {
+  if (response.status === 401) {
+    console.error("[Auth] Session expirée - redirection vers login");
+    router.push(`/${locale}/login`);
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Configuration commune pour les requêtes fetch
+ */
+const getFetchOptions = (options: RequestInit = {}): RequestInit => {
+  return {
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...options.headers,
+    },
+    ...options,
+  };
+};
+
 export default function AdminSettings() {
-  const [settings, setSettings] = useState<SystemSettings>({
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  
+  // Récupérer le locale depuis les params
+  const [locale, setLocale] = useState("fr");
+  useEffect(() => {
+    // Le locale est géré par le layout
+  }, []);
+
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  // Vérifier l'authentification au chargement
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push(`/${locale}/login`);
+    }
+  }, [status, router, locale]);
+
+  // Ajouter une notification
+  const addNotification = (type: Notification["type"], message: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setNotifications(prev => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  // DEBUG: Session NextAuth
+  useEffect(() => {
+    console.log("[SETTINGS DEBUG] === Début debug session ===");
+    console.log("[SETTINGS DEBUG] status:", status);
+    console.log("[SETTINGS DEBUG] hasSession:", !!session);
+    console.log("[SETTINGS DEBUG] userId:", session?.user?.id);
+    console.log("[SETTINGS DEBUG] role:", session?.user?.role);
+    console.log("[SETTINGS DEBUG] === Fin debug session ===");
+  }, [session, status]);
+
+  // Charger les settings depuis l'API
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") return;
+
+    const loadSettings = async () => {
+      console.log("[SETTINGS DEBUG] === Début appel API settings ===");
+      console.log("[SETTINGS DEBUG] endpoint:", "/api/admin/settings");
+
+      try {
+        setIsLoading(true);
+
+        const response = await fetch("/api/admin/settings", getFetchOptions());
+        
+        // Gestion erreur 401
+        if (handleAuthError(response, router, locale)) {
+          return;
+        }
+
+        console.log("[SETTINGS DEBUG] Response status:", response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          setSettings(data.settings || data);
+          console.log("[SETTINGS DEBUG] Settings chargés:", data);
+        } else {
+          const error = await response.json().catch(() => ({}));
+          console.error("[SETTINGS DEBUG] Erreur:", error);
+          addNotification("warning", "Paramètres par défaut utilisés");
+          // Initialiser avec valeurs par défaut
+          setSettings(getDefaultSettings());
+        }
+      } catch (err) {
+        console.error("[SETTINGS DEBUG] Erreur réseau:", err);
+        addNotification("error", "Impossible de charger les paramètres");
+        setSettings(getDefaultSettings());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, [status, router, locale]);
+
+  const getDefaultSettings = (): SystemSettings => ({
     siteName: "Match My Formation",
     siteUrl: "https://matchmyformation.com",
     adminEmail: "admin@matchmyformation.com",
@@ -46,70 +167,130 @@ export default function AdminSettings() {
     maxUploadSize: 10,
     sessionTimeout: 30,
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    // Charger les settings depuis l'API
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+  // Safe normalization
+  const safeSettings = settings ?? getDefaultSettings();
 
   const handleSave = async () => {
+    if (!safeSettings) return;
+
     setSaving(true);
     try {
-      const response = await fetch("/api/admin/settings", {
+      console.log("[SETTINGS DEBUG] === Début sauvegarde ===");
+      console.log("[SETTINGS DEBUG] Payload:", safeSettings);
+
+      const response = await fetch("/api/admin/settings", getFetchOptions({
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(settings),
-      });
+        body: JSON.stringify(safeSettings),
+      }));
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
 
       if (response.ok) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        console.log("[SETTINGS DEBUG] Sauvegarde réussie");
+        addNotification("success", "Paramètres sauvegardés avec succès");
       } else {
-        const error = await response.json();
-        alert(error.error || "Erreur lors de la sauvegarde");
+        const error = await response.json().catch(() => ({}));
+        console.error("[SETTINGS DEBUG] Erreur sauvegarde:", error);
+        addNotification("error", error.error || "Erreur lors de la sauvegarde");
       }
-    } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
-      alert("Erreur lors de la sauvegarde");
+    } catch (err) {
+      console.error("[SETTINGS DEBUG] Erreur réseau:", err);
+      addNotification("error", "Erreur de connexion lors de la sauvegarde");
     } finally {
       setSaving(false);
     }
   };
 
   const handleReset = () => {
-    setSettings({
-      siteName: "Match My Formation",
-      siteUrl: "https://matchmyformation.com",
-      adminEmail: "admin@matchmyformation.com",
-      maintenanceMode: false,
-      allowRegistration: true,
-      emailNotifications: true,
-      defaultLanguage: "fr",
-      theme: "light",
-      maxUploadSize: 10,
-      sessionTimeout: 30,
-    });
+    setSettings(getDefaultSettings());
+    addNotification("info", "Paramètres réinitialisés");
   };
 
-  if (isLoading) {
+  // Loading state - Skeleton cards
+  if (status === "loading" || isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="p-6 space-y-6">
+        {/* Header skeleton */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-4 w-64 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="flex gap-3">
+            <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Settings cards skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="h-6 w-40 bg-gray-200 rounded animate-pulse mb-6"></div>
+            <div className="space-y-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-10 w-full bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-6"></div>
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-4 w-40 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-10 w-full bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
+      {/* Notifications Toast */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        <AnimatePresence>
+          {notifications.map((notification) => (
+            <motion.div
+              key={notification.id}
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${
+                notification.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-800"
+                  : notification.type === "error"
+                  ? "bg-red-50 border border-red-200 text-red-800"
+                  : notification.type === "warning"
+                  ? "bg-yellow-50 border border-yellow-200 text-yellow-800"
+                  : "bg-blue-50 border border-blue-200 text-blue-800"
+              }`}
+            >
+              {notification.type === "success" ? (
+                <CheckCircle size={18} />
+              ) : notification.type === "error" ? (
+                <AlertCircle size={18} />
+              ) : (
+                <AlertTriangle size={18} />
+              )}
+              <span className="text-sm font-medium">{notification.message}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
             Paramètres Système
@@ -141,21 +322,6 @@ export default function AdminSettings() {
         </div>
       </div>
 
-      {/* Success Message */}
-      {saved && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-center gap-3"
-        >
-          <Check size={20} className="text-green-600" />
-          <span className="text-green-800 font-medium">
-            Paramètres sauvegardés avec succès
-          </span>
-        </motion.div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Paramètres Généraux */}
         <motion.div
@@ -177,9 +343,9 @@ export default function AdminSettings() {
               </label>
               <input
                 type="text"
-                value={settings.siteName}
+                value={safeSettings.siteName}
                 onChange={(e) =>
-                  setSettings({ ...settings, siteName: e.target.value })
+                  setSettings({ ...safeSettings, siteName: e.target.value })
                 }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -191,9 +357,9 @@ export default function AdminSettings() {
               </label>
               <input
                 type="url"
-                value={settings.siteUrl}
+                value={safeSettings.siteUrl}
                 onChange={(e) =>
-                  setSettings({ ...settings, siteUrl: e.target.value })
+                  setSettings({ ...safeSettings, siteUrl: e.target.value })
                 }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -205,9 +371,9 @@ export default function AdminSettings() {
               </label>
               <input
                 type="email"
-                value={settings.adminEmail}
+                value={safeSettings.adminEmail}
                 onChange={(e) =>
-                  setSettings({ ...settings, adminEmail: e.target.value })
+                  setSettings({ ...safeSettings, adminEmail: e.target.value })
                 }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -218,9 +384,9 @@ export default function AdminSettings() {
                 Langue par défaut
               </label>
               <select
-                value={settings.defaultLanguage}
+                value={safeSettings.defaultLanguage}
                 onChange={(e) =>
-                  setSettings({ ...settings, defaultLanguage: e.target.value })
+                  setSettings({ ...safeSettings, defaultLanguage: e.target.value })
                 }
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -252,10 +418,10 @@ export default function AdminSettings() {
               </label>
               <input
                 type="number"
-                value={settings.maxUploadSize}
+                value={safeSettings.maxUploadSize}
                 onChange={(e) =>
                   setSettings({
-                    ...settings,
+                    ...safeSettings,
                     maxUploadSize: parseInt(e.target.value),
                   })
                 }
@@ -269,10 +435,10 @@ export default function AdminSettings() {
               </label>
               <input
                 type="number"
-                value={settings.sessionTimeout}
+                value={safeSettings.sessionTimeout}
                 onChange={(e) =>
                   setSettings({
-                    ...settings,
+                    ...safeSettings,
                     sessionTimeout: parseInt(e.target.value),
                   })
                 }
@@ -285,10 +451,10 @@ export default function AdminSettings() {
                 Thème
               </label>
               <select
-                value={settings.theme}
+                value={safeSettings.theme}
                 onChange={(e) =>
                   setSettings({
-                    ...settings,
+                    ...safeSettings,
                     theme: e.target.value as "light" | "dark" | "auto",
                   })
                 }
@@ -326,17 +492,17 @@ export default function AdminSettings() {
               <button
                 onClick={() =>
                   setSettings({
-                    ...settings,
-                    maintenanceMode: !settings.maintenanceMode,
+                    ...safeSettings,
+                    maintenanceMode: !safeSettings.maintenanceMode,
                   })
                 }
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.maintenanceMode ? "bg-blue-600" : "bg-gray-200"
+                  safeSettings.maintenanceMode ? "bg-blue-600" : "bg-gray-200"
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.maintenanceMode ? "translate-x-6" : "translate-x-1"
+                    safeSettings.maintenanceMode ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
               </button>
@@ -354,17 +520,17 @@ export default function AdminSettings() {
               <button
                 onClick={() =>
                   setSettings({
-                    ...settings,
-                    allowRegistration: !settings.allowRegistration,
+                    ...safeSettings,
+                    allowRegistration: !safeSettings.allowRegistration,
                   })
                 }
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.allowRegistration ? "bg-blue-600" : "bg-gray-200"
+                  safeSettings.allowRegistration ? "bg-blue-600" : "bg-gray-200"
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.allowRegistration
+                    safeSettings.allowRegistration
                       ? "translate-x-6"
                       : "translate-x-1"
                   }`}
@@ -382,17 +548,17 @@ export default function AdminSettings() {
               <button
                 onClick={() =>
                   setSettings({
-                    ...settings,
-                    emailNotifications: !settings.emailNotifications,
+                    ...safeSettings,
+                    emailNotifications: !safeSettings.emailNotifications,
                   })
                 }
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.emailNotifications ? "bg-blue-600" : "bg-gray-200"
+                  safeSettings.emailNotifications ? "bg-blue-600" : "bg-gray-200"
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.emailNotifications
+                    safeSettings.emailNotifications
                       ? "translate-x-6"
                       : "translate-x-1"
                   }`}

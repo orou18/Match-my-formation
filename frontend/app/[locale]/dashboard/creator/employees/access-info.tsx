@@ -125,7 +125,7 @@ export default function EmployeeAccessInfo() {
               URL de connexion employé :
             </p>
             <p className="text-xs text-blue-700 font-mono bg-white px-2 py-1 rounded mt-1">
-              http://localhost:3000/fr/login-employee
+              http://localhost:3000/fr/login
             </p>
           </div>
         </div>

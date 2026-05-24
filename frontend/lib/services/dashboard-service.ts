@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * Service Dashboard - Version corrigée
+ * 
+ * CHANGEMENTS :
+ * - Suppression de buildAuthHeaders() qui utilisait localStorage
+ * - Tous les appels passent maintenant par les API routes Next.js
+ * - Les API routes Next.js gèrent l'authentification via session.accessToken
+ * - credentials: "include" pour inclure les cookies NextAuth
+ */
+
 type JsonObject = Record<string, unknown>;
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -23,84 +33,89 @@ async function readJson<T>(response: Response): Promise<T> {
   }
 }
 
-function buildAuthHeaders() {
-  const headers: Record<string, string> = {};
-
-  if (typeof window === "undefined") {
-    return headers;
-  }
-
-  // Utiliser les mêmes tokens que le service d'authentification
-  const token =
-    window.localStorage.getItem("auth_token") ||
-    window.localStorage.getItem("nextauth.session-token") ||
-    window.localStorage.getItem("token") ||
-    window.localStorage.getItem("employee_token");
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  headers["Content-Type"] = "application/json";
-  headers["Accept"] = "application/json";
-
-  return headers;
-}
-
-function getApiBaseUrl(): string {
-  const rawUrl = process.env.NEXT_PUBLIC_API_URL;
-  return rawUrl && rawUrl !== "undefined"
-    ? rawUrl.replace(/\/$/, "")
-    : "http://127.0.0.1:8000";
-}
-
 export const dashboardService = {
+  /**
+   * Récupère les données du dashboard creator
+   * Passe par l'API route Next.js qui gère l'authentification
+   */
   async getCreatorDashboard<T = JsonObject>() {
     return readJson<T>(
       await fetch("/api/creator/dashboard", {
         cache: "no-store",
-        headers: buildAuthHeaders(),
+        credentials: "include", // Inclut les cookies NextAuth
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
       })
     );
   },
 
+  /**
+   * Récupère les données du dashboard student
+   * Passe par l'API route Next.js qui gère l'authentification
+   */
   async getStudentDashboard<T = JsonObject>() {
     return readJson<T>(
-      await fetch(`/api/student/dashboard`, {
+      await fetch("/api/student/dashboard", {
         cache: "no-store",
-        headers: buildAuthHeaders(),
+        credentials: "include", // Inclut les cookies NextAuth
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
       })
     );
   },
 
+  /**
+   * Récupère les analytics admin
+   * Passe par l'API route Next.js qui gère l'authentification
+   */
   async getAdminAnalytics<T = JsonObject>(period = "30d", metric = "revenue") {
-    const baseUrl = getApiBaseUrl();
     const params = new URLSearchParams({ period, metric });
     return readJson<T>(
-      await fetch(`${baseUrl}/api/admin/stats?${params.toString()}`, {
+      await fetch(`/api/admin/stats?${params.toString()}`, {
         cache: "no-store",
-        headers: buildAuthHeaders(),
+        credentials: "include", // Inclut les cookies NextAuth
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
       })
     );
   },
 
+  /**
+   * Récupère les paramètres de branding
+   * Passe par l'API route Next.js qui gère l'authentification
+   */
   async getBrandingSettings<T = JsonObject>() {
-    const baseUrl = getApiBaseUrl();
     return readJson<T>(
-      await fetch(`${baseUrl}/api/admin/branding`, {
+      await fetch("/api/admin/branding", {
         cache: "no-store",
-        headers: buildAuthHeaders(),
+        credentials: "include", // Inclut les cookies NextAuth
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
       })
     );
   },
 
+  /**
+   * Met à jour les paramètres de branding
+   * Passe par l'API route Next.js qui gère l'authentification
+   */
   async updateBrandingSettings<T = JsonObject>(data: FormData) {
-    const baseUrl = getApiBaseUrl();
     return readJson<T>(
-      await fetch(`${baseUrl}/api/admin/branding`, {
+      await fetch("/api/admin/branding", {
         method: "PUT",
         body: data,
-        headers: buildAuthHeaders(),
+        credentials: "include", // Inclut les cookies NextAuth
+        headers: {
+          "Accept": "application/json",
+        },
       })
     );
   },

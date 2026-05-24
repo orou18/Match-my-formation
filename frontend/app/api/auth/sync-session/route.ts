@@ -1,76 +1,126 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchBackendWithRequestAuth } from "@/lib/api/request-backend";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/auth-options";
+import { fetchBackend } from "@/lib/api/backend-fetch";
 
+/**
+ * POST /api/auth/sync-session
+ * 
+ * Rôle: Synchroniser la session NextAuth avec Laravel Sanctum
+ * 
+ * CORRECTION APPLIQUÉE:
+ * - Avant: Utilisait cookies authToken/userId/userRole (obsolète)
+ * - Après: Utilise getServerSession() pour extraire accessToken du JWT NextAuth
+ * 
+ * Flux:
+ * 1. Récupérer session NextAuth (contient accessToken dans JWT)
+ * 2. Extraire session.user.accessToken (token Laravel Sanctum)
+ * 3. Appeler Laravel /api/me avec header Authorization: Bearer {token}
+ * 4. Retourner user + session cohérente
+ */
 export async function POST(request: NextRequest) {
   try {
-    const response = await fetchBackendWithRequestAuth(request, "/api/me", {
+    // 1. Récupérer session NextAuth (contient accessToken dans JWT)
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      console.warn("[sync-session] Pas de session NextAuth");
+      return NextResponse.json(
+        { success: false, message: "Non authentifié" },
+        { status: 401 }
+      );
+    }
+
+    const accessToken = session.user.accessToken;
+    
+    if (!accessToken) {
+      console.warn("[sync-session] Pas de accessToken dans session");
+      return NextResponse.json(
+        { success: false, message: "Token d'authentification manquant" },
+        { status: 401 }
+      );
+    }
+
+    console.log("[sync-session] Session NextAuth trouvée, accessToken présent");
+
+    // 2. Appeler Laravel /api/me avec le token
+    const response = await fetchBackend("/api/me", {
       method: "GET",
+      headers: {
+        "Accept": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+      },
     });
 
     const payload = await response.json().catch(() => null);
 
     if (!response.ok || !payload?.id) {
-      const nextResponse = NextResponse.json(
-        {
-          success: false,
-          message: payload?.message || "Session invalide ou expirée",
+      console.error("[sync-session] Laravel /api/me échec:", response.status, payload);
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "Session Laravel invalide ou expirée",
+          details: payload?.message 
         },
         { status: response.status || 401 }
       );
-
-      nextResponse.cookies.set("userId", "", { maxAge: 0, path: "/" });
-      nextResponse.cookies.set("userRole", "", { maxAge: 0, path: "/" });
-      nextResponse.cookies.set("authToken", "", { maxAge: 0, path: "/" });
-
-      return nextResponse;
     }
 
-    const nextResponse = NextResponse.json({
+    console.log("[sync-session] Laravel /api/me succès, user:", payload.id);
+
+    // 3. Retourner succès avec session cohérente
+    return NextResponse.json({
       success: true,
       user: payload,
+      session: {
+        id: session.user.id,
+        role: session.user.role,
+        email: session.user.email,
+        name: session.user.name,
+      },
+      message: "Session synchronisée avec succès",
     });
 
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : request.cookies.get("authToken")?.value;
+  } catch (error) {
+    console.error("[sync-session] Erreur:", error);
+    return NextResponse.json(
+      { success: false, message: "Erreur serveur lors de la synchronisation" },
+      { status: 500 }
+    );
+  }
+}
 
-    nextResponse.cookies.set("userId", String(payload.id), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
-
-    nextResponse.cookies.set("userRole", String(payload.role || ""), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
-
-    if (token) {
-      nextResponse.cookies.set("authToken", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-      });
+/**
+ * GET /api/auth/sync-session
+ * 
+ * Vérifie simplement si la session NextAuth est valide
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { authenticated: false, message: "Non authentifié" },
+        { status: 401 }
+      );
     }
 
-    return nextResponse;
-  } catch (error) {
-    console.error("Erreur de synchronisation de session:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Impossible de synchroniser la session avec le backend",
+    return NextResponse.json({
+      authenticated: true,
+      user: {
+        id: session.user.id,
+        role: session.user.role,
+        email: session.user.email,
+        name: session.user.name,
       },
-      { status: 502 }
+    });
+
+  } catch (error) {
+    console.error("[sync-session GET] Erreur:", error);
+    return NextResponse.json(
+      { authenticated: false, message: "Erreur serveur" },
+      { status: 500 }
     );
   }
 }

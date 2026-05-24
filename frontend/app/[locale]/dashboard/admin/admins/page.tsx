@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   Plus,
@@ -19,6 +21,10 @@ import {
   EyeOff,
   Check,
   X,
+  AlertCircle,
+  CheckCircle,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 
 interface Permission {
@@ -37,6 +43,12 @@ interface Admin {
   status: "active" | "inactive";
   lastLogin: string;
   avatar?: string;
+}
+
+interface Notification {
+  id: string;
+  type: "success" | "warning" | "error" | "info";
+  message: string;
 }
 
 const allPermissions: Permission[] = [
@@ -114,188 +126,233 @@ const allPermissions: Permission[] = [
   },
 ];
 
+/**
+ * Helper pour gérer les réponses 401 (session expirée)
+ */
+const handleAuthError = (response: Response, router: ReturnType<typeof useRouter>, locale: string) => {
+  if (response.status === 401) {
+    console.error("[Auth] Session expirée - redirection vers login");
+    router.push(`/${locale}/login`);
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Configuration commune pour les requêtes fetch
+ */
+const getFetchOptions = (options: RequestInit = {}): RequestInit => {
+  return {
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...options.headers,
+    },
+    ...options,
+  };
+};
+
 export default function AdminAdmins() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  
+  // Récupérer le locale depuis les params
+  const [locale, setLocale] = useState("fr");
+  useEffect(() => {
+    // Le locale est géré par le layout
+  }, []);
+
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
-  const [newAdminRole, setNewAdminRole] = useState<"admin" | "super_admin">(
-    "admin"
-  );
+  const [newAdminRole, setNewAdminRole] = useState<"admin" | "super_admin">("admin");
   const [newAdmin, setNewAdmin] = useState({ name: "", email: "" });
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
+  // Vérifier l'authentification au chargement
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push(`/${locale}/login`);
+    }
+  }, [status, router, locale]);
+
+  // Ajouter une notification
+  const addNotification = (type: Notification["type"], message: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setNotifications(prev => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  // DEBUG: Session NextAuth
+  useEffect(() => {
+    console.log("[ADMINS DEBUG] === Début debug session ===");
+    console.log("[ADMINS DEBUG] status:", status);
+    console.log("[ADMINS DEBUG] hasSession:", !!session);
+    console.log("[ADMINS DEBUG] userId:", session?.user?.id);
+    console.log("[ADMINS DEBUG] role:", session?.user?.role);
+    console.log("[ADMINS DEBUG] === Fin debug session ===");
+  }, [session, status]);
+
+  // Charger les admins depuis l'API
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") return;
+
     const loadAdmins = async () => {
+      console.log("[ADMINS DEBUG] === Début appel API admins ===");
+      console.log("[ADMINS DEBUG] endpoint:", "/api/admin/admins");
+
       try {
-        const response = await fetch("/api/admin/admins");
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch("/api/admin/admins", getFetchOptions());
+        
+        // Gestion erreur 401
+        if (handleAuthError(response, router, locale)) {
+          return;
+        }
+
+        console.log("[ADMINS DEBUG] Response status:", response.status);
+
         if (response.ok) {
           const data = await response.json();
-          setAdmins(data.admins);
+          // Safe extraction - garantit un tableau
+          const adminsData = Array.isArray(data.admins) ? data.admins : [];
+          setAdmins(adminsData);
+          console.log("[ADMINS DEBUG] Admins chargés:", adminsData.length);
         } else {
-          console.error("Erreur lors du chargement des administrateurs");
+          const error = await response.json().catch(() => ({}));
+          console.error("[ADMINS DEBUG] Erreur:", error);
+          addNotification("warning", "Impossible de charger les administrateurs");
+          setAdmins([]);
         }
-      } catch (error) {
-        console.error("Erreur:", error);
+      } catch (err) {
+        console.error("[ADMINS DEBUG] Erreur réseau:", err);
+        addNotification("error", "Erreur de connexion");
+        setError("Impossible de charger les administrateurs");
+        setAdmins([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadAdmins();
-  }, []);
+  }, [status, router, locale]);
 
-  const mockAdmins: Admin[] = [
-    {
-      id: "1",
-      name: "Jean Dupont",
-      email: "jean.dupont@platform.com",
-      role: "super_admin",
-      permissions: allPermissions.map((p) => p.id),
-      status: "active",
-      lastLogin: "2024-03-18T14:30:00Z",
-      avatar: "/temoignage.png",
-    },
-    {
-      id: "2",
-      name: "Marie Laurent",
-      email: "marie.laurent@platform.com",
-      role: "admin",
-      permissions: [
-        "users_view",
-        "users_edit",
-        "creators_view",
-        "content_view",
-        "analytics_view",
-      ],
-      status: "active",
-      lastLogin: "2024-03-18T10:15:00Z",
-      avatar: "/temoignage.png",
-    },
-    {
-      id: "3",
-      name: "Pierre Martin",
-      email: "pierre.martin@platform.com",
-      role: "admin",
-      permissions: [
-        "users_view",
-        "creators_view",
-        "creators_manage",
-        "content_manage",
-      ],
-      status: "active",
-      lastLogin: "2024-03-17T16:45:00Z",
-      avatar: "/temoignage.png",
-    },
-    {
-      id: "4",
-      name: "Sophie Bernard",
-      email: "sophie.bernard@platform.com",
-      role: "admin",
-      permissions: [
-        "content_view",
-        "content_manage",
-        "ads_manage",
-        "webinars_manage",
-      ],
-      status: "inactive",
-      lastLogin: "2024-03-15T09:20:00Z",
-      avatar: "/temoignage.png",
-    },
-  ];
+  // Safe rendering - protection contre undefined
+  const safeAdmins = Array.isArray(admins) ? admins : [];
+  
+  const filteredAdmins = safeAdmins.filter(
+    (admin) =>
+      admin && (
+        admin.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        admin.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+  );
 
   const handleCreateAdmin = async () => {
     if (!newAdmin.name || !newAdmin.email || !newAdminRole) {
-      alert("Veuillez remplir tous les champs obligatoires");
+      addNotification("warning", "Veuillez remplir tous les champs obligatoires");
       return;
     }
 
     try {
-      const response = await fetch("/api/admin/admins", {
+      const response = await fetch("/api/admin/admins", getFetchOptions({
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           name: newAdmin.name,
           email: newAdmin.email,
           role: newAdminRole,
           permissions: selectedPermissions,
         }),
-      });
+      }));
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
 
       if (response.ok) {
         const createdAdmin = await response.json();
-        setAdmins([...admins, createdAdmin]);
+        setAdmins([...safeAdmins, createdAdmin]);
         setShowCreateModal(false);
         setNewAdmin({ name: "", email: "" });
         setSelectedPermissions([]);
         setNewAdminRole("admin");
-        alert("Administrateur créé avec succès!");
+        addNotification("success", "Administrateur créé avec succès");
       } else {
-        const error = await response.json();
-        alert(error.error || "Erreur lors de la création");
+        const error = await response.json().catch(() => ({}));
+        addNotification("error", error.error || "Erreur lors de la création");
       }
-    } catch (error) {
-      console.error("Erreur:", error);
-      alert("Erreur lors de la création");
+    } catch (err) {
+      console.error("[ADMINS DEBUG] Erreur création:", err);
+      addNotification("error", "Erreur lors de la création");
     }
   };
 
   const handleUpdateAdmin = async (adminId: string, updates: any) => {
     try {
-      const response = await fetch("/api/admin/admins", {
+      const response = await fetch("/api/admin/admins", getFetchOptions({
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ id: adminId, ...updates }),
-      });
+      }));
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
 
       if (response.ok) {
         const updatedAdmin = await response.json();
         setAdmins(
-          admins.map((admin) => (admin.id === adminId ? updatedAdmin : admin))
+          safeAdmins.map((admin) => (admin.id === adminId ? updatedAdmin : admin))
         );
-        alert("Administrateur mis à jour avec succès!");
+        addNotification("success", "Administrateur mis à jour avec succès");
       } else {
-        const error = await response.json();
-        alert(error.error || "Erreur lors de la mise à jour");
+        const error = await response.json().catch(() => ({}));
+        addNotification("error", error.error || "Erreur lors de la mise à jour");
       }
-    } catch (error) {
-      console.error("Erreur:", error);
-      alert("Erreur lors de la mise à jour");
+    } catch (err) {
+      console.error("[ADMINS DEBUG] Erreur mise à jour:", err);
+      addNotification("error", "Erreur lors de la mise à jour");
     }
   };
 
   const handleDeleteAdmin = async (adminId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cet administrateur?")) {
+    // Confirmation dialog stylée via modal (pas de confirm())
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet administrateur?")) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/admin/admins?id=${adminId}`, {
+      const response = await fetch(`/api/admin/admins?id=${adminId}`, getFetchOptions({
         method: "DELETE",
-      });
+      }));
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
 
       if (response.ok) {
-        setAdmins(admins.filter((admin) => admin.id !== adminId));
-        alert("Administrateur supprimé avec succès!");
+        setAdmins(safeAdmins.filter((admin) => admin.id !== adminId));
+        addNotification("success", "Administrateur supprimé avec succès");
       } else {
-        const error = await response.json();
-        alert(error.error || "Erreur lors de la suppression");
+        const error = await response.json().catch(() => ({}));
+        addNotification("error", error.error || "Erreur lors de la suppression");
       }
-    } catch (error) {
-      console.error("Erreur:", error);
-      alert("Erreur lors de la suppression");
+    } catch (err) {
+      console.error("[ADMINS DEBUG] Erreur suppression:", err);
+      addNotification("error", "Erreur lors de la suppression");
     }
   };
-
-  const filteredAdmins = admins.filter(
-    (admin) =>
-      admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      admin.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const getRoleBadge = (role: string) => {
     return role === "super_admin"
@@ -340,24 +397,141 @@ export default function AdminAdmins() {
     }
   };
 
-  if (isLoading) {
+  // Loading state - Skeleton cards
+  if (status === "loading" || isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="p-6 space-y-6">
+        {/* Header skeleton */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+
+        {/* Stats skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-gray-200 rounded-lg animate-pulse"></div>
+                <div className="space-y-2">
+                  <div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* List skeleton */}
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="h-12 w-12 bg-gray-200 rounded-full animate-pulse"></div>
+                <div className="space-y-2 flex-1">
+                  <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state - UI stylée
+  if (error) {
+    return (
+      <div className="p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-sm border border-red-200 p-8 text-center max-w-md mx-auto"
+        >
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 mb-2">
+            Impossible de charger les administrateurs
+          </h3>
+          <p className="text-gray-500 mb-6">{error}</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+                // Recharger les données
+                fetch("/api/admin/admins", getFetchOptions())
+                  .then(res => res.json())
+                  .then(data => {
+                    setAdmins(Array.isArray(data.admins) ? data.admins : []);
+                    setIsLoading(false);
+                  })
+                  .catch(() => setIsLoading(false));
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <RefreshCw size={18} />
+              Réessayer
+            </button>
+            <button
+              onClick={() => router.push(`/${locale}/dashboard/admin`)}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Retour dashboard
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
+      {/* Notifications Toast */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        <AnimatePresence>
+          {notifications.map((notification) => (
+            <motion.div
+              key={notification.id}
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${
+                notification.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-800"
+                  : notification.type === "error"
+                  ? "bg-red-50 border border-red-200 text-red-800"
+                  : notification.type === "warning"
+                  ? "bg-yellow-50 border border-yellow-200 text-yellow-800"
+                  : "bg-blue-50 border border-blue-200 text-blue-800"
+              }`}
+            >
+              {notification.type === "success" ? (
+                <CheckCircle size={18} />
+              ) : notification.type === "error" ? (
+                <AlertCircle size={18} />
+              ) : (
+                <AlertTriangle size={18} />
+              )}
+              <span className="text-sm font-medium">{notification.message}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
             Gestion Administrateurs
           </h1>
           <p className="text-gray-600 mt-1">
-            {filteredAdmins.length} administrateurs
+            {filteredAdmins.length} administrateur{filteredAdmins.length > 1 ? 's' : ''}
           </p>
         </div>
         <button
@@ -370,7 +544,7 @@ export default function AdminAdmins() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-lg bg-purple-50">
@@ -378,7 +552,7 @@ export default function AdminAdmins() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">
-                {admins.length}
+                {safeAdmins.length}
               </p>
               <p className="text-sm text-gray-600">Total Admins</p>
             </div>
@@ -391,7 +565,7 @@ export default function AdminAdmins() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">
-                {admins.filter((a) => a.status === "active").length}
+                {safeAdmins.filter((a) => a.status === "active").length}
               </p>
               <p className="text-sm text-gray-600">Actifs</p>
             </div>
@@ -413,7 +587,7 @@ export default function AdminAdmins() {
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
         <div className="relative">
           <Search
             size={18}
@@ -429,98 +603,127 @@ export default function AdminAdmins() {
         </div>
       </div>
 
+      {/* Empty State */}
+      {filteredAdmins.length === 0 && !isLoading && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+          <Shield size={48} className="mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Aucun administrateur trouvé
+          </h3>
+          <p className="text-gray-500 mb-6">
+            {searchTerm ? "Essayez de modifier votre recherche" : "Commencez par créer votre premier administrateur"}
+          </p>
+          {!searchTerm && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Créer un admin
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Admins List */}
-      <div className="space-y-4">
-        {filteredAdmins.map((admin, index) => (
-          <motion.div
-            key={admin.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
-          >
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                    <Shield size={20} className="text-gray-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">{admin.name}</h3>
-                    <p className="text-sm text-gray-500">{admin.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold ${getRoleBadge(admin.role)}`}
-                  >
-                    {admin.role === "super_admin" ? "Super Admin" : "Admin"}
-                  </span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusBadge(admin.status)}`}
-                  >
-                    {admin.status === "active" ? "Actif" : "Inactif"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                  Permissions ({admin.permissions.length})
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {admin.permissions.slice(0, 6).map((permissionId) => {
-                    const permission = allPermissions.find(
-                      (p) => p.id === permissionId
-                    );
-                    return permission ? (
+      {filteredAdmins.length > 0 && (
+        <div className="space-y-4">
+          {filteredAdmins.map((admin, index) => {
+            // Safe rendering pour permissions
+            const safePermissions = Array.isArray(admin.permissions) ? admin.permissions : [];
+            
+            return (
+              <motion.div
+                key={admin.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+              >
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                        <Shield size={20} className="text-gray-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900">{admin.name}</h3>
+                        <p className="text-sm text-gray-500">{admin.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <span
-                        key={permissionId}
-                        className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
+                        className={`px-3 py-1 rounded-full text-xs font-bold ${getRoleBadge(admin.role)}`}
                       >
-                        {permission.name}
+                        {admin.role === "super_admin" ? "Super Admin" : "Admin"}
                       </span>
-                    ) : null;
-                  })}
-                  {admin.permissions.length > 6 && (
-                    <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                      +{admin.permissions.length - 6} autres
-                    </span>
-                  )}
-                </div>
-              </div>
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusBadge(admin.status)}`}
+                      >
+                        {admin.status === "active" ? "Actif" : "Inactif"}
+                      </span>
+                    </div>
+                  </div>
 
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <span>
-                  Dernière connexion:{" "}
-                  {admin.lastLogin
-                    ? new Date(admin.lastLogin).toLocaleDateString("fr-FR")
-                    : "Jamais"}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() =>
-                      handleUpdateAdmin(admin.id, {
-                        status:
-                          admin.status === "active" ? "inactive" : "active",
-                      })
-                    }
-                    className="text-blue-600 hover:text-blue-700"
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteAdmin(admin.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                      Permissions ({safePermissions.length})
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {safePermissions.slice(0, 6).map((permissionId) => {
+                        const permission = allPermissions.find(
+                          (p) => p.id === permissionId
+                        );
+                        return permission ? (
+                          <span
+                            key={permissionId}
+                            className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
+                          >
+                            {permission.name}
+                          </span>
+                        ) : null;
+                      })}
+                      {safePermissions.length > 6 && (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                          +{safePermissions.length - 6} autres
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <span>
+                      Dernière connexion:{" "}
+                      {admin.lastLogin
+                        ? new Date(admin.lastLogin).toLocaleDateString("fr-FR")
+                        : "Jamais"}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() =>
+                          handleUpdateAdmin(admin.id, {
+                            status:
+                              admin.status === "active" ? "inactive" : "active",
+                          })
+                        }
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAdmin(admin.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Create Admin Modal */}
       {showCreateModal && (
@@ -540,11 +743,15 @@ export default function AdminAdmins() {
                 <input
                   type="text"
                   placeholder="Nom complet"
+                  value={newAdmin.name}
+                  onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
                   className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                   type="email"
                   placeholder="Email"
+                  value={newAdmin.email}
+                  onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
                   className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -648,7 +855,10 @@ export default function AdminAdmins() {
               >
                 Annuler
               </button>
-              <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button
+                onClick={handleCreateAdmin}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 Créer l'Admin
               </button>
             </div>

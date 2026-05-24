@@ -319,7 +319,7 @@ export default function AdminSidebar() {
               </div>
             ))}
           </nav>
-
+          
           {/* Footer */}
           <div className="p-6 border-t border-gray-200">
             <Link

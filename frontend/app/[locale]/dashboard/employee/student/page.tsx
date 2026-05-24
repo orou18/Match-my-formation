@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Video,
@@ -20,6 +21,7 @@ import {
   MoreVertical,
   Target,
   BarChart3,
+  LogOut,
 } from "lucide-react";
 import { BrandingProvider } from "./components/WhiteBrandingProvider";
 import ModernDashboard from "./components/ModernDashboard";
@@ -100,8 +102,11 @@ interface EmployeePathway {
 export default function EmployeeStudentPage() {
   const router = useRouter();
   const params = useParams();
-  const locale = params.locale || "fr";
-
+  const locale = typeof params?.locale === "string" ? params.locale : "fr";
+  
+  // NextAuth session - source de vérité unique
+  const { data: session, status } = useSession();
+  
   const [dashboard, setDashboard] = useState<EmployeeDashboard | null>(null);
   const [videos, setVideos] = useState<EmployeeVideo[]>([]);
   const [pathways, setPathways] = useState<EmployeePathway[]>([]);
@@ -111,9 +116,18 @@ export default function EmployeeStudentPage() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
+  // Attendre que la session soit chargée
   useEffect(() => {
+    if (status === "loading") return;
+    
+    // Redirect si non authentifié
+    if (status === "unauthenticated") {
+      router.push(`/${locale}/login`);
+      return;
+    }
+    
     loadDashboard();
-  }, []);
+  }, [status, session]);
 
   useEffect(() => {
     if (activeTab === "videos") {
@@ -123,13 +137,16 @@ export default function EmployeeStudentPage() {
     }
   }, [activeTab, searchTerm, filterCategory, filterStatus]);
 
+  const withLocale = (path: string) =>
+    `/${locale}${path.startsWith("/") ? path : `/${path}`}`;
+
   const loadDashboard = async () => {
     try {
-      // Vérifier si l'employé est authentifié
-      const token = localStorage.getItem('employee_token');
+      // Utiliser session.accessToken de NextAuth
+      const token = session?.user?.accessToken;
       if (!token) {
-        console.error("Aucun token employé trouvé");
-        router.push(`/${locale}/login-employee`);
+        console.error("[EmployeeStudent] No access token in session");
+        router.push(withLocale("/login"));
         return;
       }
 
@@ -145,19 +162,17 @@ export default function EmployeeStudentPage() {
 
       if (response.ok) {
         const result = await response.json();
-        setDashboard(result.data);
+        setDashboard(result.data || null);
       } else {
         const error = await response.json().catch(() => ({}));
         console.error("Erreur chargement dashboard:", error);
         if (response.status === 401) {
           // Token invalide, rediriger vers login
-          localStorage.removeItem('employee_token');
-          localStorage.removeItem('employee_info');
-          router.push(`/${locale}/login-employee`);
+          router.push(withLocale("/login"));
         }
       }
     } catch (error) {
-      console.error("Erreur:", error);
+      console.error("[EmployeeStudent] Error loading dashboard:", error);
     } finally {
       setIsLoading(false);
     }
@@ -165,18 +180,19 @@ export default function EmployeeStudentPage() {
 
   const loadVideos = async () => {
     try {
-      const token = localStorage.getItem('employee_token');
+      // Utiliser session.accessToken de NextAuth
+      const token = session?.user?.accessToken;
       if (!token) {
-        console.error("Aucun token employé trouvé");
+        console.error("[EmployeeStudent] No access token in session");
         return;
       }
 
-      const params = new URLSearchParams({
+      const queryParams = new URLSearchParams({
         ...(searchTerm && { search: searchTerm }),
         ...(filterCategory !== "all" && { category: filterCategory }),
       });
 
-      const response = await fetch(`/api/employee/student/videos?${params.toString()}`, {
+      const response = await fetch(`/api/employee/student/videos?${queryParams.toString()}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -193,30 +209,29 @@ export default function EmployeeStudentPage() {
         const error = await response.json().catch(() => ({}));
         console.error("Erreur chargement vidéos:", error);
         if (response.status === 401) {
-          localStorage.removeItem('employee_token');
-          localStorage.removeItem('employee_info');
-          router.push(`/${locale}/login-employee`);
+          router.push(withLocale("/login"));
         }
       }
     } catch (error) {
-      console.error("Erreur:", error);
+      console.error("[EmployeeStudent] Error loading videos:", error);
     }
   };
 
   const loadPathways = async () => {
     try {
-      const token = localStorage.getItem('employee_token');
+      // Utiliser session.accessToken de NextAuth
+      const token = session?.user?.accessToken;
       if (!token) {
-        console.error("Aucun token employé trouvé");
+        console.error("[EmployeeStudent] No access token in session");
         return;
       }
 
-      const params = new URLSearchParams({
+      const queryParams = new URLSearchParams({
         ...(searchTerm && { search: searchTerm }),
         ...(filterStatus !== "all" && { status: filterStatus }),
       });
 
-      const response = await fetch(`/api/employee/student/pathways?${params.toString()}`, {
+      const response = await fetch(`/api/employee/student/pathways?${queryParams.toString()}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -233,21 +248,20 @@ export default function EmployeeStudentPage() {
         const error = await response.json().catch(() => ({}));
         console.error("Erreur chargement parcours:", error);
         if (response.status === 401) {
-          localStorage.removeItem('employee_token');
-          localStorage.removeItem('employee_info');
-          router.push(`/${locale}/login-employee`);
+          router.push(withLocale("/login"));
         }
       }
     } catch (error) {
-      console.error("Erreur:", error);
+      console.error("[EmployeeStudent] Error loading pathways:", error);
     }
   };
 
   const handleVideoComplete = async (videoId: number, watchedDuration: number, isCompleted: boolean) => {
     try {
-      const token = localStorage.getItem('employee_token');
+      // Utiliser session.accessToken de NextAuth
+      const token = session?.user?.accessToken;
       if (!token) {
-        console.error("Aucun token employé trouvé");
+        console.error("[EmployeeStudent] No access token in session");
         return;
       }
 
@@ -272,14 +286,17 @@ export default function EmployeeStudentPage() {
         const error = await response.json().catch(() => ({}));
         console.error("Erreur mise à jour vidéo:", error);
         if (response.status === 401) {
-          localStorage.removeItem('employee_token');
-          localStorage.removeItem('employee_info');
-          router.push(`/${locale}/login-employee`);
+          router.push(withLocale("/login"));
         }
       }
     } catch (error) {
-      console.error("Erreur:", error);
+      console.error("[EmployeeStudent] Error completing video:", error);
     }
+  };
+
+  const handleLogout = async () => {
+    // Déconnexion NextAuth
+    router.push(`/fr/login`);
   };
 
   const getStatusBadge = (status: string) => {
@@ -307,7 +324,8 @@ export default function EmployeeStudentPage() {
     return categories[category] || category;
   };
 
-  if (isLoading) {
+  // Loading state pendant le chargement de la session
+  if (status === "loading" || isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -315,6 +333,7 @@ export default function EmployeeStudentPage() {
     );
   }
 
+  // Fallback si dashboard non chargé
   if (!dashboard) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -354,7 +373,7 @@ export default function EmployeeStudentPage() {
                     Espace de formation
                   </h1>
                   <p className="text-sm text-gray-600">
-                    {dashboard?.creator_info?.name}
+                    {dashboard?.creator_info?.name ?? 'Formateur'}
                   </p>
                 </div>
               </div>
@@ -362,9 +381,10 @@ export default function EmployeeStudentPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => router.push(`/${locale}/login-employee`)}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium text-gray-700 transition-colors"
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium text-gray-700 transition-colors flex items-center gap-2"
                 >
+                  <LogOut className="w-4 h-4" />
                   Déconnexion
                 </motion.button>
               </div>
@@ -414,11 +434,20 @@ export default function EmployeeStudentPage() {
                 exit={{ opacity: 0, y: -20 }}
               >
                 <ModernDashboard
-                  stats={dashboard.stats}
-                  recentActivity={dashboard.recent_activity}
+                  stats={dashboard.stats ?? {
+                    total_videos: 0,
+                    total_pathways: 0,
+                    completed_videos: 0,
+                    completed_pathways: 0,
+                    video_completion_rate: 0,
+                    pathway_completion_rate: 0,
+                  }}
+                  recentActivity={dashboard.recent_activity ?? []}
                   creatorInfo={{
-                    ...dashboard.creator_info,
-                    avatar: dashboard.creator_info.avatar || ""
+                    id: dashboard.creator_info?.id ?? 0,
+                    name: dashboard.creator_info?.name ?? '',
+                    email: dashboard.creator_info?.email ?? '',
+                    avatar: dashboard.creator_info?.avatar ?? ''
                   }}
                 />
               </motion.div>
@@ -432,8 +461,8 @@ export default function EmployeeStudentPage() {
                 exit={{ opacity: 0, y: -20 }}
               >
                 <ProgressCharts
-                  employeeId={1} // Sera remplacé par l'ID réel de l'employé
-                  creatorId={dashboard?.creator_info?.id || 0}
+                  employeeId={session?.user?.id ? parseInt(String(session.user.id)) : 1}
+                  creatorId={dashboard?.creator_info?.id ?? 0}
                 />
               </motion.div>
             )}
@@ -446,16 +475,16 @@ export default function EmployeeStudentPage() {
                 exit={{ opacity: 0, y: -20 }}
               >
                 <ModernPathways
-                  pathways={pathways.map(p => ({
+                  pathways={(pathways ?? []).map(p => ({
                     id: p.id,
                     title: p.title,
                     description: p.description,
                     thumbnail: "/placeholder-pathway.jpg",
                     duration: 3600, // 1 heure par défaut
-                    videos_count: p.videos_count,
-                    completed_videos: Math.floor(p.videos_count * (p.progress_percentage / 100)),
+                    videos_count: p.videos_count ?? 0,
+                    completed_videos: Math.floor((p.videos_count ?? 0) * ((p.progress_percentage ?? 0) / 100)),
                     is_locked: p.status === "inactive",
-                    progress_percentage: p.progress_percentage,
+                    progress_percentage: p.progress_percentage ?? 0,
                     created_at: p.assigned_at,
                     difficulty: "intermediate" as const,
                     category: "business" as const,

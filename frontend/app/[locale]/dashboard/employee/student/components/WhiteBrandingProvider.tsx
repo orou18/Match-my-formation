@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface BrandingConfig {
@@ -33,14 +34,20 @@ interface BrandingProviderProps {
 }
 
 export function BrandingProvider({ children, creatorId }: BrandingProviderProps) {
+  const { data: session } = useSession();
   const [branding, setBranding] = useState<BrandingConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadBranding = async () => {
       try {
-        const token = localStorage.getItem('employee_token');
-        if (!token) return;
+        // Utiliser session.accessToken de NextAuth
+        const token = session?.user?.accessToken;
+        if (!token) {
+          console.warn("[WhiteBrandingProvider] No access token in session");
+          setIsLoading(false);
+          return;
+        }
 
         const response = await fetch(`/api/creator/branding/${creatorId}`, {
           credentials: "include",
@@ -56,24 +63,28 @@ export function BrandingProvider({ children, creatorId }: BrandingProviderProps)
           if (data.success) {
             const settings = data.data;
             setBranding({
-              primaryColor: settings.primary_color,
-              secondaryColor: settings.secondary_color,
-              accentColor: settings.accent_color,
+              primaryColor: settings.primary_color ?? "#007A7A",
+              secondaryColor: settings.secondary_color ?? "#002D36",
+              accentColor: settings.accent_color ?? "#FFB800",
               logo: settings.logo_url || settings.logo || "",
-              companyName: settings.company_name,
+              companyName: settings.company_name || "",
               customCSS: settings.custom_css,
             });
           }
         }
       } catch (error) {
-        console.error("Error loading branding:", error);
+        console.error("[WhiteBrandingProvider] Error loading branding:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadBranding();
-  }, [creatorId]);
+    if (creatorId > 0) {
+      loadBranding();
+    } else {
+      setIsLoading(false);
+    }
+  }, [creatorId, session?.user?.accessToken]);
 
   useEffect(() => {
     if (branding) {

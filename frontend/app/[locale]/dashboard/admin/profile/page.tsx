@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
   Mail,
@@ -25,6 +26,10 @@ import {
   Key,
   Eye,
   EyeOff,
+  AlertCircle,
+  CheckCircle,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 
 interface AdminProfile {
@@ -47,8 +52,44 @@ interface AdminProfile {
   timezone: string;
 }
 
+interface NotificationItem {
+  id: string;
+  type: "success" | "warning" | "error" | "info";
+  message: string;
+}
+
+/**
+ * Helper pour gérer les réponses 401 (session expirée)
+ */
+const handleAuthError = (response: Response, router: ReturnType<typeof useRouter>, locale: string) => {
+  if (response.status === 401) {
+    console.error("[Auth] Session expirée - redirection vers login");
+    router.push(`/${locale}/login`);
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Configuration commune pour les requêtes fetch
+ */
+const getFetchOptions = (options: RequestInit = {}): RequestInit => {
+  return {
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...options.headers,
+    },
+    ...options,
+  };
+};
+
 export default function AdminProfile() {
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const [locale, setLocale] = useState("fr");
+  
   const [profile, setProfile] = useState<AdminProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -61,54 +102,114 @@ export default function AdminProfile() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [editProfile, setEditProfile] = useState<Partial<AdminProfile>>({});
+  const [toastNotifications, setToastNotifications] = useState<NotificationItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
+  // Vérifier l'authentification au chargement
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push(`/${locale}/login`);
+    }
+  }, [status, router, locale]);
+
+  // Ajouter une notification toast
+  const addToast = (type: NotificationItem["type"], message: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setToastNotifications(prev => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setToastNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  // DEBUG: Session NextAuth
+  useEffect(() => {
+    console.log("[PROFILE DEBUG] === Début debug session ===");
+    console.log("[PROFILE DEBUG] status:", status);
+    console.log("[PROFILE DEBUG] hasSession:", !!session);
+    console.log("[PROFILE DEBUG] userId:", session?.user?.id);
+    console.log("[PROFILE DEBUG] role:", session?.user?.role);
+    console.log("[PROFILE DEBUG] === Fin debug session ===");
+  }, [session, status]);
+
+  // Charger le profile depuis l'API
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") return;
+
     const loadProfile = async () => {
+      console.log("[PROFILE DEBUG] === Début appel API profile ===");
+      console.log("[PROFILE DEBUG] endpoint:", "/api/admin/profile");
+
       try {
-        const response = await fetch("/api/admin/profile");
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch("/api/admin/profile", getFetchOptions());
+        
+        // Gestion erreur 401
+        if (handleAuthError(response, router, locale)) {
+          return;
+        }
+
+        console.log("[PROFILE DEBUG] Response status:", response.status);
+
         if (response.ok) {
           const data = await response.json();
-          setProfile(data.profile);
-          setEditProfile(data.profile);
+          // Safe extraction
+          const profileData = data.profile || data.user || data;
+          setProfile(profileData);
+          setEditProfile(profileData);
+          console.log("[PROFILE DEBUG] Profile chargé:", profileData);
         } else {
-          console.error("Erreur lors du chargement du profil");
+          const error = await response.json().catch(() => ({}));
+          console.error("[PROFILE DEBUG] Erreur:", error);
+          addToast("warning", "Impossible de charger le profil");
+          setError("Impossible de charger le profil");
         }
-      } catch (error) {
-        console.error("Erreur:", error);
+      } catch (err) {
+        console.error("[PROFILE DEBUG] Erreur réseau:", err);
+        addToast("error", "Erreur de connexion");
+        setError("Erreur de connexion");
       } finally {
         setIsLoading(false);
       }
     };
 
     loadProfile();
-  }, []);
+  }, [status, router, locale]);
+
+  // Safe rendering - protection contre undefined
+  const safeProfile = profile ?? {} as AdminProfile;
+  const safePermissions = Array.isArray(profile?.permissions) ? profile.permissions : [];
 
   const handleSaveProfile = async () => {
     if (!profile) return;
 
     setIsSaving(true);
     try {
-      const response = await fetch("/api/admin/profile", {
+      const response = await fetch("/api/admin/profile", getFetchOptions({
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(editProfile),
-      });
+      }));
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
 
       if (response.ok) {
         const updatedProfile = await response.json();
         setProfile(updatedProfile);
         setEditProfile(updatedProfile);
         setIsEditing(false);
-        alert("Profil mis à jour avec succès!");
+        addToast("success", "Profil mis à jour avec succès!");
       } else {
-        const error = await response.json();
-        alert(error.error || "Erreur lors de la mise à jour");
+        const error = await response.json().catch(() => ({}));
+        addToast("error", error.error || "Erreur lors de la mise à jour");
       }
-    } catch (error) {
-      console.error("Erreur:", error);
-      alert("Erreur lors de la mise à jour");
+    } catch (err) {
+      console.error("[PROFILE DEBUG] Erreur:", err);
+      addToast("error", "Erreur lors de la mise à jour");
     } finally {
       setIsSaving(false);
     }
@@ -116,40 +217,42 @@ export default function AdminProfile() {
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
-      alert("Les mots de passe ne correspondent pas");
+      addToast("warning", "Les mots de passe ne correspondent pas");
       return;
     }
 
     if (newPassword.length < 8) {
-      alert("Le mot de passe doit contenir au moins 8 caractères");
+      addToast("warning", "Le mot de passe doit contenir au moins 8 caractères");
       return;
     }
 
     try {
-      const response = await fetch("/api/admin/profile/change-password", {
+      const response = await fetch("/api/admin/profile/change-password", getFetchOptions({
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           currentPassword,
           newPassword,
         }),
-      });
+      }));
+
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
 
       if (response.ok) {
         setShowPasswordModal(false);
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        alert("Mot de passe modifié avec succès!");
+        addToast("success", "Mot de passe modifié avec succès!");
       } else {
-        const error = await response.json();
-        alert(error.error || "Erreur lors du changement de mot de passe");
+        const error = await response.json().catch(() => ({}));
+        addToast("error", error.error || "Erreur lors du changement de mot de passe");
       }
-    } catch (error) {
-      console.error("Erreur:", error);
-      alert("Erreur lors du changement de mot de passe");
+    } catch (err) {
+      console.error("[PROFILE DEBUG] Erreur:", err);
+      addToast("error", "Erreur lors du changement de mot de passe");
     }
   };
 
@@ -166,24 +269,29 @@ export default function AdminProfile() {
         body: formData,
       });
 
+      // Gestion erreur 401
+      if (handleAuthError(response, router, locale)) {
+        return;
+      }
+
       if (response.ok) {
         const data = await response.json();
         setProfile((prev) => (prev ? { ...prev, avatar: data.avatar } : null));
         setEditProfile((prev) => ({ ...prev, avatar: data.avatar }));
-        alert("Avatar mis à jour avec succès!");
+        addToast("success", "Avatar mis à jour avec succès!");
       } else {
-        const error = await response.json();
-        alert(error.error || "Erreur lors du téléchargement");
+        const error = await response.json().catch(() => ({}));
+        addToast("error", error.error || "Erreur lors du téléchargement");
       }
-    } catch (error) {
-      console.error("Erreur:", error);
-      alert("Erreur lors du téléchargement");
+    } catch (err) {
+      console.error("[PROFILE DEBUG] Erreur:", err);
+      addToast("error", "Erreur lors du téléchargement");
     }
   };
 
   const canEdit =
-    profile?.role === "super_admin" ||
-    profile?.permissions?.includes("profile_edit") ||
+    safeProfile.role === "super_admin" ||
+    safePermissions.includes("profile_edit") ||
     false;
 
   const getPermissionBadge = (permission: string) => {
@@ -208,24 +316,121 @@ export default function AdminProfile() {
     }
   };
 
-  if (isLoading) {
+  // Loading state - Skeleton UI
+  if (status === "loading" || isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="p-6 space-y-6">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+
+        {/* Profile skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="w-32 h-32 rounded-full bg-gray-200 animate-pulse mx-auto mb-4"></div>
+              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mx-auto mb-2"></div>
+              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mx-auto"></div>
+            </div>
+          </div>
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4"></div>
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (!profile) {
+  // Error state - UI stylée
+  if (error) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Impossible de charger le profil</p>
+      <div className="p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-sm border border-red-200 p-8 text-center max-w-md mx-auto"
+        >
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 mb-2">
+            Impossible de charger le profil
+          </h3>
+          <p className="text-gray-500 mb-6">{error}</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+                fetch("/api/admin/profile", getFetchOptions())
+                  .then(res => res.json())
+                  .then(data => {
+                    setProfile(data.profile || data.user || data);
+                    setEditProfile(data.profile || data.user || data);
+                    setIsLoading(false);
+                  })
+                  .catch(() => setIsLoading(false));
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <RefreshCw size={18} />
+              Réessayer
+            </button>
+            <button
+              onClick={() => router.push(`/${locale}/dashboard/admin`)}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Retour dashboard
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="p-6">
+      {/* Notifications Toast */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        <AnimatePresence>
+          {toastNotifications.map((notification) => (
+            <motion.div
+              key={notification.id}
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${
+                notification.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-800"
+                  : notification.type === "error"
+                  ? "bg-red-50 border border-red-200 text-red-800"
+                  : notification.type === "warning"
+                  ? "bg-yellow-50 border border-yellow-200 text-yellow-800"
+                  : "bg-blue-50 border border-blue-200 text-blue-800"
+              }`}
+            >
+              {notification.type === "success" ? (
+                <CheckCircle size={18} />
+              ) : notification.type === "error" ? (
+                <AlertCircle size={18} />
+              ) : (
+                <AlertTriangle size={18} />
+              )}
+              <span className="text-sm font-medium">{notification.message}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -252,7 +457,7 @@ export default function AdminProfile() {
                   <button
                     onClick={() => {
                       setIsEditing(false);
-                      setEditProfile(profile);
+                      if (profile) setEditProfile(profile);
                     }}
                     className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2"
                   >
@@ -280,10 +485,10 @@ export default function AdminProfile() {
               <div className="text-center">
                 <div className="relative inline-block mb-4">
                   <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                    {profile.avatar ? (
+                    {safeProfile.avatar ? (
                       <img
-                        src={profile.avatar}
-                        alt={profile.name}
+                        src={safeProfile.avatar}
+                        alt={safeProfile.name || "Profile"}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -314,28 +519,28 @@ export default function AdminProfile() {
                       className="text-center border-b-2 border-blue-500 focus:outline-none"
                     />
                   ) : (
-                    profile.name
+                    safeProfile.name || "Non renseigné"
                   )}
                 </h2>
 
                 <div className="flex items-center justify-center gap-2 mb-4">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      profile.role === "super_admin"
+                      safeProfile.role === "super_admin"
                         ? "bg-purple-100 text-purple-700"
                         : "bg-blue-100 text-blue-700"
                     }`}
                   >
-                    {profile.role === "super_admin" ? "Super Admin" : "Admin"}
+                    {safeProfile.role === "super_admin" ? "Super Admin" : "Admin"}
                   </span>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      profile.status === "active"
+                      safeProfile.status === "active"
                         ? "bg-green-100 text-green-700"
                         : "bg-red-100 text-red-700"
                     }`}
                   >
-                    {profile.status === "active" ? "Actif" : "Inactif"}
+                    {safeProfile.status === "active" ? "Actif" : "Inactif"}
                   </span>
                 </div>
 
@@ -355,7 +560,7 @@ export default function AdminProfile() {
                         className="flex-1 border-b border-gray-300 focus:outline-none focus:border-blue-500"
                       />
                     ) : (
-                      profile.email
+                      safeProfile.email || "Non renseigné"
                     )}
                   </div>
 
@@ -374,7 +579,7 @@ export default function AdminProfile() {
                         className="flex-1 border-b border-gray-300 focus:outline-none focus:border-blue-500"
                       />
                     ) : (
-                      profile.phone || "Non renseigné"
+                      safeProfile.phone || "Non renseigné"
                     )}
                   </div>
 
@@ -393,7 +598,7 @@ export default function AdminProfile() {
                         className="flex-1 border-b border-gray-300 focus:outline-none focus:border-blue-500"
                       />
                     ) : (
-                      profile.location || "Non renseigné"
+                      safeProfile.location || "Non renseigné"
                     )}
                   </div>
 
@@ -412,7 +617,7 @@ export default function AdminProfile() {
                         className="flex-1 border-b border-gray-300 focus:outline-none focus:border-blue-500"
                       />
                     ) : (
-                      profile.department || "Non renseigné"
+                      safeProfile.department || "Non renseigné"
                     )}
                   </div>
                 </div>
@@ -461,14 +666,14 @@ export default function AdminProfile() {
                   ) : (
                     <span
                       className={`w-12 h-6 rounded-full ${
-                        profile.emailNotifications
+                        safeProfile.emailNotifications
                           ? "bg-green-500"
                           : "bg-gray-300"
                       }`}
                     >
                       <div
                         className={`w-5 h-5 bg-white rounded-full shadow-sm transform ${
-                          profile.emailNotifications
+                          safeProfile.emailNotifications
                             ? "translate-x-6"
                             : "translate-x-0.5"
                         }`}
@@ -498,7 +703,7 @@ export default function AdminProfile() {
                     </select>
                   ) : (
                     <span className="text-gray-600">
-                      {profile.language === "fr" ? "Français" : "English"}
+                      {safeProfile.language === "fr" ? "Français" : "English"}
                     </span>
                   )}
                 </div>
@@ -523,7 +728,7 @@ export default function AdminProfile() {
                 />
               ) : (
                 <p className="text-gray-600">
-                  {profile.bio || "Aucune biographie renseignée"}
+                  {safeProfile.bio || "Aucune biographie renseignée"}
                 </p>
               )}
             </div>
@@ -532,7 +737,7 @@ export default function AdminProfile() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-semibold text-gray-900 mb-4">Permissions</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {profile.permissions.map((permission, index) => (
+                {safePermissions.map((permission, index) => (
                   <div
                     key={index}
                     className={`px-3 py-2 rounded-lg text-sm font-medium ${getPermissionBadge(permission)}`}
@@ -543,7 +748,7 @@ export default function AdminProfile() {
                   </div>
                 ))}
               </div>
-              {profile.permissions.length === 0 && (
+              {safePermissions.length === 0 && (
                 <p className="text-gray-500 text-center py-4">
                   Aucune permission spécifique
                 </p>
@@ -561,7 +766,7 @@ export default function AdminProfile() {
                   <div>
                     <p className="text-sm text-gray-500">Date d'inscription</p>
                     <p className="font-semibold text-gray-900">
-                      {new Date(profile.joinDate).toLocaleDateString("fr-FR")}
+                      {safeProfile.joinDate ? new Date(safeProfile.joinDate).toLocaleDateString("fr-FR") : "N/A"}
                     </p>
                   </div>
                 </div>
@@ -573,7 +778,7 @@ export default function AdminProfile() {
                   <div>
                     <p className="text-sm text-gray-500">Dernière connexion</p>
                     <p className="font-semibold text-gray-900">
-                      {new Date(profile.lastLogin).toLocaleDateString("fr-FR")}
+                      {safeProfile.lastLogin ? new Date(safeProfile.lastLogin).toLocaleDateString("fr-FR") : "N/A"}
                     </p>
                   </div>
                 </div>
@@ -587,7 +792,7 @@ export default function AdminProfile() {
                       Authentification 2FA
                     </p>
                     <p className="font-semibold text-gray-900">
-                      {profile.twoFactorEnabled ? "Activée" : "Désactivée"}
+                      {safeProfile.twoFactorEnabled ? "Activée" : "Désactivée"}
                     </p>
                   </div>
                 </div>
@@ -599,7 +804,7 @@ export default function AdminProfile() {
                   <div>
                     <p className="text-sm text-gray-500">Rôle</p>
                     <p className="font-semibold text-gray-900">
-                      {profile.role === "super_admin"
+                      {safeProfile.role === "super_admin"
                         ? "Super Administrateur"
                         : "Administrateur"}
                     </p>

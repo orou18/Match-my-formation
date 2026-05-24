@@ -10,9 +10,15 @@ function getStudentAccessToken() {
     return null;
   }
 
+  // Try to get token from NextAuth session first
+  const sessionToken = window.localStorage.getItem("nextauth.session-token");
+  if (sessionToken) {
+    return sessionToken;
+  }
+
+  // Fallback to other localStorage keys for compatibility
   return (
     window.localStorage.getItem("auth_token") ||
-    window.localStorage.getItem("nextauth.session-token") ||
     window.localStorage.getItem("token") ||
     window.localStorage.getItem("employee_token")
   );

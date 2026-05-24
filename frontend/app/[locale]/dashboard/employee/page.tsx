@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   useSimpleNotification,
   NotificationContainer,
@@ -70,11 +71,23 @@ export default function EmployeeDashboard() {
   const locale = typeof params?.locale === "string" ? params.locale : "fr";
   const { notifications, success, error, removeNotification } =
     useSimpleNotification();
+  
+  // NextAuth session - source de vérité unique
+  const { data: session, status } = useSession();
 
   useEffect(() => {
+    // Attendre que la session soit chargée
+    if (status === "loading") return;
+    
+    // Redirect si non authentifié
+    if (status === "unauthenticated") {
+      router.push(withLocale("/login"));
+      return;
+    }
+    
     loadEmployeeData();
     loadCourses();
-  }, []);
+  }, [status, session]);
 
   useEffect(() => {
     loadStats(courses);
@@ -85,9 +98,12 @@ export default function EmployeeDashboard() {
 
   const loadEmployeeData = async () => {
     try {
-      const token = localStorage.getItem("employee_token");
+      // Utiliser session.accessToken de NextAuth
+      const token = session?.user?.accessToken;
       if (!token) {
-        router.push(withLocale("/auth/employee"));
+        console.warn("[EmployeeDashboard] No access token in session");
+        error("Erreur", "Session invalide");
+        router.push(withLocale("/login"));
         return;
       }
 
@@ -99,15 +115,16 @@ export default function EmployeeDashboard() {
 
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success && data.data) {
         setEmployee(data.data);
       } else {
         error("Erreur", "Impossible de charger vos informations");
-        router.push(withLocale("/auth/employee"));
+        router.push(withLocale("/login"));
       }
     } catch (err) {
+      console.error("[EmployeeDashboard] Error loading employee data:", err);
       error("Erreur", "Une erreur technique est survenue");
-      router.push(withLocale("/auth/employee"));
+      router.push(withLocale("/login"));
     } finally {
       setLoading(false);
     }
@@ -115,7 +132,8 @@ export default function EmployeeDashboard() {
 
   const loadCourses = async () => {
     try {
-      const token = localStorage.getItem("employee_token");
+      // Utiliser session.accessToken de NextAuth
+      const token = session?.user?.accessToken;
       if (!token) return;
 
       const response = await fetch("/api/employee/courses", {
@@ -126,10 +144,11 @@ export default function EmployeeDashboard() {
 
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success && Array.isArray(data.data)) {
         setCourses(data.data);
       }
     } catch (err) {
+      console.error("[EmployeeDashboard] Error loading courses:", err);
       error("Erreur", "Impossible de charger les cours");
     }
   };
@@ -149,7 +168,8 @@ export default function EmployeeDashboard() {
 
   const loadStats = async (courses: Course[]) => {
     try {
-      const token = localStorage.getItem("employee_token");
+      // Utiliser session.accessToken de NextAuth
+      const token = session?.user?.accessToken;
       if (!token) return;
 
       const response = await fetch("/api/employee/stats", {
@@ -160,15 +180,15 @@ export default function EmployeeDashboard() {
 
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success && data.data) {
         setStats(data.data);
       } else {
         // Fallback avec calcul local si l'API échoue
-        const totalCourses = courses.length;
-        const completedCourses = courses.filter(course => course.completed).length;
-        const inProgressCourses = courses.filter(course => !course.completed && course.progress && course.progress > 0).length;
+        const totalCourses = courses.length || 0;
+        const completedCourses = courses.filter(course => course.completed).length || 0;
+        const inProgressCourses = courses.filter(course => course.progress && course.progress > 0).length || 0;
         const totalWatchTime = courses.reduce((total, course) => {
-          const duration = parseDurationToMinutes(course.duration);
+          const duration = parseDurationToMinutes(course.duration || "00:00");
           return total + (duration * (course.progress || 0) / 100);
         }, 0);
         const certificatesEarned = completedCourses;
@@ -182,29 +202,9 @@ export default function EmployeeDashboard() {
         });
       }
     } catch (err) {
-      console.error("Erreur lors du chargement des statistiques:", err);
+      console.error("[EmployeeDashboard] Error loading stats:", err);
     }
   };
-
-  const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem("employee_token");
-      if (token) {
-        await fetch("/api/employee/logout", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      }
-
-      localStorage.removeItem("employee_token");
-      localStorage.removeItem("employee_remember");
-
-      success("Déconnexion", "Vous avez été déconnecté avec succès");
-      router.push(withLocale("/auth/employee"));
-    } catch (err) {
-      error("Erreur", "Une erreur est survenue lors de la déconnexion");
     }
   };
 

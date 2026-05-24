@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
@@ -35,13 +36,30 @@ interface KPICard {
 }
 
 export default function AdminDashboard() {
+  // NextAuth session - source de vérité
+  const { data: session, status } = useSession();
+  
+  // DEBUG: Session NextAuth
+  useEffect(() => {
+    console.log("[SESSION DEBUG] === Début debug session ===");
+    console.log("[SESSION DEBUG] status:", status);
+    console.log("[SESSION DEBUG] hasSession:", !!session);
+    console.log("[SESSION DEBUG] userId:", session?.user?.id);
+    console.log("[SESSION DEBUG] role:", session?.user?.role);
+    console.log("[SESSION DEBUG] hasAccessToken:", !!session?.user?.accessToken);
+    console.log("[SESSION DEBUG] tokenLength:", session?.user?.accessToken?.length ?? 0);
+    console.log("[SESSION DEBUG] tokenPreview:", session?.user?.accessToken ? session.user.accessToken.substring(0, 20) + "..." : "null");
+    console.log("[SESSION DEBUG] === Fin debug session ===");
+  }, [session, status]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState("30d");
   const [refreshing, setRefreshing] = useState(false);
   const [analytics, setAnalytics] = useState<any>(null);
 
-  const overview = analytics?.overview || {};
-  const growth = overview.monthlyGrowth || {};
+  // Safe normalization - garantit des valeurs par défaut
+  const overview = analytics?.overview ?? {};
+  const growth = overview?.monthlyGrowth ?? {};
 
   const kpiData: KPICard[] = [
     {
@@ -99,32 +117,66 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const loadDashboard = async () => {
+      // DEBUG: Avant appel API
+      console.log("[API DEBUG] === Début appel API admin ===");
+      console.log("[API DEBUG] session:", !!session);
+      console.log("[API DEBUG] accessToken:", !!session?.user?.accessToken);
+      console.log("[API DEBUG] endpoint:", "/api/admin/stats");
+      
       try {
         const data = await dashboardService.getAdminAnalytics(
           dateRange,
           "overview"
         );
+        console.log("[API DEBUG] Réponse reçue:", data ? "OK" : "null");
         setAnalytics(data);
       } catch (error) {
-        console.error("Erreur chargement dashboard admin:", error);
+        console.error("[API DEBUG] Erreur chargement dashboard admin:", error);
+        // DEBUG: Détail erreur
+        if (error instanceof Error) {
+          console.error("[API DEBUG] Error message:", error.message);
+          console.error("[API DEBUG] Error stack:", error.stack);
+        }
       } finally {
         setIsLoading(false);
         setRefreshing(false);
       }
     };
 
-    loadDashboard();
-  }, [dateRange, refreshing]);
+    // Attendre que la session soit chargée
+    if (status !== "loading") {
+      loadDashboard();
+    }
+  }, [dateRange, refreshing, session, status]);
 
   const handleRefresh = () => {
     setRefreshing(true);
     setIsLoading(true);
   };
 
+  // Loading state - jamais d'écran blanc
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Error state - fallback UI propre
+  if (!analytics) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <p className="text-gray-500 mb-4">Impossible de charger les données</p>
+        <button
+          onClick={() => {
+            setIsLoading(true);
+            setRefreshing(true);
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Réessayer
+        </button>
       </div>
     );
   }
@@ -224,14 +276,14 @@ export default function AdminDashboard() {
               <BarChart3 size={48} className="mx-auto text-gray-400 mb-3" />
               <p className="text-gray-500">
                 {analytics?.charts?.userGrowth ? 
-                  `+${analytics.monthlyGrowth?.users?.toFixed(1)}% ce mois` : 
+                  `+${(growth?.users ?? 0).toFixed(1)}% ce mois` : 
                   'Graphique de croissance interactif'
                 }
               </p>
               <p className="text-sm text-gray-400 mt-1">
-                {analytics?.overview?.totalUsers ? 
-                  `${analytics.overview.totalUsers} utilisateurs au total` : 
-                  'Chargement...'
+                {overview?.totalUsers != null ? 
+                  `${overview?.totalUsers} utilisateurs au total` : 
+                  'Aucune donnée disponible'
                 }
               </p>
             </div>
@@ -258,14 +310,15 @@ export default function AdminDashboard() {
               <PieChart size={48} className="mx-auto text-gray-400 mb-3" />
               <p className="text-gray-500">Distribution par catégorie</p>
               <div className="mt-4 space-y-2 max-h-32 overflow-y-auto">
-                {analytics?.charts?.categoryDistribution?.map((cat: any, index: number) => (
+                {(analytics?.charts?.categoryDistribution ?? []).map((cat: any, index: number) => (
                   <div key={index} className="flex justify-between text-sm">
-                    <span className="text-gray-600">{cat.category}:</span>
-                    <span className="font-bold">{cat.count} ({cat.percentage}%)</span>
+                    <span className="text-gray-600">{cat?.category ?? 'N/A'}:</span>
+                    <span className="font-bold">{cat?.count ?? 0} ({cat?.percentage ?? 0}%)</span>
                   </div>
-                )) || (
+                ))}
+                {(analytics?.charts?.categoryDistribution ?? []).length === 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Chargement...</span>
+                    <span className="text-gray-600">Aucune donnée disponible</span>
                   </div>
                 )}
               </div>
@@ -292,7 +345,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         <div className="divide-y divide-gray-100">
-          {analytics?.recentActivity?.map((activity: any, index: number) => (
+          {(analytics?.recentActivity ?? []).map((activity: any, index: number) => (
             <div key={index} className="p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-4">
                 <div
@@ -330,6 +383,11 @@ export default function AdminDashboard() {
               </div>
             </div>
           ))}
+          {(analytics?.recentActivity ?? []).length === 0 && (
+            <div className="p-4 text-center text-gray-500">
+              Aucune activité récente
+            </div>
+          )}
         </div>
       </motion.div>
     </div>

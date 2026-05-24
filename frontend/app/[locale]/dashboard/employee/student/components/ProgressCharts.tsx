@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   BarChart3,
   PieChart,
@@ -25,6 +26,7 @@ interface ProgressChartsProps {
 }
 
 export default function ProgressCharts({ employeeId, creatorId }: ProgressChartsProps) {
+  const { data: session } = useSession();
   const [progressData, setProgressData] = useState<ProgressData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
@@ -32,8 +34,13 @@ export default function ProgressCharts({ employeeId, creatorId }: ProgressCharts
   useEffect(() => {
     const loadProgressData = async () => {
       try {
-        const token = localStorage.getItem('employee_token');
-        if (!token) return;
+        // Utiliser session.accessToken de NextAuth
+        const token = session?.user?.accessToken;
+        if (!token) {
+          console.warn("[ProgressCharts] No access token in session");
+          setIsLoading(false);
+          return;
+        }
 
         const response = await fetch(`/api/employee/student/progress?period=${selectedPeriod}`, {
           headers: {
@@ -49,14 +56,18 @@ export default function ProgressCharts({ employeeId, creatorId }: ProgressCharts
           }
         }
       } catch (error) {
-        console.error("Error loading progress data:", error);
+        console.error("[ProgressCharts] Error loading progress data:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadProgressData();
-  }, [selectedPeriod]);
+    if (creatorId > 0) {
+      loadProgressData();
+    } else {
+      setIsLoading(false);
+    }
+  }, [selectedPeriod, creatorId, session?.user?.accessToken]);
 
   if (isLoading) {
     return (
@@ -76,6 +87,13 @@ export default function ProgressCharts({ employeeId, creatorId }: ProgressCharts
       </div>
     );
   }
+
+  // Données de fallback si pas de données
+  const safeProgressData = progressData ?? {
+    daily: [],
+    weekly: [],
+    monthly: [],
+  };
 
   return (
     <div className="space-y-8">
@@ -128,31 +146,34 @@ export default function ProgressCharts({ employeeId, creatorId }: ProgressCharts
           </div>
 
           <div className="h-64 flex items-end justify-between gap-2">
-            {progressData?.daily.slice(-7).map((day, index) => (
-              <motion.div
-                key={day.date}
-                initial={{ height: 0 }}
-                animate={{ height: `${(day.videos / Math.max(...progressData.daily.map(d => d.videos))) * 100}%` }}
-                transition={{ delay: index * 0.1, type: "spring", stiffness: 100 }}
-                className="flex-1 relative group"
-              >
-                <div className="w-full bg-gradient-to-t from-primary to-primary/60 rounded-t-lg relative overflow-hidden">
-                  <motion.div
-                    className="absolute inset-0 bg-white opacity-20"
-                    animate={{ x: ["-100%", "100%"] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  />
-                </div>
+            {(safeProgressData.daily?.slice(-7) ?? []).map((day, index) => {
+              const maxVideos = Math.max(...(safeProgressData.daily?.map(d => d.videos) ?? [1]), 1);
+              return (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.1 + 0.3 }}
-                  className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
+                  key={day.date}
+                  initial={{ height: 0 }}
+                  animate={{ height: `${(day.videos / maxVideos) * 100}%` }}
+                  transition={{ delay: index * 0.1, type: "spring", stiffness: 100 }}
+                  className="flex-1 relative group"
                 >
-                  {day.videos} vidéos
+                  <div className="w-full bg-gradient-to-t from-primary to-primary/60 rounded-t-lg relative overflow-hidden">
+                    <motion.div
+                      className="absolute inset-0 bg-white opacity-20"
+                      animate={{ x: ["-100%", "100%"] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    />
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.1 + 0.3 }}
+                    className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
+                  >
+                    {day.videos} vidéos
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-6 flex items-center justify-between text-sm text-gray-600">

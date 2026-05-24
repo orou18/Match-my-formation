@@ -1,5 +1,16 @@
 "use client";
 
+/**
+ * Service Employee Student - Version corrigée
+ * 
+ * CHANGEMENTS :
+ * - Suppression de buildAuthHeaders() qui utilisait localStorage("employee_token")
+ * - Tous les appels passent maintenant par les API routes Next.js
+ * - Les API routes Next.js gèrent l'authentification via session.accessToken
+ * - credentials: "include" pour inclure les cookies NextAuth
+ * - Employee est maintenant intégré au système NextAuth comme les autres rôles
+ */
+
 type JsonObject = Record<string, unknown>;
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -23,48 +34,28 @@ async function readJson<T>(response: Response): Promise<T> {
   }
 }
 
-function buildAuthHeaders() {
-  const headers: Record<string, string> = {};
-
-  if (typeof window === "undefined") {
-    return headers;
-  }
-
-  // Utiliser les tokens d'employé
-  const token =
-    window.localStorage.getItem("employee_token") ||
-    window.localStorage.getItem("auth_token") ||
-    window.localStorage.getItem("nextauth.session-token") ||
-    window.localStorage.getItem("token");
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  headers["Content-Type"] = "application/json";
-  headers["Accept"] = "application/json";
-
-  return headers;
-}
-
-function getApiBaseUrl(): string {
-  const rawUrl = process.env.NEXT_PUBLIC_API_URL;
-  return rawUrl && rawUrl !== "undefined"
-    ? rawUrl.replace(/\/$/, "")
-    : "http://127.0.0.1:8000";
-}
-
 export const employeeStudentService = {
+  /**
+   * Récupère les données du dashboard employee/student
+   * Passe par l'API route Next.js qui gère l'authentification
+   */
   async getDashboard<T = JsonObject>() {
-    const baseUrl = getApiBaseUrl();
     return readJson<T>(
-      await fetch(`${baseUrl}/api/employee/student/dashboard`, {
+      await fetch("/api/employee/student/dashboard", {
         cache: "no-store",
-        headers: buildAuthHeaders(),
+        credentials: "include", // Inclut les cookies NextAuth
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
       })
     );
   },
 
+  /**
+   * Récupère les vidéos de l'employee
+   * Passe par l'API route Next.js qui gère l'authentification
+   */
   async getVideos<T = JsonObject>(params?: {
     search?: string;
     category?: string;
@@ -72,7 +63,6 @@ export const employeeStudentService = {
     sort_order?: string;
     per_page?: number;
   }) {
-    const baseUrl = getApiBaseUrl();
     const searchParams = new URLSearchParams();
     
     if (params?.search) searchParams.set('search', params.search);
@@ -81,16 +71,24 @@ export const employeeStudentService = {
     if (params?.sort_order) searchParams.set('sort_order', params.sort_order);
     if (params?.per_page) searchParams.set('per_page', params.per_page.toString());
 
-    const url = `${baseUrl}/api/employee/student/videos${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
     
     return readJson<T>(
-      await fetch(url, {
+      await fetch(`/api/employee/student/videos${queryString}`, {
         cache: "no-store",
-        headers: buildAuthHeaders(),
+        credentials: "include", // Inclut les cookies NextAuth
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
       })
     );
   },
 
+  /**
+   * Récupère les parcours de l'employee
+   * Passe par l'API route Next.js qui gère l'authentification
+   */
   async getPathways<T = JsonObject>(params?: {
     search?: string;
     status?: string;
@@ -98,7 +96,6 @@ export const employeeStudentService = {
     sort_order?: string;
     per_page?: number;
   }) {
-    const baseUrl = getApiBaseUrl();
     const searchParams = new URLSearchParams();
     
     if (params?.search) searchParams.set('search', params.search);
@@ -107,37 +104,52 @@ export const employeeStudentService = {
     if (params?.sort_order) searchParams.set('sort_order', params.sort_order);
     if (params?.per_page) searchParams.set('per_page', params.per_page.toString());
 
-    const url = `${baseUrl}/api/employee/student/pathways${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
     
     return readJson<T>(
-      await fetch(url, {
+      await fetch(`/api/employee/student/pathways${queryString}`, {
         cache: "no-store",
-        headers: buildAuthHeaders(),
+        credentials: "include", // Inclut les cookies NextAuth
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
       })
     );
   },
 
+  /**
+   * Récupère les détails d'un parcours
+   * Passe par l'API route Next.js qui gère l'authentification
+   */
   async getPathwayDetails<T = JsonObject>(pathwayId: number) {
-    const baseUrl = getApiBaseUrl();
     return readJson<T>(
-      await fetch(`${baseUrl}/api/employee/student/pathways/${pathwayId}`, {
+      await fetch(`/api/employee/student/pathways/${pathwayId}`, {
         cache: "no-store",
-        headers: buildAuthHeaders(),
+        credentials: "include", // Inclut les cookies NextAuth
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
       })
     );
   },
 
+  /**
+   * Marque une vidéo comme complétée
+   * Passe par l'API route Next.js qui gère l'authentification
+   */
   async completeVideo<T = JsonObject>(videoId: number, data: {
     watched_duration: number;
     completed: boolean;
   }) {
-    const baseUrl = getApiBaseUrl();
     return readJson<T>(
-      await fetch(`${baseUrl}/api/employee/student/videos/${videoId}/complete`, {
+      await fetch(`/api/employee/student/videos/${videoId}/complete`, {
         method: "POST",
+        credentials: "include", // Inclut les cookies NextAuth
         headers: {
-          ...buildAuthHeaders(),
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: JSON.stringify(data),
       })

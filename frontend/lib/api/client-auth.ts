@@ -5,10 +5,16 @@ export function getClientAccessToken() {
     return null;
   }
 
+  // Priorité à la session NextAuth (nextauth.session-token)
+  const sessionToken = window.localStorage.getItem("nextauth.session-token");
+  if (sessionToken) {
+    return sessionToken;
+  }
+
+  // Fallback pour compatibilité (à supprimer progressivement)
   return (
     window.localStorage.getItem("auth_token") ||
     window.localStorage.getItem("token") ||
-    window.localStorage.getItem("employee_token") ||
     null
   );
 }

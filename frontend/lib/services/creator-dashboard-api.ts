@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * Creator Dashboard API - Version corrigée
+ * 
+ * CHANGEMENTS :
+ * - Suppression de getClientAccessToken() qui utilisait localStorage
+ * - Tous les appels passent par les API routes Next.js
+ * - credentials: "include" pour inclure les cookies NextAuth
+ * - Les API routes Next.js gèrent l'authentification via session.accessToken
+ */
+
 export type CreatorApiResponse<T> = {
   success: boolean;
   data: T;
@@ -11,29 +21,11 @@ type CreatorRequestOptions = Omit<RequestInit, "headers"> & {
   query?: Record<string, string | number | boolean | undefined | null>;
 };
 
-function getClientAccessToken() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  return (
-    window.localStorage.getItem("auth_token") ||
-    window.localStorage.getItem("nextauth.session-token") ||
-    window.localStorage.getItem("token") ||
-    window.localStorage.getItem("employee_token")
-  );
-}
-
 function buildHeaders(headers?: HeadersInit, body?: BodyInit | null) {
   const finalHeaders = new Headers(headers || {});
 
   if (!finalHeaders.has("Accept")) {
     finalHeaders.set("Accept", "application/json");
-  }
-
-  const token = getClientAccessToken();
-  if (token && !finalHeaders.has("Authorization")) {
-    finalHeaders.set("Authorization", `Bearer ${token}`);
   }
 
   if (
