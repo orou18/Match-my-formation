@@ -20,6 +20,8 @@ import {
   Lock,
   FolderPlus,
   Check,
+  Link as LinkIcon,
+  Loader,
 } from "lucide-react";
 
 interface VideoUploadErrors {
@@ -31,6 +33,7 @@ interface VideoUploadErrors {
   pathway?: string;
   tags?: string;
   visibility?: string;
+  videoUrl?: string;
 }
 
 interface VideoUploadData {
@@ -41,7 +44,9 @@ interface VideoUploadData {
   visibility: "public" | "private" | "unlisted";
   pathway?: string;
   video: File | null;
+  videoUrl: string;
   thumbnail: File | null;
+  sourceType: "upload" | "youtube";
 }
 
 interface VideoUploadFormProps {
@@ -62,7 +67,9 @@ export default function VideoUploadForm({
     visibility: "public",
     pathway: "",
     video: null,
+    videoUrl: "",
     thumbnail: null,
+    sourceType: "youtube", // Par défaut YouTube pour demo
   });
 
   const [uploadProgress, setUploadProgress] = useState({
@@ -74,6 +81,7 @@ export default function VideoUploadForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [loadingThumbnail, setLoadingThumbnail] = useState(false);
 
   const router = useRouter();
   const params = useParams();
@@ -98,6 +106,28 @@ export default function VideoUploadForm({
     "Développement Durable",
   ];
 
+  const extractYouTubeId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=([^#&?]*)).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
+  const handleYouTubeUrlChange = (url: string) => {
+    setFormData((prev) => ({ ...prev, videoUrl: url }));
+    setErrors((prev) => ({ ...prev, videoUrl: undefined }));
+
+    if (url) {
+      const videoId = extractYouTubeId(url);
+      if (videoId) {
+        // Auto-générer la miniature YouTube
+        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        setThumbnailPreview(thumbnailUrl);
+      } else {
+        setErrors((prev) => ({ ...prev, videoUrl: "URL YouTube invalide" }));
+      }
+    }
+  };
+
   const validateForm = () => {
     const newErrors: VideoUploadErrors = {};
 
@@ -113,20 +143,28 @@ export default function VideoUploadForm({
       newErrors.category = "La catégorie est requise";
     }
 
-    if (!formData.video) {
-      newErrors.video = "La vidéo est requise";
-    }
-
-    if (!formData.thumbnail) {
-      newErrors.thumbnail = "La miniature est requise";
-    }
-
-    if (formData.video && formData.video.size > 500 * 1024 * 1024) {
-      newErrors.video = "La vidéo ne doit pas dépasser 500MB";
-    }
-
-    if (formData.thumbnail && formData.thumbnail.size > 5 * 1024 * 1024) {
-      newErrors.thumbnail = "La miniature ne doit pas dépasser 5MB";
+    if (formData.sourceType === "upload") {
+      if (!formData.video) {
+        newErrors.video = "La vidéo est requise";
+      }
+      if (!formData.thumbnail) {
+        newErrors.thumbnail = "La miniature est requise";
+      }
+      if (formData.video && formData.video.size > 500 * 1024 * 1024) {
+        newErrors.video = "La vidéo ne doit pas dépasser 500MB";
+      }
+      if (formData.thumbnail && formData.thumbnail.size > 5 * 1024 * 1024) {
+        newErrors.thumbnail = "La miniature ne doit pas dépasser 5MB";
+      }
+    } else {
+      if (!formData.videoUrl.trim()) {
+        newErrors.videoUrl = "L'URL YouTube est requise";
+      } else if (!extractYouTubeId(formData.videoUrl)) {
+        newErrors.videoUrl = "URL YouTube invalide";
+      }
+      if (!thumbnailPreview) {
+        newErrors.thumbnail = "Une miniature est requise (générée automatiquement)";
+      }
     }
 
     setErrors(newErrors);
@@ -182,11 +220,26 @@ export default function VideoUploadForm({
       uploadData.append("tags", formData.tags);
       uploadData.append("visibility", formData.visibility);
       if (formData.pathway) uploadData.append("pathway", formData.pathway);
-      if (formData.video) uploadData.append("video", formData.video);
-      if (formData.thumbnail)
-        uploadData.append("thumbnail", formData.thumbnail);
 
-      // Use XMLHttpRequest to track upload progress
+      // Ajouter les données en fonction du type de source
+      if (formData.sourceType === "youtube") {
+        uploadData.append("external_url", formData.videoUrl);
+        uploadData.append("source_type", "external");
+        uploadData.append("provider", "youtube");
+      } else {
+        if (formData.video) uploadData.append("video", formData.video);
+        uploadData.append("source_type", "upload");
+      }
+
+      if (formData.thumbnail) {
+        uploadData.append("thumbnail", formData.thumbnail);
+      } else if (thumbnailPreview && formData.sourceType === "youtube") {
+        // Télécharger la miniature YouTube
+        const response = await fetch(thumbnailPreview);
+        const blob = await response.blob();
+        uploadData.append("thumbnail", blob, "thumbnail.jpg");
+      }
+
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         const token =
@@ -211,10 +264,8 @@ export default function VideoUploadForm({
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const res = JSON.parse(xhr.responseText);
-              // backend returns { message, video }
               const created = res.video ?? res.data ?? null;
               if (created) {
-                // Normaliser le retour pour le parent
                 onSubmit(created);
                 resolve();
                 return;
@@ -484,7 +535,110 @@ export default function VideoUploadForm({
               Fichiers
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Source Type Selection */}
+          <div className="mb-8">
+            <h3 className="block text-sm font-medium text-gray-700 mb-4">
+              Source de la vidéo
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    sourceType: "youtube",
+                    video: null,
+                  }))
+                }
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  formData.sourceType === "youtube"
+                    ? "border-primary bg-primary/10"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <LinkIcon className="w-6 h-6 mx-auto mb-2 text-primary" />
+                <div className="font-medium text-sm">Lien YouTube</div>
+                <div className="text-xs text-gray-600 mt-1">
+                  Coller une URL
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    sourceType: "upload",
+                    videoUrl: "",
+                  }))
+                }
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  formData.sourceType === "upload"
+                    ? "border-primary bg-primary/10"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <Upload className="w-6 h-6 mx-auto mb-2 text-primary" />
+                <div className="font-medium text-sm">Uploader</div>
+                <div className="text-xs text-gray-600 mt-1">
+                  Fichier vidéo
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* YouTube Section */}
+          {formData.sourceType === "youtube" && (
+            <>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  URL YouTube *
+                </label>
+                <input
+                  type="text"
+                  value={formData.videoUrl}
+                  onChange={(e) => handleYouTubeUrlChange(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+                {errors.videoUrl && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.videoUrl}
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-gray-500">
+                  Exemples: youtube.com/watch?v=... ou youtu.be/...
+                </p>
+              </div>
+
+              {thumbnailPreview && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Miniature (Générée automatiquement)
+                  </label>
+                  <div className="relative">
+                    <img
+                      src={thumbnailPreview}
+                      alt="Thumbnail preview"
+                      className="w-full h-48 object-cover rounded-xl"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setThumbnailPreview(null)}
+                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Upload Section */}
+          {formData.sourceType === "upload" && (
+            <>
               {/* Video Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

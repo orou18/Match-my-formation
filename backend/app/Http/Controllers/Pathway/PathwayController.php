@@ -118,15 +118,17 @@ class PathwayController extends Controller
 
         // Pour l'instant, on utilise la même logique que employeePathways
         // Plus tard, on pourra différencier selon le type d'utilisateur
+        // Fallback pour mode démo/présentation
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Non authentifié'
-            ], 401);
+            // Si pas d'utilisateur authentifié, on retourne les données par défaut
+            // (À remplacer par une redirection vers login en production)
+            $demoMode = true;
+        } else {
+            $demoMode = false;
         }
 
         // Si c'est un employé, récupérer ses pathways
-        if ($user instanceof Employee) {
+        if (!$demoMode && $user instanceof Employee) {
             $pathways = $user->pathways()
                 ->wherePivot('is_active', true)
                 ->with(['creator:id,name,avatar', 'videos'])
@@ -141,8 +143,8 @@ class PathwayController extends Controller
 
         // Calculer les statistiques globales
         $totalPathways = $pathways->count();
-        $completedPathways = $pathways->filter(function ($pathway) use ($user) {
-            if ($user instanceof Employee) {
+        $completedPathways = $pathways->filter(function ($pathway) use ($user, $demoMode) {
+            if (!$demoMode && $user instanceof Employee) {
                 $progress = $pathway->pivot->progress_percentage ?? 0;
             } else {
                 // Pour les users normaux, progress simulé (à améliorer)
@@ -156,7 +158,7 @@ class PathwayController extends Controller
         
         // Calculer les heures complétées
         $completedHours = 0;
-        if ($user instanceof Employee) {
+        if (!$demoMode && $user instanceof Employee) {
             $completedHours = $pathways->sum(function ($pathway) {
                 $progress = $pathway->pivot->progress_percentage ?? 0;
                 return ($progress / 100) * $pathway->duration_hours;
@@ -164,11 +166,11 @@ class PathwayController extends Controller
         }
 
         // Transformer les pathways pour le frontend
-        $coursesInProgress = $pathways->map(function ($pathway) use ($user) {
+        $coursesInProgress = $pathways->map(function ($pathway) use ($user, $demoMode) {
             $progress = 0;
             $completedModules = 0;
             
-            if ($user instanceof Employee) {
+            if (!$demoMode && $user instanceof Employee) {
                 $progress = $pathway->pivot->progress_percentage ?? 0;
                 $completedModules = Math.floor(($progress / 100) * $pathway->videos->count());
             }
@@ -216,8 +218,8 @@ class PathwayController extends Controller
 
         // Certifications
         $certifications = $pathways
-            ->filter(function ($pathway) use ($user) {
-                if ($user instanceof Employee) {
+            ->filter(function ($pathway) use ($user, $demoMode) {
+                if (!$demoMode && $user instanceof Employee) {
                     $progress = $pathway->pivot->progress_percentage ?? 0;
                 } else {
                     $progress = 0;

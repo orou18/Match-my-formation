@@ -143,7 +143,7 @@ export default function EditVideoPage() {
         return;
       }
 
-      const response = await fetch(`/api/admin/videos/get?id=${videoId}`, {
+      const response = await fetch(`/api/admin/videos/${videoId}`, {
         credentials: "include",
         headers: buildClientAuthHeaders(),
       });
@@ -333,7 +333,7 @@ export default function EditVideoPage() {
         submitData.append("thumbnail", thumbnailFile);
       }
 
-      const response = await fetch(`/api/admin/videos/get?id=${videoId}`, {
+      const response = await fetch(`/api/admin/videos/${videoId}`, {
         method: "PUT",
         body: submitData,
         credentials: "include",

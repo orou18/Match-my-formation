@@ -256,10 +256,12 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // --- 5. DASHBOARD STUDENT ---
+    // Temporaire: parcours endpoint en public pour la présentation
+    Route::get('/student/parcours', [PathwayController::class, 'studentProgressDetails']);
+    
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/student/courses', [CourseController::class, 'index']);
         Route::get('/student/pathways', [PathwayController::class, 'index']);
-        Route::get('/student/parcours', [PathwayController::class, 'studentProgressDetails']);
 
         // --- 5.1 PROGRESSION STUDENT ---
         Route::get('/student/progress', [StudentProgressController::class, 'getGlobalProgress']);
@@ -269,15 +271,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // --- 5.2 VIDÉOS PUBLIQUES ---
         Route::get('/videos/all-public', [StudentVideoController::class, 'getAllPublicVideos']);
-        Route::get('/videos/{id}', [StudentVideoController::class, 'getVideoDetails']);
-        Route::post('/videos/{id}/add-url', [StudentVideoController::class, 'addVideoUrl']);
-        Route::post('/videos/{id}/publish', [StudentVideoController::class, 'publishVideo']);
+        Route::get('/videos/{id}', [StudentVideoController::class, 'getVideoDetails'])->where('id', '\d+');
+        Route::post('/videos/{id}/add-url', [StudentVideoController::class, 'addVideoUrl'])->where('id', '\d+');
+        Route::post('/videos/{id}/publish', [StudentVideoController::class, 'publishVideo'])->where('id', '\d+');
         Route::get('/user/balance', [FinanceController::class, 'balance']);
         Route::post('/user/balance', [FinanceController::class, 'process']);
         Route::get('/payment/process', [FinanceController::class, 'paymentMethods']);
         Route::post('/payment/process', [FinanceController::class, 'process']);
-        Route::post('/videos/{id}/increment-views', [StudentVideoController::class, 'incrementViews']);
-        Route::post('/videos/{id}/like', [StudentVideoController::class, 'likeVideo']);
+        Route::post('/videos/{id}/increment-views', [StudentVideoController::class, 'incrementViews'])->where('id', '\d+');
+        Route::post('/videos/{id}/like', [StudentVideoController::class, 'likeVideo'])->where('id', '\d+');
         Route::get('/videos/categories', [StudentVideoController::class, 'getCategories']);
 
         // --- 5.1 COMPTE UTILISATEUR ---

@@ -101,6 +101,30 @@ class StudentVideoController extends Controller
     }
 
     /**
+     * Obtenir les détails d'une vidéo spécifique par ID
+     */
+    public function getVideoDetails($id)
+    {
+        try {
+            $video = Video::with(['creator:id,name,email,avatar,role'])
+                ->whereNotNull('published_at')
+                ->where('visibility', 'public')
+                ->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $this->serializeVideo($video)
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Vidéo non trouvée'
+            ], 404);
+        }
+    }
+
+    /**
      * Ajouter une URL de vidéo à une vidéo existante
      */
     public function addVideoUrl(Request $request, $id)

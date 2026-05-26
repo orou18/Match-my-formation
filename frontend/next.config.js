@@ -14,6 +14,12 @@ const nextConfig = {
         hostname: "commondatastorage.googleapis.com",
         pathname: "/**",
       },
+      // Allow YouTube thumbnails
+      {
+        protocol: "https",
+        hostname: "img.youtube.com",
+        pathname: "/**",
+      },
       // Allow local backend thumbnails served over HTTP during development
       {
         protocol: "http",

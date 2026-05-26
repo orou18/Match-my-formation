@@ -48,6 +48,7 @@ export default function SafeImage({
     "images.pexels.com",
     "cdn.pixabay.com",
     "storage.googleapis.com",
+    "img.youtube.com",
   ];
 
   // Vérifier si l'URL provient d'un domaine externe
