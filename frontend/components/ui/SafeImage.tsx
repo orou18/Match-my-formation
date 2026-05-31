@@ -41,64 +41,46 @@ export default function SafeImage({
   const [useFallback, setUseFallback] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Liste des domaines externes qui causent des problèmes avec next/image
-  const externalDomains = [
-    "commondatastorage.googleapis.com",
-    "images.unsplash.com",
-    "images.pexels.com",
-    "cdn.pixabay.com",
-    "storage.googleapis.com",
-  ];
-
-  // Vérifier si l'URL provient d'un domaine externe
-  const isExternal = externalDomains.some(
-    (domain) => typeof src === "string" && src.includes(domain)
-  );
-
-  // Vérifier si l'image est une URL locale qui n'existe pas
-  const isLocalMissing =
-    typeof src === "string" &&
-    (src.includes("/videos/video") ||
-      src.includes("/matchmyformation_footer.png"));
-
-  // Utiliser le fallback si nécessaire
-  const shouldUseFallback =
-    useFallback || imageError || isExternal || isLocalMissing;
-
   const handleError = () => {
     setImageError(true);
+    setUseFallback(true);
     if (onError) onError();
   };
 
-  // Si fallback nécessaire, utiliser img natif
-  if (shouldUseFallback) {
-    if (fill) {
-      return (
-        <img
-          src={src}
-          alt={alt}
-          className={className}
-          style={{
-            ...style,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-          loading={loading}
-          onError={handleError}
-          onLoad={onLoad}
-        />
-      );
-    }
+  const isStringSrc = typeof src === "string";
+  
+  const isExternalForbidden = isStringSrc && (
+    src.includes("img.youtube.com") ||
+    src.includes("youtube.com") ||
+    src.includes("commondatastorage.googleapis.com") ||
+    src.includes("images.unsplash.com") ||
+    src.includes("images.pexels.com") ||
+    src.includes("cdn.pixabay.com") ||
+    src.includes("storage.googleapis.com")
+  );
 
+  const isLocalMissing = isStringSrc && (
+    src.includes("/videos/video") ||
+    src.includes("/matchmyformation_footer.png")
+  );
+
+  const forceNative = isExternalForbidden || isLocalMissing || useFallback || imageError;
+
+  // RENDU BLINDÉ : Si c'est une image externe ou suspecte, on retourne le JSX immédiatement
+  // pour couper court à toute exécution ou vérification de Next.js dans ce scope.
+  if (forceNative) {
     return (
       <img
         src={src}
         alt={alt}
-        width={width}
-        height={height}
+        width={fill ? undefined : width}
+        height={fill ? undefined : height}
         className={className}
-        style={style}
+        style={
+          fill
+            ? { ...style, width: "100%", height: "100%", objectFit: "cover" }
+            : style
+        }
         loading={loading}
         onError={handleError}
         onLoad={onLoad}
@@ -106,9 +88,10 @@ export default function SafeImage({
     );
   }
 
-  // Sinon, utiliser next/image optimisé
+  // On englobe l'appel Next.js dans un composant local isolé pour empêcher le compilateur
+  // d'évaluer la prop problématique en amont.
   return (
-    <Image
+    <SafeNextImage
       src={src}
       alt={alt}
       width={width}
@@ -122,11 +105,19 @@ export default function SafeImage({
       placeholder={placeholder}
       blurDataURL={blurDataURL}
       style={style}
-      onError={() => {
-        setUseFallback(true);
-        if (onError) onError();
-      }}
+      handleError={handleError}
       onLoad={onLoad}
+    />
+  );
+}
+
+// Composant interne purement Next.js, appelé uniquement si l'image est 100% locale et sûre
+function SafeNextImage({ src, handleError, ...props }: any) {
+  return (
+    <Image
+      src={src}
+      {...props}
+      onError={handleError}
     />
   );
 }

@@ -1,17 +1,33 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // 🖼️ Optimisation des images
+  // 🖼️ Optimisation des images
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+        port: "",
+        pathname: "/**",
+      },
+      // Allow YouTube thumbnails
+      {
+        protocol: "https",
+        hostname: "img.youtube.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+        port: "",
         pathname: "/**",
       },
       // Allow Google Cloud Storage for video thumbnails
       {
         protocol: "https",
         hostname: "commondatastorage.googleapis.com",
+        port: "",
         pathname: "/**",
       },
       // Allow local backend thumbnails served over HTTP during development

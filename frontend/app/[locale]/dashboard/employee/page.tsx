@@ -13,15 +13,12 @@ import {
   BookOpen,
   Clock,
   Award,
-  TrendingUp,
   LogOut,
   User,
   Building,
   Calendar,
   CheckCircle,
   Eye,
-  Target,
-  BarChart3,
   Filter,
   Search,
 } from "lucide-react";
@@ -33,7 +30,7 @@ interface Course {
   description: string;
   thumbnail: string;
   video_url?: string;
-  duration: string;
+  duration: any; // Ajusté en any pour parer aux incohérences de type de l'API
   views: number;
   likes: number;
   comments: number;
@@ -62,7 +59,6 @@ export default function EmployeeDashboard() {
   const [stats, setStats] = useState<EmployeeStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   const router = useRouter();
@@ -134,16 +130,22 @@ export default function EmployeeDashboard() {
     }
   };
 
-  const parseDurationToMinutes = (duration: string) => {
-    const parts = duration
-      .split(":")
-      .map((value) => Number.parseInt(value, 10) || 0);
-    if (parts.length === 2) {
-      return (parts[0] * 60 + parts[1]) / 60;
+  const parseDurationToMinutes = (duration: any): number => {
+    if (duration === null || duration === undefined) return 0;
+    if (typeof duration === "number") return duration;
+
+    const durationStr = String(duration).trim();
+    if (!durationStr || durationStr === "undefined" || durationStr === "null") {
+      return 0;
     }
-    if (parts.length === 3) {
-      return parts[0] * 60 + parts[1] + parts[2] / 60;
+
+    if (!durationStr.includes(":")) {
+      return Number.parseInt(durationStr, 10) || 0;
     }
+
+    const parts = durationStr.split(":").map((v) => Number.parseInt(v, 10) || 0);
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    if (parts.length === 3) return parts[0] * 60 + parts[1] + parts[2] / 60;
     return 0;
   };
 
@@ -162,7 +164,7 @@ export default function EmployeeDashboard() {
 
     const totalWatchTime = Math.round(
       courseList.reduce(
-        (sum, course) => sum + parseDurationToMinutes(course.duration),
+        (sum, course) => sum + parseDurationToMinutes(course?.duration),
         0
       )
     );
@@ -199,7 +201,6 @@ export default function EmployeeDashboard() {
   };
 
   const watchCourse = (course: Course) => {
-    // Rediriger vers la page de visionnage
     router.push(withLocale(`/video/${course.id}/watch`));
   };
 
@@ -423,7 +424,7 @@ export default function EmployeeDashboard() {
                     <Play className="w-12 h-12 text-white" />
                   </div>
                   <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
-                    {course.duration}
+                    {String(course.duration)}
                   </div>
                 </div>
 
