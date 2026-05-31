@@ -102,11 +102,43 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
   }, [sidebarOpen]);
 
   useEffect(() => {
-    if (!mounted || status !== "unauthenticated") {
-      return;
-    }
+    const checkAuthAndRole = async () => {
+      if (!mounted) return;
 
-    router.replace(`/${locale}/login`);
+      // Si pas authentifié, rediriger vers login
+      if (status === "unauthenticated") {
+        router.replace(`/${locale}/login`);
+        return;
+      }
+
+      // Vérifier le rôle de l'utilisateur
+      if (typeof window !== "undefined") {
+        const storedUserData = UserIdManager.getStoredUserData();
+        if (storedUserData) {
+          // Si le rôle n'est pas "creator", rediriger vers le bon dashboard
+          if (storedUserData.role !== "creator") {
+            router.replace(`/${locale}/dashboard/${storedUserData.role}`);
+            return;
+          }
+        } else if (status === "authenticated") {
+          // Si authentifié mais pas de données stockées, vérifier via l'API
+          try {
+            const response = await fetch("/api/auth/me");
+            if (response.ok) {
+              const data = await response.json();
+              if (data.user && data.user.role !== "creator") {
+                router.replace(`/${locale}/dashboard/${data.user.role}`);
+                return;
+              }
+            }
+          } catch (error) {
+            console.error("Erreur vérification rôle:", error);
+          }
+        }
+      }
+    };
+
+    checkAuthAndRole();
   }, [locale, mounted, router, status]);
 
   const navigation = [

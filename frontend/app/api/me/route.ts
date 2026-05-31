@@ -7,21 +7,14 @@ export async function GET(request: NextRequest) {
     const userData = UserIdManager.getStoredUserData();
 
     if (!userData || !userData.id) {
-      // Retourner un utilisateur par défaut pour éviter les erreurs 401
-      const defaultUser = {
-        id: 1,
-        name: "Étudiant",
-        email: "student@example.com",
-        role: "student",
-        avatar: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      return NextResponse.json({
-        success: true,
-        user: defaultUser,
-      });
+      // Retourner 401 si pas authentifié
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Non authentifié",
+        },
+        { status: 401 }
+      );
     }
 
     // Retourner les données utilisateur réelles
@@ -32,20 +25,13 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Erreur /api/me:", error);
 
-    // En cas d'erreur, retourner un utilisateur par défaut
-    const fallbackUser = {
-      id: 1,
-      name: "Étudiant",
-      email: "student@example.com",
-      role: "student",
-      avatar: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    return NextResponse.json({
-      success: true,
-      user: fallbackUser,
-    });
+    // Retourner 401 en cas d'erreur
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Erreur d'authentification",
+      },
+      { status: 401 }
+    );
   }
 }

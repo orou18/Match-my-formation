@@ -399,6 +399,16 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(0, 122, 138, 0.1);
 }
 
+/* Scrollbar hide pour le scroll horizontal */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Optimisation des cards et conteneurs */
 .card {
   background: white;

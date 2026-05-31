@@ -28,30 +28,15 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [loading, setLoading] = useState(false); // Commencer à false pour éviter le blocage
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<Student | null>(null);
   const router = useRouter();
   const params = useParams();
   const locale = params.locale || "fr";
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const checkAuthAndFetchUser = async () => {
       try {
-        // Créer immédiatement un utilisateur par défaut
-        const defaultStudent: Student = {
-          id: 1,
-          name: "Étudiant",
-          email: "student@example.com",
-          role: "student",
-          avatar: "",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          enrolled_courses: 0,
-          completed_courses: 0,
-          certificates: [],
-          progress: [],
-        };
-
         // Initialiser un utilisateur de test si nécessaire (côté client uniquement)
         if (typeof window !== "undefined") {
           UserIdManager.initializeTestUserIfNeeded();
@@ -59,7 +44,14 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
           // Récupérer les données utilisateur depuis UserIdManager
           const storedUserData = UserIdManager.getStoredUserData();
 
-          if (storedUserData && storedUserData.role === "student") {
+          if (storedUserData) {
+            // Vérifier si l'utilisateur a le rôle "student"
+            if (storedUserData.role !== "student") {
+              // Rediriger vers le dashboard correspondant à son rôle
+              router.replace(`/${locale}/dashboard/${storedUserData.role}`);
+              return;
+            }
+
             const studentData: Student = {
               id: storedUserData.id,
               name: storedUserData.name || "Étudiant",
@@ -75,40 +67,25 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
             };
 
             setUser(studentData);
+            setLoading(false);
             return;
           }
         }
 
-        // Utiliser l'utilisateur par défaut
-        setUser(defaultStudent);
+        // Si pas d'utilisateur stocké, rediriger vers login
+        router.replace(`/${locale}/login`);
       } catch (error) {
         console.error(
           "Erreur lors du chargement des données utilisateur:",
           error
         );
-
-        // En cas d'erreur, utiliser un utilisateur par défaut
-        const fallbackStudent: Student = {
-          id: 1,
-          name: "Étudiant",
-          email: "student@example.com",
-          role: "student",
-          avatar: "",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          enrolled_courses: 0,
-          completed_courses: 0,
-          certificates: [],
-          progress: [],
-        };
-
-        setUser(fallbackStudent);
+        router.replace(`/${locale}/login`);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserData();
+    checkAuthAndFetchUser();
   }, [router, locale]);
 
   // Utiliser un utilisateur par défaut si aucun n'est défini
